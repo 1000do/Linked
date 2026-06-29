@@ -57,10 +57,6 @@ else Application Pending or Rejected
     fe_ctrl -> status_view++: Redirect to Application Status page
     status_view -->> act--: Display Application Status page
 else Valid Dashboard Access
-    fe_ctrl -> fe_ctrl++: Fetch overall performance statistics
-    fe_ctrl--
-    
-
     fe_ctrl -> be_course_ctrl++: Send GET request to /api/courses/my-courses
     be_course_ctrl -> course_sv++: Call GetInstructorCoursesPagedAsync(instructorId)
     
@@ -94,7 +90,7 @@ else Valid Dashboard Access
     be_course_ctrl -->> fe_ctrl--: Return PagedResult<CourseResponse>
         
         fe_ctrl -->> view--: Return statusCode 200
-        view -->> act--: Display performance statistics and course list
+        view -->> act--: Display course list
     
 
     end

@@ -18,6 +18,10 @@ from docx import Document
 from pptx import Presentation
 from openpyxl import load_workbook
 import numpy as np
+import warnings
+
+# Suppress annoying PyTorch DataLoader warnings on CPU
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.utils.data.dataloader")
 
 from core.exceptions import FileProcessingException
 from services.base_service import BaseService
@@ -118,7 +122,7 @@ class TextExtractionService(BaseService):
                             texts.append(t)
                             confidences.append(float(prob))
                             
-                text = "\n".join(texts)
+                text = " [SEP] ".join(texts)
                 confidence = sum(confidences) / len(confidences) if confidences else 0.0
                 
                 log_entry = {
@@ -137,30 +141,61 @@ class TextExtractionService(BaseService):
     
     async def extract_from_pdf_legacy(self, pdf_bytes: bytes) -> Tuple[str, float, dict]:
         """
-        Extract text from PDF using OCR on rendered images.
+        Extract text from PDF using native extraction with OCR fallback.
         """
         if not pdf_bytes:
             raise FileProcessingException("pdf", "Empty PDF provided")
         
         try:
             with self.time_operation("extract_from_pdf", size=len(pdf_bytes)):
-                # pdf2image to convert PDF to images
+                # Try native extraction first
+                doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                total_pages = len(doc)
+                all_text = []
+                has_native_text = False
+                
+                for idx in range(total_pages):
+                    page = doc.load_page(idx)
+                    text = page.get_text().strip()
+                    if text:
+                        has_native_text = True
+                        all_text.append(f"Page {idx+1}: {text}")
+                
+                doc.close()
+
+                if has_native_text:
+                    combined_text = " [SEP] ".join(all_text)
+                    confidence = 1.0
+                    log_entry = {
+                        "source": "pdf_native",
+                        "success": True,
+                        "pages_processed": total_pages,
+                        "text_length": len(combined_text),
+                        "confidence": confidence,
+                    }
+                    return combined_text, confidence, log_entry
+
+                logger.info("No native text found in PDF, falling back to OCR")
+                # Fallback to OCR
                 images = convert_from_bytes(pdf_bytes, first_page=1, last_page=5)  # First 5 pages
                 
                 all_text = []
                 all_confidences = []
                 
-                for image in images:
+                for idx, image in enumerate(images):
                     image_np = np.array(image)
                     results = self._ocr_reader.readtext(image_np, detail=1, paragraph=False)
+                    page_texts = []
                     for res in results:
                         if len(res) == 3:
                             _, t, prob = res
                             if t.strip():
-                                all_text.append(t)
+                                page_texts.append(t)
                                 all_confidences.append(float(prob))
+                    if page_texts:
+                        all_text.append(f"Page {idx+1}: " + " ".join(page_texts))
                 
-                combined_text = "\n".join(all_text)
+                combined_text = " [SEP] ".join(all_text)
                 confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
                 
                 log_entry = {
@@ -181,6 +216,7 @@ class TextExtractionService(BaseService):
         self,
         video_bytes: bytes,
         sample_interval_seconds: float = 3.0,
+        max_frames: int = 30,
     ) -> Tuple[str, float, dict]:
         """
         Extract text from video frames and audio using OCR and Whisper.
@@ -199,50 +235,82 @@ class TextExtractionService(BaseService):
                 all_confidences = []
                 
                 try:
-                    # Extract text from frames
-                    cap = cv2.VideoCapture(tmp_path)
-                    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-                    sample_every_n_frames = max(1, int(fps * sample_interval_seconds))
+                    # Detect scenes using PySceneDetect
+                    import scenedetect
+                    from scenedetect import ContentDetector
+                    scene_list = scenedetect.detect(tmp_path, ContentDetector(threshold=27.0))
                     
-                    frame_idx = 0
+                    cap = cv2.VideoCapture(tmp_path)
+                    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+                    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    
+                    target_frames = []
+                    for scene in scene_list:
+                        start_frame = scene[0].get_frames()
+                        end_frame = scene[1].get_frames()
+                        middle_frame = start_frame + (end_frame - start_frame) // 2
+                        target_frames.append(middle_frame)
+                        
+                    if len(target_frames) > max_frames:
+                        # Pick the longest scenes
+                        scenes_with_duration = [(scene[1].get_frames() - scene[0].get_frames(), idx) for idx, scene in enumerate(scene_list)]
+                        scenes_with_duration.sort(reverse=True, key=lambda x: x[0])
+                        top_indices = [x[1] for x in scenes_with_duration[:max_frames]]
+                        top_indices.sort() # Keep chronological order
+                        target_frames = [target_frames[i] for i in top_indices]
+                    elif len(target_frames) == 0:
+                        # Fallback if no scenes detected
+                        total_duration = frame_count / fps if fps > 0 else 0
+                        interval = max(sample_interval_seconds, total_duration / max_frames if max_frames > 0 else sample_interval_seconds)
+                        sample_every_n_frames = max(1, int(fps * interval))
+                        target_frames = list(range(0, frame_count, sample_every_n_frames))[:max_frames]
+                    
                     frames_processed = 0
                     last_text = ""
                     
-                    while True:
+                    for frame_idx in target_frames:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                         ret, frame = cap.read()
                         if not ret:
-                            break
+                            continue
+                            
+                        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         
-                        if frame_idx % sample_every_n_frames == 0:
-                            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                            
-                            results = self._ocr_reader.readtext(rgb_frame, detail=1, paragraph=False)
-                            frame_texts = []
-                            frame_confs = []
-                            for res in results:
-                                if len(res) == 3:
-                                    _, t, prob = res
-                                    if t.strip():
-                                        frame_texts.append(t)
-                                        frame_confs.append(float(prob))
-                                        
-                            text = "\n".join(frame_texts).strip()
-                            frame_conf = sum(frame_confs) / len(frame_confs) if frame_confs else 0.0
-                            
-                            if text:
-                                # Deduplication logic
-                                similarity = SequenceMatcher(None, last_text, text).ratio()
-                                if similarity < 0.9: # Only add if it's less than 80% similar to previous frame
-                                    all_text.append(text)
-                                    all_confidences.append(frame_conf)
-                                    last_text = text
-                            
-                            frames_processed += 1
+                        # Downscale for faster OCR
+                        height, width = rgb_frame.shape[:2]
+                        max_width = 800
+                        if width > max_width:
+                            scale = max_width / width
+                            new_width = max_width
+                            new_height = int(height * scale)
+                            rgb_frame = cv2.resize(rgb_frame, (new_width, new_height))
                         
-                        frame_idx += 1
+                        results = self._ocr_reader.readtext(rgb_frame, detail=1, paragraph=False)
+                        frame_texts = []
+                        frame_confs = []
+                        for res in results:
+                            if len(res) == 3:
+                                _, t, prob = res
+                                if t.strip():
+                                    frame_texts.append(t)
+                                    frame_confs.append(float(prob))
+                                    
+                        text = " ".join(frame_texts).strip()
+                        frame_conf = sum(frame_confs) / len(frame_confs) if frame_confs else 0.0
+                        
+                        if text:
+                            # Deduplication logic
+                            similarity = SequenceMatcher(None, last_text, text).ratio()
+                            if similarity < 0.9: # Only add if it's less than 80% similar to previous frame
+                                all_text.append(f"Video Frame OCR {frame_idx}: {text}")
+                                all_confidences.append(frame_conf)
+                                last_text = text
+                        
+                        frames_processed += 1
                     
                     cap.release()
+                except Exception as e:
+                    logger.error(f"OCR text extraction failed: {e}")
                     
                     # Extract audio using Whisper (faster-whisper for efficiency)
                     try:
@@ -258,22 +326,19 @@ class TextExtractionService(BaseService):
                                 condition_on_previous_text=False
                             )
                             
-                            segment_texts = []
-                            for segment in segments:
-                                segment_texts.append(segment.text)
-                                all_confidences.append(math.exp(segment.avg_logprob))
-                                
-                            audio_text = "".join(segment_texts)
-                            logger.info(f'Audio text: {audio_text}')
-                            if audio_text.strip():
-                                all_text.append(audio_text)
+                            logger.info(f'Audio text extracted using whisper')
+                            for seg_idx, segment in enumerate(segments):
+                                seg_text = segment.text.strip()
+                                if seg_text:
+                                    all_text.append(f"Video Segment Audio {seg_idx + 1}: {seg_text}")
+                                    all_confidences.append(math.exp(segment.avg_logprob))
                             
                             os.unlink(audio_path)
                     
                     except Exception as e:
                         logger.warning(f"Audio extraction failed (continuing with OCR): {e}")
                     
-                    combined_text = "\n".join(all_text)
+                    combined_text = " [SEP] ".join(all_text)
                     confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
                     
                     log_entry = {
@@ -313,7 +378,7 @@ class TextExtractionService(BaseService):
                     if para.text.strip():
                         all_text.append(para.text)
                 
-                combined_text = "\n".join(all_text)
+                combined_text = " [SEP] ".join(all_text)
                 confidence = 1.0 if combined_text.strip() else 0.0  # High confidence for text extraction
                 
                 log_entry = {
@@ -345,11 +410,14 @@ class TextExtractionService(BaseService):
                 # Extract text from slides
                 all_text = []
                 for slide_idx, slide in enumerate(prs.slides):
+                    slide_texts = []
                     for shape in slide.shapes:
                         if hasattr(shape, "text") and shape.text.strip():
-                            all_text.append(shape.text)
+                            slide_texts.append(shape.text.strip())
+                    if slide_texts:
+                        all_text.append(f"Slide {slide_idx+1}: " + " ".join(slide_texts))
                 
-                combined_text = "\n".join(all_text)
+                combined_text = " [SEP] ".join(all_text)
                 confidence = 1.0 if combined_text.strip() else 0.0
                 
                 log_entry = {
@@ -382,12 +450,15 @@ class TextExtractionService(BaseService):
                 all_text = []
                 for sheet in wb.sheetnames[:5]:  # First 5 sheets
                     ws = wb[sheet]
+                    sheet_texts = []
                     for row in ws.iter_rows(values_only=True):
                         for cell in row:
                             if cell and str(cell).strip():
-                                all_text.append(str(cell))
+                                sheet_texts.append(str(cell).strip())
+                    if sheet_texts:
+                        all_text.append(f"Sheet {sheet}: " + " ".join(sheet_texts))
                 
-                combined_text = " ".join(all_text)
+                combined_text = " [SEP] ".join(all_text)
                 confidence = 1.0 if combined_text.strip() else 0.0
                 
                 log_entry = {
@@ -446,6 +517,7 @@ class TextExtractionService(BaseService):
         self,
         video_bytes: bytes,
         sample_interval_seconds: float = 3.0,
+        max_frames: int = 30,
     ) -> AsyncIterator[Tuple[str, float, Dict[str, Any]]]:
         """
         Extract text from video frames (OCR) and audio (Whisper) as a stream of segments.
@@ -465,23 +537,56 @@ class TextExtractionService(BaseService):
                     tmp_path = tmp.name
                 
                 # 1. OCR text extraction
-                cap = cv2.VideoCapture(tmp_path)
-                frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-                sample_every_n_frames = max(1, int(fps * sample_interval_seconds))
-                
-                frame_idx = 0
-                frames_processed = 0
-                last_text = ""
-                last_frame = 0
-                
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
+                try:
+                    import scenedetect
+                    from scenedetect import ContentDetector
+                    scene_list = scenedetect.detect(tmp_path, ContentDetector(threshold=27.0))
                     
-                    if frame_idx % sample_every_n_frames == 0:
+                    cap = cv2.VideoCapture(tmp_path)
+                    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+                    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    
+                    target_frames = []
+                    for scene in scene_list:
+                        start_frame = scene[0].get_frames()
+                        end_frame = scene[1].get_frames()
+                        middle_frame = start_frame + (end_frame - start_frame) // 2
+                        target_frames.append(middle_frame)
+                        
+                    if len(target_frames) > max_frames:
+                        # Pick the longest scenes
+                        scenes_with_duration = [(scene[1].get_frames() - scene[0].get_frames(), idx) for idx, scene in enumerate(scene_list)]
+                        scenes_with_duration.sort(reverse=True, key=lambda x: x[0])
+                        top_indices = [x[1] for x in scenes_with_duration[:max_frames]]
+                        top_indices.sort() # Keep chronological order
+                        target_frames = [target_frames[i] for i in top_indices]
+                    elif len(target_frames) == 0:
+                        total_duration = frame_count / fps if fps > 0 else 0
+                        interval = max(sample_interval_seconds, total_duration / max_frames if max_frames > 0 else sample_interval_seconds)
+                        sample_every_n_frames = max(1, int(fps * interval))
+                        target_frames = list(range(0, frame_count, sample_every_n_frames))[:max_frames]
+                    
+                    frames_processed = 0
+                    last_text = ""
+                    last_frame = 0
+                    
+                    for frame_idx in target_frames:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                        ret, frame = cap.read()
+                        if not ret:
+                            continue
+                        
                         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        
+                        # Downscale for faster OCR
+                        height, width = rgb_frame.shape[:2]
+                        max_width = 800
+                        if width > max_width:
+                            scale = max_width / width
+                            new_width = max_width
+                            new_height = int(height * scale)
+                            rgb_frame = cv2.resize(rgb_frame, (new_width, new_height))
+                        
                         results = self._ocr_reader.readtext(rgb_frame, detail=1, paragraph=False)
                         
                         frame_texts = []
@@ -513,9 +618,10 @@ class TextExtractionService(BaseService):
                                 }
                                 
                         frames_processed += 1
-                    frame_idx += 1
-                
-                cap.release()
+                        
+                    cap.release()
+                except Exception as e:
+                    logger.error(f"OCR text extraction failed: {e}")
                 
                 # 2. Whisper audio text extraction
                 try:

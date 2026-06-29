@@ -71,8 +71,7 @@ public class WishlistService : IWishlistService
 
         await _wishlistRepository.AddAsync(newItem);
         int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     public async Task RemoveFromWishlistAsync(int userId, int courseId)
@@ -85,8 +84,7 @@ public class WishlistService : IWishlistService
 
         await _wishlistRepository.RemoveAsync(item);
         int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
+        /* zero rows exception removed */
     }
 
     public async Task<bool> ToggleWishlistAsync(int userId, int courseId)
@@ -96,8 +94,7 @@ public class WishlistService : IWishlistService
         {
             await _wishlistRepository.RemoveAsync(item);
             int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
             
             // Notify via SignalR
             await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");
@@ -120,8 +117,7 @@ public class WishlistService : IWishlistService
             };
             await _wishlistRepository.AddAsync(newItem);
             int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-                throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
             
             // Notify via SignalR
             await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");

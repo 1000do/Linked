@@ -1,0 +1,55 @@
+@startuml view_system_balance
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Balance (For System)
+actor Admin as act
+
+participant "PlatformFinanceView" as view
+participant "AdminFinanceController" as be_ctrl
+participant ":AdminFinanceService" as sv
+participant ":StripeConnectService" as stripe
+participant "Stripe API" as stripe_api
+
+act++
+act->view++: Access "System Balance" page
+view->be_ctrl++: GET /api/admin/finance/balance
+be_ctrl->sv++: GetPlatformBalanceAsync()
+sv->stripe++: GetPlatformBalanceAsync()
+
+stripe->stripe_api++: Retrieve Platform Balance (usd)\nBalanceService.GetAsync()
+stripe_api-->>stripe--: Return Stripe Balance object\n(Available & Pending balances in cents)
+
+stripe->stripe_api++: Retrieve Platform Account Schedule\nAccountService.GetSelfAsync()
+stripe_api-->>stripe--: Return Stripe Account object\n(Settings.Payouts.Schedule details)
+
+stripe->stripe: Calculate balance amounts from cents to USD\n- Available amount\n- Incoming/Pending amount\n- Payout schedule details
+stripe-->>sv--: Return StripePlatformBalanceDto
+sv-->>be_ctrl--: Return PlatformBalanceResponse
+be_ctrl-->>view--: Return status 200 with ApiResponse<PlatformBalanceResponse>
+view-->>act--: Render and display Stripe Platform Balance cards:\n- Available Balance\n- Pending Balance\n- Total Balance\n- Payout Schedule information
+@enduml

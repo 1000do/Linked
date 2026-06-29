@@ -169,15 +169,11 @@ class DuplicationHandler(BaseHandler):
         if is_duplicate:
             self.logger.warning(f"Duplication detected for Course ID {course_id}. Flagged materials: {[f'material_{mat_id}' for mat_id in matched_ids]}")
             
-            # Cache embeddings: duplicated ones get separate prefix, others get normal prefix
+            # Cache embeddings: ALL new embeddings go to PENDING cache awaiting human approval
             for key, lst in new_embeddings_dict.items():
                 for new_emb in lst:
-                    if new_emb.material_id in matched_ids:
-                        self.logger.info(f"Setting DUPLICATE embeddings to cache for material {new_emb.material_id}")
-                        self.redis_service.set_duplicate_material_embedding(new_emb)
-                    else:
-                        self.logger.info(f"Setting new embeddings to cache for material {new_emb.material_id}")
-                        self.redis_service.set_material_embedding(new_emb)
+                    self.logger.info(f"Setting PENDING embeddings to cache for material {new_emb.material_id}")
+                    self.redis_service.set_pending_material_embedding(new_emb)
 
             return CourseModerationResponse(
                 course_id=course_id,
@@ -188,11 +184,11 @@ class DuplicationHandler(BaseHandler):
                 stage_logs=all_stage_logs
             )
 
-        # 6. If not duplicate, cache new embeddings in Redis
+        # 6. If not duplicate, cache all new embeddings in Redis as PENDING
         for key, lst in new_embeddings_dict.items():
             for new_emb in lst:
-                self.logger.info(f"Setting new embeddings to cache {new_emb.embedding[:50]} ... for material {new_emb.material_id}")
-                self.redis_service.set_material_embedding(new_emb)
+                self.logger.info(f"Setting PENDING embeddings to cache {new_emb.embedding[:50]} ... for material {new_emb.material_id}")
+                self.redis_service.set_pending_material_embedding(new_emb)
 
         self.logger.info(f"Stage 1 approved for Course ID {course_id}")
         return CourseModerationResponse(

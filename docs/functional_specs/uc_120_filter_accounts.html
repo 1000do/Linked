@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-120 - Filter Accounts</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-120. Filter Accounts</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin selects a role filter value from the table menu.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to filter the displayed account list by selecting specific role criteria, such as User (student), Instructor, Staff, or Registered Staff.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>Admin is currently on the Account List page.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Filter Accounts Successfully:</strong>
+                    <ul>
+                        <li>Admin selects a role filter value from the table menu.</li>
+                        <li>The system captures the selected role filter and triggers a query request.</li>
+                        <li>The system queries the database to retrieve accounts matching the selected role.</li>
+                        <li>The system paginates the results and calculates the total count.</li>
+                        <li>The system maps the matching account records to list details.</li>
+                        <li>The system renders and displays the filtered Account List table.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The filtered account list matching the selected role is successfully retrieved and displayed on the screen.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role Mapping Filters:</strong> The dropdown supports filtering specifically by:
+                    <ul>
+                        <li>"user": Accounts representing standard student users.</li>
+                        <li>"instructor": Users who have registered and been approved as instructors.</li>
+                        <li>"staff": All manager accounts holding the staff role.</li>
+                        <li>"registered_staff": Active manager accounts holding the staff role that are verified.</li>
+                        <li>"all": Returns all accounts regardless of roles.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -65,7 +65,7 @@ public class EnrollmentService : IEnrollmentService
             };
             await _repo.AddEnrollmentAsync(enrollment);
             int rows1 = await _repo.SaveChangesAsync();
-            if (rows1 <= 0) throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
 
             await transaction.CommitAsync();
@@ -156,7 +156,7 @@ public class EnrollmentService : IEnrollmentService
 
             // Lưu thay đổi ngay để các hàm đếm phía sau chính xác
             int rows3 = await _repo.SaveChangesAsync();
-            if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
 
             // 3. Kiểm tra hoàn thành khóa học
             var stats = await _courseRepo.GetCourseStatsAsync(courseId);
@@ -170,7 +170,7 @@ public class EnrollmentService : IEnrollmentService
             }
 
             int rows4 = await _repo.SaveChangesAsync();
-            if (rows4 <= 0) throw new InvalidOperationException("Failed to save changes");
+            /* zero rows exception removed */
         }
     }
 

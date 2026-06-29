@@ -1,0 +1,38 @@
+@startuml sort_coupons
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Coupons (Client-Side)
+actor Admin as act
+
+participant "CouponListView" as view
+
+act++
+act->view++: Click on table header column to sort\n(e.g., Code, Discount Value, End Date, Status)
+view->view: Sort cached coupon list in memory\n(ascending or descending order based on column)
+view-->>act--: Rerender and display sorted Coupon List table
+@enduml

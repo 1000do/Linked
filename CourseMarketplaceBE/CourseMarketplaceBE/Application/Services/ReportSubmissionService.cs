@@ -20,19 +20,25 @@ public class ReportSubmissionService : IReportSubmissionService
     private readonly ICourseRepository _courseRepo;
     private readonly IReviewRepository _reviewRepo;
     private readonly IMapper _mapper;
+    private readonly INotificationService _notificationService;
+    private readonly IUserRepository _userRepo;
 
     public ReportSubmissionService(
         IReportRepository reportRepo,
         IEnrollmentRepository enrollmentRepo,
         ICourseRepository courseRepo,
         IReviewRepository reviewRepo,
-        IMapper mapper)
+        IMapper mapper,
+        INotificationService notificationService,
+        IUserRepository userRepo)
     {
         _reportRepo = reportRepo;
         _enrollmentRepo = enrollmentRepo;
         _courseRepo = courseRepo;
         _reviewRepo = reviewRepo;
         _mapper = mapper;
+        _notificationService = notificationService;
+        _userRepo = userRepo;
     }
 
     public async Task<bool> CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request)
@@ -51,6 +57,11 @@ public class ReportSubmissionService : IReportSubmissionService
 
         await _reportRepo.AddCourseReportAsync(report);
         await SaveChangesAndHandleExceptionsAsync();
+        
+        await NotifyManagersAsync(
+            "New Course Report",
+            $"A new report has been submitted for Course #{request.CourseId}.",
+            "/AdminModeration/Reports?tab=course-reports");
             
         return true;
     }
@@ -71,6 +82,11 @@ public class ReportSubmissionService : IReportSubmissionService
 
         await _reportRepo.AddCourseReviewReportAsync(report);
         await SaveChangesAndHandleExceptionsAsync();
+
+        await NotifyManagersAsync(
+            "New Course Review Report",
+            $"A course review has been reported.",
+            "/AdminModeration/Reports?tab=review-reports&subtab=course");
             
         return true;
     }
@@ -91,6 +107,11 @@ public class ReportSubmissionService : IReportSubmissionService
 
         await _reportRepo.AddLessonReviewReportAsync(report);
         await SaveChangesAndHandleExceptionsAsync();
+
+        await NotifyManagersAsync(
+            "New Lesson Review Report",
+            $"A lesson review has been reported.",
+            "/AdminModeration/Reports?tab=review-reports&subtab=lesson");
             
         return true;
     }
@@ -179,17 +200,30 @@ public class ReportSubmissionService : IReportSubmissionService
 
     private async Task SaveChangesAndHandleExceptionsAsync()
     {
-        int numRowsAffected;
         try
         {
-            numRowsAffected = await _reportRepo.SaveChangesAsync();
+            await _reportRepo.SaveChangesAsync();
         }
         catch (ReportException ex)
         {
             throw new BadRequestException(ex.Message);
         }
+    }
 
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+    private async Task NotifyManagersAsync(string title, string content, string? linkAction)
+    {
+        var managerIds = await _userRepo.GetAllManagerIdsAsync();
+        if (managerIds.Any())
+        {
+            var dtos = managerIds.Select(id => new NotificationBulkDto
+            {
+                ReceiverId = id,
+                Title = title,
+                Content = content,
+                LinkAction = linkAction
+            }).ToList();
+
+            await _notificationService.SendBulkNotificationsAsync(dtos);
+        }
     }
 }

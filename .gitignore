@@ -37,3 +37,7 @@ ai_models/
 
 scratch/
 /private_ngoc
+
+#Test Result
+**/TestResults
+**/TestHTMLReports

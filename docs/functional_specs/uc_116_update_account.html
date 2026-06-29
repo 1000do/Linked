@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-116 - Update Account</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-116. Update Account</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin clicks the "Edit" button next to a staff account, modifies details, and saves.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to update profile details, change status, and reset the password of an existing Staff account. The system validates entries and manages lockout records if the account status is updated to or from banned.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>The target account must exist and belong to a Staff member.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Update Account Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the Account Management page.</li>
+                        <li>Admin clicks the Edit button on a specific staff account.</li>
+                        <li>The system displays the edit form populated with current staff details.</li>
+                        <li>Admin modifies the staff details.</li>
+                        <li>Admin clicks the Save button.</li>
+                        <li>The system checks that the Display Name field is provided.</li>
+                        <li>The system retrieves the target account and verifies it is a staff account.</li>
+                        <li>The system updates the staff profile fields.</li>
+                        <li>The system hashes the new password using BCrypt (if a new password is provided).</li>
+                        <li>The system adjusts the account status and creates or deletes lockout records in the database based on the status change.</li>
+                        <li>The system saves all changes to the database.</li>
+                        <li>The system displays a success message and redirects to the account list.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The updated account profile details are saved to the database.</li>
+                <li>Lockout records are updated in the database if the status is changed to or from banned.</li>
+                <li>The system displays a success message and redirects to the account list.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+                <li><strong>Mandatory Fields Missing:</strong> The system detects that the Display Name is empty. The system displays a validation error message.</li>
+                <li><strong>Staff Account Not Found:</strong> The system detects that the account does not exist or does not have a staff role. The system displays the error message: "Staff account not found."</li>
+                <li><strong>Database Save Failure:</strong> The system detects that saving the updated staff details to the database failed. The system displays an error message.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Role Scope Restriction:</strong> This update endpoint is restricted solely to accounts carrying the "staff" role.</li>
+                <li><strong>Optional Password Reset:</strong> If the password input is empty, the current password remains unchanged. If a new password is provided, it is hashed using BCrypt and overrides the old hash.</li>
+                <li><strong>Ban/Lockout Logic:</strong>
+                    <ul>
+                        <li>Banning: Transitioning the status to "Banned" automatically adds a 100-year lockout record.</li>
+                        <li>Unbanning: Transitioning from "Banned" to active/etc. automatically deletes all active lockout entries to restore login access.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

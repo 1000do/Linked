@@ -50,8 +50,8 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 - **Return Types**:
   - **List Retrievals**: Check if the list is empty and throw `KeyNotFoundException`. Map the tuple from the repository into a `PagedResult<Dto>` and return the `PagedResult<Dto>` to the controller.
   - **Write Operations**: 
-    - **Private Helper Extraction:** The `SaveChangesAsync()` call, the `try/catch` block catching the Domain Exception, and the `rows == 0` check MUST be extracted into a **private helper method** (e.g., `Save[Entity]ChangesAsync()`) to keep the main business logic method clean.
-    - Inside the helper, check the rows affected returned by the repository. If `rows == 0`, throw an `InvalidOperationException` with an entity-specific message (e.g., `"Failed to save course report"`).
+    - **Private Helper Extraction:** The `SaveChangesAsync()` call and the `try/catch` block catching the Domain Exception MUST be extracted into a **private helper method** (e.g., `Save[Entity]ChangesAsync()`) to keep the main business logic method clean.
+    - **DO NOT** check if `rows == 0` or throw `InvalidOperationException` on `0`. In EF Core, `SaveChangesAsync()` returning `0` is a successful no-op. Real database failures (like constraints or concurrency issues) will natively throw exceptions like `DbUpdateException` which the repository handles.
     - Wrap repository write operations in a `try/catch` block within the private helper. Catch custom Domain Exceptions thrown by the Repository and re-throw them as an Application-level `BadRequestException` to ensure the controller knows the operation failed due to invalid state/data.
   - **Background Tasks (Fire-and-Forget)**: 
     - **DON'T:** Never use inline `Task.Run()` for fire-and-forget logic (exhausts the thread pool).
@@ -67,7 +67,7 @@ This skill enforces the exact N-tier architectural pattern used in the Course Ma
 - **Responsibility**: Handle HTTP routing, Authorization, and payload deserialization.
 - **Form/Payload Binding**: The payload from the frontend (ViewModel/DTO) should be automatically parsed as a DTO argument in the controller method by the ASP.NET Core framework.
 - **Encapsulate GET Parameters**: Avoid parameter bloat in Service and Controller GET methods. When handling multiple filters, pagination, or search queries, consolidate them into a single unified Request DTO parameter rather than passing 3+ primitive types (e.g., use `([FromQuery] PagedReportRequestDto request)` instead of `([FromQuery] string status, [FromQuery] int page, [FromQuery] int pageSize)`).
-- **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found. Catch both `InvalidOperationException` and `BadRequestException` and pass `ex.Message` directly to `ApiResponse<T>.ErrorResponse(ex.Message)` instead of hardcoding error strings.
+- **Error Handling**: Use explicit `try/catch` blocks. Translate `KeyNotFoundException` to 404 Not Found. Catch `BadRequestException` and pass `ex.Message` directly to `ApiResponse<T>.ErrorResponse(ex.Message)` instead of hardcoding error strings. (Do not expect or catch `InvalidOperationException` for failed database saves, as EF Core handles real failures natively).
 - **Response Format**: Always wrap responses in the standardized generic API response envelope (e.g., `ApiResp<T>` or `ApiResponse<T>`).
 
 ### 4. Backend: DTOs & Mappings

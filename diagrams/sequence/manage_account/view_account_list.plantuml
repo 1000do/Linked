@@ -1,0 +1,50 @@
+@startuml view_account_list
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Account List
+actor Admin as act
+
+participant "AccountListView" as view
+participant "AdminAccountController" as be_ctrl
+participant ":AdminAccountService" as sv
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++: Access Account List / Search & Filter
+view->be_ctrl++: GET /api/admin/accounts?keyword={kw}&role={role}&page={page}&pageSize=10
+be_ctrl->sv++: GetAccountsPagedAsync(keyword, role, page, pageSize)
+sv->ctx++: Query Accounts entities\n(using Include, Where, OrderBy, Skip, Take)
+ctx->db++: Execute SQL query
+db-->>ctx--: Return result set
+ctx-->>sv--: Return items and totalCount
+sv-->>be_ctrl--: Return PagedResult<AdminAccountListDto>
+be_ctrl-->>view--: Return status 200 with JSON payload (accounts data)
+view-->>act--: Render/update Account List table
+@enduml

@@ -227,6 +227,11 @@ public class UserRepository : IUserRepository
         return admin?.ManagerId;
     }
 
+    public async Task<List<int>> GetAllManagerIdsAsync()
+    {
+        return await _context.Managers.Select(m => m.ManagerId).ToListAsync();
+    }
+
     public async Task<int> GetTotalStudentsCountAsync()
     {
         return await _context.Users.CountAsync();
@@ -330,10 +335,6 @@ public class UserRepository : IUserRepository
             if (roleLower == "staff")
             {
                 query = query.Where(a => a.Manager != null && a.Manager.Role == "staff");
-            }
-            else if (roleLower == "registered_staff")
-            {
-                query = query.Where(a => a.Manager != null && a.Manager.Role == "staff" && a.IsVerified);
             }
             else if (roleLower == "user")
             {

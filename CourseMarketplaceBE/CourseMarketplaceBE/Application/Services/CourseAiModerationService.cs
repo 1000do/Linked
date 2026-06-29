@@ -35,6 +35,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IHtmlTextManipulationService _htmlTextManipulationService;
         private readonly IEmbeddingService _embeddingService;
         private readonly IBackgroundTaskQueue _taskQueue;
+        private readonly IUserRepository _userRepo;
+        private readonly INotificationService _notificationService;
 
         public CourseAiModerationService(
             IContentHashService contentHashService,
@@ -52,7 +54,9 @@ namespace CourseMarketplaceBE.Application.Services
             IMapper mapper,
             IHtmlTextManipulationService htmlTextManipulationService,
             IEmbeddingService embeddingService,
-            IBackgroundTaskQueue taskQueue)
+            IBackgroundTaskQueue taskQueue,
+            IUserRepository userRepo,
+            INotificationService notificationService)
         {
             _contentHashService = contentHashService;
             _aiModerationService = aiModerationService;
@@ -70,6 +74,8 @@ namespace CourseMarketplaceBE.Application.Services
             _htmlTextManipulationService = htmlTextManipulationService;
             _embeddingService = embeddingService;
             _taskQueue = taskQueue;
+            _userRepo = userRepo;
+            _notificationService = notificationService;
         }
 
         public async Task StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
@@ -82,7 +88,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 try
                 {
-                    await moderationService.HandleCourseModerationAsync(request);
+                    await moderationService.HandleCourseModerationWithAIAsync(request);
                 }
                 catch (Exception)
                 {
@@ -91,7 +97,7 @@ namespace CourseMarketplaceBE.Application.Services
             });
         }
 
-        public async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
+        private async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
         {
             string cacheKey = CacheKeys.CourseModerationDetail.GetKey(courseId);
             _logger.LogInformation("GetCourseForModerationAsync: {CacheKey}", cacheKey);
@@ -113,12 +119,13 @@ namespace CourseMarketplaceBE.Application.Services
             return response;
         }
 
-        public async Task UpdateCourseStatusAndClearCacheAsync(int courseId, string status, int instructorId)
+        private async Task UpdateCourseStatusAndClearCacheAsync(int courseId, string status, int instructorId)
         {
             await _courseCommandService.UpdateCourseStatusAsync(courseId, status, instructorId);
             await _redisService.RemoveCacheAsync(CacheKeys.CourseModerationDetail.GetKey(courseId));
         }
 
+       
         private void ExtractPlainTextForModerationResponse(CourseModerationDetailResponse response)
         {
             response.Description = _htmlTextManipulationService.ExtractPlainText(response.Description ?? "");
@@ -314,7 +321,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int rowsAffected = await _aiIntegrationRepository.SaveChangesAsync();
-                if (rowsAffected == 0) throw new InvalidOperationException("Failed to save course AI integration");
+                /* zero rows exception removed */
                 return rowsAffected;
             }
             catch (CourseAiIntegrationException ex)
@@ -337,8 +344,6 @@ namespace CourseMarketplaceBE.Application.Services
         {
             _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
 
-            await _embeddingService.PersistMaterialEmbeddingsAsync(result.CourseId);
-
             var (threatLevel, feedback) = EvaluateModerationFeedback(result);
 
             await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(
@@ -348,7 +353,7 @@ namespace CourseMarketplaceBE.Application.Services
                 threatLevel);
 
             var notificationContent = $"Course {result.CourseId} requires manual review following AI Moderation. Threat Level: {threatLevel}.\n\nDetails:\n{feedback}";
-            await _courseModerationService.NotifyAdminAsync("Manual Audit Required", notificationContent, UrlConst.AdminCourseModerationURL);
+            await NotifyManagersAsync("Manual Review Required", notificationContent, UrlConst.AdminCourseModerationURL);
         }
 
         private (AiThreatLevel ThreatLevel, string Feedback) EvaluateModerationFeedback(CourseModerationResult result)
@@ -389,7 +394,8 @@ namespace CourseMarketplaceBE.Application.Services
             else if (statusStr == ModerationStatus.ManualAudit.ToValue())
             {
                 threatLevel = AiThreatLevel.ManualAudit;
-                feedback = "AI suggested manual audit.";
+                feedback = "AI suggested manual audit due to low confidence in its moderation result";
+                
             }
 
             return (threatLevel, feedback);
@@ -452,14 +458,14 @@ namespace CourseMarketplaceBE.Application.Services
 
 
 
-        private async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CourseModerationRequest request)
+        public async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CourseModerationRequest request)
         {
             try
             {
                 var isHealthy = await _aiModerationService.HealthCheckAsync();
                 if (!isHealthy)
                 {
-                    await _courseModerationService.NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
+                    await NotifyManagersAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
                     return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
@@ -470,14 +476,8 @@ namespace CourseMarketplaceBE.Application.Services
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
 
                 _logger.LogInformation("AI Moderation Result: {result}", JsonSerializer.Serialize(result));
-                if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
-                {
-                    await _courseModerationService.NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", UrlConst.AdminCourseModerationURL);
-                }
-                else
-                {
-                    await ResolveCourseAIModerationResult(result);
-                }
+                
+                await ResolveCourseAIModerationResult(result);
 
                 await LogCourseAiModeration(new LogCourseAiModerationCommand
                 {
@@ -492,8 +492,8 @@ namespace CourseMarketplaceBE.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during AI moderation for course {CourseId}", request.CourseId);
-                await _courseModerationService.NotifyAdminAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
-                throw;
+                await NotifyManagersAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
+                return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
             }
         }
 
@@ -531,18 +531,23 @@ namespace CourseMarketplaceBE.Application.Services
             return (semanticReq, harmfulReq);
         }
 
-        public async Task<CourseModerationResult> HandleCourseModerationAsync(CourseModerationRequest request)
+        private async Task NotifyManagersAsync(string title, string content, string? linkAction)
         {
-            try
+            var managerIds = await _userRepo.GetAllManagerIdsAsync();
+            if (managerIds.Any())
             {
-                return await HandleCourseModerationWithAIAsync(request);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in HandleCourseModerationAsync for course {CourseId}", request.CourseId);
-                throw;
+                var dtos = managerIds.Select(id => new NotificationBulkDto
+                {
+                    ReceiverId = id,
+                    Title = title,
+                    Content = content,
+                    LinkAction = linkAction
+                }).ToList();
+
+                await _notificationService.SendBulkNotificationsAsync(dtos);
             }
         }
+
 
         // Legacy hash dedup logic in HandleCourseModerationAsync: 
         //      var exactDeDupRes = await HandleExactDeDuplication(request.CourseId);

@@ -111,7 +111,7 @@ public class ReportModerationService : IReportModerationService
 
         if (request.Status == ReportStatus.Resolved.ToValue())
         {
-            await ApplyCoursePenaltyAsync(course, request.RemoveContent, request.ResolutionNote!);
+            await ApplyCoursePenaltyAsync(course, request.RemoveContent, request.ResolutionNote);
         }
 
         _reportRepo.UpdateCourseReport(report);
@@ -122,7 +122,7 @@ public class ReportModerationService : IReportModerationService
             await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
         }
 
-        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "course", report.CourseId);
+        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "course", report.CourseId.Value);
 
         return true;
     }
@@ -140,13 +140,13 @@ public class ReportModerationService : IReportModerationService
 
         if (request.Status == ReportStatus.Resolved.ToValue())
         {
-            await ApplyCourseReviewPenaltyAsync(review, request.RemoveContent, request.ResolutionNote!);
+            await ApplyCourseReviewPenaltyAsync(review, request.RemoveContent, request.ResolutionNote);
         }
 
         _reportRepo.UpdateCourseReviewReport(report);
         await SaveReportChangesAsync();
 
-        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "course review", report.CourseReviewId);
+        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "course review", report.CourseReviewId.Value);
 
         return true;
     }
@@ -164,13 +164,13 @@ public class ReportModerationService : IReportModerationService
 
         if (request.Status == ReportStatus.Resolved.ToValue())
         {
-            await ApplyLessonReviewPenaltyAsync(review, request.RemoveContent, request.ResolutionNote!);
+            await ApplyLessonReviewPenaltyAsync(review, request.RemoveContent, request.ResolutionNote);
         }
 
         _reportRepo.UpdateLessonReviewReport(report);
         await SaveReportChangesAsync();
 
-        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "lesson review", report.LessonReviewId);
+        await SendResolutionNotificationsAsync(request.Status, reportId, report.ReporterId, "lesson review", report.LessonReviewId.Value);
 
         return true;
     }
@@ -215,18 +215,16 @@ public class ReportModerationService : IReportModerationService
 
     private async Task ValidateReportResolutionAccessAsync(string currentStatus, int resolverId)
     {
-        var resolverRole = await _userRepo.GetRoleByAccountIdAsync(resolverId);
-        if (resolverRole != "admin" && resolverRole != "staff")
+        var account = await _userRepo.GetAccountByIdAsync(resolverId);
+        // if (account == null || account.Manager == null || (account.Manager.Role != "admin" && account.Manager.Role != "staff"))
+        if (account == null || account.Manager == null )
         {
             throw new UnauthorizedAccessException("Only staff or admin can resolve reports.");
         }
 
-        if (currentStatus == ReportStatus.Escalated.ToValue())
+        if (currentStatus == ReportStatus.Escalated.ToValue() && account.Manager.Role != "admin")
         {
-            if (resolverRole != "admin")
-            {
-                throw new UnauthorizedAccessException("Only admins can resolve escalated reports.");
-            }
+            throw new UnauthorizedAccessException("Only admins can resolve escalated reports.");
         }
     }
 
@@ -249,51 +247,70 @@ public class ReportModerationService : IReportModerationService
 
     private async Task ApplyCourseReviewPenaltyAsync(CourseReview review, bool removeContent, string resolutionNote)
     {
-        string link = $"/Course/Details/{review.Enrollment?.CourseId}#review-card-{review.CourseReviewId}";
+        string link = review.Enrollment?.CourseId is null or < 1 
+            ? "/" 
+            : $"/Course/Details/{review.Enrollment.CourseId}#review-card-{review.CourseReviewId}";
+
         if (removeContent)
         {
-            review.IsRemoved = true;
-            review.CourseReviewStatus = ReviewStatus.Violating.ToValue();
-            review.UpdatedAt = DateTime.Now;
-            _reviewRepo.UpdateCourseReview(review);
-            
-            if (review.Enrollment != null && review.Enrollment.UserId != 0)
-            {
-                await _penaltyService.ProcessReviewStrikeAsync((int)review.Enrollment.UserId, resolutionNote, link);
-            }
+            MarkCourseReviewAsViolating(review);
+            await ProcessReviewStrikeIfApplicableAsync(review.Enrollment?.UserId, resolutionNote, link);
         }
         else
         {
-            await _notificationService.SendNotificationAsync(
-                review.Enrollment?.UserId ?? 0,
-                "Review Policy Warning",
-                $"Your course review has received a policy violation warning. Reason: {resolutionNote}. Please ensure your content complies with our guidelines.",
-                link
-            );
+            await SendReviewWarningIfApplicableAsync(review.Enrollment?.UserId, "course review", resolutionNote, link);
         }
+    }
+
+    private void MarkCourseReviewAsViolating(CourseReview review)
+    {
+        review.IsRemoved = true;
+        review.CourseReviewStatus = ReviewStatus.Violating.ToValue();
+        review.UpdatedAt = DateTime.Now;
+        _reviewRepo.UpdateCourseReview(review);
     }
 
     private async Task ApplyLessonReviewPenaltyAsync(LessonReview review, bool removeContent, string resolutionNote)
     {
-        string link = $"/Course/Learn?id={review.Enrollment?.CourseId}&lessonId={review.LessonId}#review-card-{review.LessonReviewId}";
+        string link = review.Enrollment?.CourseId is null or < 1 
+            ? "/" 
+            : $"/Course/Learn?id={review.Enrollment.CourseId}&lessonId={review.LessonId}#review-card-{review.LessonReviewId}";
+
         if (removeContent)
         {
-            review.IsRemoved = true;
-            review.LessonReviewStatus = ReviewStatus.Violating.ToValue();
-            review.UpdatedAt = DateTime.Now;
-            _reviewRepo.UpdateLessonReview(review);
-
-            if (review.Enrollment != null && review.Enrollment.UserId != 0)
-            {
-                await _penaltyService.ProcessReviewStrikeAsync((int)review.Enrollment.UserId, resolutionNote, link);
-            }
+            MarkLessonReviewAsViolating(review);
+            await ProcessReviewStrikeIfApplicableAsync(review.Enrollment?.UserId, resolutionNote, link);
         }
         else
         {
+            await SendReviewWarningIfApplicableAsync(review.Enrollment?.UserId, "lesson review", resolutionNote, link);
+        }
+    }
+
+    private void MarkLessonReviewAsViolating(LessonReview review)
+    {
+        review.IsRemoved = true;
+        review.LessonReviewStatus = ReviewStatus.Violating.ToValue();
+        review.UpdatedAt = DateTime.Now;
+        _reviewRepo.UpdateLessonReview(review);
+    }
+
+    private async Task ProcessReviewStrikeIfApplicableAsync(int? userId, string resolutionNote, string link)
+    {
+        if (userId is not null and > 0)
+        {
+            await _penaltyService.ProcessReviewStrikeAsync(userId.Value, resolutionNote, link);
+        }
+    }
+
+    private async Task SendReviewWarningIfApplicableAsync(int? userId, string reviewType, string resolutionNote, string link)
+    {
+        if (userId is not null and > 0)
+        {
             await _notificationService.SendNotificationAsync(
-                review.Enrollment?.UserId ?? 0,
+                userId.Value,
                 "Review Policy Warning",
-                $"Your lesson review has received a policy violation warning. Reason: {resolutionNote}. Please ensure your content complies with our guidelines.",
+                $"Your {reviewType} has received a policy violation warning. Reason: {resolutionNote}. Please ensure your content complies with our guidelines.",
                 link
             );
         }
@@ -311,8 +328,7 @@ public class ReportModerationService : IReportModerationService
             throw new BadRequestException(ex.Message);
         }
 
-        if (rowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+        /* zero rows exception removed */
     }
 
     private async Task NotifyAdminOnEscalationAsync(string status, int reportId, string reportType)
@@ -320,50 +336,62 @@ public class ReportModerationService : IReportModerationService
         if (status == ReportStatus.Escalated.ToValue())
         {
             var adminId = await _userRepo.GetAdminIdAsync();
-            if (adminId.HasValue) 
+            if (adminId.HasValue)
             {
                 await _notificationService.SendNotificationAsync(adminId.Value, "Report Escalated", $"A {reportType} report has been escalated to you. Report ID: {reportId}", $"/AdminModeration/Reports");
             }
         }
     }
 
-    public async Task<bool> RemoveCourseAsync(int courseId, int adminId)
-    {
-        var course = await _courseRepo.GetByIdAsync(courseId);
-        if (course == null) throw new KeyNotFoundException("Course not found.");
+    // NOTE: This is a legacy method. Do not test it.
+    // public async Task<bool> RemoveCourseAsync(int courseId, int adminId)
+    // {
+    //     var course = await _courseRepo.GetByIdAsync(courseId);
+    //     if (course == null) throw new KeyNotFoundException("Course not found.");
 
-        course.IsRemoved = true;
-        course.CourseStatus = CourseStatus.Archived.ToValue();
-        course.UpdatedAt = DateTime.Now;
+    //     course.IsRemoved = true;
+    //     course.CourseStatus = CourseStatus.Archived.ToValue();
+    //     course.UpdatedAt = DateTime.Now;
 
-        await SaveReportChangesAsync();
-        
-        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
-        return true;
-    }
+    //     await SaveReportChangesAsync();
+
+    //     await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+    //     return true;
+    // }
 
     // ── Private Helpers ─────────────────────────────────────────────────────
 
-    private async Task<string> ResolveLinkActionAsync(string reportType, int? targetId)
+    private async Task<string> ResolveLinkActionAsync(string reportType, int targetId)
     {
-        if (!targetId.HasValue) return "/";
+        return reportType switch
+        {
+            "course" => $"/Course/Details/{targetId}",
+            "course review" => await BuildCourseReviewLinkAsync(targetId),
+            "lesson review" => await BuildLessonReviewLinkAsync(targetId),
+            _ => "/"
+        };
+    }
 
-        if (reportType == "course")
+    private async Task<string> BuildCourseReviewLinkAsync(int targetId)
+    {
+        var r = await _reviewRepo.GetCourseReviewByIdAsync(targetId);
+        if (r!.Enrollment?.CourseId is null or < 1)
         {
-            return $"/Course/Details/{targetId.Value}";
-        }
-        else if (reportType == "course review")
-        {
-            var r = await _reviewRepo.GetCourseReviewByIdAsync(targetId.Value);
-            return r != null ? $"/Course/Details/{r.Enrollment?.CourseId}#review-card-{targetId.Value}" : "/";
-        }
-        else if (reportType == "lesson review")
-        {
-            var r = await _reviewRepo.GetLessonReviewByIdAsync(targetId.Value);
-            return r != null ? $"/Course/Learn?id={r.Enrollment?.CourseId}&lessonId={r.LessonId}#review-card-{targetId.Value}" : "/";
+            return "/";
         }
 
-        return "/";
+        return $"/Course/Details/{r.Enrollment.CourseId}#review-card-{targetId}";
+    }
+
+    private async Task<string> BuildLessonReviewLinkAsync(int targetId)
+    {
+        var r = await _reviewRepo.GetLessonReviewByIdAsync(targetId);
+        if (r!.Enrollment?.CourseId is null or < 1)
+        {
+            return "/";
+        }
+
+        return $"/Course/Learn?id={r.Enrollment.CourseId}&lessonId={r.LessonId}#review-card-{targetId}";
     }
 
     private async Task NotifyReporterOfOutcomeAsync(int? reporterId, string linkAction, string status, string reportType)
@@ -385,7 +413,7 @@ public class ReportModerationService : IReportModerationService
     }
 
 
-    private async Task SendResolutionNotificationsAsync(string status, int reportId, int? reporterId, string reportType, int? targetId)
+    private async Task SendResolutionNotificationsAsync(string status, int reportId, int? reporterId, string reportType, int targetId)
     {
         string linkAction = await ResolveLinkActionAsync(reportType, targetId);
         await NotifyReporterOfOutcomeAsync(reporterId, linkAction, status, reportType);

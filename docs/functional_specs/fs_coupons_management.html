@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Functional Specifications - Coupons Management</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>1. Add Coupons</strong></p>
+<p><strong>Function Trigger:</strong> Admin clicks the "Create Coupon" button on the coupon list page.</p>
+<p><strong>Function Description:</strong> Allows an Admin to create a new coupon in the coupon warehouse by specifying a unique code, coupon type, discount value, minimum order value, validity dates, and usage limit.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Add Coupon Successfully:</strong>
+                <ul>
+                    <li>Admin accesses the Coupon List view.</li>
+                    <li>Admin clicks the Add Coupon button.</li>
+                    <li>The system displays the coupon creation form.</li>
+                    <li>Admin enters the coupon details: Code, Type, Value, Min Order Value, Start Date, End Date, and Limit.</li>
+                    <li>Admin clicks the Save button.</li>
+                    <li>The system normalizes the coupon type and validates form inputs.</li>
+                    <li>The system checks if the coupon code is unique in the database.</li>
+                    <li>The system instantiates a new Coupon entity with Used Count = 0 and Is Active = true.</li>
+                    <li>The system saves the coupon details to the database.</li>
+                    <li>The system displays a success message and renders the updated Coupon List.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The new coupon is successfully saved to the database.</li>
+            <li>The system renders the updated Coupon List / Success message.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li><strong>Validation Failure:</strong> The system detects invalid coupon parameters, displays a validation error message explaining the failure, and returns the user to the input step.</li>
+            <li><strong>Coupon Code Already Exists:</strong> The system detects that the coupon code already exists in the database, displays an error message, and returns the user to the input step.</li>
+            <li><strong>Database Save Failure:</strong> The system detects that saving the coupon details failed, displays an error message regarding database save failure, and returns the user to the input step.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>2. View Coupons List</strong></p>
+<p><strong>Function Trigger:</strong> Admin accesses the "Coupons & Offers" page.</p>
+<p><strong>Function Description:</strong> Allows an Admin to browse a list of all coupons in the system. The Admin can search by code or ID, filter by active status or type, and sort the list client-side.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View Coupons List Successfully:</strong>
+                <ul>
+                    <li>Admin accesses the Coupon List page.</li>
+                    <li>The system retrieves the list of coupons sorted by CouponId descending.</li>
+                    <li>The system maps the coupon list to the coupon response details (ID, Code, Type, Value, Min Order Value, Start Date, End Date, Usage Limit, Used Count, Active Status).</li>
+                    <li>The system renders and displays the Coupon List table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Filter Coupons)</strong>
+        <ul>
+            <li>Admin filters by active status or coupon type (Fixed/Percentage):
+                <ul>
+                    <li>Admin selects active status filter or coupon type filter.</li>
+                    <li>The system retrieves the matched coupon list from the database.</li>
+                    <li>The system renders and displays the filtered table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Search Coupons)</strong>
+        <ul>
+            <li>Admin searches by keyword:
+                <ul>
+                    <li>Admin enters search keyword (Coupon Code).</li>
+                    <li>The system retrieves the matching coupon list from the database.</li>
+                    <li>The system renders and displays the searched table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Sort Coupons)</strong>
+        <ul>
+            <li>Admin sorts by table header:
+                <ul>
+                    <li>Admin clicks on a table header column (Date Create, Expiring Soon, Most Popular) to sort.</li>
+                    <li>The system sorts the cached coupon list in memory (ascending or descending order).</li>
+                    <li>The system rerenders and displays the sorted table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The coupon list is successfully retrieved and rendered on the frontend.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>3. Edit Coupons</strong></p>
+<p><strong>Function Trigger:</strong> Admin clicks the "Edit" button on a coupon in the Actions row of the coupon list.</p>
+<p><strong>Function Description:</strong> Allows an Admin to update properties of an existing coupon (End Date, Usage Limit, or Active Status). Core parameters such as Coupon Code, Coupon Type, and Discount Value are locked to preserve transactional history.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>The target coupon must exist in the system.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Edit Coupon Successfully:</strong>
+                <ul>
+                    <li>Admin accesses the Coupon List page.</li>
+                    <li>Admin clicks the Edit button on a specific coupon.</li>
+                    <li>The system displays the coupon edit form with current coupon details (Coupon Code, Coupon Type, and Discount Value are read-only).</li>
+                    <li>Admin modifies the allowed fields: End Date, Usage Limit, or Active Status.</li>
+                    <li>Admin clicks the Save button.</li>
+                    <li>The system retrieves the target coupon by ID.</li>
+                    <li>The system validates the modified fields against business rules.</li>
+                    <li>The system updates the allowed properties of the Coupon entity.</li>
+                    <li>The system saves the changes to the database.</li>
+                    <li>The system displays a success message and renders the updated Coupon List.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The updated coupon properties are successfully saved to the database.</li>
+            <li>The system renders the updated Coupon List / Success message.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li><strong>Coupon Not Found:</strong> The system detects that the target coupon ID does not exist in the database, displays a "Coupon not found" error message, and returns the user to the Coupon List page.</li>
+            <li><strong>Invalid Input Data:</strong> The system detects invalid update parameters, displays a validation error message explaining the failure, and returns the user to the input step.</li>
+            <li><strong>Database Save Failure:</strong> The system detects that saving the updated coupon details failed, displays an error message regarding database save failure, and returns the user to the input step.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>Certain core fields (Coupon Code, Coupon Type, Discount Value, and Minimum Order Value) are locked to maintain accounting integrity of past orders.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>4. Delete Coupons</strong></p>
+<p><strong>Function Trigger:</strong> Admin clicks the "Delete" button on a coupon in the Actions row of the coupon list.</p>
+<p><strong>Function Description:</strong> Allows an Admin to soft-delete (disable) a coupon. Instead of physically removing the record from the database, the coupon is marked inactive and its end date is moved to the past to preserve historical data for accounting/auditing.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>The target coupon must exist in the system.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Delete Coupon Successfully:</strong>
+                <ul>
+                    <li>Admin accesses the Coupon List page.</li>
+                    <li>Admin clicks the Delete button on a specific coupon.</li>
+                    <li>The system retrieves the target coupon by ID.</li>
+                    <li>The system updates the coupon status to inactive (IsActive = false) and shifts the End Date to yesterday.</li>
+                    <li>The system saves the changes to the database.</li>
+                    <li>The system displays a success message and renders the updated Coupon List.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The coupon is successfully soft-deleted (marked inactive) in the database.</li>
+            <li>The system renders the updated Coupon List / Success message.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li><strong>Coupon Not Found:</strong> The system detects that the target coupon ID does not exist in the database, displays a "Coupon not found" error message, and returns the user to the Coupon List page.</li>
+            <li><strong>Database Save Failure:</strong> The system detects that saving the changes failed, displays an error message regarding database save failure, and returns the user to the Coupon List page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>Hard deletion (physical delete) is strictly forbidden to maintain accounting integrity and historical traceability.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>5. Search Coupons</strong></p>
+<p><strong>Function Trigger:</strong> Admin enters a search keyword in the search input field.</p>
+<p><strong>Function Description:</strong> Allows an Admin to filter the coupon list by searching for a specific keyword matching the Coupon Code.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>Admin is currently on the Coupon List page.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Search Coupons Successfully:</strong>
+                <ul>
+                    <li>Admin enters a search keyword in the search input field.</li>
+                    <li>The system captures the keyword and triggers a query request.</li>
+                    <li>The system queries the database for coupons matching the search keyword (by Coupon Code).</li>
+                    <li>The system maps the matched coupon entities to response objects.</li>
+                    <li>The system renders and displays the filtered Coupon List table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The filtered coupon list matching the search keyword is successfully retrieved and rendered on the frontend.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>6. Sort Coupons</strong></p>
+<p><strong>Function Trigger:</strong> Admin clicks on a table header column in the Coupon List page.</p>
+<p><strong>Function Description:</strong> Allows an Admin to sort the displayed coupon list ascending or descending based on selected columns (e.g., Date Create, Discount Value, Expiring Soon, Most Popular) entirely client-side.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>Admin is currently on the Coupon List page with coupon data displayed.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Sort Coupons Successfully:</strong>
+                <ul>
+                    <li>Admin clicks on a table header column (e.g., Date Create, Discount Value,...).</li>
+                    <li>The system identifies the column and toggles the sorting direction.</li>
+                    <li>The system sorts the cached coupon list in memory.</li>
+                    <li>The system rerenders and displays the sorted Coupon List table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The coupon list table is rerendered and sorted based on the selected column and direction.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>7. Filter Coupons</strong></p>
+<p><strong>Function Trigger:</strong> Admin selects active status filter or coupon type filter.</p>
+<p><strong>Function Description:</strong> Allows an Admin to filter the displayed coupon list by selecting active status (Active/Paused) or coupon type (Fixed/Percentage).</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+            <li>Admin is currently on the Coupon List page.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Filter Coupons Successfully:</strong>
+                <ul>
+                    <li>Admin selects the active status filter or coupon type filter.</li>
+                    <li>The system captures the selected filter parameters and triggers a query request.</li>
+                    <li>The system queries the database for coupons matching the filter criteria (IsActive or CouponType).</li>
+                    <li>The system maps the matched coupon entities to response objects.</li>
+                    <li>The system renders and displays the filtered Coupon List table.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The filtered coupon list matching the criteria is successfully retrieved and rendered on the frontend.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>Admin must be logged in with Admin role privileges.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>8. Apply Coupons</strong></p>
+<p><strong>Function Trigger:</strong> User enters a coupon code in the coupon input field and clicks the "Apply" button on the Cart page.</p>
+<p><strong>Function Description:</strong> Allows an authenticated User to apply a coupon code to their shopping cart. The system validates the coupon's status, expiry, limits, and minimum order requirements, calculates the eligible discount, and updates the cart totals.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>User must be logged in.</li>
+            <li>User must have at least one item in their shopping cart.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Apply Coupon Successfully:</strong>
+                <ul>
+                    <li>User enters a coupon code in the coupon input field on the Cart page.</li>
+                    <li>User clicks the Apply button.</li>
+                    <li>The system saves the coupon code to the session cookie map.</li>
+                    <li>The system requests the cart summary details including the coupon code.</li>
+                    <li>The system queries the database to retrieve the coupon details.</li>
+                    <li>The system validates that the coupon exists, is active, has not expired, is under the usage limit, and meets the minimum order requirements.</li>
+                    <li>The system calculates the discount amount according to the coupon type (Fixed or Percentage).</li>
+                    <li>The system deducts the discount from the subtotal to calculate the final total.</li>
+                    <li>The system displays the updated cart with the discount value, updated total, and a success message.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The coupon code is stored in the User's session state.</li>
+            <li>The cart totals (discount, subtotal, and total price) are recalculated and displayed on the screen.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Invalid or Ineligible Coupon:</strong> The system detects that the coupon code is invalid (e.g., does not exist, is disabled, has expired, has met its limit, or fails minimum order criteria), resets the discount to zero, records a validation error message, and displays the cart view with the warning message.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>User must be logged in.</li>
+            <li>Applied coupons are written to local cookies to maintain the discount status across browsing activities until checkout.</li>
+        </ul>
+    </li>
+</ul>
+
+<hr>
+
+<p><strong>9. Cancel Coupons</strong></p>
+<p><strong>Function Trigger:</strong> User clicks the "Cancel" / "Remove Coupon" button next to the applied coupon on the Cart page.</p>
+<p><strong>Function Description:</strong> Allows an authenticated User to remove an applied coupon from their shopping cart. The system removes the coupon code from the user's session cookies, recalculates the cart summary totals without the coupon discount, and refreshes the cart view showing original prices.</p>
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+<p><strong>Function Details</strong></p>
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>User must be logged in.</li>
+            <li>A coupon must be currently applied to the shopping cart.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>Cancel Coupon Successfully:</strong>
+                <ul>
+                    <li>User clicks the Cancel / Remove Coupon button next to the applied coupon on the Cart page.</li>
+                    <li>The system captures the cancellation request.</li>
+                    <li>The system deletes the coupon code from the session cookie map.</li>
+                    <li>The system requests the cart summary details without any coupon code.</li>
+                    <li>The system queries the database to retrieve the User's cart items.</li>
+                    <li>The system recalculates the cart totals using the original course prices without applying any coupon discount.</li>
+                    <li>The system displays the updated cart with the original prices, zero discount, and an empty coupon input field.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The coupon code is deleted from the User's session cookies.</li>
+            <li>The cart totals are recalculated to reflect original prices and rendered on the screen.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the User is not authenticated and redirects the User to the Login page.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>User must be logged in.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

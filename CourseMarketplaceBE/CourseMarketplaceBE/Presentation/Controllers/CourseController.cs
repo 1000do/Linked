@@ -214,6 +214,9 @@ public class CourseController : ControllerBase
 
             return Ok(ApiResponse<object>.SuccessResponse(new { }, "Moderation has been successfully submitted and is processing in the background."));
         }
+        catch (KeyNotFoundException ex){
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
         catch (BadRequestException ex)
         {
             return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));

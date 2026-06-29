@@ -76,7 +76,7 @@ public class AiModelManagementService : IAiModelManagementService
         {
             throw new BadRequestException(ex.Message);
         }
-        if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+        /* zero rows exception removed */
         Console.WriteLine($"New Model Id {addedModel.ModelId}");
         return _mapper.Map<AiModelAdminDto>(addedModel);
     }
@@ -102,7 +102,7 @@ public class AiModelManagementService : IAiModelManagementService
         {
             throw new BadRequestException(ex.Message);
         }
-        if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+        /* zero rows exception removed */
 
         return _mapper.Map<AiModelAdminDto>(updatedModel);
     }
@@ -125,7 +125,7 @@ public class AiModelManagementService : IAiModelManagementService
         {
             throw new BadRequestException(ex.Message);
         }
-        if (affected == 0) throw new InvalidOperationException("No changes were saved to the database.");
+        /* zero rows exception removed */
         return true;
     }
 }

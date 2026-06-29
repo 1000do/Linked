@@ -25,7 +25,7 @@ public class AdminAccountController : Controller
         role ??= "all";
         if (page < 1) page = 1;
 
-        var url = $"/api/admin/accounts?keyword={Uri.EscapeDataString(keyword ?? "")}&role={role}&page={page}&pageSize=10";
+        var url = $"/api/admin/accounts?keyword={Uri.EscapeDataString(keyword ?? "")}&role={role}&page={page}&pageSize=5";
         var response = await _apiClient.GetAsync(url);
 
         if (response.IsSuccessStatusCode)
@@ -50,7 +50,7 @@ public class AdminAccountController : Controller
         }
 
         // Return empty layout if API failed or unauthorized
-        return View(new AdminAccountListViewModel { Role = role, Page = page, PageSize = 10 });
+        return View(new AdminAccountListViewModel { Role = role, Page = page, PageSize = 5 });
     }
 
     // GET /AdminAccount/Detail/{id}
@@ -130,7 +130,6 @@ public class AdminAccountController : Controller
             return Json(new { success = false, message = "Display name is required." });
         }
 
-        var response = await _apiClient.PostJsonAsync($"/api/admin/accounts/staff/{id}", model);
         var jsonContent = new StringContent(JsonSerializer.Serialize(model), System.Text.Encoding.UTF8, "application/json");
         var putResponse = await _apiClient.PutAsync($"/api/admin/accounts/staff/{id}", jsonContent);
 
