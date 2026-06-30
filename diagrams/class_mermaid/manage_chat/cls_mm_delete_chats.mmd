@@ -79,10 +79,10 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Chat *-- ChatParticipant
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendController --> IChatService
 ChatService --> IChatRepository
 ChatRepository --> AppDbContext
@@ -91,7 +91,7 @@ ChatRepository --> AppDbContext
 ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
 ChatRepository ..> ChatParticipant
 

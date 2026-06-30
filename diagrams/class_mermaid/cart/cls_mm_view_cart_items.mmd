@@ -58,6 +58,7 @@ class CartControllerBE["CartController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class CartSummaryResponse {
+    <<dto>>
     + Items : List~CartItemDto~
     + SubTotal : decimal
     + DiscountAmount : decimal
@@ -68,6 +69,7 @@ class CartSummaryResponse {
 }
 
 class CartItemDto {
+    <<dto>>
     + CourseId : int
     + Title : string
     + ThumbnailUrl : string?
@@ -80,6 +82,7 @@ class CartItemDto {
 }
 
 class AvailableCouponDto {
+    <<dto>>
     + CouponCode : string
     + CouponType : string
     + DiscountValue : decimal
@@ -99,6 +102,7 @@ class CartItem {
     + AddedDate : DateTime?
     + Price : decimal?
     + Course : Course?
+    + User : User?
 }
 
 class Course {
@@ -199,12 +203,6 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
-CartViewModel *-- CartItemViewModel
-CartViewModel *-- AvailableCouponViewModel
-CartSummaryResponse *-- CartItemDto
-CartSummaryResponse *-- AvailableCouponDto
-
 %% === UNIDIRECTIONAL ASSOCIATION ===
 CartControllerBE --> ICartService
 CartService --> ICartRepository
@@ -212,9 +210,13 @@ CartService --> ICourseRepository
 CartService --> ICouponRepository
 CartRepository --> AppDbContext
 
-%% === BIDIRECTIONAL ASSOCIATION ===
+%% === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
 Coupon -- Course
 Course -- CartItem
+CartViewModel *-- CartItemViewModel
+CartViewModel *-- AvailableCouponViewModel
+CartSummaryResponse *-- CartItemDto
+CartSummaryResponse *-- AvailableCouponDto
 
 %% === INTERFACE REALIZATION ===
 CartService ..|> ICartService
