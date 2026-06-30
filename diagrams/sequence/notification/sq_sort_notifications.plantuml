@@ -29,7 +29,7 @@ hide footbox
 mainframe Sort Notifications (Staff/Admin)
 
 actor Admin as act
-participant "Notification/Admin.cshtml" as view
+participant "NotificationManagementPage" as view
 
 act++
 act->view++: Select sorting option in sort dropdown (newest/oldest/title/recipient)

@@ -92,24 +92,22 @@ db-->>ctx--: Return isParticipant
 ctx-->>repo--: Return isParticipant
 repo-->>sv--: Return isParticipant
 
-alt isParticipant == false
+alt [isParticipant == false]
     sv->repo++: Call HasActiveReportForChatAsync(dto.ChatId)
     repo->ctx++: Call HasActiveReportForChatAsync(chatId)
     ctx->db++: Execute SELECT query
     db-->>ctx--: Return hasActiveReport
     ctx-->>repo--: Return hasActiveReport
     repo-->>sv--: Return hasActiveReport
-    
-    alt hasActiveReport == false
-        sv-->>hub: Throw UnauthorizedAccessException
-        hub->hub++: Send error message to Caller
-        hub--
-        hub-->>view: Send error event via SignalR
-        view-->>act: Display permission error message
-    end
 end
 
-alt isParticipant == true || hasActiveReport == true
+alt [isParticipant == false && hasActiveReport == false]
+    sv-->>hub: Throw UnauthorizedAccessException
+    hub->hub++: Send error message to Caller
+    hub--
+    hub-->>view: Send error event via SignalR
+    view-->>act: Display permission error message
+else [Valid Permissions]
     sv->sv++: Create Message object
     sv--
     
@@ -156,9 +154,9 @@ alt isParticipant == true || hasActiveReport == true
     ctx->db++: Save changes (Execute INSERT & UPDATE statements)
     
     alt [Database Save Fails (throws DbUpdateException)]
-        db-->>ctx--: Throw DbUpdateException
-        ctx-->>repo--: Throw DbUpdateException
-        repo-->>sv--: Throw DbUpdateException
+        db-->>ctx: Throw DbUpdateException
+        ctx-->>repo: Throw DbUpdateException
+        repo-->>sv: Throw DbUpdateException
         sv-->>hub: Throw DbUpdateException
         hub->hub++: Send error message to Caller
         hub--

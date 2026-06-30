@@ -24,21 +24,21 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "CartController" as CartControllerFE #FFE6E6 {
+class "CartController" as CartControllerFE <<frontend controller>> #FFE6E6 {
     + RemoveFromCart(courseId: int) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "CartController" as CartControllerBE #FFE6E6 {
+class "CartController" as CartControllerBE <<backend controller>> #FFE6E6 {
     - _cartService : ICartService
     + RemoveFromCart(courseId: int) : Task<IActionResult>
 }
 
 class CartItem #CCFFE6 {
-    + Id : int <<PK>>
-    + UserId : int? <<FK>>
-    + CourseId : int? <<FK>>
+    + Id : int
+    + UserId : int?
+    + CourseId : int?
     + AddedDate : DateTime?
     + Price : decimal?
     + Course : Course?
@@ -94,7 +94,7 @@ CartService ..|> ICartService
 CartRepository ..|> ICartRepository
 
 ' === DEPENDENCY ===
-CartControllerFE ..> CartControllerBE : calls via HTTP
-CartRepository ..> CartItem : queries/updates
+CartControllerFE ..> CartControllerBE
+CartRepository ..> CartItem
 
 @enduml

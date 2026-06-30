@@ -81,6 +81,8 @@ class Notification #CCFFE6 {
     + IsRead : bool?
     + IsRemoved : bool?
     + CreatedAt : DateTime?
+    + Receiver : Account?
+    + Sender : Account?
 }
 
 class Account #CCFFE6 {
@@ -99,6 +101,10 @@ class Account #CCFFE6 {
     + IsVerified : bool
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
+    + User : User?
+    + Manager : Manager?
+    + NotificationReceivers : ICollection<Notification>
+    + NotificationSenders : ICollection<Notification>
 }
 
 class User #CCFFE6 {

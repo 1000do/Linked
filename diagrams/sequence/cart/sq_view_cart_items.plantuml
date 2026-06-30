@@ -44,9 +44,9 @@ act->view++: Access Shopping Cart page
 view->fe_ctrl++: Send GET /Cart
 
 alt [AccessToken cookie is missing]
-    fe_ctrl->login_view++: Redirect to Login page
-    deactivate fe_ctrl
-    login_view-->>act: Display Login page
+    fe_ctrl-->>login_view: Redirect to Login page
+    activate login_view
+    login_view-->>act--: Display Login page
 else [AccessToken cookie exists]
     fe_ctrl->fe_ctrl++: Get couponMap from cart_coupon cookie
     fe_ctrl--
@@ -55,8 +55,9 @@ else [AccessToken cookie exists]
     
     alt [Token is invalid or expired]
         be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-        fe_ctrl->login_view: Redirect to Login page
-        login_view-->>act: Display Login page
+        fe_ctrl-->>login_view: Redirect to Login page
+        activate login_view
+        login_view-->>act--: Display Login page
     else [Token is valid]
         be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
         
@@ -80,7 +81,7 @@ else [AccessToken cookie exists]
                 alt [coupon is null OR inactive OR expired/limit reached]
                     sv-->>be_ctrl: throw InvalidOperationException
                     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-                    fe_ctrl-->>view: Return Bad Request
+                    fe_ctrl-->>view: Return statusCode 400 (BadRequest)
                     view-->>act: Display coupon error message
                 else [coupon is valid]
                     sv->sv++: Calculate eligibleSubTotal & discountAmount
@@ -105,7 +106,7 @@ else [AccessToken cookie exists]
         fe_ctrl->fe_ctrl++: Map JSON response to CartViewModel
         fe_ctrl--
         
-        fe_ctrl-->>view--: Return View(vm)
+        fe_ctrl-->>view--: Return statusCode 200 (View)
         view-->>act--: Display cart items list, pricing summary, and available coupons
     end
 end

@@ -29,7 +29,7 @@ hide footbox
 mainframe View Notification List (User/Instructor)
 
 actor User as act
-participant "Notification/Index.cshtml" as view
+participant "NotificationPage" as view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv

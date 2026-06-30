@@ -35,273 +35,53 @@ public class ChatService : IChatService
     public async Task<List<ChatListDto>> GetMyChatsAsync(int accountId)
     {
         var participants = await _chatRepository.GetParticipantsByAccountIdAsync(accountId);
-
-        var result = new List<ChatListDto>();
-        foreach (var p in participants)
-        {
-            // Bỏ qua nếu tin nhắn cuối cùng nhỏ hơn hoặc bằng ClearedAt (đã xóa)
-            if (p.ClearedAt.HasValue && p.Chat.LastMessageAt.HasValue && p.Chat.LastMessageAt.Value <= p.ClearedAt.Value)
-            {
-                continue;
-            }
-
-            // Bỏ qua các chat chưa có tin nhắn nào để tránh hiện rỗng cho người nhận
-            if (!p.Chat.Messages.Any())
-            {
-                continue;
-            }
-
-            var unreadFromRedis = await _redisService.GetUnreadCountAsync(accountId, p.ChatId);
-            
-                var partner = p.Chat.ChatParticipants.FirstOrDefault(cp => cp.AccountId != accountId);
-                var partnerId = partner?.AccountId;
-                var isOnline = partnerId.HasValue ? await _redisService.IsUserOnlineAsync(partnerId.Value) : false;
-
-                result.Add(new ChatListDto
-                {
-                    ChatId = p.ChatId,
-                    ChatName = p.Chat.ChatName,
-                    ChatType = p.Chat.ChatType,
-                    LastMessage = p.Chat.Messages
-                        .Where(m => !m.Content.StartsWith("__ADMIN_"))
-                        .FirstOrDefault()?.Content,
-                    LastMessageAt = p.Chat.LastMessageAt,
-                    ContextType = p.Chat.ContextType,
-                    ContextId = p.Chat.ContextId,
-                    UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
-                    PartnerName = partner?.Account.User?.FullName 
-                        ?? partner?.Account.Manager?.DisplayName 
-                        ?? partner?.Account.Username 
-                        ?? partner?.Account.Email 
-                        ?? "Support Team",
-                    PartnerAvatar = partner?.Account.AvatarUrl,
-                    PartnerId = partnerId,
-                    IsOnline = isOnline
-                });
-        }
-        return result;
+        return await ProcessAndMapChatParticipantsAsync(accountId, participants);
     }
 
     public async Task<List<ChatListDto>> SearchChatsAsync(int accountId, string query)
     {
         var participants = await _chatRepository.SearchParticipantsByAccountIdAsync(accountId, query);
-
-        var result = new List<ChatListDto>();
-        foreach (var p in participants)
-        {
-            // Bỏ qua nếu tin nhắn cuối cùng nhỏ hơn hoặc bằng ClearedAt (đã xóa)
-            if (p.ClearedAt.HasValue && p.Chat.LastMessageAt.HasValue && p.Chat.LastMessageAt.Value <= p.ClearedAt.Value)
-            {
-                continue;
-            }
-
-            // Bỏ qua các chat chưa có tin nhắn nào
-            if (!p.Chat.Messages.Any())
-            {
-                continue;
-            }
-
-            var unreadFromRedis = await _redisService.GetUnreadCountAsync(accountId, p.ChatId);
-            
-            var partner = p.Chat.ChatParticipants.FirstOrDefault(cp => cp.AccountId != accountId);
-            var partnerId = partner?.AccountId;
-            var isOnline = partnerId.HasValue ? await _redisService.IsUserOnlineAsync(partnerId.Value) : false;
-
-            result.Add(new ChatListDto
-            {
-                ChatId = p.ChatId,
-                ChatName = p.Chat.ChatName,
-                ChatType = p.Chat.ChatType,
-                LastMessage = p.Chat.Messages
-                    .Where(m => m.Content != null && !m.Content.StartsWith("__ADMIN_"))
-                    .FirstOrDefault()?.Content,
-                LastMessageAt = p.Chat.LastMessageAt,
-                ContextType = p.Chat.ContextType,
-                ContextId = p.Chat.ContextId,
-                UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
-                PartnerName = partner?.Account.User?.FullName 
-                    ?? partner?.Account.Manager?.DisplayName 
-                    ?? partner?.Account.Username 
-                    ?? partner?.Account.Email 
-                    ?? "Support Team",
-                PartnerAvatar = partner?.Account.AvatarUrl,
-                PartnerId = partnerId,
-                IsOnline = isOnline
-            });
-        }
-        return result;
+        return await ProcessAndMapChatParticipantsAsync(accountId, participants);
     }
 
     public async Task<List<MessageDto>> GetChatHistoryAsync(int chatId, int accountId)
     {
-        if (!await HasAccessToChatAsync(accountId, chatId))
-            throw new UnauthorizedAccessException("You do not have permission to view this chat.");
-
-        // Đánh dấu đã xem
+        await ValidateChatAccessAsync(accountId, chatId);
         await MarkChatAsReadAsync(chatId, accountId);
 
         var participant = await _chatRepository.GetParticipantAsync(chatId, accountId);
-        
         var messages = await _chatRepository.GetMessagesByChatIdAsync(chatId);
 
-        if (participant?.ClearedAt != null)
-        {
-            messages = messages.Where(m => m.SentAt > participant.ClearedAt.Value).ToList();
-        }
+        var filteredMessages = FilterMessagesByClearedAt(messages, participant?.ClearedAt);
 
-        return messages.Select(m => new MessageDto
-        {
-            MessageId = m.MessageId,
-            ChatId = m.ChatId,
-            SenderId = m.SenderId,
-            Content = m.Content,
-            IsSeen = m.IsSeen,
-            MessageStatus = m.MessageStatus,
-            SentAt = m.SentAt,
-            SenderName = m.Sender?.User?.FullName ?? m.Sender?.Manager?.DisplayName ?? m.Sender?.Email ?? "Unknown",
-            SenderAvatar = m.Sender?.AvatarUrl,
-            Attachments = m.Attachments.Select(a => new AttachmentDto
-            {
-                AttachmentId = a.AttachmentId,
-                FileUrl = a.FileUrl,
-                FileName = a.FileName,
-                FileType = a.FileType,
-                FileSize = a.FileSize
-            }).ToList()
-        }).ToList();
+        return filteredMessages.Select(MapToMessageDto).ToList();
     }
 
     public async Task<MessageDto> SaveMessageAsync(int senderId, SendMessageDto dto)
     {
-        var isParticipant = await _chatRepository.IsParticipantAsync(dto.ChatId, senderId);
-        
-        if (!isParticipant)
-        {
-            var hasActiveReport = await _chatRepository.HasActiveReportForChatAsync(dto.ChatId);
-            if (!hasActiveReport)
-                throw new UnauthorizedAccessException("You do not have permission to send messages in this chat.");
-        }
+        await ValidateMessageSendingAccessAsync(senderId, dto.ChatId);
 
-        var message = new Message
-        {
-            ChatId = dto.ChatId,
-            SenderId = senderId,
-            Content = dto.Content,
-            SentAt = DateTime.Now,
-            MessageStatus = "ok"
-        };
-
-        // DLC Attachment Logic
-        if (_configuration.GetValue<bool>("ChatSettings:EnableAttachments") && dto.Attachments != null && dto.Attachments.Any())
-        {
-            message.Attachments = dto.Attachments.Select(a => new MessageAttachment
-            {
-                FileUrl = a.FileUrl,
-                FileName = a.FileName,
-                FileType = a.FileType,
-                FileSize = a.FileSize,
-                CreatedAt = DateTime.Now
-            }).ToList();
-        }
+        var message = CreateMessageEntity(senderId, dto);
+        ProcessMessageAttachments(message, dto.Attachments);
 
         await _chatRepository.AddMessageAsync(message);
+        await UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt);
+        await _chatRepository.SaveChangesAsync();
 
-        // Cập nhật Redis cho các người nhận
-        var chat = await _chatRepository.GetChatByIdAsync(dto.ChatId);
-        if (chat != null)
-        {
-            chat.LastMessageAt = message.SentAt;
-            await _chatRepository.UpdateChatAsync(chat);
-
-            // Tăng unread count trong Redis cho các người nhận
-            var participantIds = await _chatRepository.GetParticipantIdsAsync(dto.ChatId);
-            foreach (var accountId in participantIds)
-            {
-                if (accountId != senderId)
-                {
-                    await _redisService.IncrementUnreadCountAsync(accountId, dto.ChatId);
-                }
-            }
-        }
-
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
-
-        // Lấy thông tin sender để trả về DTO đầy đủ
         var sender = await _userRepository.GetAccountByIdAsync(senderId);
+        message.Sender = sender;
 
-        return new MessageDto
-        {
-            MessageId = message.MessageId,
-            ChatId = message.ChatId,
-            SenderId = message.SenderId,
-            Content = message.Content,
-            SentAt = message.SentAt,
-            MessageStatus = message.MessageStatus,
-            SenderName = sender?.User?.FullName ?? sender?.Manager?.DisplayName ?? sender?.Email ?? "Unknown",
-            SenderAvatar = sender?.AvatarUrl,
-            Attachments = message.Attachments.Select(a => new AttachmentDto
-            {
-                AttachmentId = a.AttachmentId,
-                FileUrl = a.FileUrl,
-                FileName = a.FileName,
-                FileType = a.FileType,
-                FileSize = a.FileSize
-            }).ToList()
-        };
+        return MapToMessageDto(message);
     }
 
     public async Task<int> GetOrCreateChatAsync(int senderId, CreateChatDto dto)
     {
-        // 1. Phân quyền tạo Chat (Actor Layer Logic)
-        var senderRole = await _userRepository.GetRoleByAccountIdAsync(senderId);
-        var targetRole = await _userRepository.GetRoleByAccountIdAsync(dto.TargetAccountId);
+        await ValidateChatCreationAccessAsync(senderId, dto);
 
-        bool canCreate = false;
+        var existingChatId = await TryGetExistingPrivateChatAsync(senderId, dto.TargetAccountId, dto.ContextType, dto.ContextId);
+        if (existingChatId.HasValue) return existingChatId.Value;
 
-        if (senderRole == "user" || senderRole == "instructor") 
-        {
-            // Learner hoặc Instructor: chat với Staff/Admin
-            if (targetRole == "admin" || targetRole == "staff") canCreate = true;
-            else if (dto.ContextType == "course" && dto.ContextId.HasValue)
-            {
-                // Kiểm tra quan hệ mua/bán khóa học
-                var isEnrolled = await _courseRepository.IsEnrolledAsync(senderId, dto.ContextId.Value) 
-                              || await _courseRepository.IsEnrolledAsync(dto.TargetAccountId, dto.ContextId.Value);
-                if (isEnrolled) canCreate = true;
-            }
-        }
-        else if (senderRole == "admin" || senderRole == "staff") 
-        {
-            canCreate = true; // Quyền hạn cao
-        }
-
-        if (!canCreate)
-            throw new UnauthorizedAccessException("You do not have permission to initiate this conversation.");
-
-        // 2. Tìm hoặc tạo mới
-        var existingParticipant = await _chatRepository.FindPrivateChatAsync(senderId, dto.TargetAccountId, dto.ContextType, dto.ContextId);
-        if (existingParticipant != null) return existingParticipant.ChatId;
-
-        var chat = new Chat
-        {
-            ChatType = "private",
-            ContextType = dto.ContextType,
-            ContextId = dto.ContextId,
-            CreatedAt = DateTime.Now,
-            ChatParticipants = new List<ChatParticipant>
-            {
-                new ChatParticipant { AccountId = senderId, Role = "member", JoinedAt = DateTime.Now },
-                new ChatParticipant { AccountId = dto.TargetAccountId, Role = "member", JoinedAt = DateTime.Now }
-            }
-        };
-
-        var createdChat = await _chatRepository.CreateChatAsync(chat);
-
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
-
-        return createdChat.ChatId;
+        return await CreateNewPrivateChatAsync(senderId, dto);
     }
 
     public async Task<bool> HasAccessToChatAsync(int accountId, int chatId)
@@ -326,8 +106,7 @@ public class ChatService : IChatService
     {
         var expiry = DateTime.Now.AddHours(hours);
         await _chatRepository.UpdateAdminAccessAsync(chatId, expiry);
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _chatRepository.SaveChangesAsync();
         return true;
     }
 
@@ -339,8 +118,7 @@ public class ChatService : IChatService
         participant.ClearedAt = DateTime.UtcNow;
         participant.UnreadCount = 0;
         await _chatRepository.UpdateParticipantAsync(participant);
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _chatRepository.SaveChangesAsync();
             
         await _redisService.ClearUnreadCountAsync(accountId, chatId);
         return true;
@@ -349,8 +127,7 @@ public class ChatService : IChatService
     public async Task<bool> MarkChatAsReadAsync(int chatId, int accountId)
     {
         await _chatRepository.MarkAsReadAsync(chatId, accountId);
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _chatRepository.SaveChangesAsync();
         await _redisService.ClearUnreadCountAsync(accountId, chatId);
         return true;
     }
@@ -368,8 +145,7 @@ public class ChatService : IChatService
         };
 
         await _chatRepository.AddReportAsync(report);
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _chatRepository.SaveChangesAsync();
         return true;
     }
 
@@ -390,8 +166,7 @@ public class ChatService : IChatService
             CreatedAt = DateTime.Now
         };
         await _chatRepository.AddAuditLogAsync(log);
-        int rows = await _chatRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _chatRepository.SaveChangesAsync();
     }
 
     public async Task<SupportAccountDto?> GetSupportAccountAsync()
@@ -429,8 +204,247 @@ public class ChatService : IChatService
         var sender = await _userRepository.GetAccountByIdAsync(senderId);
         if (sender == null) throw new InvalidOperationException("Sender not found");
 
+        var ticket = CreateTicketFromDto(senderId, sender, dto);
+
+        await AddTicketToCacheAsync(ticket);
+        
+        return ticket;
+    }
+
+    public async Task<int> AcceptSupportRequestAsync(int acceptorId, string ticketId)
+    {
+        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
+        
+        var ticket = await ValidateAndExtractSupportTicketAsync(tickets, ticketId, acceptorId);
+        
+        await RemoveSupportTicketFromCacheAsync(tickets, ticketId);
+
+        var chatId = await InitiateSupportChatAsync(ticket.SenderId, acceptorId);
+        await SaveInitialSupportMessageAsync(chatId, ticket);
+
+        return chatId;
+    }
+
+    public async Task<List<SupportTicketDto>> GetPendingRequestsAsync(int accountId, string currentRole)
+    {
+        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
+        
+        tickets = await CleanupExpiredTicketsAsync(tickets);
+
+        return FilterTicketsByRole(tickets, accountId, currentRole);
+    }
+
+    // --- Private Helper Methods ---
+
+    private async Task<List<ChatListDto>> ProcessAndMapChatParticipantsAsync(int accountId, IEnumerable<ChatParticipant> participants)
+    {
+        var result = new List<ChatListDto>();
+        foreach (var p in participants)
+        {
+            var dto = await MapToChatListDtoAsync(accountId, p);
+            if (dto != null)
+            {
+                result.Add(dto);
+            }
+        }
+        return result;
+    }
+
+    private async Task<ChatListDto?> MapToChatListDtoAsync(int accountId, ChatParticipant p)
+    {
+        if (p.ClearedAt.HasValue && p.Chat.LastMessageAt.HasValue && p.Chat.LastMessageAt.Value <= p.ClearedAt.Value)
+        {
+            return null;
+        }
+
+        if (!p.Chat.Messages.Any())
+        {
+            return null;
+        }
+
+        var unreadFromRedis = await _redisService.GetUnreadCountAsync(accountId, p.ChatId);
+        
+        var partner = p.Chat.ChatParticipants.FirstOrDefault(cp => cp.AccountId != accountId);
+        var partnerId = partner?.AccountId;
+        var isOnline = partnerId.HasValue && await _redisService.IsUserOnlineAsync(partnerId.Value);
+
+        return new ChatListDto
+        {
+            ChatId = p.ChatId,
+            ChatName = p.Chat.ChatName,
+            ChatType = p.Chat.ChatType,
+            LastMessage = p.Chat.Messages
+                .Where(m => m.Content != null && !m.Content.StartsWith("__ADMIN_"))
+                .FirstOrDefault()?.Content,
+            LastMessageAt = p.Chat.LastMessageAt,
+            ContextType = p.Chat.ContextType,
+            ContextId = p.Chat.ContextId,
+            UnreadCount = unreadFromRedis > 0 ? unreadFromRedis : p.UnreadCount,
+            PartnerName = partner?.Account.User?.FullName 
+                ?? partner?.Account.Manager?.DisplayName 
+                ?? partner?.Account.Username 
+                ?? partner?.Account.Email 
+                ?? "Support Team",
+            PartnerAvatar = partner?.Account.AvatarUrl,
+            PartnerId = partnerId,
+            IsOnline = isOnline
+        };
+    }
+
+    private async Task ValidateChatAccessAsync(int accountId, int chatId)
+    {
+        if (!await HasAccessToChatAsync(accountId, chatId))
+            throw new UnauthorizedAccessException("You do not have permission to view this chat.");
+    }
+
+    private List<Message> FilterMessagesByClearedAt(List<Message> messages, DateTime? clearedAt)
+    {
+        if (clearedAt != null)
+        {
+            return messages.Where(m => m.SentAt > clearedAt.Value).ToList();
+        }
+        return messages;
+    }
+
+    private MessageDto MapToMessageDto(Message m)
+    {
+        return new MessageDto
+        {
+            MessageId = m.MessageId,
+            ChatId = m.ChatId,
+            SenderId = m.SenderId,
+            Content = m.Content,
+            IsSeen = m.IsSeen,
+            MessageStatus = m.MessageStatus,
+            SentAt = m.SentAt,
+            SenderName = m.Sender?.User?.FullName ?? m.Sender?.Manager?.DisplayName ?? m.Sender?.Email ?? "Unknown",
+            SenderAvatar = m.Sender?.AvatarUrl,
+            Attachments = m.Attachments?.Select(a => new AttachmentDto
+            {
+                AttachmentId = a.AttachmentId,
+                FileUrl = a.FileUrl,
+                FileName = a.FileName,
+                FileType = a.FileType,
+                FileSize = a.FileSize
+            }).ToList() ?? new List<AttachmentDto>()
+        };
+    }
+
+    private async Task ValidateMessageSendingAccessAsync(int senderId, int chatId)
+    {
+        var isParticipant = await _chatRepository.IsParticipantAsync(chatId, senderId);
+        if (!isParticipant)
+        {
+            var hasActiveReport = await _chatRepository.HasActiveReportForChatAsync(chatId);
+            if (!hasActiveReport)
+                throw new UnauthorizedAccessException("You do not have permission to send messages in this chat.");
+        }
+    }
+
+    private Message CreateMessageEntity(int senderId, SendMessageDto dto)
+    {
+        return new Message
+        {
+            ChatId = dto.ChatId,
+            SenderId = senderId,
+            Content = dto.Content,
+            SentAt = DateTime.Now,
+            MessageStatus = "ok",
+            Attachments = new List<MessageAttachment>()
+        };
+    }
+
+    private void ProcessMessageAttachments(Message message, List<AttachmentInputDto>? attachments)
+    {
+        if (_configuration.GetValue<bool>("ChatSettings:EnableAttachments") && attachments != null && attachments.Any())
+        {
+            message.Attachments = attachments.Select(a => new MessageAttachment
+            {
+                FileUrl = a.FileUrl,
+                FileName = a.FileName,
+                FileType = a.FileType,
+                FileSize = a.FileSize,
+                CreatedAt = DateTime.Now
+            }).ToList();
+        }
+    }
+
+    private async Task UpdateChatAndNotifyRecipientsAsync(int senderId, int chatId, DateTime? sentAt)
+    {
+        var chat = await _chatRepository.GetChatByIdAsync(chatId);
+        if (chat != null)
+        {
+            chat.LastMessageAt = sentAt;
+            await _chatRepository.UpdateChatAsync(chat);
+
+            var participantIds = await _chatRepository.GetParticipantIdsAsync(chatId);
+            foreach (var accountId in participantIds)
+            {
+                if (accountId != senderId)
+                {
+                    await _redisService.IncrementUnreadCountAsync(accountId, chatId);
+                }
+            }
+        }
+    }
+
+    private async Task ValidateChatCreationAccessAsync(int senderId, CreateChatDto dto)
+    {
+        var senderRole = await _userRepository.GetRoleByAccountIdAsync(senderId);
+        var targetRole = await _userRepository.GetRoleByAccountIdAsync(dto.TargetAccountId);
+
+        bool canCreate = false;
+
+        if (senderRole == "user" || senderRole == "instructor") 
+        {
+            if (targetRole == "admin" || targetRole == "staff") canCreate = true;
+            else if (dto.ContextType == "course" && dto.ContextId.HasValue)
+            {
+                var isEnrolled = await _courseRepository.IsEnrolledAsync(senderId, dto.ContextId.Value) 
+                              || await _courseRepository.IsEnrolledAsync(dto.TargetAccountId, dto.ContextId.Value);
+                if (isEnrolled) canCreate = true;
+            }
+        }
+        else if (senderRole == "admin" || senderRole == "staff") 
+        {
+            canCreate = true;
+        }
+
+        if (!canCreate)
+            throw new UnauthorizedAccessException("You do not have permission to initiate this conversation.");
+    }
+
+    private async Task<int?> TryGetExistingPrivateChatAsync(int senderId, int targetAccountId, string? contextType, int? contextId)
+    {
+        var existingParticipant = await _chatRepository.FindPrivateChatAsync(senderId, targetAccountId, contextType, contextId);
+        return existingParticipant?.ChatId;
+    }
+
+    private async Task<int> CreateNewPrivateChatAsync(int senderId, CreateChatDto dto)
+    {
+        var chat = new Chat
+        {
+            ChatType = "private",
+            ContextType = dto.ContextType,
+            ContextId = dto.ContextId,
+            CreatedAt = DateTime.Now,
+            ChatParticipants = new List<ChatParticipant>
+            {
+                new ChatParticipant { AccountId = senderId, Role = "member", JoinedAt = DateTime.Now },
+                new ChatParticipant { AccountId = dto.TargetAccountId, Role = "member", JoinedAt = DateTime.Now }
+            }
+        };
+
+        var createdChat = await _chatRepository.CreateChatAsync(chat);
+        await _chatRepository.SaveChangesAsync();
+
+        return createdChat.ChatId;
+    }
+
+    private SupportTicketDto CreateTicketFromDto(int senderId, Account sender, SupportRequestDto dto)
+    {
         var ticketId = Guid.NewGuid().ToString("N");
-        var ticket = new SupportTicketDto
+        return new SupportTicketDto
         {
             TicketId = ticketId,
             SenderId = senderId,
@@ -440,72 +454,76 @@ public class ChatService : IChatService
             RequestedAt = DateTime.UtcNow,
             TargetRole = dto.TargetRole
         };
+    }
 
-        // Manage a global list of active tickets
+    private async Task AddTicketToCacheAsync(SupportTicketDto ticket)
+    {
         var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
         tickets.Add(ticket);
         await _redisService.SetCacheAsync("ActiveSupportTickets", tickets, TimeSpan.FromDays(7));
-        
-        return ticket;
     }
 
-    public async Task<int> AcceptSupportRequestAsync(int acceptorId, string ticketId)
+    private async Task<SupportTicketDto> ValidateAndExtractSupportTicketAsync(List<SupportTicketDto> tickets, string ticketId, int acceptorId)
     {
-        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
         var ticket = tickets.FirstOrDefault(t => t.TicketId == ticketId);
         
         if (ticket == null) throw new InvalidOperationException("This support request has already been accepted or expired.");
 
-        // Check acceptor role
         var role = await _userRepository.GetRoleByAccountIdAsync(acceptorId);
         if (ticket.TargetRole == "admin" && role != "admin")
             throw new UnauthorizedAccessException("Only admins can accept this request.");
         if (ticket.TargetRole == "staff" && role != "staff" && role != "admin")
             throw new UnauthorizedAccessException("Only staff or admins can accept this request.");
 
-        // Remove the ticket from the list
+        return ticket;
+    }
+
+    private async Task RemoveSupportTicketFromCacheAsync(List<SupportTicketDto> tickets, string ticketId)
+    {
         tickets.RemoveAll(t => t.TicketId == ticketId);
         await _redisService.SetCacheAsync("ActiveSupportTickets", tickets, TimeSpan.FromDays(7));
+    }
 
-        // Create Chat using GetOrCreateChatAsync
+    private async Task<int> InitiateSupportChatAsync(int senderId, int acceptorId)
+    {
         var createDto = new CreateChatDto
         {
             TargetAccountId = acceptorId,
             ContextType = "system"
         };
-        var chatId = await GetOrCreateChatAsync(ticket.SenderId, createDto);
+        return await GetOrCreateChatAsync(senderId, createDto);
+    }
 
-        // Save the initial message from the sender
+    private async Task SaveInitialSupportMessageAsync(int chatId, SupportTicketDto ticket)
+    {
         var msgDto = new SendMessageDto
         {
             ChatId = chatId,
             Content = ticket.InitialMessage
         };
         await SaveMessageAsync(ticket.SenderId, msgDto);
-
-        return chatId;
     }
 
-    public async Task<List<SupportTicketDto>> GetPendingRequestsAsync(int accountId, string currentRole)
+    private async Task<List<SupportTicketDto>> CleanupExpiredTicketsAsync(List<SupportTicketDto> tickets)
     {
-        var tickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
-        var targetRole = currentRole.ToLower();
-        
-        // Remove old tickets (> 24 hours) as a cleanup measure
         var originalCount = tickets.Count;
         tickets.RemoveAll(t => (DateTime.UtcNow - t.RequestedAt).TotalHours > 24);
         if (tickets.Count < originalCount)
         {
             await _redisService.SetCacheAsync("ActiveSupportTickets", tickets, TimeSpan.FromDays(7));
         }
+        return tickets;
+    }
 
+    private List<SupportTicketDto> FilterTicketsByRole(List<SupportTicketDto> tickets, int accountId, string currentRole)
+    {
+        var targetRole = currentRole.ToLower();
         if (targetRole == "admin")
             return tickets.Where(t => t.TargetRole == "admin").ToList();
             
         if (targetRole == "staff")
             return tickets.Where(t => t.TargetRole == "staff").ToList();
             
-        // For User/Instructor, show only their own requests
         return tickets.Where(t => t.SenderId == accountId).ToList();
     }
 }
