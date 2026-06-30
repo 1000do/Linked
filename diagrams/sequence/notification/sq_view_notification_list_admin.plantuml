@@ -29,8 +29,8 @@ hide footbox
 mainframe View Notification List (Staff/Admin)
 
 actor Admin as act
-participant "Notification/Admin.cshtml" as view
-participant "Login.cshtml" as login_view
+participant "NotificationManagementPage" as view
+participant "LoginPage" as login_view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv
@@ -47,7 +47,8 @@ fe_ctrl-->>view--: Return Admin View
 view->view++: Validate Access Token
 view--
 group opt [Token is missing or expired]
-    view->login_view++: Redirect to Login page
+    view -->> login_view: Redirect to Login page
+    activate login_view
     login_view -->> act: Display Login page
     deactivate login_view
 end

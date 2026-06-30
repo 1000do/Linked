@@ -568,7 +568,9 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             new Notification { NotificationId = 3, Receiver = new Account { User = new User() } },
             new Notification { NotificationId = 4, Receiver = null, Sender = new Account { Manager = new Manager { Role = "staff" } } },
             new Notification { NotificationId = 5, Receiver = null, Sender = new Account { User = new User { Instructor = new Instructor() } } },
-            new Notification { NotificationId = 6, Receiver = null, Sender = new Account { User = new User() } }
+            new Notification { NotificationId = 6, Receiver = null, Sender = new Account { User = new User() } },
+            new Notification { NotificationId = 7, Receiver = new Account { Manager = new Manager { Role = null } } },
+            new Notification { NotificationId = 8, Receiver = new Account { Manager = null, User = null } }
         };
 
         //Arrange 2
@@ -586,6 +588,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         items.First(i => i.NotificationId == 4).SenderRole.Should().Be("staff");
         items.First(i => i.NotificationId == 5).SenderRole.Should().Be("instructor");
         items.First(i => i.NotificationId == 6).SenderRole.Should().Be("student");
+        items.First(i => i.NotificationId == 7).ReceiverRole.Should().Be("staff");
+        items.First(i => i.NotificationId == 8).ReceiverRole.Should().Be("student");
     }
 
     [Fact]
@@ -726,6 +730,89 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         //Assert
         await act.Should().ThrowAsync<BadRequestException>().WithMessage("DB Error");
+    }
+
+    [Fact]
+    public async Task SendBulkNotificationsAsync_NullDtos_ReturnsTrueImmediately()
+    {
+        //Arrange 1
+        IEnumerable<NotificationBulkDto> dtos = null!;
+
+        //Arrange 2
+        //Act
+        var result = await _sut.SendBulkNotificationsAsync(dtos);
+
+        //Assert
+        result.Should().BeTrue();
+        await _repoMock.DidNotReceive().AddRangeAsync(Arg.Any<IEnumerable<Notification>>());
+    }
+
+    [Fact]
+    public async Task SendAdvancedAsync_EmailsNull_ReturnsZero()
+    {
+        //Arrange 1
+        var dto = new NotificationAdvancedDto { TargetType = "SPECIFIC", Emails = null, Title = "T" };
+        int senderId = 1;
+        
+        //Arrange 2
+        //Act
+        var result = await _sut.SendAdvancedAsync(dto, senderId, "admin");
+
+        //Assert
+        result.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SendAdvancedAsync_EmailsEmpty_ReturnsZero()
+    {
+        //Arrange 1
+        var dto = new NotificationAdvancedDto { TargetType = "SPECIFIC", Emails = new List<string>(), Title = "T" };
+        int senderId = 1;
+        
+        //Arrange 2
+        //Act
+        var result = await _sut.SendAdvancedAsync(dto, senderId, "admin");
+
+        //Assert
+        result.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SendAdvancedAsync_SenderIsStaffAndTargetIsStaff_ThrowsInvalidOperationException()
+    {
+        //Arrange 1
+        var dto = new NotificationAdvancedDto { TargetType = "SPECIFIC", Emails = new List<string> { "staff@staff.com" }, Title = "T" };
+        int senderId = 1;
+        var account = new Account { AccountId = 2 };
+
+        //Arrange 2
+        _userRepoMock.GetAccountByEmailAsync("staff@staff.com").Returns(account);
+        _userRepoMock.GetRoleByAccountIdAsync(2).Returns("staff");
+
+        //Act
+        Func<Task> act = async () => await _sut.SendAdvancedAsync(dto, senderId, "staff");
+
+        //Assert
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Staff cannot send notifications to staff or admin.");
+    }
+
+    [Fact]
+    public async Task SendAdvancedAsync_SenderIsAdminAndTargetIsAdmin_ThrowsInvalidOperationException()
+    {
+        //Arrange 1
+        var dto = new NotificationAdvancedDto { TargetType = "SPECIFIC", Emails = new List<string> { "admin@admin.com" }, Title = "T" };
+        int senderId = 1;
+        var account = new Account { AccountId = 2 };
+
+        //Arrange 2
+        _userRepoMock.GetAccountByEmailAsync("admin@admin.com").Returns(account);
+        _userRepoMock.GetRoleByAccountIdAsync(2).Returns("admin");
+
+        //Act
+        Func<Task> act = async () => await _sut.SendAdvancedAsync(dto, senderId, "admin");
+
+        //Assert
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Admin cannot send notifications to other admins.");
     }
 }
 }

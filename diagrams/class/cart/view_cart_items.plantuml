@@ -24,7 +24,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "CartController" as CartControllerFE #FFE6E6 {
+class "CartController" as CartControllerFE <<frontend controller>> #FFE6E6 {
     + Index() : Task<IActionResult>
     - GetCouponMapFromCookie() : Dictionary<int, string>
     - SaveCouponMapToCookie(map: Dictionary<int, string>) : void
@@ -37,7 +37,7 @@ class CartViewModel #E6CCFF {
     + Total : decimal
     + AppliedCouponCode : string?
     + CouponMessage : string?
-    + HasDiscount : bool <<Get>>
+    + HasDiscount : bool
     + AvailableCoupons : List<AvailableCouponViewModel>
 }
 
@@ -66,7 +66,7 @@ class AvailableCouponViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "CartController" as CartControllerBE #FFE6E6 {
+class "CartController" as CartControllerBE <<backend controller>> #FFE6E6 {
     - _cartService : ICartService
     + GetSummary(couponCode: string?) : Task<IActionResult>
 }
@@ -109,9 +109,9 @@ class AvailableCouponDto #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CartItem #CCFFE6 {
-    + Id : int <<PK>>
-    + UserId : int? <<FK>>
-    + CourseId : int? <<FK>>
+    + Id : int
+    + UserId : int?
+    + CourseId : int?
     + AddedDate : DateTime?
     + Price : decimal?
     + Course : Course?
@@ -119,10 +119,10 @@ class CartItem #CCFFE6 {
 }
 
 class Course #CCFFE6 {
-    + CourseId : int <<PK>>
-    + InstructorId : int? <<FK>>
-    + CategoryId : int? <<FK>>
-    + CouponId : int? <<FK>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
     + Title : string
     + Description : string?
     + Price : decimal
@@ -150,8 +150,8 @@ class Course #CCFFE6 {
 }
 
 class Coupon #CCFFE6 {
-    + CouponId : int <<PK>>
-    + ManagerId : int? <<FK>>
+    + CouponId : int
+    + ManagerId : int?
     + CouponCode : string
     + CouponType : string?
     + DiscountValue : decimal
@@ -221,22 +221,22 @@ CartRepository --> AppDbContext
 ' === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
 Coupon -- Course
 Course -- CartItem
-CartViewModel *-- CartItemViewModel : contains
-CartViewModel *-- AvailableCouponViewModel : contains
-CartSummaryResponse *-- CartItemDto : contains
-CartSummaryResponse *-- AvailableCouponDto : contains
+CartViewModel *-- CartItemViewModel
+CartViewModel *-- AvailableCouponViewModel
+CartSummaryResponse *-- CartItemDto
+CartSummaryResponse *-- AvailableCouponDto
 
 ' === INTERFACE REALIZATION ===
 CartService ..|> ICartService
 CartRepository ..|> ICartRepository
 
 ' === DEPENDENCY ===
-CartControllerFE ..> CartControllerBE : calls via HTTP
-CartControllerFE ..> CartViewModel : instantiates
-CartControllerBE ..> CartSummaryResponse : uses
-CartService ..> CartSummaryResponse : returns
-CartService ..> CartItemDto : instantiates
-CartService ..> AvailableCouponDto : instantiates
-CartRepository ..> CartItem : queries
+CartControllerFE ..> CartControllerBE
+CartControllerFE ..> CartViewModel
+CartControllerBE ..> CartSummaryResponse
+CartService ..> CartSummaryResponse
+CartService ..> CartItemDto
+CartService ..> AvailableCouponDto
+CartRepository ..> CartItem
 
 @enduml

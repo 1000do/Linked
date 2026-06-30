@@ -24,36 +24,30 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-' class "NotificationController" as FENotificationController #FFE6E6 {
-'     - _client : HttpClient
-'     + Index() : Task<IActionResult>
-'     + GetListTiny() : Task<IActionResult>
-' }
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
+    - _client : HttpClient
+    + Index() : Task<IActionResult>
+    + GetListTiny() : Task<IActionResult>
+}
 
-' class InstructorController #FFE6E6 {
-'     - _api : ApiClient
-'     + Notifications() : Task<IActionResult>
-'     + MarkAsRead(id: int) : Task<IActionResult>
-' }
-
-' class NotificationViewModel #E6CCFF {
-'     + NotificationId : int
-'     + ReceiverId : int
-'     + ReceiverFullName : string?
-'     + ReceiverEmail : string?
-'     + Title : string
-'     + Content : string
-'     + LinkAction : string?
-'     + IsRead : bool
-'     + CreatedAt : DateTime?
-'     + ReceiverRole : string?
-'     + SenderId : int?
-'     + SenderRole : string?
-' }
+class NotificationViewModel #E6CCFF {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
+}
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "NotificationController" as BENotificationController #FFE6E6 {
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
     - _notiService : INotificationService
     + MarkAsRead(id: int) : Task<IActionResult>
 }
@@ -94,9 +88,9 @@ class AppDbContext #E6F3FF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification #CCFFE6 {
-    + NotificationId : int <<PK>>
-    + SenderId : int? <<FK>>
-    + ReceiverId : int? <<FK>>
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
     + Title : string?
     + Content : string?
     + LinkAction : string?
@@ -108,7 +102,7 @@ class Notification #CCFFE6 {
 }
 
 class Account #CCFFE6 {
-    + AccountId : int <<PK>>
+    + AccountId : int
     + Email : string
     + Username : string?
     + PasswordHash : string?
@@ -124,10 +118,12 @@ class Account #CCFFE6 {
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
     + User : User?
+    + NotificationReceivers : ICollection<Notification>
+    + NotificationSenders : ICollection<Notification>
 }
 
 class User #CCFFE6 {
-    + UserId : int <<PK>>
+    + UserId : int
     + FullName : string
     + Bio : string?
     + DateOfBirth : DateOnly?
@@ -140,20 +136,17 @@ Account *-- User
 Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-BENotificationController --> INotificationService
+BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
-' Notification -- Account
 
 ' === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-' FENotificationController ..> BENotificationController : calls (direct fetch)
-' InstructorController ..> BENotificationController : calls (API)
-' FENotificationController ..> NotificationViewModel : uses
-' InstructorController ..> NotificationViewModel : uses
-NotificationRepository ..> Notification : queries
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+NotificationRepository ..> Notification
 
 @enduml

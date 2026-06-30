@@ -23,7 +23,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class NotificationControllerFE #FFE6E6 {
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
     - _client : HttpClient
     + Index() : Task<IActionResult>
     + GetListTiny() : Task<IActionResult>
@@ -47,7 +47,7 @@ class NotificationViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class BENotificationController #FFE6E6 {
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
     - _notiService : INotificationService
     - _chatService : IChatService
     + GetMyNotifications() : Task<IActionResult>
@@ -81,9 +81,9 @@ class NotificationAdminResponseDto #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification #CCFFE6 {
-    + NotificationId : int <<PK>>
-    + SenderId : int? <<FK>>
-    + ReceiverId : int? <<FK>>
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
     + Title : string?
     + Content : string?
     + LinkAction : string?
@@ -95,7 +95,7 @@ class Notification #CCFFE6 {
 }
 
 class Account #CCFFE6 {
-    + AccountId : int <<PK>>
+    + AccountId : int
     + Email : string
     + Username : string?
     + PasswordHash : string?
@@ -111,10 +111,12 @@ class Account #CCFFE6 {
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
     + User : User?
+    + NotificationReceivers : ICollection<Notification>
+    + NotificationSenders : ICollection<Notification>
 }
 
 class User #CCFFE6 {
-    + UserId : int <<PK>>
+    + UserId : int
     + FullName : string
     + Bio : string?
     + DateOfBirth : DateOnly?
@@ -180,9 +182,9 @@ Account *-- User
 Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-NotificationControllerFE ..> BENotificationController : calls
-BENotificationController --> INotificationService
-BENotificationController --> IChatService
+FrontendController ..> BackendController
+BackendController --> INotificationService
+BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -191,11 +193,11 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-NotificationControllerFE ..> NotificationViewModel : uses
-BENotificationController ..> NotificationDto : uses
-BENotificationController ..> NotificationAdminResponseDto : uses
-NotificationService ..> NotificationDto : uses
-NotificationService ..> NotificationAdminResponseDto : uses
-NotificationRepository ..> Notification : queries
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationDto
+BackendController ..> NotificationAdminResponseDto
+NotificationService ..> NotificationDto
+NotificationService ..> NotificationAdminResponseDto
+NotificationRepository ..> Notification
 
 @enduml

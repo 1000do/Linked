@@ -29,7 +29,7 @@ hide footbox
 mainframe Search Notifications (Staff/Admin)
 
 actor Admin as act
-participant "Notification/Admin.cshtml" as view
+participant "NotificationManagementPage" as view
 
 act++
 act->view++: Enter keyword in search input field

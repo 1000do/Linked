@@ -24,7 +24,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "NotificationController" as NotificationControllerFE #FFE6E6 {
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
     - _client : HttpClient
     + Index() : Task<IActionResult>
     + GetListTiny() : Task<IActionResult>
@@ -48,7 +48,7 @@ class NotificationViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "NotificationController" as NotificationControllerBE #FFE6E6 {
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
     - _notiService : INotificationService
     + Delete(id: int) : Task<IActionResult>
 }
@@ -56,9 +56,9 @@ class "NotificationController" as NotificationControllerBE #FFE6E6 {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification #CCFFE6 {
-    + NotificationId : int <<PK>>
-    + SenderId : int? <<FK>>
-    + ReceiverId : int? <<FK>>
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
     + Title : string?
     + Content : string?
     + LinkAction : string?
@@ -108,7 +108,7 @@ class AppDbContext #E6F3FF {
 ' ==================== RELATIONSHIPS ====================
 
 ' === UNIDIRECTIONAL ASSOCIATION ===
-NotificationControllerBE --> INotificationService
+BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -117,8 +117,8 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY ===
-NotificationControllerFE ..> NotificationControllerBE : calls via HTTP
-NotificationControllerFE ..> NotificationViewModel : uses
-NotificationRepository ..> Notification : queries
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+NotificationRepository ..> Notification
 
 @enduml

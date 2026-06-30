@@ -136,6 +136,8 @@ class Account #CCFFE6 {
     + AccountUpdatedAt : DateTime?
     + User : User?
     + Manager : Manager?
+    + NotificationReceivers : ICollection<Notification>
+    + NotificationSenders : ICollection<Notification>
 }
 
 class User #CCFFE6 {

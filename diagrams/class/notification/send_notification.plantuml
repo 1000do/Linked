@@ -24,31 +24,31 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-' class "NotificationController" as FENotificationController #FFE6E6 {
-'     - _client : HttpClient
-'     + Index() : Task<IActionResult>
-'     + GetListTiny() : Task<IActionResult>
-'     + Admin() : IActionResult
-' }
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
+    - _client : HttpClient
+    + Index() : Task<IActionResult>
+    + GetListTiny() : Task<IActionResult>
+    + Admin() : IActionResult
+}
 
-' class NotificationViewModel #E6CCFF {
-'     + NotificationId : int
-'     + ReceiverId : int
-'     + ReceiverFullName : string?
-'     + ReceiverEmail : string?
-'     + Title : string
-'     + Content : string
-'     + LinkAction : string?
-'     + IsRead : bool
-'     + CreatedAt : DateTime?
-'     + ReceiverRole : string?
-'     + SenderId : int?
-'     + SenderRole : string?
-' }
+class NotificationViewModel #E6CCFF {
+    + NotificationId : int
+    + ReceiverId : int
+    + ReceiverFullName : string?
+    + ReceiverEmail : string?
+    + Title : string
+    + Content : string
+    + LinkAction : string?
+    + IsRead : bool
+    + CreatedAt : DateTime?
+    + ReceiverRole : string?
+    + SenderId : int?
+    + SenderRole : string?
+}
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "NotificationController" as BENotificationController #FFE6E6 {
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
     - _notiService : INotificationService
     - _chatService : IChatService
     + GetMyNotifications() : Task<IActionResult>
@@ -96,9 +96,9 @@ class NotificationBulkDto #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification #CCFFE6 {
-    + NotificationId : int <<PK>>
-    + SenderId : int? <<FK>>
-    + ReceiverId : int? <<FK>>
+    + NotificationId : int
+    + SenderId : int?
+    + ReceiverId : int?
     + Title : string?
     + Content : string?
     + LinkAction : string?
@@ -110,7 +110,7 @@ class Notification #CCFFE6 {
 }
 
 class Account #CCFFE6 {
-    + AccountId : int <<PK>>
+    + AccountId : int
     + Email : string
     + Username : string?
     + PasswordHash : string?
@@ -126,10 +126,13 @@ class Account #CCFFE6 {
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
     + User : User?
+    + Manager : Manager?
+    + NotificationReceivers : ICollection<Notification>
+    + NotificationSenders : ICollection<Notification>
 }
 
 class User #CCFFE6 {
-    + UserId : int <<PK>>
+    + UserId : int
     + FullName : string
     + Bio : string?
     + DateOfBirth : DateOnly?
@@ -225,28 +228,26 @@ Account *-- User
 Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-BENotificationController --> INotificationService
-BENotificationController --> IChatService
+FrontendController ..> BackendController
+BackendController --> INotificationService
+BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationService --> IUserRepository
 NotificationRepository --> AppDbContext
-' Notification -- Account
 
 ' === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-' FENotificationController ..> BENotificationController : calls
-' FENotificationController ..> NotificationViewModel : uses
-BENotificationController ..> NotificationSendDto : uses
-BENotificationController ..> NotificationAdvancedDto : uses
-BENotificationController ..> NotificationAdminResponseDto : uses
-NotificationService ..> NotificationAdvancedDto : uses
-NotificationService ..> NotificationSendDto : uses
-NotificationService ..> NotificationAdminResponseDto : uses
-NotificationService ..> NotificationBulkDto : uses
-' NotificationService ..> Notification : instantiates
-NotificationRepository ..> Notification : queries
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationSendDto
+BackendController ..> NotificationAdvancedDto
+BackendController ..> NotificationAdminResponseDto
+NotificationService ..> NotificationAdvancedDto
+NotificationService ..> NotificationSendDto
+NotificationService ..> NotificationAdminResponseDto
+NotificationService ..> NotificationBulkDto
+NotificationRepository ..> Notification
 
 @enduml

@@ -29,7 +29,7 @@ hide footbox
 mainframe Send Notifications (Staff/Admin)
 
 actor Admin as act
-participant "Notification/Admin.cshtml" as view
+participant "NotificationManagementPage" as view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv
@@ -123,9 +123,9 @@ else [Valid input]
             ctx->db++: Execute INSERT statements
             
             alt [Database Save Fails (throws DbUpdateException)]
-                db-->>ctx--: Throw DbUpdateException
-                ctx-->>repo--: Throw DbUpdateException
-                repo-->>sv--: Throw NotificationException
+                db-->>ctx: Throw DbUpdateException
+                ctx-->>repo: Throw DbUpdateException
+                repo-->>sv: Throw NotificationException
                 sv-->>be_ctrl: throw NotificationException
                 be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
                 fe_ctrl-->>view: Return JSON error response
