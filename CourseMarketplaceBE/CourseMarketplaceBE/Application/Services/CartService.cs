@@ -33,35 +33,18 @@ public class CartService : ICartService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task AddToCartAsync(int userId, int courseId)
     {
-        // Kiểm tra khóa học có tồn tại và đang được published không
-        var course = await _courseRepo.GetByIdAsync(courseId);
-        if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
-            throw new InvalidOperationException("Course does not exist or is not published.");
+        var course = await ValidateAndGetCourseForAdditionAsync(userId, courseId);
 
-        // Kiểm tra không cho phép giảng viên tự mua khóa học của mình
-        if (course.InstructorId == userId)
-            throw new InvalidOperationException("You cannot add your own course to the cart.");
-
-        // Kiểm tra user đã enrolled chưa (không cần mua lại)
-        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
-            throw new InvalidOperationException("You have already purchased this course.");
-
-        // Kiểm tra khóa học đã có trong giỏ chưa
-        if (await _repo.IsCourseInCartAsync(userId, courseId))
-            throw new InvalidOperationException("Course is already in the cart.");
-
-        // Thêm vào giỏ với giá hiện tại của khóa học (snapshot price)
         var cartItem = new CartItem
         {
             UserId    = userId,
             CourseId  = courseId,
-            Price     = course.Price,       // Lưu snapshot giá tại thời điểm add
+            Price     = course.Price,
             AddedDate = DateTime.Now
         };
 
         await _repo.AddCartItemAsync(cartItem);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _repo.SaveChangesAsync();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -74,8 +57,7 @@ public class CartService : ICartService
             throw new InvalidOperationException("Course not found in the cart.");
 
         _repo.RemoveCartItem(item);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _repo.SaveChangesAsync();
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -83,28 +65,12 @@ public class CartService : ICartService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task<CartSummaryResponse> GetCartSummaryAsync(int userId, string? couponCode)
     {
-        // ── 3.1 Lấy cart items kèm navigation ──────────────────────────────
         var cartItems = await _repo.GetCartItemsWithDetailsAsync(userId);
+        var cartItemsList = cartItems.ToList();
 
-        // ── 3.2 Map sang DTO ────────────────────────────────────────────────
-        var items = cartItems.Select(c => new CartItemDto
-        {
-            CourseId       = c.CourseId ?? 0,
-            Title          = c.Course?.Title ?? "(Course not found)",
-            ThumbnailUrl   = c.Course?.CourseThumbnailUrl,
-            InstructorName = c.Course?.Instructor?.InstructorNavigation?.FullName,
-            // Ưu tiên snapshot giá lúc add; nếu null thì lấy giá hiện tại
-            Price          = c.Price ?? c.Course?.Price ?? 0m,
-            OriginalPrice  = c.Price ?? c.Course?.Price ?? 0m,
-            DiscountedPrice = c.Price ?? c.Course?.Price ?? 0m,
-            AppliedCouponCode = null,
-            DiscountAmount = 0m
-        }).ToList();
-
-        // ── 3.3 Tính SubTotal ───────────────────────────────────────────────
+        var items = MapToCartItemDtos(cartItemsList);
         decimal subTotal = items.Sum(i => i.Price);
 
-        // ── 3.4 Response mặc định (không coupon) ────────────────────────────
         var response = new CartSummaryResponse
         {
             Items             = items,
@@ -115,117 +81,153 @@ public class CartService : ICartService
             CouponMessage     = null
         };
 
-        // ── 3.5 Kiểm tra & tính Coupon nếu có ───────────────────────────────
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            var now = DateTime.Now;
-            var codes = couponCode.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(c => c.Trim().ToUpper())
-                .Distinct()
-                .ToList();
+            await ApplyCouponsAsync(response, cartItemsList, items, couponCode);
+        }
 
-            var appliedCoupons = new List<string>();
-            var couponMessages = new List<string>();
+        response.AvailableCoupons = await GetAvailableCouponsAsync(cartItemsList);
 
-            foreach (var code in codes)
+        return response;
+    }
+
+    // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
+
+    private async Task<Course> ValidateAndGetCourseForAdditionAsync(int userId, int courseId)
+    {
+        var course = await _courseRepo.GetByIdAsync(courseId);
+        if (course == null || course.CourseStatus != CourseStatus.Published.ToValue())
+            throw new InvalidOperationException("Course does not exist or is not published.");
+
+        if (course.InstructorId == userId)
+            throw new InvalidOperationException("You cannot add your own course to the cart.");
+
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
+            throw new InvalidOperationException("You have already purchased this course.");
+
+        if (await _repo.IsCourseInCartAsync(userId, courseId))
+            throw new InvalidOperationException("Course is already in the cart.");
+
+        return course;
+    }
+
+    private List<CartItemDto> MapToCartItemDtos(List<CartItem> cartItems)
+    {
+        return cartItems.Select(c => new CartItemDto
+        {
+            CourseId       = c.CourseId ?? 0,
+            Title          = c.Course?.Title ?? "(Course not found)",
+            ThumbnailUrl   = c.Course?.CourseThumbnailUrl,
+            InstructorName = c.Course?.Instructor?.InstructorNavigation?.FullName,
+            Price          = c.Price ?? c.Course?.Price ?? 0m,
+            OriginalPrice  = c.Price ?? c.Course?.Price ?? 0m,
+            DiscountedPrice = c.Price ?? c.Course?.Price ?? 0m,
+            AppliedCouponCode = null,
+            DiscountAmount = 0m
+        }).ToList();
+    }
+
+    private async Task ApplyCouponsAsync(CartSummaryResponse response, List<CartItem> cartItems, List<CartItemDto> items, string couponCode)
+    {
+        var now = DateTime.Now;
+        var codes = couponCode.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(c => c.Trim().ToUpper())
+            .Distinct()
+            .ToList();
+
+        var appliedCoupons = new List<string>();
+        var couponMessages = new List<string>();
+
+        foreach (var code in codes)
+        {
+            var coupon = await _couponRepo.GetByCodeAsync(code);
+            ValidateCoupon(coupon, now);
+
+            decimal eligibleSubTotal = CalculateEligibleSubTotal(cartItems, coupon.CouponId);
+
+            if (eligibleSubTotal >= coupon.MinOrderValue && eligibleSubTotal > 0)
             {
-                var coupon = await _couponRepo.GetByCodeAsync(code);
-                if (coupon == null)
-                {
-                    throw new InvalidOperationException("This coupon does not exist.");
-                }
-
-                if (coupon.IsActive != true ||
-                    (coupon.StartDate.HasValue && now < coupon.StartDate.Value) ||
-                    (coupon.EndDate.HasValue && now > coupon.EndDate.Value) ||
-                    (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value))
-                {
-                    throw new InvalidOperationException("This coupon has expired or run out of usage.");
-                }
-
-                // Logic mới: Chỉ giảm cho khóa học khớp mã
-                decimal eligibleSubTotal = cartItems
-                    .Where(c => c.Course != null && c.Course.CouponId == coupon.CouponId)
-                    .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
-
-                if (eligibleSubTotal >= coupon.MinOrderValue && eligibleSubTotal > 0)
-                {
-                    // ✅ Coupon hợp lệ — tính DiscountAmount theo loại dựa trên eligibleSubTotal
-                    decimal discountAmount = coupon.CouponType == "percentage"
-                        ? eligibleSubTotal * (coupon.DiscountValue / 100m)
-                        : coupon.DiscountValue;
-
-                    // Đảm bảo không vượt quá giá trị khóa học
-                    discountAmount = Math.Round(Math.Min(discountAmount, eligibleSubTotal), 2);
-
-                    response.DiscountAmount += discountAmount;
-                    appliedCoupons.Add(coupon.CouponCode);
-
-                    var msg = coupon.CouponType == "percentage"
-                        ? $"off {coupon.DiscountValue:0.##}%"
-                        : $"off ${coupon.DiscountValue:N2}";
-                    couponMessages.Add($"{coupon.CouponCode} ({msg})");
-
-                    // Cập nhật giá trị giảm giá cho từng item cụ thể!
-                    foreach (var item in items)
-                    {
-                        var matchingCartItem = cartItems.FirstOrDefault(c => c.CourseId == item.CourseId);
-                        if (matchingCartItem != null && matchingCartItem.Course != null && matchingCartItem.Course.CouponId == coupon.CouponId)
-                        {
-                            decimal itemDiscount = coupon.CouponType == "percentage"
-                                ? item.OriginalPrice * (coupon.DiscountValue / 100m)
-                                : coupon.DiscountValue;
-
-                            itemDiscount = Math.Round(Math.Min(itemDiscount, item.OriginalPrice), 2);
-
-                            item.DiscountAmount = itemDiscount;
-                            item.DiscountedPrice = item.OriginalPrice - itemDiscount;
-                            item.AppliedCouponCode = coupon.CouponCode;
-                        }
-                    }
-                }
-            }
-
-            if (appliedCoupons.Any())
-            {
-                response.Total = Math.Round(Math.Round(subTotal - response.DiscountAmount, 2), 2); // Tránh nested math
-                response.AppliedCouponCode = string.Join(",", appliedCoupons);
-                response.CouponMessage = "Applied: " + string.Join(", ", couponMessages);
-            }
-            else
-            {
-                response.CouponMessage = "No valid coupon applied.";
+                ApplyDiscount(response, items, cartItems, coupon, eligibleSubTotal, appliedCoupons, couponMessages);
             }
         }
 
-        // ── 3.6 Query danh sách voucher khả dụng (Voucher Wallet) ─────────────
-        var now2           = DateTime.Now;
-        var activeCoupons  = await _couponRepo.GetActiveAvailableCouponsAsync(now2);
-
-        response.AvailableCoupons = activeCoupons.Select(cp =>
+        if (appliedCoupons.Any())
         {
-            // Tính eligibleSubTotal cho cp này
-            decimal eligibleSubTotal = cartItems
-                .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
-                .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+            response.Total = Math.Round(Math.Round(response.SubTotal - response.DiscountAmount, 2), 2);
+            response.AppliedCouponCode = string.Join(",", appliedCoupons);
+            response.CouponMessage = "Applied: " + string.Join(", ", couponMessages);
+        }
+        else
+        {
+            response.CouponMessage = "No valid coupon applied.";
+        }
+    }
 
+    private void ValidateCoupon(Coupon? coupon, DateTime now)
+    {
+        if (coupon == null)
+            throw new InvalidOperationException("This coupon does not exist.");
+
+        if (coupon.IsActive != true ||
+            (coupon.StartDate.HasValue && now < coupon.StartDate.Value) ||
+            (coupon.EndDate.HasValue && now > coupon.EndDate.Value) ||
+            (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit.Value))
+        {
+            throw new InvalidOperationException("This coupon has expired or run out of usage.");
+        }
+    }
+
+    private decimal CalculateEligibleSubTotal(IEnumerable<CartItem> cartItems, int couponId)
+    {
+        return cartItems
+            .Where(c => c.Course != null && c.Course.CouponId == couponId)
+            .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+    }
+
+    private void ApplyDiscount(CartSummaryResponse response, List<CartItemDto> items, List<CartItem> cartItems, Coupon coupon, decimal eligibleSubTotal, List<string> appliedCoupons, List<string> couponMessages)
+    {
+        decimal discountAmount = coupon.CouponType == "percentage"
+            ? eligibleSubTotal * (coupon.DiscountValue / 100m)
+            : coupon.DiscountValue;
+
+        discountAmount = Math.Round(Math.Min(discountAmount, eligibleSubTotal), 2);
+
+        response.DiscountAmount += discountAmount;
+        appliedCoupons.Add(coupon.CouponCode);
+
+        var msg = coupon.CouponType == "percentage"
+            ? $"off {coupon.DiscountValue:0.##}%"
+            : $"off ${coupon.DiscountValue:N2}";
+        couponMessages.Add($"{coupon.CouponCode} ({msg})");
+
+        foreach (var item in items)
+        {
+            var matchingCartItem = cartItems.FirstOrDefault(c => c.CourseId == item.CourseId);
+            if (matchingCartItem != null && matchingCartItem.Course != null && matchingCartItem.Course.CouponId == coupon.CouponId)
+            {
+                decimal itemDiscount = coupon.CouponType == "percentage"
+                    ? item.OriginalPrice * (coupon.DiscountValue / 100m)
+                    : coupon.DiscountValue;
+
+                itemDiscount = Math.Round(Math.Min(itemDiscount, item.OriginalPrice), 2);
+
+                item.DiscountAmount = itemDiscount;
+                item.DiscountedPrice = item.OriginalPrice - itemDiscount;
+                item.AppliedCouponCode = coupon.CouponCode;
+            }
+        }
+    }
+
+    private async Task<List<AvailableCouponDto>> GetAvailableCouponsAsync(List<CartItem> cartItems)
+    {
+        var now = DateTime.Now;
+        var activeCoupons = await _couponRepo.GetActiveAvailableCouponsAsync(now);
+
+        return activeCoupons.Select(cp =>
+        {
+            decimal eligibleSubTotal = CalculateEligibleSubTotal(cartItems, cp.CouponId);
             bool isEligible = eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0;
-
-            string conditionMessage;
-            if (eligibleSubTotal == 0)
-            {
-                conditionMessage = "Not applicable to any course in the cart";
-            }
-            else if (!isEligible)
-            {
-                conditionMessage = $"Spend another ${(cp.MinOrderValue - eligibleSubTotal):N2} to use this coupon";
-            }
-            else
-            {
-                conditionMessage = cp.CouponType == "percentage"
-                    ? $"Off {cp.DiscountValue:0.##}%"
-                    : $"Off ${cp.DiscountValue:N2}";
-            }
+            string conditionMessage = GenerateCouponConditionMessage(cp, eligibleSubTotal, isEligible);
 
             return new AvailableCouponDto
             {
@@ -239,8 +241,23 @@ public class CartService : ICartService
                 CourseId         = cp.Courses.FirstOrDefault()?.CourseId
             };
         }).ToList();
+    }
 
-        return response;
+    private string GenerateCouponConditionMessage(Coupon cp, decimal eligibleSubTotal, bool isEligible)
+    {
+        if (eligibleSubTotal == 0)
+        {
+            return "Not applicable to any course in the cart";
+        }
+        else if (!isEligible)
+        {
+            return $"Spend another ${(cp.MinOrderValue - eligibleSubTotal):N2} to use this coupon";
+        }
+        else
+        {
+            return cp.CouponType == "percentage"
+                ? $"Off {cp.DiscountValue:0.##}%"
+                : $"Off ${cp.DiscountValue:N2}";
+        }
     }
 }
-
