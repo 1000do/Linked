@@ -27,7 +27,7 @@
 hide footbox
 
 mainframe Login
-actor User as act
+actor "User/Instructor/Staff/Admin" as act
 
 participant "LoginView" as view
 participant "AdminNotificationView" as admin_view
@@ -42,15 +42,15 @@ database Database as db
 
 act++
 act->view++: Enter Username/Email and Password\nand click "Sign In"
-view->fe_ctrl++: Send POST /Account/Login (with form body)
+view->fe_ctrl++: POST /Account/Login
 
-fe_ctrl->be_ctrl++: Send POST /api/auth/login
+fe_ctrl->be_ctrl++: POST /api/auth/login
 
 be_ctrl->sv++: Call LoginAsync(request)
 
 sv->u_repo++: Call GetAccountByEmailOrUsernameAsync(usernameOrEmail)
 u_repo->ctx++: Query Account
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>u_repo--: Return account
 u_repo-->>sv--: Return account
@@ -58,41 +58,36 @@ u_repo-->>sv--: Return account
 sv->sv++: Verify password hash
 sv--
 
-alt [account == null or invalid password]
+alt Invalid credentials
     sv-->>be_ctrl: Return null
     be_ctrl-->>fe_ctrl: Return statusCode 401
-    fe_ctrl-->>view: Return statusCode 200 (View with error)
-    view-->>act: Display "Incorrect username/email or password"
-else [Valid credentials]
+    fe_ctrl-->>view: Return statusCode 200
+    view-->>act: Display error message
+else Valid credentials
     sv->lock_repo++: Call GetActiveLockoutAsync(accountId, "account")
     lock_repo->ctx++: Query active lockout
-    ctx->db++: Execute SELECT query
+    ctx->db++: Execute query
     db-->>ctx--: Return result
     ctx-->>lock_repo--: Return lockout
-    lock_repo-->>sv--: Return lockout
+    lock_repo-->>sv--: Return activeLockout
 
     sv->sv++: Check activeLockout
     sv--
 
-    alt [activeLockout != null]
-        sv-->>be_ctrl: throw UnauthorizedAccessException
-        be_ctrl-->>fe_ctrl: Return statusCode 500
-        fe_ctrl-->>view: Return statusCode 200 (View with error)
-        view-->>act: Display error message
-    else [activeLockout == null]
+    alt Account is active
         sv->u_repo++: Call UpdateLastLoginAsync(accountId)
         u_repo->ctx++: Update LastLoginDate
         ctx-->>u_repo--: Return result
         
         u_repo->ctx++: Call SaveChangesAsync()
-        ctx->db++: Execute UPDATE statement
+        ctx->db++: Save changes to database
         db-->>ctx--: Return result
         ctx-->>u_repo--: Return numberOfRowsAffected
         u_repo-->>sv--: Return result
         
         sv->u_repo++: Call GetRoleByAccountIdAsync(accountId)
         u_repo->ctx++: Query Role
-        ctx->db++: Execute SELECT query
+        ctx->db++: Execute query
         db-->>ctx--: Return result
         ctx-->>u_repo--: Return role
         u_repo-->>sv--: Return role
@@ -105,30 +100,37 @@ else [Valid credentials]
         ctx-->>u_repo--: Return result
         
         u_repo->ctx++: Call SaveChangesAsync()
-        ctx->db++: Execute UPDATE statement
+        ctx->db++: Save changes to database
         db-->>ctx--: Return result
         ctx-->>u_repo--: Return numberOfRowsAffected
         u_repo-->>sv--: Return result
         
-        sv-->>be_ctrl--: Return LoginResponse DTO
+        sv-->>be_ctrl: Return LoginResponse object
         
         be_ctrl->be_ctrl++: Append HttpOnly cookies
         be_ctrl--
         
-        be_ctrl-->>fe_ctrl--: Return statusCode 200
+        be_ctrl-->>fe_ctrl: Return statusCode 200
         
         fe_ctrl->fe_ctrl++: Append HttpOnly cookies and user info cookies
         fe_ctrl--
         
-        alt [role == admin or staff]
-            fe_ctrl -> admin_view++: Redirect to Admin Notification page
+        alt role == admin or staff
+            fe_ctrl -->> admin_view: Redirect to Admin Notification page
+            activate admin_view
             admin_view -->> act: Display Admin Notification page
-        else [role == user or instructor]
-            fe_ctrl -> home_view++: Redirect to Home Index page
-            deactivate fe_ctrl
-            deactivate view
-            home_view -->> act--: Display Homepage
+            deactivate admin_view
+        else role == user or instructor
+            fe_ctrl -->> home_view: Redirect to Home Index page
+            activate home_view
+            home_view -->> act: Display Homepage
+            deactivate home_view
         end
+    else Account is locked out
+        sv-->>be_ctrl--: throw UnauthorizedAccessException
+        be_ctrl-->>fe_ctrl--: Return statusCode 500
+        fe_ctrl-->>view--: Return statusCode 200
+        view-->>act--: Display error message
     end
 end
 @enduml
