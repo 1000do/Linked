@@ -36,23 +36,23 @@ participant ":CouponRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
-act ++
-act -> view++: Select filter option
-view -> be_ctrl++: GET /api/coupon?isActive={isActive}&type={type}
+act++
+act->view++: Select filter option
+view->be_ctrl++: GET /api/coupon?isActive={isActive}&type={type}
 
-be_ctrl -> sv++: GetAll(GetUserId(), isActive, type, search, isAdmin)
+be_ctrl->sv++: GetAll(GetUserId(), isActive, type, search, isAdmin)
 
-sv -> repo++: GetAllAsync(filterId, isActive, type, search)
-repo -> ctx++: Query coupons
-ctx -> db++: Execute query
-db -->> ctx--: Return coupons list
-ctx -->> repo--: Return coupons list
-repo -->> sv--: Return coupons list
+sv->repo++: GetAllAsync(filterId, isActive, type, search)
+repo->ctx++: Query coupons
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return list of Coupons
+repo-->>sv--: Return list of Coupons
 
-sv -> sv++: Map to list of CouponResponse
-sv --
+sv->sv++: Map to list of CouponResponse
+sv--
 
-sv -->> be_ctrl--: Return list of CouponResponse
-be_ctrl -->> view--: Return statusCode 200
-view -->> act--: Display filtered coupons list
+sv-->>be_ctrl--: Return result
+be_ctrl-->>view--: Return statusCode 200
+view-->>act--: Display filtered coupons list
 @enduml

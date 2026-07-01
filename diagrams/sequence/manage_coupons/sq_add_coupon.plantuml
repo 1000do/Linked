@@ -38,29 +38,21 @@ database Database as db
 
 act++
 act->view++: Click "Add Coupon" & enter details
-view->be_ctrl++: Send POST /api/coupon (AJAX)
+view->be_ctrl++: POST /api/coupon
 
 be_ctrl->sv++: Call Create(req, managerId)
 sv->sv++: Call NormalizeType() & ValidateCreate()
 sv--
 
-alt [Invalid Request Data]
-    sv-->>be_ctrl: Throw ArgumentException
-    be_ctrl-->>view: Return statusCode 400 (BadRequest)
-    view-->>act: Display error toast message
-else [Valid Request Data]
+alt Valid Request Data
     sv->repo++: Call GetByCodeAsync(req.CouponCode)
     repo->ctx++: Query Coupon
-    ctx->db++: Execute SELECT query
+    ctx->db++: Execute query
     db-->>ctx--: Return result
     ctx-->>repo--: Return Coupon entity
     repo-->>sv--: Return Coupon entity
     
-    alt [Coupon Code Already Exists]
-        sv-->>be_ctrl: Throw InvalidOperationException
-        be_ctrl-->>view: Return statusCode 400 (BadRequest)
-        view-->>act: Display error toast message
-    else [Coupon Code is Unique]
+    alt Coupon Code is Unique
         sv->sv++: Instantiate new Coupon entity
         sv--
         
@@ -71,14 +63,22 @@ else [Valid Request Data]
         
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Commit tracked changes
-        ctx->db++: Execute INSERT statement
+        ctx->db++: Save changes to database
         db-->>ctx--: Return result
         ctx-->>repo--: Return numberOfRowsAffected
         repo-->>sv--: Return success
         
-        sv-->>be_ctrl--: Return result
-        be_ctrl-->>view--: Return statusCode 200 (Ok)
-        view-->>act--: Render updated Coupon List / Display success message
+        sv-->>be_ctrl: Return result
+        be_ctrl-->>view: Return statusCode 200
+        view-->>act: Render updated Coupon List / Display success message
+    else Coupon Code Already Exists
+        sv-->>be_ctrl: Throw InvalidOperationException
+        be_ctrl-->>view: Return statusCode 400
+        view-->>act: Display error toast message
     end
+else Invalid Request Data
+    sv-->>be_ctrl--: Throw ArgumentException
+    be_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display error toast message
 end
 @enduml
