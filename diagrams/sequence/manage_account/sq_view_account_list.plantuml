@@ -39,34 +39,34 @@ database Database as db
 
 act++
 act->view++: Access Account List / Search & Filter
-view->fe_ctrl++: Send GET /AdminAccount/Index?keyword={kw}&role={role}&page={page}
+view->fe_ctrl++: GET /AdminAccount/Index?keyword={kw}&role={role}&page={page}
 
-fe_ctrl->be_ctrl++: Send GET /api/admin/accounts?keyword={kw}&role={role}&page={page}&pageSize=5
+fe_ctrl->be_ctrl++: GET /api/admin/accounts?keyword={kw}&role={role}&page={page}&pageSize=5
 
 be_ctrl->sv++: Call GetAccountsPagedAsync(keyword, role, page, 5)
 
 sv->u_repo++: Call GetAccountsPagedAsync(keyword, role, page, 5)
 
 u_repo->ctx++: Call CountAsync() on filtered query
-ctx->db++: Execute SELECT COUNT(*) query
-db-->>ctx--: Return count result
+ctx->db++: Execute query
+db-->>ctx--: Return result
 ctx-->>u_repo--: Return totalCount
 
 u_repo->ctx++: Call ToListAsync() with OrderBy, Skip, Take
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return result set
+ctx->db++: Execute query
+db-->>ctx--: Return result
 ctx-->>u_repo--: Return list of Accounts
 
-u_repo-->>sv--: Return (items, totalCount) tuple
+u_repo-->>sv--: Return items and totalCount
 
 sv->sv++: Map Account entities to AdminAccountListDto
 sv--
 
-sv-->>be_ctrl--: Return PagedResult<AdminAccountListDto>
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+sv-->>be_ctrl--: Return PagedResult object
+be_ctrl-->>fe_ctrl--: Return statusCode 200
 
 fe_ctrl->fe_ctrl++: Parse JSON and construct ViewModel
 fe_ctrl--
-fe_ctrl-->>view--: Return View(model)
+fe_ctrl-->>view--: Return statusCode 200
 view-->>act--: Render Account List table with data
 @enduml
