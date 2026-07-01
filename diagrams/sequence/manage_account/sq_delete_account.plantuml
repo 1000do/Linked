@@ -40,9 +40,9 @@ database Database as db
 
 act++
 act->view++: Click "Delete/Ban" button
-view->fe_ctrl++: Send POST /AdminAccount/ToggleBan/{id} (AJAX)
+view->fe_ctrl++: POST /AdminAccount/ToggleBan/{id}
 
-fe_ctrl->be_ctrl++: Send POST /api/admin/accounts/{id}/toggle-ban
+fe_ctrl->be_ctrl++: POST /api/admin/accounts/{id}/toggle-ban
 
 be_ctrl->be_ctrl++: Extract adminId from User claims
 be_ctrl--
@@ -51,30 +51,20 @@ be_ctrl->sv++: Call ToggleBanAsync(id, adminId)
 
 sv->u_repo++: Call GetAccountByIdAsync(id)
 u_repo->ctx++: Query Account with Manager details
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>u_repo--: Return Account entity
 u_repo-->>sv--: Return Account entity
 
-alt [Account not found]
-    sv-->>be_ctrl: Return null
-    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-    fe_ctrl-->>view: Return JSON with success = false
-    view-->>act: Display error toast message
-else [Account is Super Admin]
-    sv-->>be_ctrl: throw InvalidOperationException
-    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view: Return JSON with success = false
-    view-->>act: Display error toast message
-else [Account is valid]
-    alt [Account is currently Banned]
+alt Account is valid
+    alt Account is currently Banned
         sv->sv++: Set AccountStatus = "Active"
         sv--
         sv->lockout_repo++: Call RemoveAccountLockoutsAsync(accountId)
         lockout_repo->ctx++: Remove Lockout entities
         ctx-->>lockout_repo--: Return tracking state
         lockout_repo-->>sv--: Return success
-    else [Account is currently Active]
+    else Account is currently Active
         sv->sv++: Set AccountStatus = "Banned"
         sv--
         sv->lockout_repo++: Call AddAsync(lockout)
@@ -85,14 +75,24 @@ else [Account is valid]
     
     sv->u_repo++: Call SaveChangesAsync()
     u_repo->ctx++: Commit tracked changes
-    ctx->db++: Execute UPDATE/INSERT statements
+    ctx->db++: Save changes to database
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return success
     
-    sv-->>be_ctrl--: Return newStatus
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-    fe_ctrl-->>view--: Return JSON with success = true
-    view-->>act--: Display success toast and update UI status
+    sv-->>be_ctrl: Return newStatus
+    be_ctrl-->>fe_ctrl: Return statusCode 200
+    fe_ctrl-->>view: Return JSON with success = true
+    view-->>act: Display success toast and update UI status
+else Account is Super Admin
+    sv-->>be_ctrl: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl: Return statusCode 400
+    fe_ctrl-->>view: Return JSON with success = false
+    view-->>act: Display error toast message
+else Account not found
+    sv-->>be_ctrl--: Return null
+    be_ctrl-->>fe_ctrl--: Return statusCode 404
+    fe_ctrl-->>view--: Return JSON with success = false
+    view-->>act--: Display error toast message
 end
 @enduml
