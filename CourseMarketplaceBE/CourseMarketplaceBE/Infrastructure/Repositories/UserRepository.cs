@@ -182,8 +182,8 @@ public class UserRepository : IUserRepository
 
         var isInstructor = await _context.Instructors.AnyAsync(i =>
             i.InstructorId == accountId
-            && i.ApprovalStatus == "Approved"
-            && i.StripeOnboardingStatus == "Active");
+            && i.ApprovalStatus == "Approved");
+            //  i.StripeOnboardingStatus == "Active");
         if (isInstructor) return "instructor";
 
         return "user";
