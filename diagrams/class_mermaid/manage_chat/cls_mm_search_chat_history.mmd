@@ -19,6 +19,7 @@ class BackendController["ChatController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class ChatListDto {
+    <<dto>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string
@@ -142,13 +143,13 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Account *-- User
 Account *-- Manager
 Chat *-- ChatParticipant
 Chat *-- Message
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 ChatParticipant --> Account
 Message --> Account
 BackendController --> IChatService
@@ -159,7 +160,7 @@ ChatRepository --> AppDbContext
 ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
 BackendController ..> ChatListDto
 ChatService ..> ChatListDto

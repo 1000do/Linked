@@ -47,7 +47,7 @@ alt [AccessToken cookie is missing]
     fe_ctrl-->>view: Return statusCode 302 (Redirect)
     view->login_view++: Redirect to Login page
     deactivate view
-    login_view-->>act: Display Login page
+    login_view-->>act--: Display Login page
 else [AccessToken cookie exists]
     fe_ctrl-->>view--: Return View
     activate view
@@ -61,7 +61,7 @@ else [AccessToken cookie exists]
     alt [Token is invalid or expired]
         be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
         fe_ctrl-->>view: Return Unauthorized
-        view->login_view: Redirect to Login page
+        view->login_view++: Redirect to Login page
         login_view-->>act--: Display Login page
     else [Token is valid]
         be_ctrl->sv++: Call GetMyChatsAsync(accountId)

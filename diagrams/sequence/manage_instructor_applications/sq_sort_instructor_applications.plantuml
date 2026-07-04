@@ -31,11 +31,11 @@ mainframe Sort Instructor Applications
 actor Staff as act
 participant "AdminApprovalIndexPage" as view
 
-act++
-act->view++: Select sorting option in sort dropdown
-view->view++: EventListener: change event triggered
+act ++
+act -> view++: Select sorting option in sort dropdown
+view -> view++: EventListener: change event triggered
 
-view->view++: applyFilters() (runs client-side sorting on cached applications)
+view -> view++: applyFilters() (runs client-side sorting on cached applications)
 note over view
     Sorts applications by selected criteria:
     - oldest: Instructor ID ascending (FIFO)
@@ -43,13 +43,12 @@ note over view
     - name-asc: Full Name alphabetically ascending (A-Z)
     - name-desc: Full Name alphabetically descending (Z-A)
 end note
-view--
+view --
 
-view->view++: renderTable() (renders sorted results)
-view--
+view -> view++: renderTable() (renders sorted results)
+view --
 
-view-->>act: Display sorted pending instructor applications
-deactivate view
+view -->> act--: Display sorted pending instructor applications
 deactivate view
 
 @enduml

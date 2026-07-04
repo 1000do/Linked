@@ -29,7 +29,7 @@ hide footbox
 mainframe View Notification Detail (Staff/Admin)
 
 actor Admin as act
-participant "Notification/Admin.cshtml" as view
+participant "NotificationManagementPage" as view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":NotificationService" as sv
@@ -72,9 +72,9 @@ alt [User role is staff AND notification belongs to user AND notification is unr
         ctx->db++: Execute UPDATE statement
         
         alt [Database Save Fails (throws DbUpdateException)]
-            db-->>ctx--: Throw DbUpdateException
-            ctx-->>repo--: Throw DbUpdateException
-            repo-->>sv--: Throw NotificationException
+            db-->>ctx: Throw DbUpdateException
+            ctx-->>repo: Throw DbUpdateException
+            repo-->>sv: Throw NotificationException
             sv-->>be_ctrl: Throw BadRequestException
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON error response

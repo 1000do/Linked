@@ -5,18 +5,10 @@ direction LR
 
 class FrontendController["NotificationController"] {
     <<frontend controller>>
-    - _api : ApiClient
+    - _client : HttpClient
     + Index() Task~IActionResult~
     + GetListTiny() Task~IActionResult~
     + Admin() IActionResult
-    + GetAllAdmin() Task~IActionResult~
-    + GetMyNotifications() Task~IActionResult~
-    + MarkAllAsRead() Task~IActionResult~
-    + MarkAsRead(id: int) Task~IActionResult~
-    + Delete(id: int) Task~IActionResult~
-    + SendAdvanced(payload: object) Task~IActionResult~
-    + GetUnreadSummary() Task~IActionResult~
-    + SearchEmails(query: string) Task~IActionResult~
 }
 
 class NotificationViewModel {
@@ -41,9 +33,8 @@ class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     - _chatService : IChatService
-    + GetMyNotifications(page: int, pageSize: int) Task~IActionResult~
-    + GetAllNotifications(page: int, pageSize: int) Task~IActionResult~
-    + MarkAllAsRead() Task~IActionResult~
+    + GetMyNotifications() Task~IActionResult~
+    + GetAllNotifications() Task~IActionResult~
     + MarkAsRead(id: int) Task~IActionResult~
     + Delete(id: int) Task~IActionResult~
     + SearchEmails(query: string) Task~IActionResult~
@@ -67,7 +58,6 @@ class NotificationAdvancedDto {
     + Emails : List~string~?
     + Title : string
     + Content : string
-    + LinkAction : string?
 }
 
 class NotificationAdminResponseDto {
@@ -79,10 +69,13 @@ class NotificationAdminResponseDto {
     + CreatedAt : DateTime?
     + ReceiverEmail : string?
     + ReceiverFullName : string?
-    + ReceiverRole : string?
-    + ReceiverId : int?
-    + SenderId : int?
-    + SenderRole : string?
+}
+
+class NotificationBulkDto {
+    <<dto>>
+    + ReceiverId : int
+    + Title : string
+    + Content : string
     + LinkAction : string?
 }
 
@@ -131,31 +124,20 @@ class User {
     + DateOfBirth : DateOnly?
 }
 
-class Manager {
-    + ManagerId : int
-    + Role : string?
-    + DisplayName : string
-    + FullName : string?
-    + PhoneNumber : string?
-    + AvatarUrl : string?
-    + Bio : string?
-}
-
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
     <<interface>>
-    + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~ *
-    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~ *
-    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task~bool~ *
-    + SendBulkNotificationsAsync(dtos: IEnumerable~NotificationBulkDto~) Task~bool~ *
+    + GetNotificationsForUserAsync(userId: int) Task~List~Notification~~ *
+    + GetAllNotificationsForAdminAsync() Task~List~NotificationAdminResponseDto~~ *
+    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task *
+    + SendBulkNotificationsAsync(dtos: IEnumerable~NotificationBulkDto~) Task *
     + DeleteNotificationAsync(notiId: int, userId: int) Task~bool~ *
-    + GetAllNotificationsAsync(page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~ *
+    + GetAllNotificationsAsync() Task~List~Notification~~ *
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~ *
-    + MarkAllAsReadAsync(userId: int) Task~bool~ *
-    + SearchEmailsAsync(query: string, senderId: int, senderRole: string) Task~List~string~~ *
+    + SearchEmailsAsync(query: string) Task~List~string~~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
-    + SendAdvancedAsync(dto: NotificationAdvancedDto, senderId: int, senderRole: string) Task~int~ *
+    + SendAdvancedAsync(dto: NotificationAdvancedDto) Task~int~ *
 }
 
 class IChatService {
@@ -163,33 +145,25 @@ class IChatService {
     + GetTotalUnreadCountAsync(accountId: int) Task~int~ *
 }
 
-%% ==================== BACKEND - REPOSITORY INTERFACES ====================
-
 class INotificationRepository {
     <<interface>>
-    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
+    + GetByReceiverIdAsync(userId: int) Task~List~Notification~~ *
     + GetByIdAsync(id: int) Task~Notification?~ *
     + AddAsync(notification: Notification) Task *
     + AddRangeAsync(notifications: IEnumerable~Notification~) Task *
     + Delete(notification: Notification) void *
-    + Update(notification: Notification) void *
-    + UpdateRange(notifications: IEnumerable~Notification~) void *
     + SaveChangesAsync() Task~int~ *
-    + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
-    + GetUnreadByReceiverIdAsync(userId: int) Task~List~Notification~~ *
+    + GetAllAsync() Task~List~Notification~~ *
+    + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
-    + AutoCleanupAdminNotificationsAsync() Task~int~ *
-    + GetSentNotificationsCountAsync(senderId: int) Task~int~ *
+    + AutoCleanupAdminNotificationsAsync() Task *
 }
 
 class IUserRepository {
     <<interface>>
-    + GetAccountByEmailAsync(email: string) Task~Account?~ *
-    + GetRoleByAccountIdAsync(accountId: int) Task~string~ *
     + GetAllUserIdsAsync() Task~List~int~~ *
-    + GetUserIdsForStaffSenderAsync() Task~List~int~~ *
-    + GetUserIdsForAdminSenderAsync() Task~List~int~~ *
-    + SearchEmailsByQueryAsync(query: string, senderId: int, senderRole: string, take: int) Task~List~string~~ *
+    + GetUserIdByEmailAsync(email: string) Task~int?~ *
+    + SearchEmailsByQueryAsync(query: string, take: int) Task~List~string~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
@@ -198,55 +172,40 @@ class NotificationService {
     - _repo : INotificationRepository
     - _userRepo : IUserRepository
     - _hubContext : IHubContext~NotificationHub~
-    + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~
-    + GetAllNotificationsAsync(page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~
-    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task~bool~
+    + GetNotificationsForUserAsync(userId: int) Task~List~Notification~~
+    + GetAllNotificationsAsync() Task~List~Notification~~
+    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task
     + DeleteNotificationAsync(notiId: int, userId: int) Task~bool~
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~
-    + MarkAllAsReadAsync(userId: int) Task~bool~
-    + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~
-    + SearchEmailsAsync(query: string, senderId: int, senderRole: string) Task~List~string~~
+    + GetAllNotificationsForAdminAsync() Task~List~NotificationAdminResponseDto~~
+    + SearchEmailsAsync(query: string) Task~List~string~~
     + GetUnreadCountAsync(userId: int) Task~int~
-    + SendAdvancedAsync(dto: NotificationAdvancedDto, senderId: int, senderRole: string) Task~int~
-    + SendBulkNotificationsAsync(dtos: IEnumerable~NotificationBulkDto~) Task~bool~
+    + SendAdvancedAsync(dto: NotificationAdvancedDto) Task~int~
+    + SendBulkNotificationsAsync(dtos: IEnumerable~NotificationBulkDto~) Task
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
     - _context : AppDbContext
-    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
-    + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
+    + GetByReceiverIdAsync(userId: int) Task~List~Notification~~
+    + GetAllAsync() Task~List~Notification~~
     + GetByIdAsync(id: int) Task~Notification?~
     + Delete(notification: Notification) void
     + AddAsync(notification: Notification) Task
     + AddRangeAsync(notifications: IEnumerable~Notification~) Task
-    + Update(notification: Notification) void
-    + UpdateRange(notifications: IEnumerable~Notification~) void
     + SaveChangesAsync() Task~int~
-    + GetUnreadByReceiverIdAsync(userId: int) Task~List~Notification~~
+    + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~
     + GetUnreadCountAsync(userId: int) Task~int~
-    + AutoCleanupAdminNotificationsAsync() Task~int~
-    + GetSentNotificationsCountAsync(senderId: int) Task~int~
-}
-
-class UserRepository {
-    - _context : AppDbContext
-    + GetAccountByEmailAsync(email: string) Task~Account?~
-    + GetRoleByAccountIdAsync(accountId: int) Task~string~
-    + GetAllUserIdsAsync() Task~List~int~~
-    + GetUserIdsForStaffSenderAsync() Task~List~int~~
-    + GetUserIdsForAdminSenderAsync() Task~List~int~~
-    + SearchEmailsByQueryAsync(query: string, senderId: int, senderRole: string, take: int) Task~List~string~~
+    + AutoCleanupAdminNotificationsAsync() Task
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
     + Accounts : DbSet~Account~
-    + Users : DbSet~User~
-    + Managers : DbSet~Manager~
     + Notifications : DbSet~Notification~
+    + Users : DbSet~User~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
@@ -256,33 +215,30 @@ class AppDbContext {
 
 %% === COMPOSITION (filled diamond) ===
 Account *-- User
-Account *-- Manager
 Account *-- Notification
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+FrontendController ..> BackendController
 BackendController --> INotificationService
 BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationService --> IUserRepository
 NotificationRepository --> AppDbContext
-UserRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
-UserRepository ..|> IUserRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-FrontendController ..> BackendController
 FrontendController ..> NotificationViewModel
 BackendController ..> NotificationSendDto
 BackendController ..> NotificationAdvancedDto
 BackendController ..> NotificationAdminResponseDto
 NotificationService ..> NotificationAdvancedDto
+NotificationService ..> NotificationSendDto
 NotificationService ..> NotificationAdminResponseDto
-NotificationService ..> Notification
+NotificationService ..> NotificationBulkDto
 NotificationRepository ..> Notification
-UserRepository ..> Account
 
 %% ==================== STYLES ====================
 

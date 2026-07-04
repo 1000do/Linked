@@ -12,6 +12,7 @@ class ChatControllerBE["ChatController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class MessageDto {
+    <<dto>>
     + MessageId : int
     + ChatId : int
     + SenderId : int?
@@ -25,6 +26,7 @@ class MessageDto {
 }
 
 class AttachmentDto {
+    <<dto>>
     + AttachmentId : int
     + FileUrl : string
     + FileName : string?
@@ -93,13 +95,13 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
-MessageDto *-- AttachmentDto
-
 %% === UNIDIRECTIONAL ASSOCIATION ===
 ChatControllerBE --> IChatService
 ChatService --> IChatRepository
 ChatRepository --> AppDbContext
+
+%% === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
+MessageDto *-- AttachmentDto
 
 %% === INTERFACE REALIZATION ===
 ChatService ..|> IChatService
@@ -108,6 +110,8 @@ ChatRepository ..|> IChatRepository
 %% === DEPENDENCY ===
 ChatControllerBE ..> MessageDto
 ChatService ..> MessageDto
+ChatService ..> Message
+ChatService ..> ChatParticipant
 ChatRepository ..> Message
 ChatRepository ..> ChatParticipant
 

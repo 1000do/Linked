@@ -129,7 +129,9 @@ class AppDbContext #E6F3FF {
     + Instructors : DbSet<Instructor>
     + Users : DbSet<User>
     + Accounts : DbSet<Account>
-    + SaveChangesAsync(cancellationToken: CancellationToken) : Task<int>
+    ---
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) : void
+    # OnModelCreating(modelBuilder: ModelBuilder) : void
 }
 
 ' ==================== RELATIONSHIPS ====================

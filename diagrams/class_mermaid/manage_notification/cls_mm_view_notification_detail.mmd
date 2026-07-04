@@ -3,12 +3,13 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class NotificationControllerFE["NotificationController"] {
+class FrontendController["NotificationController"] {
     <<frontend controller>>
     + MarkAsRead(id: int) Task~IActionResult~
 }
 
 class NotificationViewModel {
+    <<view model>>
     + NotificationId : int
     + ReceiverId : int
     + ReceiverFullName : string?
@@ -25,7 +26,7 @@ class NotificationViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class NotificationControllerBE["NotificationController"] {
+class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     + MarkAsRead(id: int) Task~IActionResult~
@@ -34,6 +35,7 @@ class NotificationControllerBE["NotificationController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class NotificationAdminResponseDto {
+    <<dto>>
     + NotificationId : int
     + Title : string?
     + Content : string?
@@ -60,6 +62,8 @@ class Notification {
     + IsRead : bool?
     + IsRemoved : bool?
     + CreatedAt : DateTime?
+    + Receiver : Account?
+    + Sender : Account?
 }
 
 class Account {
@@ -78,6 +82,10 @@ class Account {
     + IsVerified : bool
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
+    + User : User?
+    + Manager : Manager?
+    + NotificationReceivers : ICollection~Notification~
+    + NotificationSenders : ICollection~Notification~
 }
 
 class User {
@@ -140,13 +148,13 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Account *-- User
 Account *-- Manager
 Account *-- Notification
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-NotificationControllerBE --> INotificationService
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -154,10 +162,10 @@ NotificationRepository --> AppDbContext
 NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
-%% === DEPENDENCY ===
-NotificationControllerFE ..> NotificationControllerBE
-NotificationControllerFE ..> NotificationViewModel
-NotificationControllerBE ..> NotificationAdminResponseDto
+%% === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationAdminResponseDto
 NotificationRepository ..> Notification
 
 %% ==================== STYLES ====================

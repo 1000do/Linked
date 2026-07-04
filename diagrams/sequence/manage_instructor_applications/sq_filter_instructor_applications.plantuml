@@ -31,23 +31,22 @@ mainframe Filter Instructor Applications
 actor Staff as act
 participant "AdminApprovalIndexPage" as view
 
-act++
-act->view++: Select specialization in filter expertise dropdown
-view->view++: EventListener: change event triggered
+act ++
+act -> view++: Select specialization in filter expertise dropdown
+view -> view++: EventListener: change event triggered
 
-view->view++: applyFilters() (runs client-side filtering on cached applications)
+view -> view++: applyFilters() (runs client-side filtering on cached applications)
 note over view
     Filters applications where:
     - all: Shows all specialization requests
     - specific category: Matches selected expertise category in ExpertiseCategories string
 end note
-view--
+view --
 
-view->view++: renderTable() (renders filtered results)
-view--
+view -> view++: renderTable() (renders filtered results)
+view --
 
-view-->>act: Display filtered pending instructor applications
-deactivate view
+view -->> act--: Display filtered pending instructor applications
 deactivate view
 
 @enduml
