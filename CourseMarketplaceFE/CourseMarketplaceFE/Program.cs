@@ -49,7 +49,7 @@ namespace CourseMarketplaceFE
                 .AddCookie(options =>
                 {
                     options.LoginPath = "/Account/Login";
-                    options.AccessDeniedPath = "/Account/Login";
+                    options.AccessDeniedPath = "/Home/Error/403";
                     options.Cookie.Name = "LinkedLearn.Auth";
                 });
 
