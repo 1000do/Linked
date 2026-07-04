@@ -99,16 +99,23 @@ class TextClassifierService(BaseService):
         chunk_results = []
 
         for i in range(0, length, stride):
-            chunk = tokens[i : i + window_size]
-            encoded_chunk = tokenizer(
-                tokenizer.convert_ids_to_tokens(chunk),
-                is_split_into_words=True,
-                truncation=True,
-                padding='max_length',
-                max_length=window_size,
-                add_special_tokens=True,
-                return_tensors="pt"
-            ).to(self.device)
+            # Leave 2 spaces for [CLS] and [SEP]
+            chunk = tokens[i : i + window_size - 2]
+            
+            # Construct sequence with special tokens
+            input_ids = [tokenizer.cls_token_id] + chunk + [tokenizer.sep_token_id]
+            attention_mask = [1] * len(input_ids)
+            
+            # Pad to window_size
+            pad_len = window_size - len(input_ids)
+            if pad_len > 0:
+                input_ids.extend([tokenizer.pad_token_id] * pad_len)
+                attention_mask.extend([0] * pad_len)
+            
+            encoded_chunk = {
+                "input_ids": torch.tensor([input_ids], device=self.device),
+                "attention_mask": torch.tensor([attention_mask], device=self.device)
+            }
             
             with torch.no_grad():
                 spam_outputs = spam_model(**encoded_chunk)
@@ -346,4 +353,117 @@ class TextClassifierService(BaseService):
 
         except Exception as e:
             logger.error(f"Text classification robust pipeline failed: {e}")
+            raise ModelInferenceException("text_classifier", str(e))
+
+    def classify_text_list(self, texts: List[str], spam_threshold: float = 0.85, toxic_threshold: float = 0.85, window_size: int = 128) -> Tuple[str, float, Dict[str, Any]]:
+        """
+        Classify a list of extracted texts for toxicity and spam using batched inference.
+        """
+        if not texts:
+            return "APPROVED", 1.0, {"action": "APPROVED", "score": 1.0, "raw_label": "SAFE"}
+
+        start_time = time.time()
+        try:
+            spam_model = self._spam_model
+            toxic_model = self._toxic_model
+            spam_model.eval()
+            toxic_model.eval()
+            tokenizer = self._spam_tokenizer
+            
+            # 1. Tokenize and apply sliding window to all texts
+            all_chunks = []
+            stride = 64
+            
+            for text in texts:
+                if not text.strip():
+                    continue
+                    
+                tokens = tokenizer.encode(text, add_special_tokens=False)
+                length = len(tokens)
+                
+                # If text is short, add it as a single chunk
+                if length <= window_size - 2:
+                    all_chunks.append(tokens)
+                else:
+                    # If text is long, use sliding window to retain context without losing data
+                    for i in range(0, length, stride):
+                        chunk = tokens[i : i + window_size - 2]
+                        all_chunks.append(chunk)
+                        if i + window_size - 2 >= length:
+                            break
+                            
+            if not all_chunks:
+                return "APPROVED", 1.0, {"action": "APPROVED", "score": 1.0, "raw_label": "SAFE"}
+
+            # 2. Process in batches to maximize CPU/GPU efficiency
+            batch_size = 16
+            chunk_results = []
+            
+            for i in range(0, len(all_chunks), batch_size):
+                batch_chunks = all_chunks[i : i + batch_size]
+                
+                input_ids_batch = []
+                attention_mask_batch = []
+                
+                for chunk in batch_chunks:
+                    input_ids = [tokenizer.cls_token_id] + chunk + [tokenizer.sep_token_id]
+                    pad_len = window_size - len(input_ids)
+                    
+                    attention_mask = [1] * len(input_ids) + [0] * pad_len
+                    if pad_len > 0:
+                        input_ids.extend([tokenizer.pad_token_id] * pad_len)
+                        
+                    input_ids_batch.append(input_ids)
+                    attention_mask_batch.append(attention_mask)
+                
+                encoded_batch = {
+                    "input_ids": torch.tensor(input_ids_batch, device=self.device),
+                    "attention_mask": torch.tensor(attention_mask_batch, device=self.device)
+                }
+                
+                with torch.no_grad():
+                    spam_outputs = spam_model(**encoded_batch)
+                    toxic_outputs = toxic_model(**encoded_batch)
+                    
+                    spam_probs = F.softmax(spam_outputs.logits, dim=-1)
+                    toxic_probs = F.softmax(toxic_outputs.logits, dim=-1)
+                
+                spam_confs, spam_preds = torch.max(spam_probs, dim=1)
+                toxic_confs, toxic_preds = torch.max(toxic_probs, dim=1)
+                
+                # Unpack the batch results
+                for j in range(len(batch_chunks)):
+                    chunk_results.append({
+                        "text": tokenizer.decode(batch_chunks[j]),
+                        "spam_score": spam_confs[j].item(),
+                        "spam_label": spam_model.config.id2label[spam_preds[j].item()],
+                        "toxic_score": toxic_confs[j].item(),
+                        "toxic_label": toxic_model.config.id2label[toxic_preds[j].item()],
+                    })
+
+            # 3. Aggregate all results using the standard logic
+            logger.info(f"Aggregating harmful detection result with spam threshold {spam_threshold} and toxic threshold {toxic_threshold}")
+            agg = self.aggregation_logic(chunk_results, spam_threshold=spam_threshold, toxic_threshold=toxic_threshold)
+            self.logger.info(f"Aggregated results:\n{json.dumps(agg, indent=4,ensure_ascii=False)}")
+            elapsed_ms = (time.time() - start_time) * 1000
+            
+            action = agg.get("action", "APPROVED")
+            score = agg.get("score", 1.0)
+            
+            # Combine up to a reasonable length for display
+            display_text = " | ".join(texts)
+            if len(display_text) > 60:
+                display_text = display_text[:60] + "..."
+                
+            details = {
+                "text": agg.get("text", display_text),
+                "score": score,
+                "raw_label": agg.get("raw_label", "SAFE"),
+                "latency_ms": elapsed_ms,
+                "reason": agg.get("reason", "Inference complete")
+            }
+            return action, score, details
+
+        except Exception as e:
+            logger.error(f"Text list classification robust pipeline failed: {e}")
             raise ModelInferenceException("text_classifier", str(e))

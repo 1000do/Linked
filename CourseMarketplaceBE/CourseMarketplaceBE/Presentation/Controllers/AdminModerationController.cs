@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize(Roles = "admin,staff")]
     [ApiController]
     [Route("api/admin/moderation")]
+    [Authorize(Roles = "admin,staff")]
     public class AdminModerationController : ControllerBase
     {
         private readonly ICourseModerationService _courseModerationService;

@@ -49,7 +49,8 @@ fe_ctrl -> fe_ctrl++: Validate Admin authorization
 fe_ctrl--
 
 alt Unauthorized Access
-    fe_ctrl -> login_view++: Redirect to Login page
+    fe_ctrl -->> login_view: Redirect to Login page
+    activate login_view
     login_view -->> act--: Display Login page
 else Authorized Access
     fe_ctrl -> be_ctrl++: Send GET request to /api/admin/ai-service/logs/course
