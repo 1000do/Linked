@@ -245,23 +245,23 @@ class HarmfulService(BaseService):
     async def _process_media_content_batch(
         self, alias: str, file_bytes: bytes, file_type: str, spam_threshold: float, toxic_threshold: float
     ) -> Tuple[bool, float, Dict[str, Any]]:
-        chunk_text, extraction_conf, extraction_log = await self.text_extractor.extract_generic_legacy(
+        chunk_texts, extraction_conf, extraction_log = await self.text_extractor.extract_generic_legacy(
             content=file_bytes,
             material_type=file_type
         )
         
-        if not chunk_text or not chunk_text.strip():
+        if not chunk_texts:
             return False, 1.0, {"status": "SKIPPED", "reason": "No text extracted"}
             
-        result_action, conf, details = self.text_classifier.classify_text(
-            chunk_text,
+        result_action, conf, details = self.text_classifier.classify_text_list(
+            chunk_texts,
             spam_threshold=spam_threshold,
             toxic_threshold=toxic_threshold
         )
         
         final_details = {
             "source": extraction_log.get("source", "unknown"),
-            "text_length": len(chunk_text),
+            "text_length": sum(len(t) for t in chunk_texts),
             "classification": details
         }
         

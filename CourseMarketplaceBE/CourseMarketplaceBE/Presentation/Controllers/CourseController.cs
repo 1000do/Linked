@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -203,6 +204,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPost("moderate")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> ModerateCourse([FromBody] CourseModerationRequest request)
     {
         try

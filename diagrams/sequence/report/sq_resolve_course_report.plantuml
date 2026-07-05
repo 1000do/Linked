@@ -50,10 +50,12 @@ fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid (Not Logged In)
-    fe_ctrl -> login_view++: Redirect to login page
+    fe_ctrl -->> login_view: Redirect to login page
+    activate login_view
     login_view -->> act--: Display authentication error message
 else Unauthorized Access
-    fe_ctrl -> home_view++: Redirect to home or access denied page
+    fe_ctrl -->> home_view: Redirect to home or access denied page
+    activate home_view
     home_view -->> act--: Display access denied message
 else Authorized Access
     fe_ctrl -> be_ctrl++: PATCH /api/admin/moderation/reports/courses/{reportId}
