@@ -44,6 +44,7 @@ public class ChatController : Controller
     public IActionResult Learner()
     {
         ViewBag.Actor = "Learner";
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 
@@ -56,6 +57,7 @@ public class ChatController : Controller
             return RedirectToAction("ApplicationStatus", "Instructor");
 
         ViewBag.Actor = "Instructor";
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 
@@ -63,6 +65,7 @@ public class ChatController : Controller
     public IActionResult Admin()
     {
         ViewBag.Actor = "Admin";
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 
