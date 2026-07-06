@@ -248,6 +248,30 @@ public class ChatController : ControllerBase
         }
     }
 
+    [HttpDelete("message/{messageId}")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
+    public async Task<IActionResult> DeleteMessage(int messageId)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        try
+        {
+            var chatId = await _chatService.DeleteMessageAsync(messageId, accountId);
+            
+            // Broadcast to the user's other tabs
+            await _hubContext.Clients.Group($"User_{accountId}").SendAsync("MessageDeleted", new { MessageId = messageId, ChatId = chatId });
+            
+            return Ok();
+        }
+        catch (System.Collections.Generic.KeyNotFoundException) 
+        { 
+            return NotFound(); 
+        }
+        catch (System.UnauthorizedAccessException ex) 
+        { 
+            return StatusCode(403, new { message = ex.Message }); 
+        }
+    }
+
     [HttpGet("pending-requests")]
     [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetPendingRequests()

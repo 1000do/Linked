@@ -162,6 +162,15 @@ public class ChatController : Controller
 
     [HttpDelete]
     [Authorize(Roles = "user,instructor,admin,staff")]
+    public async Task<IActionResult> DeleteMessage(int messageId)
+    {
+        var response = await _api.DeleteAsync($"chat/message/{messageId}");
+        if (response.IsSuccessStatusCode) return Ok();
+        return BadRequest();
+    }
+
+    [HttpDelete]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> ClearHistory(int chatId)
     {
         var response = await _api.DeleteAsync($"chat/{chatId}/clear");
