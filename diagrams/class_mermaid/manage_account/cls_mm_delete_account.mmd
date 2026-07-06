@@ -1,0 +1,129 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAccountControllerFE["AdminAccountController"] {
+    <<frontend controller>>
+    + ToggleBan(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAccountControllerBE["AdminAccountController"] {
+    <<backend controller>>
+    - _adminAccountService : IAdminAccountService
+    
+    + ToggleBan(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string
+    + PasswordHash : string?
+    + AccountStatus : string
+    + IsVerified : bool
+    + Manager : Manager?
+}
+
+class Manager {
+    + ManagerId : int
+    + AccountId : int
+    + DisplayName : string
+    + PhoneNumber : string?
+}
+
+class Lockout {
+    + LockoutId : int
+    + AccountId : int
+    + Reason : string
+    + LockoutEnd : DateTime
+    + Account : Account?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminAccountService {
+    <<interface>>
+    + ToggleBanAsync(id: int, adminId: int) Task~string~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + GetAccountByIdAsync(id: int) Task~Account?~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ILockoutRepository {
+    <<interface>>
+    + RemoveAccountLockoutsAsync(accountId: int) Task~void~ *
+    + AddAsync(lockout: Lockout) Task~void~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminAccountService {
+    - _userRepository : IUserRepository
+    - _lockoutRepository : ILockoutRepository
+    
+    + ToggleBanAsync(id: int, adminId: int) Task~string~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + GetAccountByIdAsync(id: int) Task~Account?~
+    + SaveChangesAsync() Task~int~
+}
+
+class LockoutRepository {
+    - _context : AppDbContext
+    
+    + RemoveAccountLockoutsAsync(accountId: int) Task~void~
+    + AddAsync(lockout: Lockout) Task~void~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    + Managers : DbSet~Manager~
+    + Lockouts : DbSet~Lockout~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === BIDIRECTIONAL ASSOCIATION (solid line) ===
+Account "1" -- "0..1" Manager
+Account "1" -- "*" Lockout
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAccountControllerBE --> IAdminAccountService
+AdminAccountService --> IUserRepository
+AdminAccountService --> ILockoutRepository
+UserRepository --> AppDbContext
+LockoutRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AdminAccountService ..|> IAdminAccountService
+UserRepository ..|> IUserRepository
+LockoutRepository ..|> ILockoutRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAccountControllerFE ..> AdminAccountControllerBE
+AdminAccountService ..> Lockout
+UserRepository ..> Account
+UserRepository ..> Manager
+LockoutRepository ..> Lockout
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

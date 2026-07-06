@@ -1,0 +1,141 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAccountControllerFE["AdminAccountController"] {
+    <<frontend controller>>
+    + FlagAccount(id: int, model: FlagAccountViewModel) Task~IActionResult~
+}
+
+class FlagAccountViewModel {
+    + Reason : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAccountControllerBE["AdminAccountController"] {
+    <<backend controller>>
+    - _adminAccountService : IAdminAccountService
+    
+    + FlagAccount(id: int, request: FlagAccountRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class FlagAccountRequest {
+    + Reason : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string
+    + PasswordHash : string?
+    + AccountStatus : string
+    + IsVerified : bool
+    + FlagCount : int
+}
+
+class Lockout {
+    + LockoutId : int
+    + AccountId : int
+    + Reason : string
+    + LockoutEnd : DateTime
+    + Account : Account?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminAccountService {
+    <<interface>>
+    + FlagAccountAsync(id: int, reason: string) Task~bool~ *
+}
+
+class INotificationService {
+    <<interface>>
+    + SendNotificationAsync(accountId: int, title: string, content: string) Task~void~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + GetAccountByIdAsync(id: int) Task~Account?~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ILockoutRepository {
+    <<interface>>
+    + AddAsync(lockout: Lockout) Task~void~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminAccountService {
+    - _userRepository : IUserRepository
+    - _lockoutRepository : ILockoutRepository
+    - _notificationService : INotificationService
+    
+    + FlagAccountAsync(id: int, reason: string) Task~bool~
+}
+
+class NotificationService {
+    + SendNotificationAsync(accountId: int, title: string, content: string) Task~void~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + GetAccountByIdAsync(id: int) Task~Account?~
+    + SaveChangesAsync() Task~int~
+}
+
+class LockoutRepository {
+    - _context : AppDbContext
+    
+    + AddAsync(lockout: Lockout) Task~void~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    + Lockouts : DbSet~Lockout~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === BIDIRECTIONAL ASSOCIATION (solid line) ===
+Account "1" -- "*" Lockout
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAccountControllerBE --> IAdminAccountService
+AdminAccountService --> IUserRepository
+AdminAccountService --> ILockoutRepository
+AdminAccountService --> INotificationService
+UserRepository --> AppDbContext
+LockoutRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AdminAccountService ..|> IAdminAccountService
+NotificationService ..|> INotificationService
+UserRepository ..|> IUserRepository
+LockoutRepository ..|> ILockoutRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAccountControllerFE ..> AdminAccountControllerBE
+AdminAccountControllerFE ..> FlagAccountViewModel
+AdminAccountControllerBE ..> FlagAccountRequest
+AdminAccountService ..> Lockout
+UserRepository ..> Account
+LockoutRepository ..> Lockout
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
