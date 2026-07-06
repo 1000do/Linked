@@ -1,0 +1,101 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AccountControllerFE["AccountController"] {
+    <<frontend controller>>
+    + Profile() Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ProfileControllerBE["ProfileController"] {
+    <<backend controller>>
+    - _userProfileService : IUserProfileService
+    
+    + GetProfile() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class UserProfileResponse {
+    + FullName : string?
+    + Username : string
+    + Email : string
+    + PhoneNumber : string?
+    + Bio : string?
+    + DateOfBirth : DateTime?
+    + IsVerified : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class User {
+    + UserId : int
+    + FullName : string?
+    + Username : string
+    + Email : string
+    + PhoneNumber : string?
+    + Bio : string?
+    + DateOfBirth : DateTime?
+    + IsVerified : bool
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IUserProfileService {
+    <<interface>>
+    + GetUserProfileAsync(userId: int) Task~UserProfileResponse?~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + GetUserByIdAsync(userId: int) Task~User?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class UserProfileService {
+    - _userRepository : IUserRepository
+    
+    + GetUserProfileAsync(userId: int) Task~UserProfileResponse?~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + GetUserByIdAsync(userId: int) Task~User?~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Users : DbSet~User~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ProfileControllerBE --> IUserProfileService
+UserProfileService --> IUserRepository
+UserRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+UserProfileService ..|> IUserProfileService
+UserRepository ..|> IUserRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AccountControllerFE ..> UserProfileResponse
+ProfileControllerBE ..> UserProfileResponse
+UserProfileService ..> UserProfileResponse
+UserRepository ..> User
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

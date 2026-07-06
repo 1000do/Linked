@@ -1,0 +1,114 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class WishlistControllerFE["WishlistController"] {
+    <<frontend controller>>
+    + ToggleAjax(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class WishlistControllerBE["WishlistController"] {
+    <<backend controller>>
+    - _wishlistService : IWishlistService
+    
+    + CheckWishlist(courseId: int) Task~IActionResult~
+    + AddToWishlist(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class WishlistItem {
+    + WishlistItemId : int
+    + UserId : int
+    + CourseId : int
+    + CreatedAt : DateTime
+}
+
+class Course {
+    + CourseId : int
+    + Title : string
+    + Status : string
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IWishlistService {
+    <<interface>>
+    + IsInWishlistAsync(userId: int, courseId: int) Task~bool~ *
+    + AddToWishlistAsync(userId: int, courseId: int) Task~bool~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(courseId: int) Task~Course?~ *
+}
+
+class IWishlistRepository {
+    <<interface>>
+    + ExistsAsync(userId: int, courseId: int) Task~bool~ *
+    + AddAsync(newItem: WishlistItem) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class WishlistService {
+    - _wishlistRepository : IWishlistRepository
+    - _courseRepository : ICourseRepository
+    
+    + IsInWishlistAsync(userId: int, courseId: int) Task~bool~
+    + AddToWishlistAsync(userId: int, courseId: int) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(courseId: int) Task~Course?~
+}
+
+class WishlistRepository {
+    - _context : AppDbContext
+    
+    + ExistsAsync(userId: int, courseId: int) Task~bool~
+    + AddAsync(newItem: WishlistItem) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + WishlistItems : DbSet~WishlistItem~
+    + Courses : DbSet~Course~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+WishlistControllerBE --> IWishlistService
+WishlistService --> IWishlistRepository
+WishlistService --> ICourseRepository
+CourseRepository --> AppDbContext
+WishlistRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+WishlistService ..|> IWishlistService
+CourseRepository ..|> ICourseRepository
+WishlistRepository ..|> IWishlistRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+WishlistService ..> WishlistItem
+WishlistService ..> Course
+CourseRepository ..> Course
+WishlistRepository ..> WishlistItem
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
