@@ -47,7 +47,33 @@ act->view: Select files (Optional)
 act->view: Click "Send" button (or press Enter)
 
 opt With Attachments
-    ref over view, upload_sv: Upload Attachments & Get Metadata
+    loop for each selected file f
+        view->fe_ctrl++: Send POST /Chat/UploadAttachment with file
+        fe_ctrl->be_att_ctrl++: Send POST /api/ChatAttachment/upload (with Bearer Token)
+        
+        be_att_ctrl->be_att_ctrl++: Check ChatSettings:EnableAttachments
+        be_att_ctrl--
+        
+        alt EnableAttachments = false
+            be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return BadRequest
+            view-->>act: Display feature disabled warning
+        else EnableAttachments = true
+            alt file size > 10MB
+                be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view: Return BadRequest
+                view-->>act: Display file size validation error
+            else file size <= 10MB
+                be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+                upload_sv->upload_sv++: Upload to Cloudinary
+                upload_sv--
+                upload_sv-->>be_att_ctrl--: Return SecureUrl
+                
+                be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
+                fe_ctrl-->>view--: Return JSON with attachment metadata
+            end
+        end
+    end
 end
 
 view->view++: sendMsg()
@@ -59,10 +85,19 @@ hub--
 
 hub->sv++: Call SaveMessageAsync(senderId, dto)
 sv->repo++: Call IsParticipantAsync(dto.ChatId, senderId)
+repo->ctx++: Call IsParticipantAsync(chatId, senderId)
+ctx->db++: Execute SELECT query
+
+db-->>ctx--: Return isParticipant
+ctx-->>repo--: Return isParticipant
 repo-->>sv--: Return isParticipant
 
 alt [isParticipant == false]
     sv->repo++: Call HasActiveReportForChatAsync(dto.ChatId)
+    repo->ctx++: Call HasActiveReportForChatAsync(chatId)
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return hasActiveReport
+    ctx-->>repo--: Return hasActiveReport
     repo-->>sv--: Return hasActiveReport
 end
 
@@ -82,17 +117,29 @@ else [Valid Permissions]
     end
     
     sv->repo++: Call AddMessageAsync(message)
+    repo->ctx++: Call AddAsync(message)
+    ctx-->>repo--: Return success
     repo-->>sv--: Return success
     
     sv->repo++: Call GetChatByIdAsync(dto.ChatId)
+    repo->ctx++: Call GetChatByIdAsync(chatId)
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return Chat
+    ctx-->>repo--: Return Chat
     repo-->>sv--: Return Chat
     
     sv->sv++: Update chat.LastMessageAt = message.SentAt
     sv--
     sv->repo++: Call UpdateChatAsync(chat)
+    repo->ctx++: Call UpdateChatAsync(chat)
+    ctx-->>repo--: Return success
     repo-->>sv--: Return success
     
     sv->repo++: Call GetParticipantIdsAsync(dto.ChatId)
+    repo->ctx++: Call GetParticipantIdsAsync(chatId)
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return accountIds
+    ctx-->>repo--: Return accountIds
     repo-->>sv--: Return accountIds
     
     loop for each accountId in participantIds
@@ -121,6 +168,10 @@ else [Valid Permissions]
         repo-->>sv--: Return result
         
         sv->user_repo++: Call GetAccountByIdAsync(senderId)
+        user_repo->ctx++: Call GetAccountByIdAsync(senderId)
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return Account
+        ctx-->>user_repo--: Return Account
         user_repo-->>sv--: Return Account
         
         sv->sv++: Map to MessageDto
