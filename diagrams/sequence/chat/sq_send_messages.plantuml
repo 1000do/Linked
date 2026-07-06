@@ -32,12 +32,15 @@ actor User as act
 participant "ChatIndexPage" as view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
-participant ":CloudinaryUploadService" as upload_sv
+participant ":ICloudinaryUploadService" as upload_sv
 participant "ChatHub" as hub
-participant ":ChatService" as sv
-participant ":ChatRepository" as repo
-participant ":UserRepository" as user_repo
-participant ":RedisService" as redis
+participant ":IChatService" as sv
+participant ":Message" as msg_ett
+participant ":MessageAttachment" as msg_att_ett
+participant ":MessageDto" as msg_dto
+participant ":IChatRepository" as repo
+participant ":IUserRepository" as user_repo
+participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -92,7 +95,7 @@ db-->>ctx--: Return isParticipant
 ctx-->>repo--: Return isParticipant
 repo-->>sv--: Return isParticipant
 
-alt [isParticipant == false]
+alt isParticipant == false
     sv->repo++: Call HasActiveReportForChatAsync(dto.ChatId)
     repo->ctx++: Call HasActiveReportForChatAsync(chatId)
     ctx->db++: Execute SELECT query
@@ -101,19 +104,19 @@ alt [isParticipant == false]
     repo-->>sv--: Return hasActiveReport
 end
 
-alt [isParticipant == false && hasActiveReport == false]
+alt isParticipant == false && hasActiveReport == false
     sv-->>hub: Throw UnauthorizedAccessException
     hub->hub++: Send error message to Caller
     hub--
     hub-->>view: Send error event via SignalR
     view-->>act: Display permission error message
-else [Valid Permissions]
-    sv->sv++: Create Message object
-    sv--
+else Valid Permissions
+    sv->msg_ett++: Call Message(dto)
+    msg_ett-->>sv--: Return Message object
     
     opt EnableAttachments == true && dto.Attachments is not empty
-        sv->sv++: Map Attachments to MessageAttachments
-        sv--
+        sv->msg_att_ett++: Call MessageAttachment()
+        msg_att_ett-->>sv--: Return MessageAttachments list
     end
     
     sv->repo++: Call AddMessageAsync(message)
@@ -121,39 +124,17 @@ else [Valid Permissions]
     ctx-->>repo--: Return success
     repo-->>sv--: Return success
     
-    sv->repo++: Call GetChatByIdAsync(dto.ChatId)
-    repo->ctx++: Call GetChatByIdAsync(chatId)
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return Chat
-    ctx-->>repo--: Return Chat
-    repo-->>sv--: Return Chat
-    
-    sv->sv++: Update chat.LastMessageAt = message.SentAt
+    sv->sv++: Update chat.LastMessageAt
     sv--
-    sv->repo++: Call UpdateChatAsync(chat)
-    repo->ctx++: Call UpdateChatAsync(chat)
-    ctx-->>repo--: Return success
-    repo-->>sv--: Return success
     
-    sv->repo++: Call GetParticipantIdsAsync(dto.ChatId)
-    repo->ctx++: Call GetParticipantIdsAsync(chatId)
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return accountIds
-    ctx-->>repo--: Return accountIds
-    repo-->>sv--: Return accountIds
-    
-    loop for each accountId in participantIds
-        alt accountId != senderId
-            sv->redis++: Call IncrementUnreadCountAsync(accountId, dto.ChatId)
-            redis-->>sv--: Return
-        end
-    end
+    sv->sv++: Increment unread counts for participants in Redis
+    sv--
     
     sv->repo++: Call SaveChangesAsync()
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes (Execute INSERT & UPDATE statements)
     
-    alt [Database Save Fails (throws DbUpdateException)]
+    alt Database Save Fails (throws DbUpdateException)
         db-->>ctx: Throw DbUpdateException
         ctx-->>repo: Throw DbUpdateException
         repo-->>sv: Throw DbUpdateException
@@ -162,20 +143,16 @@ else [Valid Permissions]
         hub--
         hub-->>view: Send error event via SignalR
         view-->>act: Display database error message
-    else [Database Save Succeeds]
+    else Database Save Succeeds
         db-->>ctx--: Return result
         ctx-->>repo--: Return result
         repo-->>sv--: Return result
         
-        sv->user_repo++: Call GetAccountByIdAsync(senderId)
-        user_repo->ctx++: Call GetAccountByIdAsync(senderId)
-        ctx->db++: Execute SELECT query
-        db-->>ctx--: Return Account
-        ctx-->>user_repo--: Return Account
-        user_repo-->>sv--: Return Account
-        
-        sv->sv++: Map to MessageDto
+        sv->sv++: Fetch sender details
         sv--
+        
+        sv->msg_dto++: Call MessageDto()
+        msg_dto-->>sv--: Return MessageDto object
         
         sv-->>hub--: Return MessageDto
         

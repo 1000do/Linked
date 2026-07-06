@@ -32,10 +32,13 @@ actor Staff as act
 participant "ChatIndexPage" as view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
-participant ":CloudinaryUploadService" as upload_sv
+participant ":ICloudinaryUploadService" as upload_sv
 participant "ChatHub" as hub
-participant ":ChatService" as sv
-participant ":ChatRepository" as repo
+participant ":IChatService" as sv
+participant ":Message" as msg_ett
+participant ":MessageAttachment" as msg_att_ett
+participant ":MessageDto" as msg_dto
+participant ":IChatRepository" as repo
 
 participant ":AppDbContext" as ctx
 database Database as db
@@ -83,36 +86,22 @@ hub->hub++: GetAccountId()
 hub--
 
 hub->sv++: Call SaveMessageAsync(senderId, dto)
-sv->repo++: Call IsParticipantAsync(dto.ChatId, senderId)
-repo->ctx++: Call IsParticipantAsync(chatId, senderId)
-ctx->db++: Execute SELECT query
+    sv->sv++: Call ValidateMessageSendingAccessAsync(senderId, dto.ChatId)
+    sv--
 
-db-->>ctx--: Return isParticipant
-ctx-->>repo--: Return isParticipant
-repo-->>sv--: Return isParticipant
-
-alt [isParticipant == false]
-    sv->repo++: Call HasActiveReportForChatAsync(dto.ChatId)
-    repo->ctx++: Call HasActiveReportForChatAsync(chatId)
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return hasActiveReport
-    ctx-->>repo--: Return hasActiveReport
-    repo-->>sv--: Return hasActiveReport
-end
-
-alt [isParticipant == false && hasActiveReport == false]
+alt isParticipant == false && hasActiveReport == false
     sv-->>hub: Throw UnauthorizedAccessException
     hub->hub++: Send error message to Caller
     hub--
     hub-->>view: Send error event via SignalR
     view-->>act: Display permission error message
-else [Valid Permissions]
-    sv->sv++: Create Message object
-    sv--
-    
+else Valid Permissions
+    sv->msg_ett++: Call Message(dto)
+    msg_ett-->>sv--: Return Message object
+
     opt EnableAttachments == true && dto.Attachments is not empty
-        sv->sv++: Map Attachments to MessageAttachments
-        sv--
+        sv->msg_att_ett++: Call MessageAttachment()
+        msg_att_ett-->>sv--: Return MessageAttachments list
     end
     
     sv->repo++: Call AddMessageAsync(message)
@@ -120,17 +109,14 @@ else [Valid Permissions]
     ctx-->>repo--: Return success
     repo-->>sv--: Return success
     
-    sv->sv++: Update chat.LastMessageAt
-    sv--
-    
-    sv->sv++: Increment unread counts for participants in Redis
+    sv->sv++: Call UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt)
     sv--
     
     sv->repo++: Call SaveChangesAsync()
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes (Execute INSERT & UPDATE statements)
     
-    alt [Database Save Fails (throws DbUpdateException)]
+    alt Database Save Fails (throws DbUpdateException)
         db-->>ctx: Throw DbUpdateException
         ctx-->>repo: Throw DbUpdateException
         repo-->>sv: Throw DbUpdateException
@@ -139,13 +125,16 @@ else [Valid Permissions]
         hub--
         hub-->>view: Send error event via SignalR
         view-->>act: Display database error message
-    else [Database Save Succeeds]
+    else Database Save Succeeds
         db-->>ctx--: Return result
         ctx-->>repo--: Return result
         repo-->>sv--: Return result
         
-        sv->sv++: Fetch sender details and Map to MessageDto
+        sv->sv++: Fetch sender details
         sv--
+        
+        sv->msg_dto++: Call MessageDto()
+        msg_dto-->>sv--: Return MessageDto object
         
         sv-->>hub--: Return MessageDto
         

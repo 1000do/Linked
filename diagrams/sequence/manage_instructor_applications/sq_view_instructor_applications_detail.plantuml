@@ -34,6 +34,7 @@ participant "AdminApprovalDetailPage" as detail_view
 participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
 participant "AdminApprovalController" as be_ctrl <<backend controller>>
 participant ":InstructorApprovalService" as sv
+participant ":InstructorApplicationDetailResponse" as app_detail_dto
 participant ":InstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db

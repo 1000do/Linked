@@ -32,10 +32,11 @@ actor User as act
 participant "CourseDetailPage" as view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
-participant ":AuthService" as auth_sv
-participant ":CartService" as sv
-participant ":CourseRepository" as courseRepo
-participant ":CartRepository" as repo
+participant ":IAuthService" as auth_sv
+participant ":ICartService" as sv
+participant ":CartItem" as cart_ett
+participant ":ICourseRepository" as courseRepo
+participant ":ICartRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -108,6 +109,9 @@ else [AccessToken cookie exists]
             fe_ctrl-->>view: Return JSON (success = false)
             view-->>act: Display already in cart message
         else [Valid Add to Cart request]
+            sv->cart_ett++: Call CartItem()
+            cart_ett-->>sv--: Return CartItem object
+            
             sv->repo++: Call AddCartItemAsync(cartItem)
             repo->ctx++: Call AddCartItemAsync(cartItem)
             ctx-->>repo--: Return success

@@ -34,7 +34,8 @@ participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant "ChatHub" as hub
 participant ":ChatService" as sv
-participant ":ChatRepository" as repo
+participant ":IChatRepository" as repo
+participant ":MessageDto" as msg_dto
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -105,8 +106,8 @@ else [hasAccess == true]
         
         sv->sv++: Filter messages where SentAt > ClearedAt
         sv--
-        sv->sv++: Map Messages to MessageDto list
-        sv--
+        sv->msg_dto++: Call MessageDto()
+        msg_dto-->>sv--: Return MessageDto list
         
         sv-->>be_ctrl--: Return List<MessageDto>
         be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with message list

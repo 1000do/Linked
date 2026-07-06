@@ -32,8 +32,8 @@ actor User as act
 participant "NotificationPage" as view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
-participant ":NotificationService" as sv
-participant ":NotificationRepository" as repo
+participant ":INotificationService" as sv
+participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant "NotificationHub" as hub
