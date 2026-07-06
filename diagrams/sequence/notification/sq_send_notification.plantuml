@@ -141,18 +141,8 @@ else [Valid input]
                     hub--
                 end
                 
-                sv->user_repo++: Call GetAllManagerIdsAsync()
-                user_repo->ctx++: Query manager IDs
-                ctx->db++: Execute SELECT query
-                db-->>ctx--: Return manager IDs list
-                ctx-->>user_repo--: Return manager IDs list
-                user_repo-->>sv--: Return manager IDs list
-                
-                opt [remaining managers exist]
-                    sv->hub++: Call Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification")
-                    hub-->>sv: Broadcast notification to remaining managers
-                    hub--
-                end
+                sv->sv++: Broadcast notification update to remaining managers
+                sv--
                 
                 sv-->>be_ctrl--: Return targetUserIds.Count
                 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
