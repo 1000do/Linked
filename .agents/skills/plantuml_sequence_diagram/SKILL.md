@@ -49,7 +49,7 @@ Do NOT invent custom actor names (like "Learner" or "Customer"). You must exclus
 
 ### Modeling Rules
 - **Controller Stereotypes:** Frontend controllers and Backend controllers MUST be explicitly distinguished using PlantUML stereotypes (`<<frontend controller>>` and `<<backend controller>>`) directly in their participant declarations.
-- **Implementations Only:** Do not model interfaces (e.g., use `:CourseRepository` rather than `ICourseRepository`).
+- **Interfaces Only:** Always model the interfaces for injected dependencies, not their implementations. Prefix class instances with a colon and `I` (e.g., `:ICourseRepository` rather than `:CourseRepository`, `:ICourseService` rather than `:CourseService`).
 - **Instance Prefixing:** Prefix class instances with a colon (e.g., `:CourseService`, `:CourseRepository`). Do not prefix views, controllers, or actor aliases.
 - **Visuals:** All participants except actors (stick figure) and databases (cylinder figure) must be drawn as rectangles.
 - **Participant Grouping Order:** Declare participants logically in the order of interaction. For example, place the `view_model` immediately after `fe_ctrl`, and the DTO (`res`) immediately after `sv`.
@@ -176,14 +176,30 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
   - For **Read/Select Operations**, `alt` blocks should trigger based on data presence (e.g., `Entity == null` vs `Entity found`) or authorization states (e.g., `Unauthenticated`, `Unauthorized Access`).
 - **Prefer Flat Structures:** Whenever possible, prefer a flat `alt/else` structure over deep nesting to improve diagram readability. You may reorder the logical flow in the diagram to make a flat structure work sensibly (e.g., grouping early validation failures as `else` branches, and placing the successful execution path in a final `else All checks pass` branch).
 - **Semantic Triggers for Flat Structures:** The conditional trigger (the self-call `sv->sv++`) immediately preceding a flat `alt` fragment must have a broad, semantic label covering *all* nested checks (e.g., `Validate course update request`). Furthermore, the final success branch of the `alt` block must explicitly pair with this trigger (e.g., `else Valid course update request`).
-- **Condensing Validation Logic:** Encourage condensing fine-grained, related validation checks into unified `else` branches. For example, combine a "course ownership check" and an "instructor lockout check" into a single `else Invalid Instructor Rights` branch to reduce visual noise.
+- **Condensing Validation Logic:** Encourage condensing fine-grained, related validation checks into unified `else` branches. If multiple validation checks throw the exact same exception (e.g., `BadRequestException`) and result in the exact same HTTP response and view state, merge them into a single, broad `else` branch (e.g., `else Invalid course content`) to simplify the diagram and avoid repetitive boilerplate.
 
 ### Abstracting Auxiliary Logic & Fetches
 - Verbose inline code blocks (like `foreach` loops) or secondary read operations (like fetching overall category lists, wishlist statuses, or generic stats when the main focus is a course list) should be aggressively abstracted into descriptive self-calls, but **only** if they apply to *auxiliary* changes/fetches outside the primary context. For example, in an operation for Courses, fetching/modifying Lessons is auxiliary and should be abstracted. In an operation for Lessons, modifying Courses or Learning Materials would be auxiliary. These self-calls should use natural language (e.g., `sv->sv++: Remove lessons in course`).
 - **Complete Omission of Unrelated Fetches:** Completely omit auxiliary, unrelated API fetches (e.g., fetching general config dropdowns or unconnected moderation logs in a frontend controller) if they clutter the diagram and distract from the primary use case focus.
 
 ### Frontend Authentication/Authorization Validation
-- Complex authentication and authorization checks (e.g., checking cookies, roles, or calling backend APIs via action filters to validate access) should be abstracted into a single self-call at the frontend controller level (e.g., `fe_ctrl -> fe_ctrl++: Validate Dashboard Access`), immediately followed by a flat `alt` block handling the rejection branches (Login redirect, Not Found redirect, etc.).
+- Authentication and authorization checks (e.g., checking cookies, roles) must be abstracted into a single self-call at the frontend controller level (e.g., `fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization`), immediately followed by a standardized flat `alt` block handling the 401 and 403 branches.
+- You MUST explicitly include `LoginPage` as `login_view` and `ErrorPage` as `error_view` in the participant list.
+- The block must be formatted exactly as follows, with the success label dynamically matching the self-call target:
+  ```plantuml
+  fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+  fe_ctrl--
+  
+  alt Session Invalid
+      fe_ctrl -->> login_view: Redirect to LoginPage
+      activate login_view
+      login_view -->> act--: Display login form
+  else Unauthorized Access
+      fe_ctrl -->> error_view: Redirect to ErrorPage
+      activate error_view
+      error_view -->> act--: Display error message
+  else Valid actor's authentication and authorization
+  ```
 
 ### Form Validation
 - Standard client-side UI input validations must be shown in the UI/view first.
@@ -214,15 +230,15 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
 
 ### Layer and Component Omissions
 - Omit `fe_ctrl` if the frontend requests the backend directly (e.g. via direct AJAX/Fetch call without server-side MVC controller routing).
-- Omit ViewModels/DTOs from the diagram participants list if they are handled implicitly by ASP.NET Core binding and not explicitly manipulated in custom controller/service logic.
 
 ### Database Operations (Read/Write)
 - **Database Call Naming:** When modeling the database interaction (e.g., `ctx -> db++`), use a semantic message like `Save changes to database` or `Execute query` instead of raw SQL queries.
-- **Read Operations (No Explicit Exceptions):** Do NOT model unhandled database exceptions (e.g., `SqlException` or generic `alt Database query failed` blocks) for standard read/select operations unless explicitly caught and handled in the service/repository code. Assume the read succeeds and returns data or null.
+- **Read Operations (No Explicit Exceptions):** Do NOT model unhandled database exceptions (e.g., `SqlException` or generic `alt Database query failed` blocks) for standard read/select operations. However, if the code explicitly checks for empty lists or null entities and returns a failure state, use `alt Database Query Failure` for the missing data path, and `else Database Query Success` for the found data path. The `alt` fragment branching MUST start right after the query execution call from `ctx` (AppDbContext) to `db` (Database).
 - **Aligning with Codebase Implementation:** Before modeling database failure paths for write operations, always check the actual repository and service code:
-  - **Exception-Based Saving (Preferred):** If the code uses a `try/catch` around `SaveChangesAsync()` to catch EF Core's `DbUpdateException` (or a domain exception like `AiModelException`), use an `alt DbUpdateException` fragment immediately following the database save call, with `else Saved Successfully` for the success path.
+  - **Exception-Based Saving (Preferred):** If the code uses a `try/catch` around `SaveChangesAsync()` to catch EF Core's `DbUpdateException` (or a domain exception), you MUST use `alt Database Save Failure` for the exception fragment, and `else Database Save Success` for the success path. Avoid raw exception names like `alt DbUpdateException` or phrases like `Saved Successfully`.
   - **Integer-Based Checking:** Only if the code explicitly checks the returned integer, assume `SaveChangesAsync()` returns an `int` variable named `numberOfRowsAffected`. Use a self-call `Check numberOfRowsAffected` and branch on `numberOfRowsAffected > 0` vs `numberOfRowsAffected = 0`.
 - In the failed paths (whether exception or zero rows), accurately trace the exception thrown by the repository and service, ensuring it matches the actual codebase (e.g., throwing a `BadRequestException` which results in a `400 BadRequest` controller return).
+- **Write Operation Returns:** When a database write operation succeeds and returns an integer representing the rows affected (from `db` up through `ctx`, `repo`, etc.), you MUST strictly use the phrase `Return numberOfRowsAffected`. Do not casually swing between "rows affected", "num rows", or other variations.
 
 ### Distinct Return Paths
 - Paths for `alt` branches must remain separate from their entry point down to the final return to the actor. Even if two branches display a similar status code or error popup, they represent separate paths and must deactivate their lifelines independently.
@@ -232,10 +248,14 @@ When dealing with nested `alt` fragments, clearly distinguish between "Local" an
   - Frontend Example: `view -> fe_ctrl++: POST /InstructorCourse/ModerateCourse`
   - Backend Example: `fe_ctrl -> be_ctrl++: POST /api/courses/moderate`
 
-### DTO and Object Instantiation
-- When instantiating a DTO or result object (e.g., `participant ":ResponseDto" as res`), model it as a synchronous method call representing the constructor, and include key arguments to clarify its state. Do NOT use PlantUML's native `**` instantiation syntax.
-  - Example: `sv -> res++: Call CourseModerationResult(courseId, "MANUAL_AUDIT")`
-  - Return: `res -->> sv--: Return CourseModerationResult object`
+### DTO, Entity, and ViewModel Instantiation
+- If the code contains explicit object instantiation syntax for a DTO, Entity, or ViewModel (e.g., `new CourseModerationResult()`, `new AiModel()`), it MUST be modeled explicitly using its own participant, followed by a synchronous constructor call and return. Do NOT abstract this into a simple self-call.
+- **IMapper Usage:** This explicit modeling scheme also applies when the code uses AutoMapper (`IMapper`) to create the object (e.g., `_mapper.Map<AiModelAdminDto>(addedModel)`). Instead of modeling the mapper itself, you treat it as if the DTO's constructor was called directly.
+- Do NOT use PlantUML's native `**` instantiation syntax. Include key arguments to clarify its state.
+  - Example (Explicit `new`): `sv -> res++: Call CourseModerationResult(courseId, "MANUAL_AUDIT")`
+  - Example (IMapper map): `sv -> res++: Call AiModelAdminDto()`
+  - Return: `res -->> sv--: Return AiModelAdminDto object`
+- **When to Omit:** Only simplify, abstract, or skip modeling these objects if they are provided implicitly by the framework under the hood (e.g., through ASP.NET Core model binding when passing form data to a controller method).
 
 ### Diagram Complexity and Ref Fragments
 To prevent sequence diagrams from becoming overwhelmingly complicated, large blocks of logic must be extracted into their own separate sequence diagrams and referenced using a `ref over` fragment. This applies to both sequential and concurrent execution flows.
@@ -256,6 +276,7 @@ Before extracting logic into a `ref` fragment (whether for sequential complexity
 - When a request kicks off a background task that runs concurrently with the original thread (e.g., `QueueBackgroundWorkItemAsync`), use a `par` fragment to separate the asynchronous execution from the main synchronous return path.
 - Place the extracted `ref over` fragment in the first branch of the `par` block to represent the background work.
 - Use the `else` branch of the `par` block to immediately return the queuing result and continue the synchronous flow back to the actor.
+- **Trivial Background Tasks:** If a `Task.WhenAll` or background thread only handles trivial secondary fetches (like writing basic logs or fetching dropdown configs) alongside a primary core fetch, you may entirely omit the `par` fragment and only model the primary fetch sequentially to reduce visual noise. Only use `par` when the concurrent tasks are both substantial components of the domain logic.
   ```plantuml
   sv -> queue++: QueueBackgroundWorkItemAsync(workItem)
   par Background Execution
