@@ -1,0 +1,171 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAccountControllerFE["AdminAccountController"] {
+    <<frontend controller>>
+    + Detail(id: int) Task~IActionResult~
+}
+
+class AccountDetailViewModel {
+    + AccountDetail : AdminAccountDetail
+    + Transactions : AccountTransactionSummary
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAccountControllerBE["AdminAccountController"] {
+    <<backend controller>>
+    - _adminAccountService : IAdminAccountService
+    
+    + GetAccountDetail(id: int) Task~IActionResult~
+    + GetAccountTransactions(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class AdminAccountDetail {
+    + AccountId : int
+    + Email : string
+    + Role : string
+}
+
+class AccountTransactionSummary {
+    + TotalSpent : decimal
+    + TotalRevenue : decimal
+    + TotalWithdrawn : decimal
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminAccountService {
+    <<interface>>
+    + GetAccountDetailAsync(id: int) Task~AdminAccountDetail~ *
+    + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummary~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + GetAccountByIdAsync(id: int) Task~Account?~ *
+}
+
+class ILockoutRepository {
+    <<interface>>
+    + GetActiveLockoutAsync(id: int, type: string) Task~Lockout?~ *
+}
+
+class IReportRepository {
+    <<interface>>
+    + GetResolvedReportsCountAsync(id: int) Task~int~ *
+}
+
+class INotificationRepository {
+    <<interface>>
+    + GetSentNotificationsCountAsync(id: int) Task~int~ *
+}
+
+class IChatRepository {
+    <<interface>>
+    + GetActiveChatsCountAsync(id: int) Task~int~ *
+}
+
+class ITransactionRepository {
+    <<interface>>
+    + GetTotalSpentAsync(id: int) Task~decimal~ *
+    + GetInstructorTotalRevenueAsync(id: int) Task~decimal~ *
+    + GetInstructorTotalWithdrawnAsync(id: int) Task~decimal~ *
+    + GetAccountTransactionsSummaryAsync(id: int) Task~AccountTransactionSummary~ *
+}
+
+class IEnrollmentRepository {
+    <<interface>>
+    + GetMyEnrolledCoursesAsync(id: int) Task~List~Enrollment~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminAccountService {
+    - _userRepository : IUserRepository
+    - _lockoutRepository : ILockoutRepository
+    - _reportRepository : IReportRepository
+    - _notificationRepository : INotificationRepository
+    - _chatRepository : IChatRepository
+    - _transactionRepository : ITransactionRepository
+    - _enrollmentRepository : IEnrollmentRepository
+    
+    + GetAccountDetailAsync(id: int) Task~AdminAccountDetail~
+    + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummary~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    + GetAccountByIdAsync(id: int) Task~Account?~
+}
+
+class LockoutRepository {
+    + GetActiveLockoutAsync(id: int, type: string) Task~Lockout?~
+}
+
+class ReportRepository {
+    + GetResolvedReportsCountAsync(id: int) Task~int~
+}
+
+class NotificationRepository {
+    + GetSentNotificationsCountAsync(id: int) Task~int~
+}
+
+class ChatRepository {
+    + GetActiveChatsCountAsync(id: int) Task~int~
+}
+
+class TransactionRepository {
+    + GetTotalSpentAsync(id: int) Task~decimal~
+    + GetInstructorTotalRevenueAsync(id: int) Task~decimal~
+    + GetInstructorTotalWithdrawnAsync(id: int) Task~decimal~
+    + GetAccountTransactionsSummaryAsync(id: int) Task~AccountTransactionSummary~
+}
+
+class EnrollmentRepository {
+    + GetMyEnrolledCoursesAsync(id: int) Task~List~Enrollment~~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION (hollow diamond) ===
+AccountDetailViewModel o-- AdminAccountDetail
+AccountDetailViewModel o-- AccountTransactionSummary
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAccountControllerBE --> IAdminAccountService
+AdminAccountService --> IUserRepository
+AdminAccountService --> ILockoutRepository
+AdminAccountService --> IReportRepository
+AdminAccountService --> INotificationRepository
+AdminAccountService --> IChatRepository
+AdminAccountService --> ITransactionRepository
+AdminAccountService --> IEnrollmentRepository
+
+%% === INTERFACE REALIZATION ===
+AdminAccountService ..|> IAdminAccountService
+UserRepository ..|> IUserRepository
+LockoutRepository ..|> ILockoutRepository
+ReportRepository ..|> IReportRepository
+NotificationRepository ..|> INotificationRepository
+ChatRepository ..|> IChatRepository
+TransactionRepository ..|> ITransactionRepository
+EnrollmentRepository ..|> IEnrollmentRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAccountControllerFE ..> AdminAccountControllerBE
+AdminAccountControllerFE ..> AccountDetailViewModel
+AdminAccountControllerBE ..> AdminAccountDetail
+AdminAccountControllerBE ..> AccountTransactionSummary
+
+AdminAccountService ..> AdminAccountDetail
+AdminAccountService ..> AccountTransactionSummary
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

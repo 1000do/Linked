@@ -1,0 +1,126 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAccountControllerFE["AdminAccountController"] {
+    <<frontend controller>>
+    + CreateStaff(model: CreateStaffViewModel) Task~IActionResult~
+}
+
+class CreateStaffViewModel {
+    + Email : string
+    + Username : string
+    + DisplayName : string
+    + Password : string
+    + PhoneNumber : string?
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAccountControllerBE["AdminAccountController"] {
+    <<backend controller>>
+    - _adminAccountService : IAdminAccountService
+    
+    + CreateStaff(request: CreateStaffRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CreateStaffRequest {
+    + Email : string
+    + Username : string
+    + DisplayName : string
+    + Password : string
+    + PhoneNumber : string?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string
+    + PasswordHash : string?
+    + AccountStatus : string
+    + IsVerified : bool
+}
+
+class Manager {
+    + ManagerId : int
+    + AccountId : int
+    + DisplayName : string
+    + PhoneNumber : string?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminAccountService {
+    <<interface>>
+    + IsUsernameExistsAsync(username: string) Task~bool~ *
+    + CreateStaffAsync(request: CreateStaffRequest) Task~bool~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + IsUsernameExistsAsync(username: string) Task~bool~ *
+    + RegisterManagerAsync(account: Account, manager: Manager) Task~void~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminAccountService {
+    - _userRepository : IUserRepository
+    
+    + IsUsernameExistsAsync(username: string) Task~bool~
+    + CreateStaffAsync(request: CreateStaffRequest) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + IsUsernameExistsAsync(username: string) Task~bool~
+    + RegisterManagerAsync(account: Account, manager: Manager) Task~void~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    + Managers : DbSet~Manager~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === BIDIRECTIONAL ASSOCIATION (solid line) ===
+Account "1" -- "0..1" Manager
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAccountControllerBE --> IAdminAccountService
+AdminAccountService --> IUserRepository
+UserRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AdminAccountService ..|> IAdminAccountService
+UserRepository ..|> IUserRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAccountControllerFE ..> AdminAccountControllerBE
+AdminAccountControllerFE ..> CreateStaffViewModel
+AdminAccountControllerBE ..> CreateStaffRequest
+AdminAccountService ..> CreateStaffRequest
+AdminAccountService ..> Account
+AdminAccountService ..> Manager
+UserRepository ..> Account
+UserRepository ..> Manager
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

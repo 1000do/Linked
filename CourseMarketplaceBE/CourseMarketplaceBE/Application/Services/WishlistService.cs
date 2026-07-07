@@ -5,6 +5,9 @@ using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.AspNetCore.SignalR;
 using CourseMarketplaceBE.Hubs;
 using CourseMarketplaceBE.Domain.Constants;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -26,36 +29,18 @@ public class WishlistService : IWishlistService
         var items = await _wishlistRepository.GetByUserIdAsync(userId);
         
         var responses = new List<WishlistResponse>();
-        foreach (var w in items)
+        foreach (var item in items)
         {
-            int courseId = w.CourseId ?? 0;
-            var isEnrolled = await _courseRepository.IsEnrolledAsync(userId, courseId);
-            var stats = await _courseRepository.GetCourseStatsAsync(courseId);
-
-            responses.Add(new WishlistResponse
-            {
-                Id = w.Id,
-                CourseId = courseId,
-                Title = w.Course?.Title ?? "",
-                CourseThumbnailUrl = w.Course?.CourseThumbnailUrl,
-                Price = w.Course?.Price ?? 0,
-                InstructorName = w.Course?.Instructor?.InstructorNavigation?.FullName ?? "Unknown",
-                RatingAverage = stats != null ? (decimal)stats.RatingAverage : 4.5m,
-                TotalStudents = stats?.TotalStudents ?? 0,
-                IsEnrolled = isEnrolled,
-                AddedDate = w.AddedDate ?? DateTime.UtcNow
-            });
+            var response = await MapToWishlistResponseAsync(item, userId);
+            responses.Add(response);
         }
+        
         return responses;
     }
 
     public async Task AddToWishlistAsync(int userId, int courseId)
     {
-        var course = await _courseRepository.GetByIdAsync(courseId);
-        if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
-        {
-            throw new InvalidOperationException("Course does not exist or is not published.");
-        }
+        await EnsureCourseIsValidForWishlistAsync(courseId);
 
         if (await _wishlistRepository.ExistsAsync(userId, courseId))
         {
@@ -70,8 +55,7 @@ public class WishlistService : IWishlistService
         };
 
         await _wishlistRepository.AddAsync(newItem);
-        int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _wishlistRepository.SaveChangesAsync();
     }
 
     public async Task RemoveFromWishlistAsync(int userId, int courseId)
@@ -83,8 +67,7 @@ public class WishlistService : IWishlistService
         }
 
         await _wishlistRepository.RemoveAsync(item);
-        int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _wishlistRepository.SaveChangesAsync();
     }
 
     public async Task<bool> ToggleWishlistAsync(int userId, int courseId)
@@ -93,21 +76,14 @@ public class WishlistService : IWishlistService
         if (item != null)
         {
             await _wishlistRepository.RemoveAsync(item);
-            int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-            /* zero rows exception removed */
-            
-            // Notify via SignalR
-            await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");
+            await _wishlistRepository.SaveChangesAsync();
+            await NotifyWishlistCountUpdatedAsync(userId);
             
             return false; // Removed
         }
         else
         {
-            var course = await _courseRepository.GetByIdAsync(courseId);
-            if (course == null || course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
-            {
-                throw new InvalidOperationException("Course does not exist or is not published.");
-            }
+            await EnsureCourseIsValidForWishlistAsync(courseId);
 
             var newItem = new WishlistItem
             {
@@ -115,12 +91,10 @@ public class WishlistService : IWishlistService
                 CourseId = courseId,
                 AddedDate = DateTime.UtcNow
             };
-            await _wishlistRepository.AddAsync(newItem);
-            int numberOfRowsAffected = await _wishlistRepository.SaveChangesAsync();
-            /* zero rows exception removed */
             
-            // Notify via SignalR
-            await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");
+            await _wishlistRepository.AddAsync(newItem);
+            await _wishlistRepository.SaveChangesAsync();
+            await NotifyWishlistCountUpdatedAsync(userId);
             
             return true; // Added
         }
@@ -135,5 +109,42 @@ public class WishlistService : IWishlistService
     {
         var items = await _wishlistRepository.GetByUserIdAsync(userId);
         return items.Count;
+    }
+
+    // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
+
+    private async Task<WishlistResponse> MapToWishlistResponseAsync(WishlistItem item, int userId)
+    {
+        int courseId = item.CourseId ?? 0;
+        var isEnrolled = await _courseRepository.IsEnrolledAsync(userId, courseId);
+        var stats = await _courseRepository.GetCourseStatsAsync(courseId);
+
+        return new WishlistResponse
+        {
+            Id = item.Id,
+            CourseId = courseId,
+            Title = item.Course?.Title ?? "",
+            CourseThumbnailUrl = item.Course?.CourseThumbnailUrl,
+            Price = item.Course?.Price ?? 0,
+            InstructorName = item.Course?.Instructor?.InstructorNavigation?.FullName ?? "Unknown",
+            RatingAverage = stats != null ? (decimal)stats.RatingAverage : 4.5m,
+            TotalStudents = stats?.TotalStudents ?? 0,
+            IsEnrolled = isEnrolled,
+            AddedDate = item.AddedDate ?? DateTime.UtcNow
+        };
+    }
+
+    private async Task EnsureCourseIsValidForWishlistAsync(int courseId)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null || course.CourseStatus != CourseStatus.Published.ToValue())
+        {
+            throw new InvalidOperationException("Course does not exist or is not published.");
+        }
+    }
+
+    private async Task NotifyWishlistCountUpdatedAsync(int userId)
+    {
+        await _hubContext.Clients.User(userId.ToString()).SendAsync("UpdateWishlistCount");
     }
 }

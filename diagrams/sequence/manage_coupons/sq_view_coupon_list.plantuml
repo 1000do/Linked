@@ -30,7 +30,7 @@ mainframe View Coupon List
 actor Admin as act
 
 participant "AdminCouponView" as view
-participant "   CouponController   " as be_ctrl <<backend controller>>
+participant "CouponController" as be_ctrl <<backend controller>>
 participant ":CouponService" as sv
 participant ":CouponRepository" as repo
 participant ":AppDbContext" as ctx
@@ -38,20 +38,20 @@ database Database as db
 
 act++
 act->view++: Access "Voucher Center" page / Search & Filter Coupons
-view->be_ctrl++: Send GET /api/coupon?isActive={isActive}&type={type}&search={search} (AJAX)
+view->be_ctrl++: GET /api/coupon?isActive={isActive}&type={type}&search={search}
 
 be_ctrl->sv++: Call GetAll(managerId, isActive, type, search, isAdmin=true)
 sv->repo++: Call GetAllAsync(managerId=null, isActive, type, search)
 repo->ctx++: Query Coupons
-ctx->db++: Execute SELECT query (with filters, ordered by CouponId desc)
+ctx->db++: Execute query
 db-->>ctx--: Return result
-ctx-->>repo--: Return list of Coupon entities
-repo-->>sv--: Return list of Coupon entities
+ctx-->>repo--: Return list of Coupons
+repo-->>sv--: Return list of Coupons
 
-sv->sv++: Map list to List<CouponResponse>
+sv->sv++: Map to list of CouponResponse
 sv--
 
-sv-->>be_ctrl--: Return List<CouponResponse>
-be_ctrl-->>view--: Return statusCode 200 (Ok)
-view-->>act--: Render filtered Coupon List table
+sv-->>be_ctrl--: Return result
+be_ctrl-->>view--: Return statusCode 200
+view-->>act--: Render Coupon List table
 @enduml
