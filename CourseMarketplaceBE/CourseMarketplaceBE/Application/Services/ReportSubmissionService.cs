@@ -147,29 +147,35 @@ public class ReportSubmissionService : IReportSubmissionService
 
     private async Task ValidateCourseReportAsync(int reporterId, int courseId, string reason)
     {
-        var course = await _courseRepo.GetByIdAsync(courseId)
-            ?? throw new InvalidOperationException("Course not found.");
+        var role = await _userRepo.GetRoleByAccountIdAsync(reporterId);
+        if (role == "manager")
+            throw new BadRequestException("Managers cannot report courses.");
 
-        if (course.CourseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) || 
-            course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("This course is currently under review and cannot be reported.");
+        var course = await _courseRepo.GetByIdAsync(courseId)
+            ?? throw new KeyNotFoundException("Course not found.");
+
+        if (course.CourseStatus.Equals(CourseStatus.Draft.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            course.CourseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase) ||
+            course.CourseStatus.Equals(CourseStatus.Rejected.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new BadRequestException("This course is currently in draft, pending, under review, or rejected and cannot be reported.");
 
         if (course.CourseStatus.Equals(CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently locked and cannot be reported.");
+            throw new BadRequestException("This course is permanently locked and cannot be reported.");
 
         if (course.InstructorId == reporterId)
-            throw new InvalidOperationException("You cannot report your own course.");
+            throw new BadRequestException("You cannot report your own course.");
 
         var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(reporterId, courseId);
         if (enrollment == null)
-            throw new InvalidOperationException("You must be enrolled in the course before reporting it.");
+            throw new BadRequestException("You must be enrolled in the course before reporting it.");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
+            throw new BadRequestException("Report reason cannot be empty.");
 
         var existing = await _reportRepo.GetPendingCourseReportAsync(reporterId, courseId, reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this course.");
+            throw new BadRequestException("You already have a pending report with this reason for this course.");
     }
 
     private async Task ValidateCourseReviewReportAsync(int reporterId, int courseReviewId, string reason)
