@@ -19,13 +19,16 @@ public class PagedReportRequestDto : PagedRequestDto
 public class CreateCourseReportRequest
 {
     [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "Invalid Course ID.")]
     public int CourseId { get; set; }
 
     /// <summary>VD: "Nội dung sai lệch", "Vi phạm bản quyền", "Spam", "Nội dung người lớn"</summary>
-    [Required]
+    [Required(ErrorMessage = "Please select a reason for your report.", AllowEmptyStrings = false)]
     [MaxLength(255)]
     public string Reason { get; set; } = null!;
 
+    [Required(ErrorMessage = "Description is required.")]
+    [MinLength(20, ErrorMessage = "Description must be at least 20 characters long.")]
     [MaxLength(1000)]
     public string? Description { get; set; }
 }
