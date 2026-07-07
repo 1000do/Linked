@@ -74,6 +74,7 @@ opt With Attachments
                 
                 be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
                 fe_ctrl-->>view--: Return JSON with attachment metadata
+                view-->>act: Display uploaded file in UI
             end
         end
     end
