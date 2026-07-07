@@ -45,51 +45,36 @@ view->fe_ctrl++: GET /Account/Profile
 fe_ctrl->fe_ctrl++: Check AccessToken cookie
 fe_ctrl--
 
-alt Valid AccessToken
-    fe_ctrl->be_ctrl++: GET /api/Profile
+fe_ctrl->be_ctrl++: GET /api/Profile
+
+be_ctrl->be_ctrl++: Validate login session & Parse userId
+be_ctrl--
+
+be_ctrl->sv++: Call GetUserProfileAsync(userId)
+
+sv->repo++: Call GetUserByIdAsync(userId)
+repo->ctx++: Query User joined with navigation details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return User entity
+repo-->>sv--: Return User entity
+
+sv->sv++: Check user != null
+sv--
+
+alt user != null
+    sv-->>be_ctrl--: Return UserProfileResponse object
+    be_ctrl-->>fe_ctrl--: Return statusCode 200
     
-    be_ctrl->be_ctrl++: Validate login session & Parse userId
-    be_ctrl--
-    
-    alt Valid login session
-        be_ctrl->sv++: Call GetUserProfileAsync(userId)
-        
-        sv->repo++: Call GetUserByIdAsync(userId)
-        repo->ctx++: Query User joined with navigation details
-        ctx->db++: Execute query
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return User entity
-        repo-->>sv--: Return User entity
-        
-        sv->sv++: Check user != null
-        sv--
-        
-        alt user != null
-            sv-->>be_ctrl: Return UserProfileResponse object
-            be_ctrl-->>fe_ctrl: Return statusCode 200
-            
-            fe_ctrl->fe_ctrl++: Read response and check IsVerified
-            fe_ctrl--
-            fe_ctrl->fe_ctrl++: Append IsVerified cookie
-            fe_ctrl--
-            fe_ctrl-->>view: Return statusCode 200
-            view-->>act: Display user profile information
-        else user == null
-            sv-->>be_ctrl--: Return null
-            be_ctrl-->>fe_ctrl: Return statusCode 404
-            fe_ctrl-->>view: Return statusCode 302
-            view-->>act: Redirect to Login page
-            act->login_view++: Access Login page
-            login_view-->>act--: Display Login page
-        end
-    else Invalid login session
-        be_ctrl-->>fe_ctrl--: Return statusCode 401
-        fe_ctrl-->>view: Return statusCode 302
-        view-->>act: Redirect to Login page
-        act->login_view++: Access Login page
-        login_view-->>act--: Display Login page
-    end
-else No AccessToken
+    fe_ctrl->fe_ctrl++: Read response and check IsVerified
+    fe_ctrl--
+    fe_ctrl->fe_ctrl++: Append IsVerified cookie
+    fe_ctrl--
+    fe_ctrl-->>view--: Return statusCode 200
+    view-->>act--: Display user profile information
+else user == null
+    sv-->>be_ctrl--: Return null
+    be_ctrl-->>fe_ctrl--: Return statusCode 404
     fe_ctrl-->>view--: Return statusCode 302
     view-->>act--: Redirect to Login page
     act->login_view++: Access Login page

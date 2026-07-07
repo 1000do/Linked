@@ -79,6 +79,7 @@ WishlistService ..|> IWishlistService
 WishlistRepository ..|> IWishlistRepository
 
 %% === DEPENDENCY (dashed arrows) ===
+WishlistControllerFE ..> WishlistControllerBE : HTTP/AJAX
 WishlistService ..> WishlistItem
 WishlistRepository ..> WishlistItem
 

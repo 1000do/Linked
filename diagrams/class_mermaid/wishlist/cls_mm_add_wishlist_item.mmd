@@ -104,6 +104,7 @@ CourseRepository ..|> ICourseRepository
 WishlistRepository ..|> IWishlistRepository
 
 %% === DEPENDENCY (dashed arrows) ===
+WishlistControllerFE ..> WishlistControllerBE : HTTP/AJAX
 WishlistService ..> WishlistItem
 WishlistService ..> Course
 CourseRepository ..> Course
