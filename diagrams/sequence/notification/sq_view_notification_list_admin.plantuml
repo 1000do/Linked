@@ -30,11 +30,13 @@ mainframe View Notification List (Staff/Admin)
 
 actor Admin as act
 participant "NotificationManagementPage" as view
+participant "ErrorPage" as error_page
 participant "LoginPage" as login_view
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
-participant ":NotificationService" as sv
-participant ":NotificationRepository" as repo
+participant ":INotificationService" as sv
+participant ":NotificationAdminResponseDto" as notif_admin_dto
+participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant "NotificationHub" as hub
@@ -61,8 +63,8 @@ fe_ctrl->be_ctrl++: Send GET /api/Notification/all (with Bearer Token)
 
 alt [Unauthorized role]
     be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view: Return JSON error response
-    view-->>act: Display Access Denied message
+    fe_ctrl-->>error_page++: Redirect to ErrorPage
+    error_page-->>act--: Display Access Denied message
 else [Authorized Admin/Staff]
     be_ctrl->sv++: Call GetAllNotificationsForAdminAsync()
     
@@ -89,8 +91,9 @@ else [Authorized Admin/Staff]
     ctx-->>repo--: Return active notifications list
     repo-->>sv--: Return active notifications list
     
-    sv->sv++: Map to NotificationAdminResponseDto list
-    sv--
+    sv->notif_admin_dto++: Call NotificationAdminResponseDto()
+    
+    notif_admin_dto-->>sv--: Return NotificationAdminResponseDto list
     sv-->>be_ctrl--: Return PagedResult<NotificationAdminResponseDto>
     be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
     fe_ctrl-->>view--: Return JSON notifications list

@@ -64,6 +64,7 @@ namespace CourseMarketplaceFE.Controllers
         // --- BFF Proxies for JS Clients ---
 
         [HttpGet]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> GetAllAdmin()
         {
             var response = await _api.GetAsync("notification/all");
@@ -72,6 +73,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> GetMyNotifications()
         {
             var response = await _api.GetAsync("notification");
@@ -80,6 +82,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> MarkAllAsRead()
         {
             var response = await _api.PutAsync("notification/mark-all-as-read", null);
@@ -88,6 +91,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var response = await _api.PutAsync($"notification/mark-as-read/{id}", null);
@@ -96,6 +100,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> Delete(int id)
         {
             var response = await _api.DeleteAsync($"notification/{id}");
@@ -104,6 +109,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> SendAdvanced([FromBody] object payload)
         {
             var response = await _api.PostJsonAsync("notification/send-advanced", payload);
@@ -112,8 +118,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
-        
-        [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> GetUnreadSummary()
         {
             var response = await _api.GetAsync("notification/unread-summary");
@@ -122,6 +127,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> SearchEmails([FromQuery] string query)
         {
             var response = await _api.GetAsync($"notification/search-emails?query={Uri.EscapeDataString(query ?? "")}");

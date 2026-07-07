@@ -32,8 +32,9 @@ actor Staff as act
 participant "ChatIndexPage" as view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
-participant ":ChatService" as sv
-participant ":ChatRepository" as repo
+participant ":IChatService" as sv
+participant ":ChatListDto" as chat_dto
+participant ":IChatRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -57,8 +58,9 @@ db-->>ctx--: Return filtered ChatParticipants list
 ctx-->>repo--: Return filtered ChatParticipants list
 repo-->>sv--: Return filtered ChatParticipants list
 
-sv->sv++: Map to ChatListDto items
-sv--
+sv->chat_dto++: Call ChatListDto()
+
+chat_dto-->>sv--: Return ChatListDto items
 
 sv-->>be_ctrl--: Return ChatListDto list
 be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)

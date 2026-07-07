@@ -10,6 +10,7 @@ public interface IChatService
     Task<List<ChatListDto>> SearchChatsAsync(int accountId, string query);
     Task<List<MessageDto>> GetChatHistoryAsync(int chatId, int accountId);
     Task<MessageDto> SaveMessageAsync(int senderId, SendMessageDto dto);
+    Task<int> DeleteMessageAsync(int messageId, int accountId);
     Task<int> GetOrCreateChatAsync(int senderId, CreateChatDto dto);
     Task<bool> HasAccessToChatAsync(int accountId, int chatId);
     Task<List<int>> GetParticipantIdsAsync(int chatId);

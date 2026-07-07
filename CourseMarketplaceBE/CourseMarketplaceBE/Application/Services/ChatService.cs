@@ -54,6 +54,8 @@ public class ChatService : IChatService
 
         var filteredMessages = FilterMessagesByClearedAt(messages, participant?.ClearedAt);
 
+        filteredMessages = filteredMessages.Where(m => !(m.SenderId == accountId && m.MessageStatus == "deleted_by_sender")).ToList();
+
         return filteredMessages.Select(MapToMessageDto).ToList();
     }
 
@@ -72,6 +74,20 @@ public class ChatService : IChatService
         message.Sender = sender;
 
         return MapToMessageDto(message);
+    }
+
+    public async Task<int> DeleteMessageAsync(int messageId, int accountId)
+    {
+        var message = await _chatRepository.GetMessageByIdAsync(messageId);
+        if (message == null) throw new KeyNotFoundException("Message not found.");
+
+        if (message.SenderId != accountId)
+            throw new UnauthorizedAccessException("You can only delete your own messages.");
+
+        message.MessageStatus = "deleted_by_sender";
+        await _chatRepository.SaveChangesAsync();
+        
+        return message.ChatId;
     }
 
     public async Task<int> GetOrCreateChatAsync(int senderId, CreateChatDto dto)

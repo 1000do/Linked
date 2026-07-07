@@ -44,6 +44,7 @@ public class ChatController : Controller
     public IActionResult Learner()
     {
         ViewBag.Actor = "Learner";
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 
@@ -56,6 +57,7 @@ public class ChatController : Controller
             return RedirectToAction("ApplicationStatus", "Instructor");
 
         ViewBag.Actor = "Instructor";
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 
@@ -63,12 +65,14 @@ public class ChatController : Controller
     public IActionResult Admin()
     {
         ViewBag.Actor = "Admin";
+        ViewBag.EnableAttachments = _configuration.GetValue<bool>("ChatSettings:EnableAttachments");
         return View("Index");
     }
 
     // --- BFF Proxy Methods --- //
 
     [HttpGet]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetList()
     {
         var response = await _api.GetAsync("chat/list");
@@ -78,6 +82,7 @@ public class ChatController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> Search(string q)
     {
         var response = await _api.GetAsync($"chat/search?q={Uri.EscapeDataString(q ?? "")}");
@@ -87,6 +92,7 @@ public class ChatController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetHistory(int roomId)
     {
         var response = await _api.GetAsync($"chat/history?roomId={roomId}");
@@ -98,6 +104,7 @@ public class ChatController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetUnreadCount()
     {
         var response = await _api.GetAsync("chat/unread-count");
@@ -107,6 +114,7 @@ public class ChatController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetPendingRequests()
     {
         var response = await _api.GetAsync("chat/pending-requests");
@@ -116,6 +124,7 @@ public class ChatController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> GetAdminAccount()
     {
         var response = await _api.GetAsync("chat/admin-account");
@@ -125,6 +134,7 @@ public class ChatController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> RequestSupport([FromBody] dynamic dto)
     {
         var response = await _api.PostJsonAsync("chat/request-support", dto);
@@ -133,6 +143,7 @@ public class ChatController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> AcceptSupport(string ticketId)
     {
         var response = await _api.PostAsync($"chat/accept-support/{ticketId}");
@@ -141,6 +152,7 @@ public class ChatController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> CreateDirectChat([FromBody] dynamic dto)
     {
         var response = await _api.PostJsonAsync("chat/create", dto);
@@ -149,6 +161,16 @@ public class ChatController : Controller
     }
 
     [HttpDelete]
+    [Authorize(Roles = "user,instructor,admin,staff")]
+    public async Task<IActionResult> DeleteMessage(int messageId)
+    {
+        var response = await _api.DeleteAsync($"chat/message/{messageId}");
+        if (response.IsSuccessStatusCode) return Ok();
+        return BadRequest();
+    }
+
+    [HttpDelete]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> ClearHistory(int chatId)
     {
         var response = await _api.DeleteAsync($"chat/{chatId}/clear");
@@ -157,6 +179,7 @@ public class ChatController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> UploadAttachment(IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("File is empty");

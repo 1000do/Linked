@@ -1,0 +1,89 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class FrontendController["ChatController"] {
+    <<frontend controller>>
+    - _api : ApiClient
+    + DeleteMessage(messageId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class BackendController["ChatController"] {
+    <<backend controller>>
+    - _chatService : IChatService
+    - _hubContext : IHubContext~ChatHub~
+    
+    + DeleteMessage(messageId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Message {
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
+    + Content : string
+    + IsSeen : bool
+    + MessageStatus : string
+    + SentAt : DateTime?
+    + ReceivedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IChatService {
+    <<interface>>
+    + DeleteMessageAsync(messageId: int, accountId: int) Task~int~ *
+}
+
+class IChatRepository {
+    <<interface>>
+    + GetMessageByIdAsync(messageId: int) Task~Message?~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ChatService {
+    - _chatRepository : IChatRepository
+    
+    + DeleteMessageAsync(messageId: int, accountId: int) Task~int~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ChatRepository {
+    - _context : AppDbContext
+    
+    + GetMessageByIdAsync(messageId: int) Task~Message?~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Messages : DbSet~Message~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> IChatService
+ChatService --> IChatRepository
+ChatRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ChatService ..|> IChatService
+ChatRepository ..|> IChatRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+ChatService ..> Message
+ChatRepository ..> Message
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -223,6 +223,11 @@ public class ChatRepository : IChatRepository
         return await _context.UserReports.FindAsync(reportId);
     }
 
+    public async Task<Message?> GetMessageByIdAsync(int messageId)
+    {
+        return await _context.Messages.FindAsync(messageId);
+    }
+
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();

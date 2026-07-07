@@ -36,7 +36,7 @@ participant ":InstructorApprovalService" as sv
 participant ":InstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant ":NotificationService" as noti_sv
+participant ":INotificationService" as noti_sv
 
 act ++
 act -> view++: Click "Approve" on an instructor application row

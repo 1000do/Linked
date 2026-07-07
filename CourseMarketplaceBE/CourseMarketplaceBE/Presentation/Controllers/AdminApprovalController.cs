@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize(Roles = "admin,staff")]
     [ApiController]
     [Route("api/[controller]")]
     public class AdminApprovalController : ControllerBase
@@ -15,6 +14,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public AdminApprovalController(IInstructorApprovalService service) => _service = service;
 
         [HttpGet("pending-instructors")]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> GetPending([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var list = await _service.GetPendingListAsync(page, pageSize);
@@ -23,6 +23,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> GetDetail(int id)
         {
             var item = await _service.GetDetailAsync(id);
@@ -31,6 +32,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpPost("process")]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> Process(UpdateApprovalStatusDto dto)
         {
             try
