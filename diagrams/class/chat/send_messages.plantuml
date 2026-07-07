@@ -24,7 +24,7 @@ skinparam arrowColor #333333
 
 ' ==================== BACKEND - HUB ====================
 
-class ChatHub #FFE6E6 {
+class ChatHub <<signalr hub>> #FFE6E6 {
     - _chatService : IChatService
     + SendMessage(dto: SendMessageDto) : Task
 }
@@ -68,17 +68,17 @@ class AttachmentDto #E6CCFF {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Message #CCFFE6 {
-    + MessageId : int <<PK>>
-    + ChatId : int <<FK>>
-    + SenderId : int? <<FK>>
+    + MessageId : int
+    + ChatId : int
+    + SenderId : int?
     + Content : string
     + SentAt : DateTime?
     + MessageStatus : string
 }
 
 class MessageAttachment #CCFFE6 {
-    + AttachmentId : int <<PK>>
-    + MessageId : int? <<FK>>
+    + AttachmentId : int
+    + MessageId : int?
     + FileUrl : string
     + FileName : string?
     + FileType : string?
@@ -87,7 +87,7 @@ class MessageAttachment #CCFFE6 {
 }
 
 class Chat #CCFFE6 {
-    + ChatId : int <<PK>>
+    + ChatId : int
     + LastMessageAt : DateTime?
 }
 
@@ -149,22 +149,22 @@ ChatHub --> IChatService
 ChatService --> IChatRepository
 ChatService --> IRedisService
 ChatRepository --> AppDbContext
-Message "1" *-- "*" MessageAttachment
-Chat "1" *-- "*" Message
+Message *-- MessageAttachment
+Chat *-- Message
 
 ' === INTERFACE REALIZATION ===
 ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
 ' === DEPENDENCY ===
-ChatHub ..> SendMessageDto : uses
-ChatHub ..> MessageDto : uses
-SendMessageDto *-- AttachmentInputDto : contains
-MessageDto *-- AttachmentDto : contains
-ChatService ..> SendMessageDto : uses
-ChatService ..> MessageDto : uses
-ChatService ..> Message : uses
-ChatRepository ..> Message : uses
-ChatRepository ..> Chat : uses
+ChatHub ..> SendMessageDto
+ChatHub ..> MessageDto
+SendMessageDto *-- AttachmentInputDto
+MessageDto *-- AttachmentDto
+ChatService ..> SendMessageDto
+ChatService ..> MessageDto
+ChatService ..> Message
+ChatRepository ..> Message
+ChatRepository ..> Chat
 
 @enduml

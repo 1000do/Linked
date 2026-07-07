@@ -1,0 +1,63 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Coupons
+
+actor Admin as act
+participant "CouponListView" as view
+participant "CouponController" as be_ctrl <<backend controller>>
+participant ":CouponService" as sv
+participant ":CouponRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Access coupon list page
+view->be_ctrl++: GET /api/coupon
+
+be_ctrl->sv++: GetAll(GetUserId(), isActive, type, search, isAdmin)
+
+sv->repo++: GetAllAsync(filterId, isActive, type, search)
+repo->ctx++: Query coupons
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return list of Coupons
+repo-->>sv--: Return list of Coupons
+
+sv->sv++: Map to list of CouponResponse
+sv--
+
+sv-->>be_ctrl--: Return result
+be_ctrl-->>view--: Return statusCode 200
+view-->>act--: Display coupons list
+
+act->view++: Click on table header column to sort
+view->view++: Sort cached coupon list in memory
+view--
+view-->>act--: Display sorted coupons list
+@enduml

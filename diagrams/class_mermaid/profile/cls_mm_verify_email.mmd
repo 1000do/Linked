@@ -1,0 +1,110 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AccountControllerFE["AccountController"] {
+    <<frontend controller>>
+    + VerifyOtp(request: VerifyOtpRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AuthControllerBE["AuthController"] {
+    <<backend controller>>
+    - _authService : IAuthService
+    
+    + VerifyEmail(request: VerifyEmailRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class VerifyOtpRequest {
+    + Otp : string
+}
+
+class VerifyEmailRequest {
+    + Email : string
+    + Otp : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string
+    + PasswordHash : string?
+    + AccountStatus : string
+    + IsVerified : bool
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAuthService {
+    <<interface>>
+    + VerifyEmailAsync(email: string, otp: string) Task~bool~ *
+}
+
+class IOtpService {
+    <<interface>>
+    + ConsumeOtp(email: string, otp: string, purpose: string) bool *
+}
+
+class IUserRepository {
+    <<interface>>
+    + UpdateEmailVerifiedAsync(email: string) Task~bool~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService {
+    - _userRepository : IUserRepository
+    - _otpService : IOtpService
+    
+    + VerifyEmailAsync(email: string, otp: string) Task~bool~
+}
+
+class OtpService {
+    + ConsumeOtp(email: string, otp: string, purpose: string) bool
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + UpdateEmailVerifiedAsync(email: string) Task~bool~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AuthControllerBE --> IAuthService
+AuthService --> IUserRepository
+AuthService --> IOtpService
+UserRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+OtpService ..|> IOtpService
+UserRepository ..|> IUserRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AccountControllerFE ..> VerifyOtpRequest
+AccountControllerFE ..> VerifyEmailRequest
+AuthControllerBE ..> VerifyEmailRequest
+UserRepository ..> Account
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

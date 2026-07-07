@@ -39,9 +39,9 @@ database Database as db
 
 act++
 act->view++: Click "Remove" button next to a course
-view->fe_ctrl++: Send POST /Wishlist/Remove (with courseId)
+view->fe_ctrl++: POST /Wishlist/Remove
 
-fe_ctrl->be_ctrl++: Send DELETE /api/wishlist/{courseId}
+fe_ctrl->be_ctrl++: DELETE /api/wishlist/{courseId}
 
 be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
@@ -50,28 +50,23 @@ be_ctrl->sv++: Call RemoveFromWishlistAsync(userId, courseId)
 
 sv->w_repo++: Call GetByUserAndCourseAsync(userId, courseId)
 w_repo->ctx++: Query WishlistItem
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
-ctx-->>w_repo--: Return item
-w_repo-->>sv--: Return item
+ctx-->>w_repo--: Return result
+w_repo-->>sv--: Return result
 
 sv->sv++: Validate item
 sv--
 
-alt [item == null]
-    sv-->>be_ctrl: throw KeyNotFoundException
-    be_ctrl-->>fe_ctrl: Return statusCode 404
-    fe_ctrl-->>view: Return statusCode 302
-    view-->>act: Reload wishlist page
-else [item != null]
+alt item != null
     sv->w_repo++: Call RemoveAsync(item)
     w_repo->ctx++: Mark entity as deleted
     ctx-->>w_repo--: Return result
     w_repo-->>sv--: Return result
     
     sv->w_repo++: Call SaveChangesAsync()
-    w_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute DELETE statement
+    w_repo->ctx++: Commit tracked changes
+    ctx->db++: Execute query
     db-->>ctx--: Return result
     ctx-->>w_repo--: Return numberOfRowsAffected
     w_repo-->>sv--: Return numberOfRowsAffected
@@ -79,16 +74,21 @@ else [item != null]
     sv->sv++: Check numberOfRowsAffected
     sv--
     
-    alt [numberOfRowsAffected = 0]
-        sv-->>be_ctrl: throw InvalidOperationException
-        be_ctrl-->>fe_ctrl: Return statusCode 400
-        fe_ctrl-->>view: Return statusCode 302
-        view-->>act: Reload wishlist page
-    else [numberOfRowsAffected > 0]
-        sv-->>be_ctrl--: Return result
+    alt numberOfRowsAffected > 0
+        sv-->>be_ctrl--: Return success
         be_ctrl-->>fe_ctrl--: Return statusCode 200
         fe_ctrl-->>view--: Return statusCode 302
         view-->>act--: Reload wishlist page
+    else numberOfRowsAffected == 0
+        sv-->>be_ctrl--: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl--: Return statusCode 400
+        fe_ctrl-->>view--: Return statusCode 302
+        view-->>act--: Reload wishlist page
     end
+else item == null
+    sv-->>be_ctrl--: throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl--: Return statusCode 404
+    fe_ctrl-->>view--: Return statusCode 302
+    view-->>act--: Reload wishlist page
 end
 @enduml

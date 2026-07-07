@@ -27,7 +27,7 @@
 hide footbox
 
 mainframe Login with Google
-actor User as act
+actor "User/Instructor" as act
 
 participant "LoginView" as view
 participant "AdminNotificationView" as admin_view
@@ -46,9 +46,9 @@ act->view++: Click "Sign in with Google" button
 view->Google++: Request Google Authentication
 Google-->>view--: Return Google IdToken
 
-view->fe_ctrl++: Send POST /Account/GoogleLogin (with IdToken)
+view->fe_ctrl++: POST /Account/GoogleLogin
 
-fe_ctrl->be_ctrl++: Send POST /api/auth/google-login
+fe_ctrl->be_ctrl++: POST /api/auth/google-login
 
 be_ctrl->sv++: Call GoogleLoginAsync(idToken)
 
@@ -57,7 +57,7 @@ Google-->>sv--: Return payload
 
 sv->u_repo++: Call GetAccountByEmailAsync(email)
 u_repo->ctx++: Query Account
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>u_repo--: Return account
 u_repo-->>sv--: Return account
@@ -65,20 +65,20 @@ u_repo-->>sv--: Return account
 sv->sv++: Check account
 sv--
 
-opt [account == null]
+opt account == null
     sv->u_repo++: Call RegisterUserAsync(acc, user)
     u_repo->ctx++: Add Account and User entities
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute INSERT statement
+    ctx->db++: Save changes to database
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return isCreated
     
     sv->u_repo++: Call GetAccountByEmailAsync(email)
     u_repo->ctx++: Query Account
-    ctx->db++: Execute SELECT query
+    ctx->db++: Execute query
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return account
     u_repo-->>sv--: Return account
@@ -86,33 +86,28 @@ end
 
 sv->lock_repo++: Call GetActiveLockoutAsync(accountId, "account")
 lock_repo->ctx++: Query active lockout
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>lock_repo--: Return lockout
-lock_repo-->>sv--: Return lockout
+lock_repo-->>sv--: Return activeLockout
 
 sv->sv++: Check activeLockout
 sv--
 
-alt [activeLockout != null]
-    sv-->>be_ctrl: throw UnauthorizedAccessException
-    be_ctrl-->>fe_ctrl: Return statusCode 500
-    fe_ctrl-->>view: Return statusCode 400
-    view-->>act--: Display error message
-else [activeLockout == null]
+alt Account is active
     sv->u_repo++: Call UpdateLastLoginAsync(accountId)
     u_repo->ctx++: Update LastLoginDate
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute UPDATE statement
+    ctx->db++: Save changes to database
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return result
     
     sv->u_repo++: Call GetRoleByAccountIdAsync(accountId)
     u_repo->ctx++: Query Role
-    ctx->db++: Execute SELECT query
+    ctx->db++: Execute query
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return role
     u_repo-->>sv--: Return role
@@ -125,30 +120,38 @@ else [activeLockout == null]
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute UPDATE statement
+    ctx->db++: Save changes to database
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return result
     
-    sv-->>be_ctrl--: Return LoginResponse DTO
-    be_ctrl-->>fe_ctrl--: Return statusCode 200
+    sv-->>be_ctrl: Return LoginResponse object
+    
+    be_ctrl-->>fe_ctrl: Return statusCode 200
     
     fe_ctrl->fe_ctrl++: Append HttpOnly cookies and user info cookies
     fe_ctrl--
     
-    fe_ctrl-->>view--: Return statusCode 200
+    fe_ctrl-->>view: Return statusCode 200
     
     view->view++: Check user role from cookies
     view--
     
-    alt [role == admin or staff]
-        view -> admin_view++: Redirect to Admin Notification page
-        deactivate view
+    alt role == admin or staff
+        view -->> admin_view: Redirect to Admin Notification page
+        activate admin_view
         admin_view -->> act: Display Admin Notification page
-    else [role == user or instructor]
-        view -> home_view++: Redirect to Home Index page
-        deactivate view
-        home_view -->> act--: Display Homepage
+        deactivate admin_view
+    else role == user or instructor
+        view -->> home_view: Redirect to Home Index page
+        activate home_view
+        home_view -->> act: Display Homepage
+        deactivate home_view
     end
+else Account is locked out
+    sv-->>be_ctrl--: throw UnauthorizedAccessException
+    be_ctrl-->>fe_ctrl--: Return statusCode 500
+    fe_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display error message
 end
 @enduml

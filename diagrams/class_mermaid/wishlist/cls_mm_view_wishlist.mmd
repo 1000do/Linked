@@ -1,0 +1,98 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class WishlistControllerFE["WishlistController"] {
+    <<frontend controller>>
+    + Index() Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class WishlistControllerBE["WishlistController"] {
+    <<backend controller>>
+    - _wishlistService : IWishlistService
+    
+    + GetWishlist() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class WishlistCourseResponse {
+    + CourseId : int
+    + Title : string
+    + ThumbnailUrl : string?
+    + Price : decimal
+    + InstructorName : string
+    + AverageRating : double
+    + EnrollmentCount : int
+    + IsEnrolled : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class WishlistItem {
+    + WishlistItemId : int
+    + UserId : int
+    + CourseId : int
+    + CreatedAt : DateTime
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IWishlistService {
+    <<interface>>
+    + GetWishlistAsync(userId: int) Task~List~WishlistCourseResponse~~ *
+}
+
+class IWishlistRepository {
+    <<interface>>
+    + GetByUserIdAsync(userId: int) Task~List~WishlistItem~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class WishlistService {
+    - _wishlistRepository : IWishlistRepository
+    
+    + GetWishlistAsync(userId: int) Task~List~WishlistCourseResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class WishlistRepository {
+    - _context : AppDbContext
+    
+    + GetByUserIdAsync(userId: int) Task~List~WishlistItem~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + WishlistItems : DbSet~WishlistItem~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+WishlistControllerBE --> IWishlistService
+WishlistService --> IWishlistRepository
+WishlistRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+WishlistService ..|> IWishlistService
+WishlistRepository ..|> IWishlistRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+WishlistControllerFE ..> WishlistCourseResponse
+WishlistControllerBE ..> WishlistCourseResponse
+WishlistService ..> WishlistCourseResponse
+WishlistRepository ..> WishlistItem
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

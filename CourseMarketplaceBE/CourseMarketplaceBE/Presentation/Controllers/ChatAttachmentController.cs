@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ChatAttachmentController : ControllerBase
@@ -22,6 +21,7 @@ public class ChatAttachmentController : ControllerBase
     }
 
     [HttpPost("upload")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> UploadAttachment(IFormFile file)
     {
         if (!_configuration.GetValue<bool>("ChatSettings:EnableAttachments"))

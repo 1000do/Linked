@@ -27,6 +27,7 @@ class CartItem {
     + AddedDate : DateTime?
     + Price : decimal?
     + Course : Course?
+    + User : User?
 }
 
 class Course {
@@ -128,7 +129,7 @@ CartService --> ICourseRepository
 CartRepository --> AppDbContext
 CourseRepository --> AppDbContext
 
-%% === BIDIRECTIONAL ASSOCIATION ===
+%% === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
 Course -- CartItem
 
 %% === INTERFACE REALIZATION ===

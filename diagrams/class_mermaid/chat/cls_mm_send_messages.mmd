@@ -4,6 +4,7 @@ direction LR
 %% ==================== BACKEND - HUB ====================
 
 class ChatHub {
+    <<signalr hub>>
     - _chatService : IChatService
     + SendMessage(dto: SendMessageDto) Task
 }
@@ -11,12 +12,14 @@ class ChatHub {
 %% ==================== BACKEND - DTOs ====================
 
 class SendMessageDto {
+    <<dto>>
     + ChatId : int
     + Content : string
     + Attachments : List~AttachmentInputDto~?
 }
 
 class AttachmentInputDto {
+    <<dto>>
     + FileUrl : string
     + FileName : string?
     + FileType : string?
@@ -24,6 +27,7 @@ class AttachmentInputDto {
 }
 
 class MessageDto {
+    <<dto>>
     + MessageId : int
     + ChatId : int
     + SenderId : int?
@@ -37,6 +41,7 @@ class MessageDto {
 }
 
 class AttachmentDto {
+    <<dto>>
     + AttachmentId : int
     + FileUrl : string
     + FileName : string?
@@ -126,17 +131,17 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
-Message *-- MessageAttachment
-Chat *-- Message
-SendMessageDto *-- AttachmentInputDto
-MessageDto *-- AttachmentDto
-
 %% === UNIDIRECTIONAL ASSOCIATION ===
 ChatHub --> IChatService
 ChatService --> IChatRepository
 ChatService --> IRedisService
 ChatRepository --> AppDbContext
+
+%% === COMPOSITION / BIDIRECTIONAL ASSOCIATION ===
+Message *-- MessageAttachment
+Chat *-- Message
+SendMessageDto *-- AttachmentInputDto
+MessageDto *-- AttachmentDto
 
 %% === INTERFACE REALIZATION ===
 ChatService ..|> IChatService

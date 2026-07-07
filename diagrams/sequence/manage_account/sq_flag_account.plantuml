@@ -1,0 +1,102 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Flag Account for Violation
+actor Admin as act
+
+participant "AdminAccountView" as view
+participant "AdminAccountController" as fe_ctrl <<frontend controller>>
+participant "AdminAccountController" as be_ctrl <<backend controller>>
+participant ":AdminAccountService" as sv
+participant ":UserRepository" as u_repo
+participant ":LockoutRepository" as lockout_repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":NotificationService" as noti
+
+act++
+act->view++: Click "Flag Account" button & enter Reason
+view->fe_ctrl++: POST /AdminAccount/Flag/{id}
+
+fe_ctrl->fe_ctrl++: Validate request model
+fe_ctrl--
+
+alt Validation passed
+    fe_ctrl->be_ctrl++: POST /api/admin/accounts/{id}/flag
+    
+    be_ctrl->sv++: Call FlagAccountAsync(id, reason)
+    sv->u_repo++: Call GetAccountByIdAsync(id)
+    u_repo->ctx++: Query Account
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return Account entity
+    u_repo-->>sv--: Return Account entity
+    
+    alt Account eligible for flagging
+        sv->sv++: Increment flags, update AccountStatus
+        sv--
+        
+        opt newFlags >= 3
+            sv->lockout_repo++: Call AddAsync(lockout)
+            lockout_repo->ctx++: Add Lockout entity (30 days)
+            ctx-->>lockout_repo--: Return tracking state
+            lockout_repo-->>sv--: Return success
+        end
+        
+        sv->u_repo++: Call SaveChangesAsync()
+        u_repo->ctx++: Commit tracked changes
+        ctx->db++: Save changes to database
+        db-->>ctx--: Return result
+        ctx-->>u_repo--: Return numberOfRowsAffected
+        u_repo-->>sv--: Return success
+        
+        opt Send Notification (Try-Catch)
+            sv->noti++: Call SendNotificationAsync(accountId, title, content)
+            noti-->>sv--: Completed
+        end
+        
+        sv-->>be_ctrl: Return result
+        be_ctrl-->>fe_ctrl: Return statusCode 200
+        fe_ctrl-->>view: Return JSON with success = true
+        view-->>act: Render updated account status & flag count
+    else Account is already banned or flags >= 3
+        sv-->>be_ctrl: Return result
+        be_ctrl-->>fe_ctrl: Return statusCode 400
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    else Account not found
+        sv-->>be_ctrl--: Return result
+        be_ctrl-->>fe_ctrl--: Return statusCode 404
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    end
+else Validation failed
+    fe_ctrl-->>view--: Return JSON with success = false
+    view-->>act--: Display error toast message
+end
+@enduml

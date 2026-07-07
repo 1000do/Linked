@@ -24,7 +24,7 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class NotificationControllerFE #FFE6E6 {
+class "NotificationController" as FrontendController <<frontend controller>> #FFE6E6 {
     - _client : HttpClient
     + Details(id: int) : Task<IActionResult>
 }
@@ -46,7 +46,7 @@ class NotificationViewModel #E6CCFF {
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class NotificationController #FFE6E6 {
+class "NotificationController" as BackendController <<backend controller>> #FFE6E6 {
     - _notiService : INotificationService
     + GetNotificationDetail(id: int) : Task<IActionResult>
 }
@@ -76,6 +76,8 @@ class Notification #CCFFE6 {
     + IsRead : bool?
     + IsRemoved : bool?
     + CreatedAt : DateTime?
+    + Receiver : Account?
+    + Sender : Account?
 }
 
 class Account #CCFFE6 {
@@ -94,6 +96,9 @@ class Account #CCFFE6 {
     + IsVerified : bool
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
+    + User : User?
+    + NotificationReceivers : ICollection<Notification>
+    + NotificationSenders : ICollection<Notification>
 }
 
 class User #CCFFE6 {
@@ -151,7 +156,7 @@ Account *-- User
 Account *-- Notification
 
 ' === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-NotificationController --> INotificationService
+BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -160,9 +165,9 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 ' === DEPENDENCY (dashed arrows) ===
-NotificationControllerFE ..> NotificationController
-NotificationControllerFE ..> NotificationViewModel
-NotificationController ..> NotificationResponseDto
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationResponseDto
 NotificationService ..> NotificationResponseDto
 NotificationRepository ..> Notification
 

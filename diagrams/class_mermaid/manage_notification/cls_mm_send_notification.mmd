@@ -3,8 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class NotificationControllerFE["NotificationController"] {
+class FrontendController["NotificationController"] {
     <<frontend controller>>
+    - _api : ApiClient
     + Index() Task~IActionResult~
     + GetListTiny() Task~IActionResult~
     + Admin() IActionResult
@@ -19,6 +20,7 @@ class NotificationControllerFE["NotificationController"] {
 }
 
 class NotificationViewModel {
+    <<view model>>
     + NotificationId : int
     + ReceiverId : int
     + ReceiverFullName : string?
@@ -35,7 +37,7 @@ class NotificationViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class NotificationControllerBE["NotificationController"] {
+class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     - _chatService : IChatService
@@ -53,12 +55,14 @@ class NotificationControllerBE["NotificationController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class NotificationSendDto {
+    <<dto>>
     + ReceiverId : int
     + Title : string
     + Content : string
 }
 
 class NotificationAdvancedDto {
+    <<dto>>
     + TargetType : string
     + Emails : List~string~?
     + Title : string
@@ -67,6 +71,7 @@ class NotificationAdvancedDto {
 }
 
 class NotificationAdminResponseDto {
+    <<dto>>
     + NotificationId : int
     + Title : string?
     + Content : string?
@@ -115,6 +120,8 @@ class Account {
     + AccountUpdatedAt : DateTime?
     + User : User?
     + Manager : Manager?
+    + NotificationReceivers : ICollection~Notification~
+    + NotificationSenders : ICollection~Notification~
 }
 
 class User {
@@ -160,15 +167,15 @@ class IChatService {
 
 class INotificationRepository {
     <<interface>>
-    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~ValueTuple~List~Notification~~int~~~ *
+    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
     + GetByIdAsync(id: int) Task~Notification?~ *
-    + AddAsync(notification: Notification) Task~void~ *
-    + AddRangeAsync(notifications: IEnumerable~Notification~) Task~void~ *
+    + AddAsync(notification: Notification) Task *
+    + AddRangeAsync(notifications: IEnumerable~Notification~) Task *
     + Delete(notification: Notification) void *
     + Update(notification: Notification) void *
     + UpdateRange(notifications: IEnumerable~Notification~) void *
     + SaveChangesAsync() Task~int~ *
-    + GetAllAsync(page: int, pageSize: int) Task~ValueTuple~List~Notification~~int~~~ *
+    + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
     + GetUnreadByReceiverIdAsync(userId: int) Task~List~Notification~~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
     + AutoCleanupAdminNotificationsAsync() Task~int~ *
@@ -190,6 +197,7 @@ class IUserRepository {
 class NotificationService {
     - _repo : INotificationRepository
     - _userRepo : IUserRepository
+    - _hubContext : IHubContext~NotificationHub~
     + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~
     + GetAllNotificationsAsync(page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~
     + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task~bool~
@@ -207,12 +215,12 @@ class NotificationService {
 
 class NotificationRepository {
     - _context : AppDbContext
-    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~ValueTuple~List~Notification~~int~~~
-    + GetAllAsync(page: int, pageSize: int) Task~ValueTuple~List~Notification~~int~~~
+    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
+    + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
     + GetByIdAsync(id: int) Task~Notification?~
     + Delete(notification: Notification) void
-    + AddAsync(notification: Notification) Task~void~
-    + AddRangeAsync(notifications: IEnumerable~Notification~) Task~void~
+    + AddAsync(notification: Notification) Task
+    + AddRangeAsync(notifications: IEnumerable~Notification~) Task
     + Update(notification: Notification) void
     + UpdateRange(notifications: IEnumerable~Notification~) void
     + SaveChangesAsync() Task~int~
@@ -239,21 +247,21 @@ class AppDbContext {
     + Users : DbSet~User~
     + Managers : DbSet~Manager~
     + Notifications : DbSet~Notification~
+    
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Account *-- User
 Account *-- Manager
 Account *-- Notification
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-NotificationControllerFE ..> NotificationControllerBE
-NotificationControllerBE --> INotificationService
-NotificationControllerBE --> IChatService
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+BackendController --> INotificationService
+BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationService --> IUserRepository
 NotificationRepository --> AppDbContext
@@ -264,11 +272,12 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 UserRepository ..|> IUserRepository
 
-%% === DEPENDENCY ===
-NotificationControllerFE ..> NotificationViewModel
-NotificationControllerBE ..> NotificationSendDto
-NotificationControllerBE ..> NotificationAdvancedDto
-NotificationControllerBE ..> NotificationAdminResponseDto
+%% === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationSendDto
+BackendController ..> NotificationAdvancedDto
+BackendController ..> NotificationAdminResponseDto
 NotificationService ..> NotificationAdvancedDto
 NotificationService ..> NotificationAdminResponseDto
 NotificationService ..> Notification

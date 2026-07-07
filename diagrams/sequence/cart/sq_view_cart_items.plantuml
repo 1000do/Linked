@@ -27,61 +27,89 @@
 hide footbox
 
 mainframe View Cart Items
-actor User as act
 
-participant "Cart/Index.cshtml" as view
+actor User as act
+participant "CartIndexPage" as view
+participant "LoginPage" as login_view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
-participant ":CartService" as sv
-participant ":CartRepository" as repo
-participant ":CouponRepository" as couponRepo
-participant ":CourseRepository" as courseRepo
+participant ":ICartService" as sv
+participant ":CartSummaryResponse" as cart_res
+participant ":ICartRepository" as repo
+participant ":ICouponRepository" as couponRepo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Access Shopping Cart page
-view->fe_ctrl++: Send GET request to /Cart
+view->fe_ctrl++: Send GET /Cart
 
-fe_ctrl->fe_ctrl++: Get applied coupon map from cookies
-fe_ctrl--
-
-fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode=... (with Bearer Token)
-
-be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
-sv->repo++: Call GetCartItemsWithDetailsAsync(userId)
-repo->ctx++: Query CartItems joined with Course details
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return CartItems list
-ctx-->>repo--: Return CartItems list
-repo-->>sv--: Return CartItems list
-
-alt [Coupon code is provided]
-    sv->couponRepo++: Call GetByCodeAsync(couponCode)
-    couponRepo->ctx++: Query Coupon details
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return Coupon entity
-    ctx-->>couponRepo--: Return Coupon entity
-    couponRepo-->>sv--: Return Coupon entity
+alt [AccessToken cookie is missing]
+    fe_ctrl-->>login_view: Redirect to Login page
+    activate login_view
+    login_view-->>act--: Display Login page
+else [AccessToken cookie exists]
+    fe_ctrl->fe_ctrl++: Get couponMap from cart_coupon cookie
+    fe_ctrl--
+    
+    fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode={couponCode} (with Bearer Token)
+    
+    alt [Token is invalid or expired]
+        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
+        fe_ctrl-->>login_view: Redirect to Login page
+        activate login_view
+        login_view-->>act--: Display Login page
+    else [Token is valid]
+        be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
+        
+        sv->repo++: Call GetCartItemsWithDetailsAsync(userId)
+        repo->ctx++: Call GetCartItemsWithDetailsAsync(userId)
+        ctx->db++: Execute SELECT query
+        
+        db-->>ctx--: Return CartItems list with Course & Instructor navigation
+        ctx-->>repo--: Return List<CartItem>
+        repo-->>sv--: Return List<CartItem>
+        
+        opt [couponCode is provided]
+            loop for each couponCode in list
+                sv->couponRepo++: Call GetByCodeAsync(code)
+                couponRepo->ctx++: Call GetByCodeAsync(code)
+                ctx->db++: Execute SELECT query
+                db-->>ctx--: Return Coupon
+                ctx-->>couponRepo--: Return Coupon
+                couponRepo-->>sv--: Return Coupon
+                
+                alt [coupon is null OR inactive OR expired/limit reached]
+                    sv-->>be_ctrl: throw InvalidOperationException
+                    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                    fe_ctrl-->>view: Return statusCode 400 (BadRequest)
+                    view-->>act: Display coupon error message
+                else [coupon is valid]
+                    sv->sv++: Calculate eligibleSubTotal & discountAmount
+                    sv--
+                end
+            end
+        end
+        
+        sv->couponRepo++: Call GetActiveAvailableCouponsAsync(now)
+        couponRepo->ctx++: Call GetActiveAvailableCouponsAsync(now)
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return active coupons list
+        ctx-->>couponRepo--: Return List<Coupon>
+        couponRepo-->>sv--: Return List<Coupon>
+        
+        sv->cart_res++: Call CartSummaryResponse()
+        cart_res-->>sv--: Return CartSummaryResponse object
+        
+        sv-->>be_ctrl--: Return CartSummaryResponse object
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+        
+        fe_ctrl->fe_ctrl++: Map JSON response to CartViewModel
+        fe_ctrl--
+        
+        fe_ctrl-->>view--: Return statusCode 200 (View)
+        view-->>act--: Display cart items list, pricing summary, and available coupons
+    end
 end
 
-loop For each CartItem
-    sv->courseRepo++: Call IsEnrolledAsync(userId, courseId)
-    courseRepo->ctx++: Check enrollment status
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return enrollment boolean
-    ctx-->>courseRepo--: Return result
-    courseRepo-->>sv--: Return result
-end
-
-sv->sv++: Calculate SubTotal, DiscountAmount, and Total
-sv--
-
-sv-->>be_ctrl--: Return CartSummaryResponse
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
-
-fe_ctrl->fe_ctrl++: Map response to CartViewModel
-fe_ctrl--
-fe_ctrl-->>view--: Return View(vm)
-view-->>act--: Display cart items, prices, and coupon details
 @enduml

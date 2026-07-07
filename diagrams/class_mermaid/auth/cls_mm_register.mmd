@@ -1,0 +1,126 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AccountController {
+    <<frontend controller>>
+    + Register() Task~IActionResult~
+    + Register(model: RegisterViewModel) Task~IActionResult~
+}
+
+class RegisterViewModel {
+    + Email : string
+    + Username : string
+    + FullName : string
+    + Password : string
+    + ConfirmPassword : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AuthController {
+    <<backend controller>>
+    - _authService : IAuthService
+    
+    + Register(request: RegisterRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class RegisterRequest {
+    + Email : string
+    + Username : string
+    + FullName : string
+    + Password : string
+    + ConfirmPassword : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + PasswordHash : string
+    + AccountStatus : string
+    + IsVerified : bool
+    + User : User?
+}
+
+class User {
+    + UserId : int
+    + AccountId : int
+    + Username : string
+    + FullName : string
+    + Account : Account?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAuthService {
+    <<interface>>
+    + RegisterAsync(request: RegisterRequest) Task~string~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + IsEmailExistsAsync(email: string) Task~bool~ *
+    + IsUsernameExistsAsync(username: string) Task~bool~ *
+    + RegisterUserAsync(account: Account, user: User) Task~bool~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService {
+    - _userRepository : IUserRepository
+    
+    + RegisterAsync(request: RegisterRequest) Task~string~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + IsEmailExistsAsync(email: string) Task~bool~
+    + IsUsernameExistsAsync(username: string) Task~bool~
+    + RegisterUserAsync(account: Account, user: User) Task~bool~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    + Users : DbSet~User~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Account *-- User
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AuthController --> IAuthService
+AuthService --> IUserRepository
+UserRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+UserRepository ..|> IUserRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AccountController ..> AuthController
+AccountController ..> RegisterViewModel
+AuthController ..> RegisterRequest
+AuthService ..> RegisterRequest
+AuthService ..> Account
+AuthService ..> User
+UserRepository ..> Account
+UserRepository ..> User
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
