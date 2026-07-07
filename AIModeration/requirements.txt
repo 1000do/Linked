@@ -25,6 +25,7 @@ PyMuPDF
 python-pptx
 openpyxl
 python-docx
+scenedetect
 
 # Audio
 

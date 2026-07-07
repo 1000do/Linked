@@ -13,7 +13,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 /// </summary>
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class CartController : ControllerBase
 {
     private readonly ICartService _cartService;
@@ -38,6 +37,7 @@ public class CartController : ControllerBase
     /// Thêm courseId vào giỏ của người đang login.
     /// </summary>
     [HttpPost("add/{courseId:int}")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> AddToCart(int courseId)
     {
         var userId = GetUserId();
@@ -68,6 +68,7 @@ public class CartController : ControllerBase
     /// Xóa courseId khỏi giỏ của người đang login.
     /// </summary>
     [HttpDelete("remove/{courseId:int}")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> RemoveFromCart(int courseId)
     {
         var userId = GetUserId();
@@ -96,6 +97,7 @@ public class CartController : ControllerBase
     /// couponCode là optional — không truyền = không áp dụng coupon.
     /// </summary>
     [HttpGet("summary")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GetSummary([FromQuery] string? couponCode)
     {
         var userId = GetUserId();

@@ -19,6 +19,7 @@ class BackendController["ChatController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class MessageDto {
+    <<dto>>
     + MessageId : int
     + ChatId : int
     + SenderId : int?
@@ -32,6 +33,7 @@ class MessageDto {
 }
 
 class AttachmentDto {
+    <<dto>>
     + AttachmentId : int
     + FileUrl : string
     + FileName : string?
@@ -148,14 +150,14 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Account *-- User
 Account *-- Manager
 Chat *-- Message
 Message *-- MessageAttachment
 MessageDto *-- AttachmentDto
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 Message --> Account
 BackendController --> IChatService
 ChatService --> IChatRepository
@@ -165,7 +167,7 @@ ChatRepository --> AppDbContext
 ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
 BackendController ..> MessageDto
 ChatService ..> MessageDto

@@ -9,6 +9,7 @@ class AdminApprovalControllerFE["AdminApprovalController"] {
 }
 
 class InstructorApprovalViewModel {
+    <<view model>>
     + InstructorId : int
     + FullName : string
     + Email : string
@@ -33,6 +34,7 @@ class AdminApprovalControllerBE["AdminApprovalController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class InstructorApprovalDto {
+    <<dto>>
     + InstructorId : int
     + FullName : string
     + Email : string
@@ -124,6 +126,9 @@ class AppDbContext {
     + Instructors : DbSet~Instructor~
     + Users : DbSet~User~
     + Accounts : DbSet~Account~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -149,4 +154,5 @@ InstructorApprovalService ..> InstructorApprovalDto
 InstructorRepository ..> Instructor
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

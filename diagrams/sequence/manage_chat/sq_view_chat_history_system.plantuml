@@ -35,7 +35,8 @@ participant "ChatController" as be_ctrl <<backend controller>>
 participant ":ChatService" as sv
 participant ":UserRepository" as user_repo
 participant ":ChatRepository" as repo
-participant ":RedisService" as redis
+participant ":IRedisService" as redis
+participant ":MessageDto" as msg_dto
 participant ":AppDbContext" as ctx
 database Database as db
 participant "ChatHub" as hub
@@ -98,9 +99,9 @@ else [hasAccess == true]
     ctx->db++: Save changes (Execute UPDATE statement)
     
     alt [Database Save Fails (throws DbUpdateException)]
-        db-->>ctx--: Throw DbUpdateException
-        ctx-->>repo--: Throw DbUpdateException
-        repo-->>sv--: Throw DbUpdateException
+        db-->>ctx: Throw DbUpdateException
+        ctx-->>repo: Throw DbUpdateException
+        repo-->>sv: Throw DbUpdateException
         sv-->>be_ctrl: Throw DbUpdateException
         be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
         fe_ctrl-->>view: Return JSON error
@@ -130,6 +131,9 @@ else [hasAccess == true]
         
         sv->sv++: Filter messages sent after ClearedAt
         sv--
+        
+        sv->msg_dto++: Call MessageDto()
+        msg_dto-->>sv--: Return MessageDto list
         
         sv-->>be_ctrl--: Return MessageDto list
         be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)

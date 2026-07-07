@@ -33,8 +33,8 @@ participant "CartPage" as view
 participant "LoginPage" as login_view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
-participant ":CartService" as sv
-participant ":CartRepository" as repo
+participant ":ICartService" as sv
+participant ":ICartRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -49,16 +49,17 @@ else [User confirms]
     view->fe_ctrl++: Send POST /Cart/RemoveFromCart (with courseId)
     
     alt [AccessToken cookie is missing]
-        fe_ctrl->login_view++: Redirect to Login page
-        deactivate fe_ctrl
-        login_view-->>act: Display Login page
+        fe_ctrl-->>login_view: Redirect to Login page
+        activate login_view
+        login_view-->>act--: Display Login page
     else [AccessToken cookie exists]
         fe_ctrl->be_ctrl++: Send DELETE /api/cart/remove/{courseId} (with Bearer Token)
         
         alt [Token is invalid or expired]
             be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-            fe_ctrl->login_view: Redirect to Login page
-            login_view-->>act: Display Login page
+            fe_ctrl-->>login_view: Redirect to Login page
+            activate login_view
+            login_view-->>act--: Display Login page
         else [Token is valid]
             be_ctrl->sv++: Call RemoveFromCartAsync(userId, courseId)
             
@@ -80,7 +81,7 @@ else [User confirms]
                 
                 sv->repo++: Call SaveChangesAsync()
                 repo->ctx++: Call SaveChangesAsync()
-                ctx->db++: Save changes (Execute DELETE statement)
+                ctx->db++: Save changes to database
                 
                 alt [Database Save Fails (throws DbUpdateException)]
                     db-->>ctx--: Throw DbUpdateException

@@ -32,9 +32,9 @@ actor Staff as act
 participant "ChatIndexPage" as view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
-participant ":ChatService" as sv
-participant ":ChatRepository" as repo
-participant ":RedisService" as redis
+participant ":IChatService" as sv
+participant ":IChatRepository" as repo
+participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -75,9 +75,9 @@ else [User confirms]
         ctx->db++: Save changes (Execute UPDATE statement)
         
         alt [Database Save Fails (throws DbUpdateException)]
-            db-->>ctx--: Throw DbUpdateException
-            ctx-->>repo--: Throw DbUpdateException
-            repo-->>sv--: Throw DbUpdateException
+            db-->>ctx: Throw DbUpdateException
+            ctx-->>repo: Throw DbUpdateException
+            repo-->>sv: Throw DbUpdateException
             sv-->>be_ctrl: Throw DbUpdateException
             be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
             fe_ctrl-->>view: Return JSON error

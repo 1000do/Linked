@@ -27,10 +27,10 @@
 hide footbox
 mainframe Handle Course Moderation With AI
 
-participant ":BackgroundTaskQueue" as queue
-participant ":CourseAiModerationService" as sv
+participant ":IBackgroundTaskQueue" as queue
+participant ":ICourseAiModerationService" as sv
 participant ":CourseModerationResult" as res
-participant ":AiModerationService" as ai_sv
+participant ":IAiModerationService" as ai_sv
 
 queue ++
 queue -> sv++: HandleCourseModerationWithAIAsync(request)

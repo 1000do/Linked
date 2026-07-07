@@ -3,14 +3,16 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class NotificationControllerFE["NotificationController"] {
+class FrontendController["NotificationController"] {
     <<frontend controller>>
+    - _client : HttpClient
     + Index() Task~IActionResult~
     + GetListTiny() Task~IActionResult~
     + Admin() IActionResult
 }
 
 class NotificationViewModel {
+    <<view model>>
     + NotificationId : int
     + ReceiverId : int
     + ReceiverFullName : string?
@@ -27,7 +29,7 @@ class NotificationViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class NotificationControllerBE["NotificationController"] {
+class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     - _chatService : IChatService
@@ -39,6 +41,7 @@ class NotificationControllerBE["NotificationController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class NotificationDto {
+    <<dto>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -50,6 +53,7 @@ class NotificationDto {
 }
 
 class NotificationAdminResponseDto {
+    <<dto>>
     + NotificationId : int
     + Title : string?
     + Content : string?
@@ -92,6 +96,8 @@ class Account {
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
     + User : User?
+    + NotificationReceivers : ICollection~Notification~
+    + NotificationSenders : ICollection~Notification~
 }
 
 class User {
@@ -123,7 +129,7 @@ class INotificationRepository {
     + GetByReceiverIdAsync(userId: int) Task~List~Notification~~ *
     + GetAllAsync() Task~List~Notification~~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
-    + AutoCleanupAdminNotificationsAsync() Task~void~ *
+    + AutoCleanupAdminNotificationsAsync() Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
@@ -143,7 +149,7 @@ class NotificationRepository {
     + GetByReceiverIdAsync(userId: int) Task~List~Notification~~
     + GetAllAsync() Task~List~Notification~~
     + GetUnreadCountAsync(userId: int) Task~int~
-    + AutoCleanupAdminNotificationsAsync() Task~void~
+    + AutoCleanupAdminNotificationsAsync() Task
 }
 
 %% ==================== BACKEND - DbContext ====================
@@ -152,20 +158,21 @@ class AppDbContext {
     + Accounts : DbSet~Account~
     + Notifications : DbSet~Notification~
     + Users : DbSet~User~
+    
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Account *-- User
 Account *-- Notification
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-NotificationControllerFE ..> NotificationControllerBE
-NotificationControllerBE --> INotificationService
-NotificationControllerBE --> IChatService
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+FrontendController ..> BackendController
+BackendController --> INotificationService
+BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -173,10 +180,10 @@ NotificationRepository --> AppDbContext
 NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
-%% === DEPENDENCY ===
-NotificationControllerFE ..> NotificationViewModel
-NotificationControllerBE ..> NotificationDto
-NotificationControllerBE ..> NotificationAdminResponseDto
+%% === DEPENDENCY (dashed arrows) ===
+FrontendController ..> NotificationViewModel
+BackendController ..> NotificationDto
+BackendController ..> NotificationAdminResponseDto
 NotificationService ..> NotificationDto
 NotificationService ..> NotificationAdminResponseDto
 NotificationRepository ..> Notification

@@ -33,7 +33,7 @@ public class CartService : ICartService
     // ═══════════════════════════════════════════════════════════════════════
     public async Task AddToCartAsync(int userId, int courseId)
     {
-        var course = await ValidateAndGetCourseForAdditionAsync(userId, courseId);
+        var course = await ValidateAndGetCourseForCartAsync(userId, courseId);
 
         var cartItem = new CartItem
         {
@@ -45,6 +45,24 @@ public class CartService : ICartService
 
         await _repo.AddCartItemAsync(cartItem);
         await _repo.SaveChangesAsync();
+    }
+
+    private async Task<Course> ValidateAndGetCourseForCartAsync(int userId, int courseId)
+    {
+        var course = await _courseRepo.GetByIdAsync(courseId);
+        if (course == null || course.CourseStatus != CourseStatus.Published.ToValue())
+            throw new InvalidOperationException("Course does not exist or is not published.");
+
+        if (course.InstructorId == userId)
+            throw new InvalidOperationException("You cannot add your own course to the cart.");
+
+        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
+            throw new InvalidOperationException("You have already purchased this course.");
+
+        if (await _repo.IsCourseInCartAsync(userId, courseId))
+            throw new InvalidOperationException("Course is already in the cart.");
+
+        return course;
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -66,9 +84,8 @@ public class CartService : ICartService
     public async Task<CartSummaryResponse> GetCartSummaryAsync(int userId, string? couponCode)
     {
         var cartItems = await _repo.GetCartItemsWithDetailsAsync(userId);
-        var cartItemsList = cartItems.ToList();
-
-        var items = MapToCartItemDtos(cartItemsList);
+        
+        var items = MapToCartItemDtos(cartItems);
         decimal subTotal = items.Sum(i => i.Price);
 
         var response = new CartSummaryResponse
@@ -83,35 +100,15 @@ public class CartService : ICartService
 
         if (!string.IsNullOrWhiteSpace(couponCode))
         {
-            await ApplyCouponsAsync(response, cartItemsList, items, couponCode);
+            await ProcessAppliedCouponsAsync(cartItems, items, couponCode, response);
         }
 
-        response.AvailableCoupons = await GetAvailableCouponsAsync(cartItemsList);
+        response.AvailableCoupons = await GetAvailableCouponsAsync(cartItems);
 
         return response;
     }
 
-    // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
-
-    private async Task<Course> ValidateAndGetCourseForAdditionAsync(int userId, int courseId)
-    {
-        var course = await _courseRepo.GetByIdAsync(courseId);
-        if (course == null || course.CourseStatus != CourseStatus.Published.ToValue())
-            throw new InvalidOperationException("Course does not exist or is not published.");
-
-        if (course.InstructorId == userId)
-            throw new InvalidOperationException("You cannot add your own course to the cart.");
-
-        if (await _courseRepo.IsEnrolledAsync(userId, courseId))
-            throw new InvalidOperationException("You have already purchased this course.");
-
-        if (await _repo.IsCourseInCartAsync(userId, courseId))
-            throw new InvalidOperationException("Course is already in the cart.");
-
-        return course;
-    }
-
-    private List<CartItemDto> MapToCartItemDtos(List<CartItem> cartItems)
+    private List<CartItemDto> MapToCartItemDtos(IEnumerable<CartItem> cartItems)
     {
         return cartItems.Select(c => new CartItemDto
         {
@@ -127,7 +124,11 @@ public class CartService : ICartService
         }).ToList();
     }
 
-    private async Task ApplyCouponsAsync(CartSummaryResponse response, List<CartItem> cartItems, List<CartItemDto> items, string couponCode)
+    private async Task ProcessAppliedCouponsAsync(
+        IEnumerable<CartItem> cartItems, 
+        List<CartItemDto> items, 
+        string couponCode, 
+        CartSummaryResponse response)
     {
         var now = DateTime.Now;
         var codes = couponCode.Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -141,13 +142,20 @@ public class CartService : ICartService
         foreach (var code in codes)
         {
             var coupon = await _couponRepo.GetByCodeAsync(code);
+            if (coupon == null)
+            {
+                throw new InvalidOperationException("This coupon does not exist.");
+            }
+
             ValidateCoupon(coupon, now);
 
-            decimal eligibleSubTotal = CalculateEligibleSubTotal(cartItems, coupon.CouponId);
+            decimal eligibleSubTotal = cartItems
+                .Where(c => c.Course != null && c.Course.CouponId == coupon.CouponId)
+                .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
 
             if (eligibleSubTotal >= coupon.MinOrderValue && eligibleSubTotal > 0)
             {
-                ApplyDiscount(response, items, cartItems, coupon, eligibleSubTotal, appliedCoupons, couponMessages);
+                ApplyCouponDiscount(cartItems, items, coupon, eligibleSubTotal, response, appliedCoupons, couponMessages);
             }
         }
 
@@ -163,11 +171,8 @@ public class CartService : ICartService
         }
     }
 
-    private void ValidateCoupon(Coupon? coupon, DateTime now)
+    private void ValidateCoupon(Coupon coupon, DateTime now)
     {
-        if (coupon == null)
-            throw new InvalidOperationException("This coupon does not exist.");
-
         if (coupon.IsActive != true ||
             (coupon.StartDate.HasValue && now < coupon.StartDate.Value) ||
             (coupon.EndDate.HasValue && now > coupon.EndDate.Value) ||
@@ -177,14 +182,14 @@ public class CartService : ICartService
         }
     }
 
-    private decimal CalculateEligibleSubTotal(IEnumerable<CartItem> cartItems, int couponId)
-    {
-        return cartItems
-            .Where(c => c.Course != null && c.Course.CouponId == couponId)
-            .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
-    }
-
-    private void ApplyDiscount(CartSummaryResponse response, List<CartItemDto> items, List<CartItem> cartItems, Coupon coupon, decimal eligibleSubTotal, List<string> appliedCoupons, List<string> couponMessages)
+    private void ApplyCouponDiscount(
+        IEnumerable<CartItem> cartItems, 
+        List<CartItemDto> items, 
+        Coupon coupon, 
+        decimal eligibleSubTotal, 
+        CartSummaryResponse response, 
+        List<string> appliedCoupons, 
+        List<string> couponMessages)
     {
         decimal discountAmount = coupon.CouponType == "percentage"
             ? eligibleSubTotal * (coupon.DiscountValue / 100m)
@@ -218,14 +223,17 @@ public class CartService : ICartService
         }
     }
 
-    private async Task<List<AvailableCouponDto>> GetAvailableCouponsAsync(List<CartItem> cartItems)
+    private async Task<List<AvailableCouponDto>> GetAvailableCouponsAsync(IEnumerable<CartItem> cartItems)
     {
         var now = DateTime.Now;
         var activeCoupons = await _couponRepo.GetActiveAvailableCouponsAsync(now);
 
         return activeCoupons.Select(cp =>
         {
-            decimal eligibleSubTotal = CalculateEligibleSubTotal(cartItems, cp.CouponId);
+            decimal eligibleSubTotal = cartItems
+                .Where(c => c.Course != null && c.Course.CouponId == cp.CouponId)
+                .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
+
             bool isEligible = eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0;
             string conditionMessage = GenerateCouponConditionMessage(cp, eligibleSubTotal, isEligible);
 
@@ -242,22 +250,5 @@ public class CartService : ICartService
             };
         }).ToList();
     }
-
-    private string GenerateCouponConditionMessage(Coupon cp, decimal eligibleSubTotal, bool isEligible)
-    {
-        if (eligibleSubTotal == 0)
-        {
-            return "Not applicable to any course in the cart";
-        }
-        else if (!isEligible)
-        {
-            return $"Spend another ${(cp.MinOrderValue - eligibleSubTotal):N2} to use this coupon";
-        }
-        else
-        {
-            return cp.CouponType == "percentage"
-                ? $"Off {cp.DiscountValue:0.##}%"
-                : $"Off ${cp.DiscountValue:N2}";
-        }
-    }
 }
+

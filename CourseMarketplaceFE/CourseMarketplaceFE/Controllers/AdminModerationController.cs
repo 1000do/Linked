@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Microsoft.AspNetCore.Authorization;
 using CourseMarketplaceFE.Models.Common;
 
 namespace CourseMarketplaceFE.Controllers
 {
+    [Authorize(Roles = "admin,staff")]
     public class AdminModerationController : Controller
     {
         private readonly ApiClient _apiClient;

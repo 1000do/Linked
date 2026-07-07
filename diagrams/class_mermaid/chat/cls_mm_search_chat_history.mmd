@@ -23,6 +23,7 @@ class BackendChatController["ChatController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class ChatListDto {
+    <<dto>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string?
@@ -106,11 +107,23 @@ class IChatRepository {
     + SearchParticipantsByAccountIdAsync(accountId: int, query: string) Task~List~ChatParticipant~~ *
 }
 
+class IUserRepository {
+    <<interface>>
+}
+
+class ICourseRepository {
+    <<interface>>
+}
+
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
     - _chatRepository : IChatRepository
     - _redisService : IRedisService
+    - _userRepository : IUserRepository
+    - _courseRepository : ICourseRepository
+    - _configuration : IConfiguration
+    
     + SearchChatsAsync(accountId: int, query: string) Task~List~ChatListDto~~
 }
 
@@ -118,6 +131,7 @@ class ChatService {
 
 class ChatRepository {
     - _context : AppDbContext
+    
     + SearchParticipantsByAccountIdAsync(accountId: int, query: string) Task~List~ChatParticipant~~
 }
 
@@ -130,35 +144,40 @@ class AppDbContext {
     + Accounts : DbSet~Account~
     + Users : DbSet~User~
     + Managers : DbSet~Manager~
+    
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Chat *-- ChatParticipant
 Chat *-- Message
 
-%% === AGGREGATION ===
+%% === AGGREGATION (hollow diamond) ===
 Account o-- User
 Account o-- Manager
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendChatController --> IChatService
 ChatService --> IChatRepository
 ChatService --> IRedisService
+ChatService --> IUserRepository
+ChatService --> ICourseRepository
 ChatRepository --> AppDbContext
+
 ChatParticipant --> Account
 
 %% === INTERFACE REALIZATION ===
 ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
 FrontendChatController ..> BackendChatController
 BackendChatController ..> ChatListDto
 ChatService ..> ChatListDto
+ChatService ..> ChatParticipant
 ChatRepository ..> ChatParticipant
 
 %% ==================== STYLES ====================

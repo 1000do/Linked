@@ -29,11 +29,13 @@ hide footbox
 mainframe View Notification List (User/Instructor)
 
 actor User as act
-participant "Notification/Index.cshtml" as view
+participant "NotificationPage" as view
+participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
-participant ":NotificationService" as sv
-participant ":NotificationRepository" as repo
+participant ":INotificationService" as sv
+participant ":NotificationResponseDto" as notif_dto
+participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -53,8 +55,8 @@ alt [Token is valid]
     repo-->>sv--: Return notification list & count
     
     alt [notifications exist]
-        sv->sv++: Map to NotificationResponseDto list
-        sv--
+        sv->notif_dto++: Call NotificationResponseDto()
+        notif_dto-->>sv--: Return NotificationResponseDto list
         sv-->>be_ctrl: Return PagedResult<NotificationResponseDto>
         be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
         fe_ctrl-->>view: Return View with notifications
@@ -67,8 +69,8 @@ alt [Token is valid]
     end
 else [Token is missing or invalid]
     be_ctrl-->>fe_ctrl--: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view--: Return View with empty list
-    view-->>act--: Display empty list / redirect to Login
+    fe_ctrl-->>error_page++: Redirect to ErrorPage
+    error_page-->>act--: Display empty list / redirect to Login
 end
 
 @enduml

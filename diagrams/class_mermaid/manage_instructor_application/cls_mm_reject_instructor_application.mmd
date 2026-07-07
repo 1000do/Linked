@@ -19,6 +19,7 @@ class AdminApprovalControllerBE["AdminApprovalController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class UpdateApprovalStatusDto {
+    <<dto>>
     + InstructorId : int
     + Status : string
     + Reason : string?
@@ -112,7 +113,9 @@ class AppDbContext {
     + Instructors : DbSet~Instructor~
     + Users : DbSet~User~
     + Accounts : DbSet~Account~
-    + SaveChangesAsync(cancellationToken: CancellationToken) Task~int~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -138,4 +141,5 @@ InstructorApprovalService ..> UpdateApprovalStatusDto
 InstructorRepository ..> Instructor
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

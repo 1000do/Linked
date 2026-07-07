@@ -48,6 +48,16 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         var status = statusEl.GetString();
 
+                        if (status == "Approved")
+                        {
+                            // Trigger a token refresh precisely once when newly approved
+                            // so that the JWT picks up the new 'instructor' role from backend.
+                            if (Request.Cookies["UserRole"] != "instructor")
+                            {
+                                await _api.TryRefreshTokenAsync();
+                            }
+                        }
+
                         // Cập nhật lại Cookie cho lần sau
                         var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
                         Response.Cookies.Append("InstructorApprovalStatus", status ?? "None", statusCookieOpts);
@@ -586,6 +596,7 @@ namespace CourseMarketplaceFE.Controllers
         // }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> ModerateCourse([FromForm] int courseId)
         {
             try

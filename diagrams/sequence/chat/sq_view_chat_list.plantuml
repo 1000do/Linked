@@ -33,9 +33,10 @@ participant "ChatIndexPage" as view
 participant "LoginPage" as login_view
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
-participant ":ChatService" as sv
-participant ":RedisService" as redis
-participant ":ChatRepository" as repo
+participant ":IChatService" as sv
+participant ":ChatListDto" as chat_dto
+participant ":IRedisService" as redis
+participant ":IChatRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -47,7 +48,7 @@ alt [AccessToken cookie is missing]
     fe_ctrl-->>view: Return statusCode 302 (Redirect)
     view->login_view++: Redirect to Login page
     deactivate view
-    login_view-->>act: Display Login page
+    login_view-->>act--: Display Login page
 else [AccessToken cookie exists]
     fe_ctrl-->>view--: Return View
     activate view
@@ -61,7 +62,7 @@ else [AccessToken cookie exists]
     alt [Token is invalid or expired]
         be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
         fe_ctrl-->>view: Return Unauthorized
-        view->login_view: Redirect to Login page
+        view->login_view++: Redirect to Login page
         login_view-->>act--: Display Login page
     else [Token is valid]
         be_ctrl->sv++: Call GetMyChatsAsync(accountId)
@@ -82,8 +83,9 @@ else [AccessToken cookie exists]
             redis-->>sv--: Return isOnline
         end
         
-        sv->sv++: Map to List<ChatListDto>
-        sv--
+        sv->chat_dto++: Call ChatListDto()
+        
+        chat_dto-->>sv--: Return ChatListDto items
         
         sv-->>be_ctrl--: Return List<ChatListDto>
         be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)

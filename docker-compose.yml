@@ -46,10 +46,13 @@ services:
   #     TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
   #     CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
   #     TEXT_EMBEDDING_MODEL_NAME: ${TEXT_EMBEDDING_MODEL_NAME}
+  #     WHISPER_MODEL_NAME: ${WHISPER_MODEL_NAME}
   #     MEDIA_EMBEDDING_DIM: ${MEDIA_EMBEDDING_DIM}
   #     TEXT_EMBEDDING_DIM: ${TEXT_EMBEDDING_DIM}
   #   volumes:
   #     - ./ai_models:/app/models
+  #     - hf_cache:/root/.cache/huggingface
+  #     - easyocr_cache:/root/.EasyOCR
   #   ports:
   #     - "8001:8000"
   #   depends_on:
@@ -119,3 +122,5 @@ services:
 
 volumes:
   db_data:
+  # hf_cache:
+  # easyocr_cache:

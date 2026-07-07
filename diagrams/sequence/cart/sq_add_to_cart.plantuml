@@ -32,10 +32,11 @@ actor User as act
 participant "CourseDetailPage" as view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
-participant ":AuthService" as auth_sv
-participant ":CartService" as sv
-participant ":CourseRepository" as courseRepo
-participant ":CartRepository" as repo
+participant ":IAuthService" as auth_sv
+participant ":ICartService" as sv
+participant ":CartItem" as cart_ett
+participant ":ICourseRepository" as courseRepo
+participant ":ICartRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -70,75 +71,75 @@ else [AccessToken cookie exists]
         ctx-->>courseRepo--: Return Course entity
         courseRepo-->>sv--: Return Course entity
         
+        sv->courseRepo++: Call IsEnrolledAsync(userId, courseId)
+        courseRepo->ctx++: Call IsEnrolledAsync(userId, courseId)
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return isEnrolled boolean
+        ctx-->>courseRepo--: Return result
+        courseRepo-->>sv--: Return result
+        
+        sv->repo++: Call IsCourseInCartAsync(userId, courseId)
+        repo->ctx++: Call IsCourseInCartAsync(userId, courseId)
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return isInCart boolean
+        ctx-->>repo--: Return result
+        repo-->>sv--: Return result
+        
+        sv->sv++: Validate Add to Cart request
+        sv--
+        
         alt [course == null || status != Published]
             sv-->>be_ctrl: throw InvalidOperationException("Course does not exist or is not published.")
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON (success = false)
             view-->>act: Display course unavailable message
-        else [course != null && status == Published]
-            alt [course.InstructorId == userId]
-                sv-->>be_ctrl: throw InvalidOperationException("You cannot add your own course to the cart.")
-                be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+        else [course.InstructorId == userId]
+            sv-->>be_ctrl: throw InvalidOperationException("You cannot add your own course to the cart.")
+            be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return JSON (success = false)
+            view-->>act: Display instructor restriction message
+        else [isEnrolled == true]
+            sv-->>be_ctrl: throw InvalidOperationException("You have already purchased this course.")
+            be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return JSON (success = false)
+            view-->>act: Display already purchased message
+        else [isInCart == true]
+            sv-->>be_ctrl: throw InvalidOperationException("Course is already in the cart.")
+            be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return JSON (success = false)
+            view-->>act: Display already in cart message
+        else [Valid Add to Cart request]
+            sv->cart_ett++: Call CartItem()
+            cart_ett-->>sv--: Return CartItem object
+            
+            sv->repo++: Call AddCartItemAsync(cartItem)
+            repo->ctx++: Call AddCartItemAsync(cartItem)
+            ctx-->>repo--: Return success
+            repo-->>sv--: Return success
+            
+            sv->repo++: Call SaveChangesAsync()
+            repo->ctx++: Call SaveChangesAsync()
+            ctx->db++: Save changes to database
+            
+            alt [Database Save Fails (throws DbUpdateException)]
+                db-->>ctx--: Throw DbUpdateException
+                ctx-->>repo--: Throw DbUpdateException
+                repo-->>sv--: Throw DbUpdateException
+                sv-->>be_ctrl: Throw DbUpdateException
+                be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
                 fe_ctrl-->>view: Return JSON (success = false)
-                view-->>act: Display instructor restriction message
-            else [course.InstructorId != userId]
-                sv->courseRepo++: Call IsEnrolledAsync(userId, courseId)
-                courseRepo->ctx++: Call IsEnrolledAsync(userId, courseId)
-                ctx->db++: Execute SELECT query
-                db-->>ctx--: Return isEnrolled boolean
-                ctx-->>courseRepo--: Return result
-                courseRepo-->>sv--: Return result
+                view-->>act: Display system error message
+            else [Database Save Succeeds]
+                db-->>ctx--: Return result
+                ctx-->>repo--: Return result
+                repo-->>sv--: Return result
                 
-                alt [isEnrolled == true]
-                    sv-->>be_ctrl: throw InvalidOperationException("You have already purchased this course.")
-                    be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-                    fe_ctrl-->>view: Return JSON (success = false)
-                    view-->>act: Display already purchased message
-                else [isEnrolled == false]
-                    sv->repo++: Call IsCourseInCartAsync(userId, courseId)
-                    repo->ctx++: Call IsCourseInCartAsync(userId, courseId)
-                    ctx->db++: Execute SELECT query
-                    db-->>ctx--: Return isInCart boolean
-                    ctx-->>repo--: Return result
-                    repo-->>sv--: Return result
-                    
-                    alt [isInCart == true]
-                        sv-->>be_ctrl: throw InvalidOperationException("Course is already in the cart.")
-                        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-                        fe_ctrl-->>view: Return JSON (success = false)
-                        view-->>act: Display already in cart message
-                    else [isInCart == false]
-                        sv->repo++: Call AddCartItemAsync(cartItem)
-                        repo->ctx++: Call AddCartItemAsync(cartItem)
-                        ctx-->>repo--: Return success
-                        repo-->>sv--: Return success
-                        
-                        sv->repo++: Call SaveChangesAsync()
-                        repo->ctx++: Call SaveChangesAsync()
-                        ctx->db++: Save changes (Execute INSERT statement)
-                        
-                        alt [Database Save Fails (throws DbUpdateException)]
-                            db-->>ctx--: Throw DbUpdateException
-                            ctx-->>repo--: Throw DbUpdateException
-                            repo-->>sv--: Throw DbUpdateException
-                            sv-->>be_ctrl: Throw DbUpdateException
-                            be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
-                            fe_ctrl-->>view: Return JSON (success = false)
-                            view-->>act: Display system error message
-                        else [Database Save Succeeds]
-                            db-->>ctx--: Return result
-                            ctx-->>repo--: Return result
-                            repo-->>sv--: Return result
-                            
-                            sv-->>be_ctrl--: Return
-                            be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-                            fe_ctrl-->>view--: Return JSON (success = true)
-                            view->view++: Update cart badge count
-                            view--
-                            view-->>act--: Display success toast notification
-                        end
-                    end
-                end
+                sv-->>be_ctrl--: Return
+                be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+                fe_ctrl-->>view--: Return JSON (success = true)
+                view->view++: Update cart badge count
+                view--
+                view-->>act--: Display success toast notification
             end
         end
     end
