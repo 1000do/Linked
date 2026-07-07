@@ -31,8 +31,8 @@ actor User as act
 participant "CourseLearningPage" as view
 participant "ReportController" as fe_ctrl <<frontend controller>>
 participant "ReportController" as be_ctrl <<backend controller>>
-participant ":ReportSubmissionService" as sv
-participant ":ReportRepository" as repo
+participant ":IReportSubmissionService" as sv
+participant ":IReportRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -84,7 +84,7 @@ else Valid ModelState
         repo -> ctx++: SaveChangesAsync()
         ctx -> db++: Save changes to database
         
-        alt DbUpdateException
+        alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException
             repo -->> sv: throw ReportException
@@ -92,7 +92,7 @@ else Valid ModelState
             be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success = false)
             view -->> act: Display error message regarding report submission failure
-        else Saved Successfully
+        else Database Save Success
             db -->> ctx: Return result
             db--
             ctx -->> repo: Return result
