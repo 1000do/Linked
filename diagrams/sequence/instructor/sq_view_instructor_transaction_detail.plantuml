@@ -1,0 +1,96 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor's Transaction History Detail
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "LoginPage" as login_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":TransactionService" as tx_sv
+participant ":TransactionRepository" as tx_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view: Click "View" button \nnext to a transaction row
+view -> fe_tx_ctrl++: GET /Transaction/InstructorDetail/{id}
+
+fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/{id}
+
+alt Session Invalid / Unauthorized Access (EX-1)
+    be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 401
+    fe_tx_ctrl -->> login_view: Redirect to /Account/Login
+    activate login_view
+    login_view -->> act: Display Login page
+    deactivate login_view
+else Authorized
+    be_tx_ctrl -> tx_sv++: GetTransactionDetailAsync(id)
+    tx_sv -> tx_repo++: GetTransactionDetailAsync(id)
+    tx_repo -> ctx++: Query Transaction by id
+    ctx -> db++: Execute SELECT
+    db -->> ctx--: Transaction Data
+    
+    alt Transaction Not Found (EX-5)
+        ctx -->> tx_repo: null
+        tx_repo -->> tx_sv: null
+        tx_sv -->> be_tx_ctrl: null
+        be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 404
+        fe_tx_ctrl -->> view: Redirect to Earnings Dashboard \nwith Error message
+        view -->> act: Display warning message regarding transaction not found
+    else Transaction Found
+        ctx -->> tx_repo--: Transaction Entity
+        tx_repo -->> tx_sv--: Return TransactionDetailDto
+        tx_sv -->> be_tx_ctrl--: Return TransactionDetailDto
+        be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (TransactionDetailVM)
+        
+        fe_tx_ctrl -> fe_tx_ctrl: Check Transaction Ownership (EX-5.2)
+        alt Unauthorized Transaction Access (EX-5.2)
+            fe_tx_ctrl -->> view: Redirect to Earnings Dashboard \nwith Authorization error
+            view -->> act: Display authorization error message
+        else Authorized Access
+            alt Refund Request Pending (A.7.1)
+                fe_tx_ctrl -->> view: Return View with TransactionDetailVM (Pending)
+                view -->> act: Display top warning banner (Refund Request Pending)
+            else Refund Approved (A.7.2)
+                fe_tx_ctrl -->> view: Return View with TransactionDetailVM (Refunded)
+                view -->> act: Display top alert banner (Refund Approved) & \nhighlight negative deductions in Split Summary Card
+            else Refund Request Rejected (A.7.3)
+                fe_tx_ctrl -->> view: Return View with TransactionDetailVM (Completed + Note)
+                view -->> act: Display top informational banner (Refund Rejected)
+            else Normal Transaction
+                fe_tx_ctrl -->> view--: Return View with TransactionDetailVM
+                view -->> act--: Display Transaction details page\n(Overview, Product, Purchaser, Stripe refs, Split Summary)
+            end
+        end
+    end
+end
+
+@enduml

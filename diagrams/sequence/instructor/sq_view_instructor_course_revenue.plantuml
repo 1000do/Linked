@@ -1,0 +1,89 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor's Course Revenue
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "LoginPage" as login_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":AdminFinanceService" as finance_sv
+participant ":AdminFinanceRepository" as finance_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view: Access Earnings Dashboard
+view -> fe_tx_ctrl++: GET /Transaction/Instructor?year={y}&month={m}
+
+fe_tx_ctrl -> fe_tx_ctrl++: Check Cookies["InstructorApprovalStatus"]
+fe_tx_ctrl--
+
+alt Not Approved Instructor
+    fe_tx_ctrl -->> view: Return statusCode 302
+    view -->> act: Redirect to /Instructor/ApplicationStatus
+else Approved Instructor
+    
+    fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor/course-revenues
+    
+    alt Session Invalid / Unauthorized Access (EX-1)
+        be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 401
+        fe_tx_ctrl -->> login_view: Redirect to /Account/Login
+        activate login_view
+        login_view -->> act: Display Login page
+        deactivate login_view
+    else Authorized
+        be_tx_ctrl -> finance_sv++: GetInstructorCourseRevenuesByInstructorAsync(userId, year, month)
+        finance_sv -> finance_repo++: GetInstructorCourseRevenuesByInstructorAsync(userId, year, month)
+        
+        finance_repo -> ctx++: Query Courses by InstructorId
+        ctx -> db++: Execute SELECT Courses
+        db -->> ctx: Courses Data
+        
+        ctx -> db: Execute SELECT Transactions (Status = succeeded or refund_pending)
+        db -->> ctx--: Transactions Data
+        ctx -->> finance_repo--: Raw Entities
+        
+        finance_repo -> finance_repo: Calculate Monthly, Previous Month, Yearly, Lifetime Net Revenue
+        finance_repo -> finance_repo: Calculate Growth % / New Sales
+        
+        finance_repo -->> finance_sv--: Return List<InstructorCourseRevenueProjection>
+        finance_sv -->> be_tx_ctrl--: Return List<InstructorCourseRevenueResponse>
+        be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (Data)
+    end
+    
+    fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
+    view -->> act: Display Earnings dashboard (Defaults to Learner Purchases tab)
+    
+    act -> view: Click "Course Revenues" tab
+    view -->> act--: Display course revenue table \n(Course Title, Sales Qty, Monthly Rev, Yearly Rev, Lifetime Rev, Growth %)
+end
+
+@enduml

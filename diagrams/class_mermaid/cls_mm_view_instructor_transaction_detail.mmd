@@ -1,0 +1,176 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class TransactionControllerFE["TransactionController"] {
+    <<frontend controller>>
+    + InstructorDetail(id: int) Task~IActionResult~
+}
+
+class TransactionDetailVM {
+    <<view model>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + StripePaymentIntentId : string?
+    + Date : DateTime?
+    + Status : string?
+    + Currency : string?
+    + BuyerName : string
+    + BuyerEmail : string
+    + CourseTitle : string
+    + CourseThumbnail : string?
+    + InstructorName : string
+    + InstructorEmail : string
+    + GrossAmount : decimal
+    + OriginalPrice : decimal
+    + DiscountAmount : decimal
+    + CouponUsed : bool
+    + CouponCode : string?
+    + CouponType : string?
+    + CouponDiscountValue : decimal?
+    + TransferRate : decimal
+    + InstructorPayout : decimal
+    + PlatformProfit : decimal
+    + IsPaid : bool
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    + GetTransactionDetail(id: int) Task~IActionResult~
+}
+
+class TransactionDetailDto {
+    <<dto>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + StripePaymentIntentId : string?
+    + Date : DateTime?
+    + Status : string?
+    + Currency : string?
+    + BuyerName : string
+    + BuyerEmail : string
+    + CourseTitle : string
+    + CourseThumbnail : string?
+    + InstructorName : string
+    + InstructorEmail : string
+    + GrossAmount : decimal
+    + OriginalPrice : decimal
+    + DiscountAmount : decimal
+    + CouponUsed : bool
+    + CouponCode : string?
+    + CouponType : string?
+    + CouponDiscountValue : decimal?
+    + TransferRate : decimal
+    + InstructorPayout : decimal
+    + PlatformProfit : decimal
+    + IsPaid : bool
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICES ====================
+
+class ITransactionService {
+    <<interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
+}
+
+class TransactionService {
+    - _repo : ITransactionRepository
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+%% ==================== BACKEND - REPOSITORIES ====================
+
+class ITransactionRepository {
+    <<interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
+}
+
+class TransactionRepository {
+    - _context : AppDbContext
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + Transactions : DbSet~Transaction~
+}
+
+%% ==================== BACKEND - ENTITIES ====================
+
+class Transaction {
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+}
+
+class TransactionExt {
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+class InstructorPayout {
+    + PayoutId : int
+    + TransactionId : int?
+    + InstructorId : int?
+    + PayoutAmount : decimal
+    + IsPaid : bool
+}
+
+class OrderItem {
+    + OrderItemId : int
+    + CourseId : int?
+    + OriginalPrice : decimal?
+    + DiscountAmount : decimal
+    + CouponUsed : bool?
+    + CouponCode : string?
+    + CouponType : string?
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerBE --> ITransactionService
+TransactionService --> ITransactionRepository
+TransactionRepository --> AppDbContext
+AppDbContext --> Transaction
+Transaction --> TransactionExt : 1..1
+Transaction --> InstructorPayout : 1..*
+Transaction --> OrderItem : 1..1
+
+%% === REALIZATION ===
+TransactionService ..|> ITransactionService
+TransactionRepository ..|> ITransactionRepository
+
+%% === DEPENDENCY ===
+TransactionControllerFE ..> TransactionDetailVM
+TransactionControllerFE ..> TransactionControllerBE : API
+TransactionControllerBE ..> TransactionDetailDto
+ITransactionService ..> TransactionDetailDto
+TransactionService ..> TransactionDetailDto
+ITransactionRepository ..> TransactionDetailDto
+TransactionRepository ..> TransactionDetailDto
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

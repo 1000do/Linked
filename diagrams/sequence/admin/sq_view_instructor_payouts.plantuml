@@ -1,0 +1,95 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor Payouts
+
+actor "Administrator" as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant "AdminFinanceController" as be_ctrl <<backend controller>>
+participant ":AdminFinanceService" as finance_sv
+participant ":StripeConnectService" as stripe_sv
+participant ":AdminFinanceRepository" as finance_repo
+database Database as db
+participant "Stripe API" as stripe
+
+act ++
+view ++
+
+act -> view: Access Admin Finance Dashboard
+view -> fe_ctrl++: GET /AdminFinance
+
+fe_ctrl -> fe_ctrl: Validate active login session
+alt Session Invalid (EX-1)
+    fe_ctrl -->> login_view: Redirect to /Account/Login
+    activate login_view
+    login_view -->> act: Display authentication error message\nRedirect to login page
+    deactivate login_view
+else Valid Session
+    fe_ctrl -> be_ctrl++: GET /api/admin/finance/payouts
+    be_ctrl -> finance_sv++: GetInstructorPayoutsAsync()
+    finance_sv -> finance_repo++: Query Payouts from DB
+    finance_repo -> db++: Execute SELECT
+    db -->> finance_repo--: List of Payouts
+    finance_repo -->> finance_sv--: List of Payouts
+    finance_sv -->> be_ctrl--: PagedResult<PayoutDetailResponse>
+    be_ctrl -->> fe_ctrl--: Return statusCode 200 (Data)
+    
+    fe_ctrl -> fe_ctrl: Map to AdminFinanceUnifiedVM
+    fe_ctrl -->> view--: Return View(AdminFinanceUnifiedVM)
+    
+    act -> view: Click the "Instructor Payouts" tab
+    
+    view -> view: Apply negative red formatting for\nRefunded status
+    view -->> act: Display payouts table (Tx/Instructor,\nPayout Share, Stripe Status, Action)
+end
+
+alt A.4.1 Sync Payout Statuses from Stripe
+    act -> view: Click "Sync with Stripe" button
+    view -> fe_ctrl++: POST /AdminFinance/SyncAllPayouts
+    fe_ctrl -> be_ctrl++: POST /api/admin/finance/payouts/sync-all
+    
+    be_ctrl -> finance_sv++: SyncAllPayoutsWithStripeAsync()
+    finance_sv -> stripe_sv++: SyncAllPayoutsWithStripeAsync()
+    stripe_sv -> stripe++: Request Stripe Connect API to sync statuses
+    stripe -->> stripe_sv--: Updated payout statuses
+    stripe_sv -->> finance_sv--: Success
+    
+    finance_sv -> finance_repo++: Update payout statuses in database
+    finance_repo -> db++: Execute UPDATE
+    db -->> finance_repo--: 1 row affected
+    finance_repo -->> finance_sv--: Success
+    
+    finance_sv -->> be_ctrl--: Success
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    
+    fe_ctrl -->> view--: Redirect to Index (tab=po) with success message
+    view -->> act: Display success message indicating payout statuses have been synchronized
+end
+
+@enduml

@@ -13,10 +13,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class GiftController : ControllerBase
 {
     private readonly IGiftService _giftService;
+    private readonly ICourseQueryService _courseQueryService;
 
-    public GiftController(IGiftService giftService)
+    public GiftController(IGiftService giftService, ICourseQueryService courseQueryService)
     {
         _giftService = giftService;
+        _courseQueryService = courseQueryService;
     }
 
     private int? GetUserId()
@@ -83,6 +85,30 @@ public class GiftController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpGet("course/{id}")]
+    public async Task<IActionResult> GetCourseDetails(int id)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, userId, role);
+            return Ok(ApiResponse<object>.SuccessResponse(course, "Retrieved course successfully."));
+        }
+        catch (System.Collections.Generic.KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
 }

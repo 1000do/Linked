@@ -1,0 +1,116 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Reject Refund Request
+
+actor "Administrator" as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant "AdminFinanceController" as be_ctrl <<backend controller>>
+participant ":AdminFinanceService" as finance_sv
+participant ":AdminFinanceRepository" as finance_repo
+participant ":INotificationService" as noti_sv
+database Database as db
+
+act ++
+view ++
+
+act -> view: Access Admin Finance Dashboard
+act -> view: Select the "Refund Requests" tab
+act -> view: Click the "Reject" button on a pending request row
+
+view -->> act: Display "Reject Refund" confirmation dialog
+
+act -> view: Input rejection reason and click "Reject Request"
+
+alt A.5.1 Reject Reason Missing
+    view -->> act: Display validation error: "You must enter a rejection reason!"
+else Reason Provided
+    view -> fe_ctrl++: POST /AdminFinance/RejectRefundDecision
+    
+    fe_ctrl -> fe_ctrl++: Validate active login session
+    fe_ctrl -->> fe_ctrl--: Session status
+    
+    alt Session Invalid (EX-1)
+        fe_ctrl -->> login_view: Redirect to /Account/Login
+        activate login_view
+        login_view -->> act: Display authentication error message\nRedirect to login page
+        deactivate login_view
+    else Valid Session
+        fe_ctrl -> be_ctrl++: POST /api/admin/finance/refunds/{id}/reject
+        
+        be_ctrl -> finance_sv++: RejectRefundAsync(transactionId, adminNote)
+        
+        finance_sv -> finance_repo++: GetTransactionWithFullGraphAsync(transactionId)
+        finance_repo -> db++: Execute SELECT
+        db -->> finance_repo--: Transaction entity
+        finance_repo -->> finance_sv--: Transaction entity
+        
+        finance_sv -> finance_sv++: Validate Transaction (Exists & Status)
+        finance_sv -->> finance_sv--: Validation result
+        
+        alt Transaction Not Found (EX-3)
+            finance_sv -->> be_ctrl: Throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Display transaction not found error
+        else Status is Not Pending (EX-5)
+            finance_sv -->> be_ctrl: Throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Display error (not in pending status)
+        else Status is Pending
+            
+            finance_sv -> finance_sv++: Revert Status to "succeeded" & Save Admin Note
+            finance_sv -->> finance_sv--: Status updated
+            
+            finance_sv -> finance_repo++: SaveChangesAsync()
+            finance_repo -> db++: Execute UPDATE
+            db -->> finance_repo--: Rows affected
+            finance_repo -->> finance_sv--: Success
+            
+            finance_sv -> noti_sv++: SendNotificationAsync(studentId)
+            noti_sv -> db++: Execute INSERT Notification
+            db -->> noti_sv--: Success
+            noti_sv -->> finance_sv--: Success
+            
+            finance_sv -->> be_ctrl--: Success
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            
+            fe_ctrl -->> view--: Return redirect to Index
+            
+            view -->> act: Close confirmation dialog and display rejection success notification
+        end
+    end
+end
+
+alt A.5 Click Cancel
+    act -> view: Click the "Cancel" button on the confirmation dialog
+    view -> view: Close the confirmation dialog
+    view -->> act: Return to Refund Requests list (Step 3)
+end
+
+@enduml

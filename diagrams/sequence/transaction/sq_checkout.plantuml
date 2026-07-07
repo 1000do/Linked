@@ -1,0 +1,145 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Checkout
+
+actor "User" as act
+participant "CartPage" as cart
+participant "CheckoutPage" as view
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":CheckoutService" as sv
+participant ":OrderRepository" as order_repo
+participant ":CartRepository" as cart_repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant "Stripe API" as stripe_api <<external>>
+
+act ++
+cart ++
+
+act -> cart: Click "Checkout" button
+cart -> fe_ctrl++: GET /Cart/Checkout
+
+fe_ctrl -> fe_ctrl++: Get cart summary
+fe_ctrl--
+fe_ctrl -->> cart--: Return Checkout View HTML
+cart -->> act--: Redirect / Display CheckoutPage
+
+act -> view++: Page loads (Stripe Elements)
+view -> fe_ctrl++: POST /Cart/CreatePaymentIntentAjax (with couponCode)
+fe_ctrl -> be_ctrl++: POST /api/checkout/create-intent
+
+be_ctrl -> sv++: InitiatePaymentIntentAsync(userId, couponCode)
+
+opt Coupon Code Present
+    sv -> sv++: Validate coupon eligibility
+    sv--
+end
+
+sv -> sv++: Calculate total amount and apply discounts
+sv--
+
+sv -> stripe_api++: POST /v1/payment_intents (Create PaymentIntent)
+stripe_api -->> sv--: Return PaymentIntent (ClientSecret)
+
+sv -> order_repo++: AddAsync(Order)
+order_repo -> ctx++: Add entity
+ctx -->> order_repo--: Success
+order_repo -->> sv--: Success
+
+sv -> order_repo++: SaveChangesAsync()
+order_repo -> ctx++: Save changes
+ctx -> db++: Execute INSERT
+db -->> ctx--: Success
+ctx -->> order_repo--: Success
+order_repo -->> sv--: Success
+
+sv -->> be_ctrl--: Return CheckoutResponse (ClientSecret)
+be_ctrl -->> fe_ctrl--: Return 200 OK (ClientSecret)
+fe_ctrl -->> view--: Return JSON (ClientSecret)
+
+view -> view++: Initialize Stripe Elements with ClientSecret
+view--
+
+act -> view: Enter card details & click "Pay"
+view -> stripe_api++: Confirm Card Payment (Stripe.js)
+
+alt Incorrect Card Information / Declined
+    stripe_api -->> view: Return error (Declined/Invalid)
+    view -->> act: Display error message on payment form
+else Payment Cancellation
+    act -> view: Cancel payment (close or back)
+    view -->> act: Restore cart / Cancel
+else Payment Processed Successfully
+    stripe_api -->> view--: Return Success (payment_intent_id)
+    view -> fe_ctrl++: Redirect GET /Cart/CheckoutSuccess?payment_intent_id={id}
+    
+    fe_ctrl -> be_ctrl++: GET /api/checkout/success-intent?payment_intent_id={id}
+    
+    be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
+    
+    sv -> stripe_api++: GET /v1/payment_intents/{id}
+    stripe_api -->> sv--: Return PaymentIntent Details (status = "succeeded")
+    
+    sv -> sv++: Validate transaction amount & status
+    sv--
+    
+    sv -> sv++: Update Order status to "Paid"
+    sv--
+    
+    sv -> sv++: Create Enrollments for User
+    sv--
+    
+    sv -> sv++: Create InstructorPayout (Pending, holds for 14 days)
+    sv--
+    
+    sv -> cart_repo++: ClearCartAsync(userId)
+    cart_repo -> ctx++: Remove cart items
+    ctx -->> cart_repo--: Success
+    cart_repo -->> sv--: Success
+    
+    sv -> order_repo++: SaveChangesAsync()
+    order_repo -> ctx++: Save changes
+    ctx -> db++: Execute UPDATE/INSERT/DELETE
+    db -->> ctx--: Success
+    ctx -->> order_repo--: Success
+    order_repo -->> sv--: Success
+    
+    sv -->> be_ctrl--: Return success message
+    be_ctrl -->> fe_ctrl--: Return 200 OK
+    
+    fe_ctrl -> fe_ctrl++: Delete Coupon Cookie
+    fe_ctrl--
+    fe_ctrl -->> view--: Redirect to /Course/MyCourses
+    view -->> act: Display "Payment successful! Start learning."
+end
+
+deactivate view
+deactivate act
+
+@enduml

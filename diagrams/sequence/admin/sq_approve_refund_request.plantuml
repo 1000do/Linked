@@ -1,0 +1,132 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Approve Refund Request
+
+actor "Administrator" as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant "AdminFinanceController" as be_ctrl <<backend controller>>
+participant ":AdminFinanceService" as finance_sv
+participant ":AdminFinanceRepository" as finance_repo
+participant ":IPaymentGatewayService" as payment_gateway
+participant ":INotificationService" as noti_sv
+database Database as db
+participant "Stripe API" as stripe
+
+act ++
+view ++
+
+act -> view: Access Admin Finance Dashboard
+act -> view: Select the "Refund Requests" tab
+act -> view: Click the "Approve" button on a pending request row
+
+view -->> act: Display "Approve Refund" confirmation dialog
+
+act -> view: Input optional feedback and click "Approve & Refund"
+view -> fe_ctrl++: POST /AdminFinance/ApproveRefundDecision
+
+    fe_ctrl -> fe_ctrl++: Validate active login session
+    fe_ctrl --
+alt Session Invalid (EX-1)
+    fe_ctrl -->> login_view: Redirect to /Account/Login
+    activate login_view
+    login_view -->> act: Display authentication error message\nRedirect to login page
+    deactivate login_view
+else Valid Session
+    fe_ctrl -> be_ctrl++: POST /api/admin/finance/refunds/{id}/approve
+    
+    be_ctrl -> finance_sv++: ApproveRefundAsync(transactionId, adminNote)
+    
+    finance_sv -> finance_repo++: GetTransactionWithFullGraphAsync(transactionId)
+    finance_repo -> db++: Execute SELECT
+    db -->> finance_repo--: Transaction entity
+    finance_repo -->> finance_sv--: Transaction entity
+    
+    finance_sv -> finance_sv++: Validate Transaction & Gift constraints
+    finance_sv --
+    alt Transaction Not Found (EX-3)
+        finance_sv -->> be_ctrl: Throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Display transaction not found error
+    else Status is Not Pending (EX-5)
+        finance_sv -->> be_ctrl: Throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Display error (not in pending status)
+    else Status is Pending
+        
+        finance_sv -> payment_gateway++: ReverseTransferAsync(stripeTransferId)
+        payment_gateway -> stripe++: POST /v1/transfers/{id}/reversals
+        alt Transfer Reversal Failed (EX-6)
+            stripe -->> payment_gateway: Error
+            payment_gateway -->> finance_sv: Throw Exception
+            finance_sv -->> be_ctrl: Throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Display transfer reversal failed error
+        else Reversal Successful
+            stripe -->> payment_gateway--: Reversal Data
+            payment_gateway -->> finance_sv--: reversalId
+        end
+        
+        finance_sv -> payment_gateway++: RefundAsync(paymentIntentId, amount, reason)
+        payment_gateway -> stripe++: POST /v1/refunds
+        alt Stripe Refund Failed (EX-7)
+            stripe -->> payment_gateway: Error
+            payment_gateway -->> finance_sv: Throw Exception
+            finance_sv -->> be_ctrl: Throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Display Stripe refund failed error
+        else Refund Successful
+            stripe -->> payment_gateway--: Refund Data
+            payment_gateway -->> finance_sv--: refundId
+        end
+        
+        finance_sv -> finance_sv++: Update Status, Negate amounts\n& Revoke student enrollment access
+        finance_sv -->> finance_sv--: Update completed
+        
+        finance_sv -> finance_repo++: SaveChangesAsync()
+        finance_repo -> db++: Execute UPDATE
+        db -->> finance_repo--: Rows affected
+        finance_repo -->> finance_sv--: Success
+        
+        finance_sv -> noti_sv++: SendNotificationAsync(studentId)
+        noti_sv -> db++: Execute INSERT Notification
+        db -->> noti_sv--: Success
+        noti_sv -->> finance_sv--: Success
+        
+        finance_sv -->> be_ctrl--: Success
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+        fe_ctrl -->> view--: Return redirect to Index
+        
+        view -->> act: Close confirmation dialog and display success notification
+    end
+end
+
+
+@enduml

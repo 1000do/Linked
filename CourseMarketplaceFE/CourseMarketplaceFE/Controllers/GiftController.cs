@@ -30,7 +30,7 @@ public class GiftController : Controller
         }
 
         // Lấy thông tin khóa học để hiển thị trên giao diện Setup
-        var response = await _api.GetAsync($"public/courses/{courseId}");
+        var response = await _api.GetAsync($"gift/course/{courseId}");
         if (!response.IsSuccessStatusCode)
         {
             TempData["Error"] = "Course not found.";
@@ -93,7 +93,7 @@ public class GiftController : Controller
         if (!ModelState.IsValid)
         {
             // Load lại thông tin khóa học nếu form invalid
-            var courseResponse = await _api.GetAsync($"public/courses/{model.CourseId}");
+            var courseResponse = await _api.GetAsync($"gift/course/{model.CourseId}");
             if (courseResponse.IsSuccessStatusCode)
             {
                 var json = await courseResponse.Content.ReadAsStringAsync();
@@ -154,7 +154,7 @@ public class GiftController : Controller
         }
 
         // Lấy thông tin khóa học
-        var courseResponse = await _api.GetAsync($"public/courses/{courseId}");
+        var courseResponse = await _api.GetAsync($"gift/course/{courseId}");
         if (!courseResponse.IsSuccessStatusCode)
         {
             TempData["Error"] = "Course not found.";

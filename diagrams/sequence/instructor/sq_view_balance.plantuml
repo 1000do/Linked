@@ -1,0 +1,93 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Balance
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant "InstructorController" as be_inst_ctrl <<backend controller>>
+participant ":TransactionService" as tx_sv
+participant ":InstructorService" as inst_sv
+participant ":TransactionRepository" as tx_repo
+participant ":InstructorRepository" as inst_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view: Click "Revenue & Payouts" (or Filter by Month/Year)
+view -> fe_tx_ctrl++: GET /Transaction/Instructor?year={y}&month={m}
+
+par Fetch Dashboard Data Concurrently
+    fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor\n(paged & all for {y}, {m})
+    be_tx_ctrl -> tx_sv++: GetInstructorTransactionsAsync(...)
+    tx_sv -> tx_repo++: GetInstructorTransactionsAsync(...)
+    tx_repo -> ctx++: Query Transactions
+    ctx -> db++: Execute SELECT
+    db -->> ctx--: Data
+    ctx -->> tx_repo--: Transactions List
+    tx_repo -->> tx_sv--: Return List
+    tx_sv -->> be_tx_ctrl--: Return List
+    be_tx_ctrl -->> fe_tx_ctrl--: Return Transactions Data
+
+    fe_tx_ctrl -> be_inst_ctrl++: GET /api/instructor/payouts\n(paged & all for {y}, {m})
+    be_inst_ctrl -> inst_sv++: GetPayoutsAsync(...)
+    inst_sv -> inst_repo++: GetPayoutsAsync(...)
+    inst_repo -> ctx++: Query InstructorPayouts
+    ctx -> db++: Execute SELECT
+    db -->> ctx--: Data
+    ctx -->> inst_repo--: Payouts List
+    inst_repo -->> inst_sv--: Return List
+    inst_sv -->> be_inst_ctrl--: Return List
+    be_inst_ctrl -->> fe_tx_ctrl--: Return Payouts Data
+
+    fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor/course-revenues
+    be_tx_ctrl -> tx_sv++: GetInstructorCourseRevenuesAsync(...)
+    tx_sv -> tx_repo++: GetInstructorCourseRevenuesAsync(...)
+    tx_repo -> ctx++: Query Revenue Group By Course
+    ctx -> db++: Execute SELECT
+    db -->> ctx--: Data
+    ctx -->> tx_repo--: Revenue List
+    tx_repo -->> tx_sv--: Return List
+    tx_sv -->> be_tx_ctrl--: Return List
+    be_tx_ctrl -->> fe_tx_ctrl--: Return Revenue Data
+    
+    fe_tx_ctrl -> be_inst_ctrl++: GET /api/instructor/payout-days
+    be_inst_ctrl -> inst_sv++: GetPayoutDaysDelay()
+    inst_sv -->> be_inst_ctrl--: Return 14 (days)
+    be_inst_ctrl -->> fe_tx_ctrl--: Return 
+end
+
+fe_tx_ctrl -> fe_tx_ctrl++: Compute Financial Metrics\n(Gross Revenue, Refunded, Net Earnings, Pending, Withdrawn)
+fe_tx_ctrl--
+
+fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
+view -->> act: Display Earnings Dashboard (Cards & Transaction Revenue Chart)
+@enduml

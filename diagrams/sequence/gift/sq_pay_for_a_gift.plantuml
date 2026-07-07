@@ -1,0 +1,148 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Pay for a gift
+
+actor User as act
+participant "GiftCheckoutPage" as view
+participant "MyCoursesPage" as my_courses_view
+participant "GiftController" as fe_gift_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":CheckoutService" as sv
+participant ":StripePaymentGateway" as stripe
+participant ":OrderRepository" as order_repo
+
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+' == Access Gift Checkout ==
+act -> view: Access Gift Checkout page
+' view -> fe_gift_ctrl++: GET /Gift/Checkout
+' fe_gift_ctrl -->> view--: Return View
+' view -> view++: Mount Stripe Elements (Empty Card Form)
+' view--
+' view -->> act: Display checkout page and card entry form
+
+' == Initiate Payment Intent ==
+act -> view: Fill in Card details (Name, Card Number, Expiry, CVC)
+act -> view: Click "Pay Securely" button
+
+view -> view++: Validate form inputs
+view--
+opt Invalid form inputs
+    view -->> act: Highlight invalid fields and display error message
+end
+
+' note right of view: Intent is created ON SUBMIT\nto prevent incomplete intents in Stripe
+view -> fe_gift_ctrl++: POST /Gift/CreateGiftPaymentIntentAjax (AJAX)
+fe_gift_ctrl -> be_ctrl++: POST /api/checkout/gift-intent
+be_ctrl -> sv++: InitiateGiftPaymentIntentAsync(userId, request)
+
+sv -> sv++: ValidateCourseForGiftAsync(course, recipientEmail, courseId)
+sv--
+
+alt Gift Details Missing or Invalid
+    sv -->> be_ctrl: throw ArgumentException
+    be_ctrl -->> fe_gift_ctrl: Return statusCode 400
+    fe_gift_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display error message
+else Valid Gift Details
+    sv -> stripe++: CreatePaymentIntentAsync(purchasePrice, "usd", metadata)
+    stripe -->> sv--: Return ClientSecret and PaymentIntentId
+    
+    sv -->> be_ctrl--: Return CheckoutResponse
+    be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
+    fe_gift_ctrl -->> view--: Return JSON (ClientSecret)
+end
+
+' == Process Stripe Payment ==
+view -> stripe++: stripe.confirmCardPayment(clientSecret, cardDetails)
+stripe -->> view--: Return payment result
+
+alt Payment declined
+    view -->> act: Display payment error message
+else Payment Successful
+    view -->> fe_gift_ctrl--: Redirect to /Gift/CheckoutSuccess?payment_intent_id=...
+    activate fe_gift_ctrl
+    fe_gift_ctrl -> be_ctrl++: GET /api/checkout/success-intent
+    be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
+    
+    sv -> sv++: IsTransactionAlreadyProcessedAsync(paymentIntentId)
+    sv--
+    
+    sv -> stripe++: GetPaymentIntentMetadataAsync(paymentIntentId)
+    stripe -->> sv--: Return metadata
+    
+    sv -> sv++: ProcessSuccessfulPaymentCoreAsync
+    
+    sv -> order_repo++: BeginTransactionAsync()
+    order_repo -> ctx++: Database.BeginTransactionAsync()
+    ctx -> db++: Begin transaction
+    db -->> ctx--: Transaction started
+    ctx -->> order_repo--: Return IDbContextTransaction
+    order_repo -->> sv--: Return transaction
+    
+    sv -> sv++: Save Order, OrderItems, Transactions
+    sv -> order_repo++: AddAsync(order)
+    order_repo -->> sv--: Return result
+    sv--
+    
+    sv -> sv++: ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
+    sv--
+    
+    sv -> sv++: ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+    sv--
+    
+    sv -> order_repo++: SaveChangesAsync()
+    order_repo -> ctx++: SaveChangesAsync()
+    ctx -> db++: Execute query
+    db -->> ctx--: Return data
+    ctx -->> order_repo--: Return 1
+    order_repo -->> sv--: Return 1
+    
+    sv -> sv++: Commit transaction
+    sv -> ctx++: transaction.CommitAsync()
+    ctx -> db++: Commit
+    db -->> ctx--: Committed
+    ctx -->> sv--: Return result
+    sv--
+    
+    sv--
+    sv -->> be_ctrl--: Return result
+    be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
+    
+    fe_gift_ctrl -->> my_courses_view--: Redirect to My Courses page
+    activate my_courses_view
+    my_courses_view -->> act: Display checkout success message
+    deactivate my_courses_view
+    deactivate view
+end
+
+@enduml

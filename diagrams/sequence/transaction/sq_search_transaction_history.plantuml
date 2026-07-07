@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white
+            BackgroundColor white   
         }
         groupHeader{
             BackgroundColor white
@@ -25,11 +25,10 @@
 </style>
 
 hide footbox
-
 mainframe Search Transaction History
-actor User as act
 
-participant "Transaction/History.cshtml" as view
+actor User as act
+participant "PurchaseHistoryPage" as view
 participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":TransactionService" as sv
@@ -37,34 +36,63 @@ participant ":TransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
-act++
-act->view++: Enter keyword / select status / select sortBy
-act->view: Click "Apply" button
-view->fe_ctrl++: Submit form to GET /Transaction/History
+act ++
+view ++
 
-fe_ctrl->be_ctrl++: Send GET /api/transactions/my?keyword=...&status=...&sortBy=...
+act -> view: Enter search keyword in "Search by course title..." input field
+act -> view: Click "Apply" button or press "Enter"
 
-be_ctrl->sv++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
-sv->repo++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+view -> fe_ctrl++: GET /Transaction/History?keyword=searchTerm
 
-repo->ctx++: Apply search, filter, and ordering
-ctx->db++: Execute SELECT query with filters
-db-->>ctx--: Return database results
-ctx-->>repo--: Return data
-repo-->>sv--: Return data
-
-sv->sv++: Map to PagedResult
-sv--
-sv-->>be_ctrl--: Return DTO list
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
-
-fe_ctrl->fe_ctrl++: Deserialize response
+fe_ctrl -> fe_ctrl++: Initialize TransactionPagedVM
 fe_ctrl--
-fe_ctrl-->>view--: Return View(vm)
 
-alt [No transactions match filters]
-    view-->>act: Display empty state message
-else [Matching transactions found]
-    view-->>act--: Display filtered and sorted purchase history list
+fe_ctrl -> be_ctrl++: GET /api/transactions/my?keyword=searchTerm
+be_ctrl -> sv++: GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+sv -> sv++: Validate pagination parameters
+sv--
+
+sv -> repo++: GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+repo -> ctx++: Calculate totalCount and query items with keyword filter
+ctx -> db++: Execute query
+db -->> ctx--: Return data
+ctx -->> repo--: Return items and totalCount
+
+repo -->> sv--: Return items and totalCount
+
+sv -> sv++: Create PagedResult
+sv--
+
+sv -->> be_ctrl--: Return PagedResult object
+be_ctrl -->> fe_ctrl--: Return statusCode 200
+
+fe_ctrl -> fe_ctrl++: Deserialize JSON to TransactionPagedVM
+fe_ctrl--
+
+fe_ctrl -->> view--: Return View(vm)
+
+view -> view++: Check totalCount and keyword
+view--
+alt Matching results found (totalCount > 0)
+    view -->> act: Display filtered list of transactions
+
+    opt Reset Search (A.2.1)
+        act -> view: Click "Reset" button
+        view -> fe_ctrl++: GET /Transaction/History (without keyword)
+        
+       
+        fe_ctrl -->> view--: Return View(vm)
+        
+        view -->> act: Clear search input field and hide "Reset" button
+        view -->> act: Display full unfiltered transaction history list
+    end
+    
+else No matching results found (totalCount == 0)
+    view -->> act: Display empty state screen with "No transactions found" message
+
+
 end
+
 @enduml

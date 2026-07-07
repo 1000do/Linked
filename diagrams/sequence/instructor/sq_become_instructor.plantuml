@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white
+            BackgroundColor white   
         }
         groupHeader{
             BackgroundColor white
@@ -25,112 +25,116 @@
 </style>
 
 hide footbox
-
 mainframe Become an Instructor
-actor User as act
 
-participant "Instructor/Become.cshtml" as view
-participant "Instructor/ApplicationStatus.cshtml" as status_view
+actor "Learner" as act
+participant "InstructorPortal" as portal
+participant "ApplyPage" as view
 participant "InstructorController" as fe_ctrl <<frontend controller>>
 participant "InstructorController" as be_ctrl <<backend controller>>
 participant ":InstructorService" as sv
+participant ":FileUploadService" as upload
 participant ":InstructorRepository" as repo
-participant "Cloudinary API" as cloud
 participant ":AppDbContext" as ctx
 database Database as db
 
-== Step 1: Access Application Form ==
-act++
-act->view++: Access "Become an Instructor" page
-view->fe_ctrl++: Send GET /Instructor/Apply
+act ++
+portal ++
 
-fe_ctrl->be_ctrl++: Send GET /api/instructor/dashboard (with Bearer Token)
-be_ctrl-->>fe_ctrl--: Return statusCode 404 (Not Found)
+act -> portal: Click "Become an Instructor"
+portal -> fe_ctrl++: GET /Instructor/Apply
 
-fe_ctrl->be_ctrl++: Send GET /api/instructor/stripe-countries
-be_ctrl-->>fe_ctrl--: Return supported countries list
+fe_ctrl -> fe_ctrl++: Check user session
+fe_ctrl--
 
-fe_ctrl->be_ctrl++: Send GET /api/public/courses/categories
-be_ctrl-->>fe_ctrl--: Return available categories list
-
-fe_ctrl-->>view--: Return View(applyModel)
-view-->>act--: Display Become an Instructor form
-
-== Step 2: Submit Application ==
-act++
-act->view++: Enter bio, professional title, upload CV, and click "Submit"
-view->fe_ctrl++: Send POST /Instructor/Apply (with Form Data)
-
-fe_ctrl->be_ctrl++: Send POST /api/instructor/apply (with MultipartFormDataContent)
-
-be_ctrl->sv++: Call SubmitApplicationAsync(userId, request)
-sv->repo++: Call GetApplicationByUserIdAsync(userId)
-repo->ctx++: Query existing application
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return application
-ctx-->>repo--: Return application
-repo-->>sv--: Return application
-
-alt [CV Document File provided]
-    sv->cloud++: Upload certificate/CV file
-    cloud-->>sv--: Return Cloudinary file URL
+opt Session Invalid
+    fe_ctrl -->> portal: Return Redirect to Login
+    portal -->> act: Display Login page
 end
 
-alt [Previous application was Rejected]
-    sv->repo++: Call UpdateApplicationAsync(app)
-    repo->ctx++: Mark application as modified
-    ctx-->>repo--: Return
-    repo-->>sv--: Return
-else [New application]
-    sv->repo++: Call AddApplicationAsync(app)
-    repo->ctx++: Add application entity
-    ctx-->>repo--: Return
-    repo-->>sv--: Return
+fe_ctrl -> be_ctrl++: GET /api/instructor/dashboard
+be_ctrl -->> fe_ctrl--: Return ApprovalStatus (if any)
+
+opt ApprovalStatus == "Pending" or "Approved"
+    fe_ctrl -->> portal: Redirect to ApplicationStatus page
+    portal -->> act: Display Application Status
 end
 
-sv->repo++: Call SaveChangesAsync()
-repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Execute INSERT or UPDATE statement
-db-->>ctx--: Return result
-ctx-->>repo--: Return numberOfRowsAffected
-repo-->>sv--: Return numberOfRowsAffected
+fe_ctrl -> be_ctrl++: GET /api/Profile
+be_ctrl -->> fe_ctrl--: Return IsVerified status
 
-repo->repo++: Check numberOfRowsAffected
-repo--
+opt Email Not Verified
+    fe_ctrl -->> view++: Render View with ViewBag.IsEmailVerified = false
+    view -> view++: Block form, show warning banner
+    view--
+    view -->> act: Display "Email Not Verified" banner & "Verify Email Now" button
+    act -> view: Click "Verify Email Now"
+    view -->> act: Redirect to Email Verification page
+end
 
-alt [numberOfRowsAffected > 0]
-    repo-->>sv: Return true
-    sv-->>be_ctrl--: Return success message
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-    
-    fe_ctrl -> status_view++: Redirect to status page
-    deactivate fe_ctrl
-    deactivate view
-    
-    status_view->fe_ctrl++: Send GET /Instructor/ApplicationStatus
-    fe_ctrl->be_ctrl++: Send GET /api/instructor/dashboard (with Bearer Token)
-    be_ctrl->sv++: Call GetInstructorDashboardAsync(userId)
-    sv->repo++: Call GetDashboardAsync(userId)
-    repo->ctx++: Query details
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return details
-    ctx-->>repo--: Return details
-    repo-->>sv--: Return details
-    sv-->>be_ctrl--: Return details
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with dashboard JSON
-    
-    fe_ctrl->fe_ctrl++: Save Cookie "InstructorApprovalStatus" = "Pending"
+opt Resubmitting a Rejected Application
+    fe_ctrl -> be_ctrl++: GET /api/instructor/apply-info
+    be_ctrl -->> fe_ctrl--: Return previous application info (Rejected)
+    fe_ctrl -> fe_ctrl++: Pre-fill ViewModel (IsResubmit = true)
     fe_ctrl--
-    fe_ctrl-->>status_view--: Return View(model)
-    deactivate fe_ctrl
-    status_view-->>act--: Display application status page
-else [numberOfRowsAffected = 0]
-    repo-->>sv--: Return false
-    sv->sv++: throw InvalidOperationException
-    sv--
-    sv-->>be_ctrl--: throw InvalidOperationException
-    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view--: Return statusCode 400
-    view-->>act--: Display submission failure error message
 end
+
+fe_ctrl -->> view: Return View(ViewModel)
+view -->> act: Display instructor application form
+
+act -> view: Fill professional details, Stripe country, and upload document(s)
+act -> view: Click "Submit Application"
+view -> fe_ctrl++: POST /Instructor/Apply (FormData)
+
+fe_ctrl -> fe_ctrl++: Validate form & file constraints (Max 3 files, 5MB, format)
+fe_ctrl--
+
+alt Form Validation Failed
+    fe_ctrl -->> view: Return View with ModelState errors
+    view -->> act: Display validation errors inline
+else Validation Passed (Normal Flow)
+    fe_ctrl -> be_ctrl++: POST /api/instructor/apply (FormData)
+    
+    be_ctrl -> sv++: SubmitApplicationAsync(userId, request)
+    
+    sv -> repo++: GetByIdAsync(userId)
+    repo -> ctx++: Query instructor
+    ctx -> db++: Execute SELECT
+    db -->> ctx--: Return record
+    ctx -->> repo--: Return Instructor entity
+    repo -->> sv--: Return Instructor entity
+    
+    sv -> upload++: UploadImageAsync(file)
+    upload -->> sv--: Return document URLs
+    
+    alt Resubmitting a Rejected Application
+        sv -> sv++: Update existing application properties (ApprovalStatus = Pending)
+        sv--
+    else New Application
+        sv -> sv++: Create new Instructor entity (ApprovalStatus = Pending)
+        sv--
+        sv -> repo++: AddAsync(instructor)
+        repo -> ctx++: Add entity
+        ctx -->> repo--: Success
+        repo -->> sv--: Success
+    end
+    
+    sv -> repo++: SaveChangesAsync()
+    repo -> ctx++: Save changes
+    ctx -> db++: Execute INSERT / UPDATE
+    db -->> ctx--: Success
+    ctx -->> repo--: Return rows affected
+    repo -->> sv--: Return rows affected
+    
+    sv -->> be_ctrl--: Return success message
+    be_ctrl -->> fe_ctrl--: Return 200 OK
+    
+    fe_ctrl -->> portal--: Redirect to ApplicationStatus (TempData["SuccessMessage"])
+    portal -->> act: Display "Your application has been submitted successfully!"
+end
+
+deactivate view
+deactivate portal
+deactivate act
+
 @enduml

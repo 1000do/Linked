@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white
+            BackgroundColor white   
         }
         groupHeader{
             BackgroundColor white
@@ -25,11 +25,11 @@
 </style>
 
 hide footbox
-
 mainframe View Transaction Detail
-actor User as act
 
-participant "Transaction/HistoryDetail.cshtml" as view
+actor User as act
+participant "PurchaseHistoryPage" as list_view
+participant "HistoryDetailPage" as view
 participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":TransactionService" as sv
@@ -37,31 +37,63 @@ participant ":TransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
-act++
-act->view++: Click chevron/details button on transaction card
-view->fe_ctrl++: Send GET /Transaction/HistoryDetail/{id}
+act ++
+list_view ++
 
-fe_ctrl->be_ctrl++: Send GET /api/transactions/{id} (with Bearer Token)
+act -> list_view: Click "View Detail" button next to a transaction record
+list_view -> fe_ctrl++: GET /Transaction/HistoryDetail/{id}
 
-alt [Transaction not found (404)]
-    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-    fe_ctrl-->>view: Redirect to Transaction/History with Error message
-    view-->>act: Redirect to Purchase History page and display error
-else [Transaction is found]
-    be_ctrl->sv++: Call GetTransactionDetailAsync(transactionId)
-    sv->repo++: Call GetTransactionDetailAsync(transactionId)
-    
-    repo->ctx++: Query detailed transaction data
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return data
-    ctx-->>repo--: Return DTO
-    repo-->>sv--: Return DTO
-    sv-->>be_ctrl--: Return DTO
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
-    
-    fe_ctrl->fe_ctrl++: Deserialize response
-    fe_ctrl--
-    fe_ctrl-->>view--: Return View
-    view-->>act--: Display invoice details page
+fe_ctrl -> be_ctrl++: GET /api/transactions/{id}
+
+be_ctrl -> be_ctrl++: Check user session
+be_ctrl--
+
+opt Session Invalid
+    be_ctrl -->> fe_ctrl: Return 401 Unauthorized
+    fe_ctrl -->> view: Redirect to Login
+    view -->> act: Display Login page
 end
+
+be_ctrl -> sv++: GetTransactionDetailAsync(id)
+
+sv -> repo++: GetTransactionDetailAsync(id)
+
+repo -> ctx++: Query transaction details
+ctx -> db++: Execute SELECT with JOINs (Courses, Users, OrderItems)
+db -->> ctx--: Return record
+ctx -->> repo--: Return TransactionDetailDto projection
+repo -->> sv--: Return TransactionDetailDto
+
+sv -->> be_ctrl--: Return TransactionDetailDto
+
+alt Transaction Not Found
+    be_ctrl -->> fe_ctrl: Return 404 NotFound
+    fe_ctrl -->> list_view: Redirect to History list (TempData["Error"])
+    list_view -->> act: Display "Transaction not found" message
+else Transaction Found (Normal Flow)
+    be_ctrl -->> fe_ctrl--: Return 200 OK (ApiResponse<TransactionDetailDto>)
+    
+    fe_ctrl -> fe_ctrl++: Deserialize to TransactionDetailVM
+    fe_ctrl--
+    
+    fe_ctrl -->> view++: Return View(TransactionDetailVM)
+    
+    view -> view++: Render transaction receipt
+    view--
+    
+    opt Refunded Transaction
+        view -> view++: Check if Status == "refunded"
+        view--
+        view -->> act: Display refund notification banner (Reason, Admin Note)
+        view -->> act: Display negative Gross Amount and Total
+    end
+    
+    view -->> act: Display detailed financial breakdown, purchaser info, and course details
+end
+
+deactivate fe_ctrl
+deactivate list_view
+deactivate view
+deactivate act
+
 @enduml
