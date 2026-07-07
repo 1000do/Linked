@@ -50,24 +50,13 @@ namespace CourseMarketplaceBE.Application.Services
 
             var dtos = items.Select(a =>
             {
-                string? roleName = "user";
-                string? fullName = a.User?.FullName;
-
-                if (a.Manager != null)
-                {
-                    roleName = a.Manager.Role;
-                    fullName = a.Manager.FullName ?? a.Manager.DisplayName;
-                }
-                else if (a.User?.Instructor != null)
-                {
-                    roleName = "instructor";
-                }
+                var (roleName, fullName) = ResolveRoleAndFullName(a);
 
                 return new AdminAccountListDto
                 {
                     AccountId = a.AccountId,
                     Email = a.Email,
-                    FullName = fullName ?? "No Name",
+                    FullName = fullName,
                     Role = roleName,
                     AccountStatus = a.AccountStatus ?? AccountStatus.Active.ToValue(),
                     AccountCreatedAt = a.AccountCreatedAt,
@@ -86,26 +75,14 @@ namespace CourseMarketplaceBE.Application.Services
             var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null) return null;
 
-            string? roleName = "user";
-            string? fullName = account.User?.FullName;
-
-            if (account.Manager != null)
-            {
-                roleName = account.Manager.Role;
-                fullName = account.Manager.FullName ?? account.Manager.DisplayName;
-            }
-            else if (account.User?.Instructor != null)
-            {
-                roleName = "instructor";
-            }
-
+            var (roleName, fullName) = ResolveRoleAndFullName(account);
             var activeLockout = await _lockoutRepository.GetActiveLockoutAsync(id, "account");
 
             var dto = new AdminAccountDetailDto
             {
                 AccountId = account.AccountId,
                 Email = account.Email,
-                FullName = fullName ?? "No Name",
+                FullName = fullName,
                 PhoneNumber = account.Manager?.PhoneNumber ?? account.PhoneNumber,
                 AccountStatus = account.AccountStatus ?? AccountStatus.Active.ToValue(),
                 AccountCreatedAt = account.AccountCreatedAt,
@@ -118,36 +95,18 @@ namespace CourseMarketplaceBE.Application.Services
                 LockoutEnd = activeLockout?.LockoutEnd
             };
 
-            // Nếu là Staff hoặc Admin (Manager)
             if (account.Manager != null)
             {
-                dto.ResolvedReportsCount = await _reportRepository.GetResolvedReportsCountAsync(id);
-                dto.SentNotificationsCount = await _notificationRepository.GetSentNotificationsCountAsync(id);
-                dto.ActiveChatsCount = await _chatRepository.GetActiveChatsCountAsync(id);
+                await PopulateManagerDetailsAsync(dto, id);
             }
 
-            // Nếu là Học viên
             if (account.User != null)
             {
-                dto.TotalSpent = await _transactionRepository.GetTotalSpentAsync(id);
-                dto.EnrolledCoursesCount = (await _enrollmentRepository.GetMyEnrolledCoursesAsync(id)).Count;
+                await PopulateStudentDetailsAsync(dto, id);
 
-                // Nếu là Giảng viên
-                var inst = account.User.Instructor;
-                if (inst != null)
+                if (account.User.Instructor != null)
                 {
-                    dto.IsInstructor = true;
-                    dto.ProfessionalTitle = inst.ProfessionalTitle;
-                    dto.ExpertiseCategories = inst.ExpertiseCategories;
-                    dto.LinkedinUrl = inst.LinkedinUrl;
-                    dto.StripeAccountId = inst.StripeAccountId;
-                    dto.StripeOnboardingStatus = inst.StripeOnboardingStatus;
-                    dto.PayoutsEnabled = inst.PayoutsEnabled;
-                    dto.ChargesEnabled = inst.ChargesEnabled;
-
-                    dto.TotalRevenue = await _transactionRepository.GetInstructorTotalRevenueAsync(id);
-                    dto.TotalWithdrawn = await _transactionRepository.GetInstructorTotalWithdrawnAsync(id);
-                    dto.AvailableBalance = dto.TotalRevenue - dto.TotalWithdrawn;
+                    await PopulateInstructorDetailsAsync(dto, id, account.User.Instructor);
                 }
             }
 
@@ -228,24 +187,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (!string.IsNullOrWhiteSpace(request.AccountStatus))
             {
-                var oldStatus = account.AccountStatus;
-                account.AccountStatus = request.AccountStatus;
-                if (request.AccountStatus.Equals(AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase) && !string.Equals(oldStatus, AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase))
-                {
-                    var lockout = new Lockout
-                    {
-                        AccountId = account.AccountId,
-                        LockoutType = "account",
-                        LockoutLevel = "severe",
-                        LockoutStart = DateTime.UtcNow,
-                        LockoutEnd = DateTime.UtcNow.AddYears(100)
-                    };
-                    await _lockoutRepository.AddAsync(lockout);
-                }
-                else if (!request.AccountStatus.Equals(AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase) && string.Equals(oldStatus, AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase))
-                {
-                    await _lockoutRepository.RemoveAccountLockoutsAsync(account.AccountId);
-                }
+                await ProcessStatusUpdateAsync(account, request.AccountStatus);
             }
 
             await _userRepository.SaveChangesAsync();
@@ -257,7 +199,6 @@ namespace CourseMarketplaceBE.Application.Services
             var account = await _userRepository.GetAccountByIdAsync(id);
             if (account == null) return null;
 
-            // Không cho phép tự ban chính mình (Super Admin)
             if (account.Manager != null && account.Manager.Role == "admin")
             {
                 throw new InvalidOperationException("Cannot ban the Super Admin account.");
@@ -266,24 +207,15 @@ namespace CourseMarketplaceBE.Application.Services
             if (account.AccountStatus == AccountStatus.Banned.ToValue())
             {
                 account.AccountStatus = AccountStatus.Active.ToValue();
-                await _lockoutRepository.RemoveAccountLockoutsAsync(account.AccountId);
+                await RemoveLockoutsAsync(account.AccountId);
             }
             else
             {
                 account.AccountStatus = AccountStatus.Banned.ToValue();
-                var lockout = new Lockout
-                {
-                    AccountId = account.AccountId,
-                    LockoutType = "account",
-                    LockoutLevel = "severe",
-                    LockoutStart = DateTime.UtcNow,
-                    LockoutEnd = DateTime.UtcNow.AddYears(100)
-                };
-                await _lockoutRepository.AddAsync(lockout);
+                await ApplySevereLockoutAsync(account.AccountId, 36500); // 100 years
             }
 
-            int rows4 = await _userRepository.SaveChangesAsync();
-            /* zero rows exception removed */
+            await _userRepository.SaveChangesAsync();
             return account.AccountStatus;
         }
 
@@ -304,6 +236,82 @@ namespace CourseMarketplaceBE.Application.Services
             var newFlags = currentFlags + 1;
             account.AccountFlagCount = newFlags;
 
+            await ProcessFlaggingStatusAsync(account, newFlags);
+            await _userRepository.SaveChangesAsync();
+            await SendFlaggingNotificationAsync(account.AccountId, newFlags, reason);
+
+            return (true, newFlags, account.AccountStatus, null);
+        }
+
+        // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
+
+        private (string Role, string FullName) ResolveRoleAndFullName(Account account)
+        {
+            string role = "user";
+            string fullName = account.User?.FullName ?? "No Name";
+
+            if (account.Manager != null)
+            {
+                role = account.Manager.Role;
+                fullName = account.Manager.FullName ?? account.Manager.DisplayName ?? "No Name";
+            }
+            else if (account.User?.Instructor != null)
+            {
+                role = "instructor";
+            }
+
+            return (role, fullName);
+        }
+
+        private async Task PopulateManagerDetailsAsync(AdminAccountDetailDto dto, int accountId)
+        {
+            dto.ResolvedReportsCount = await _reportRepository.GetResolvedReportsCountAsync(accountId);
+            dto.SentNotificationsCount = await _notificationRepository.GetSentNotificationsCountAsync(accountId);
+            dto.ActiveChatsCount = await _chatRepository.GetActiveChatsCountAsync(accountId);
+        }
+
+        private async Task PopulateStudentDetailsAsync(AdminAccountDetailDto dto, int accountId)
+        {
+            dto.TotalSpent = await _transactionRepository.GetTotalSpentAsync(accountId);
+            dto.EnrolledCoursesCount = (await _enrollmentRepository.GetMyEnrolledCoursesAsync(accountId)).Count;
+        }
+
+        private async Task PopulateInstructorDetailsAsync(AdminAccountDetailDto dto, int accountId, Instructor inst)
+        {
+            dto.IsInstructor = true;
+            dto.ProfessionalTitle = inst.ProfessionalTitle;
+            dto.ExpertiseCategories = inst.ExpertiseCategories;
+            dto.LinkedinUrl = inst.LinkedinUrl;
+            dto.StripeAccountId = inst.StripeAccountId;
+            dto.StripeOnboardingStatus = inst.StripeOnboardingStatus;
+            dto.PayoutsEnabled = inst.PayoutsEnabled;
+            dto.ChargesEnabled = inst.ChargesEnabled;
+
+            dto.TotalRevenue = await _transactionRepository.GetInstructorTotalRevenueAsync(accountId);
+            dto.TotalWithdrawn = await _transactionRepository.GetInstructorTotalWithdrawnAsync(accountId);
+            dto.AvailableBalance = dto.TotalRevenue - dto.TotalWithdrawn;
+        }
+
+        private async Task ProcessStatusUpdateAsync(Account account, string newStatus)
+        {
+            var oldStatus = account.AccountStatus;
+            account.AccountStatus = newStatus;
+            
+            bool isNewStatusBanned = newStatus.Equals(AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase);
+            bool isOldStatusBanned = string.Equals(oldStatus, AccountStatus.Banned.ToValue(), StringComparison.OrdinalIgnoreCase);
+
+            if (isNewStatusBanned && !isOldStatusBanned)
+            {
+                await ApplySevereLockoutAsync(account.AccountId, 36500); // 100 years
+            }
+            else if (!isNewStatusBanned && isOldStatusBanned)
+            {
+                await RemoveLockoutsAsync(account.AccountId);
+            }
+        }
+
+        private async Task ProcessFlaggingStatusAsync(Account account, int newFlags)
+        {
             if (newFlags == 1)
             {
                 account.AccountStatus = AccountStatus.Flagged1.ToValue();
@@ -315,25 +323,35 @@ namespace CourseMarketplaceBE.Application.Services
             else if (newFlags >= 3)
             {
                 account.AccountStatus = AccountStatus.Banned.ToValue();
-                var lockout = new Lockout
-                {
-                    AccountId = account.AccountId,
-                    LockoutType = "account",
-                    LockoutLevel = "severe",
-                    LockoutStart = DateTime.UtcNow,
-                    LockoutEnd = DateTime.UtcNow.AddDays(30)
-                };
-                await _lockoutRepository.AddAsync(lockout);
+                await ApplySevereLockoutAsync(account.AccountId, 30); // 30 days
             }
+        }
 
-            int rows5 = await _userRepository.SaveChangesAsync();
-            /* zero rows exception removed */
+        private async Task ApplySevereLockoutAsync(int accountId, int durationDays)
+        {
+            var lockout = new Lockout
+            {
+                AccountId = accountId,
+                LockoutType = "account",
+                LockoutLevel = "severe",
+                LockoutStart = DateTime.UtcNow,
+                LockoutEnd = DateTime.UtcNow.AddDays(durationDays)
+            };
+            await _lockoutRepository.AddAsync(lockout);
+        }
 
-            // Send notification
+        private async Task RemoveLockoutsAsync(int accountId)
+        {
+            await _lockoutRepository.RemoveAccountLockoutsAsync(accountId);
+        }
+
+        private async Task SendFlaggingNotificationAsync(int accountId, int flags, string reason)
+        {
             string reasonStr = string.IsNullOrWhiteSpace(reason) ? "No reason specified" : reason;
             string notiTitle = "Account Flagged Warning";
-            string notiContent = $"Your account has been flagged. Reason: {reasonStr}. Current flags: {newFlags}/3.";
-            if (newFlags >= 3)
+            string notiContent = $"Your account has been flagged. Reason: {reasonStr}. Current flags: {flags}/3.";
+            
+            if (flags >= 3)
             {
                 notiTitle = "Account Banned Notification";
                 notiContent = $"Your account has been banned due to repeated violations. Reason: {reasonStr}.";
@@ -341,14 +359,12 @@ namespace CourseMarketplaceBE.Application.Services
 
             try
             {
-                await _notificationService.SendNotificationAsync(account.AccountId, notiTitle, notiContent, "/profile");
+                await _notificationService.SendNotificationAsync(accountId, notiTitle, notiContent, "/profile");
             }
             catch (Exception notiEx)
             {
                 Console.WriteLine($"Error sending notification: {notiEx.Message}");
             }
-
-            return (true, newFlags, account.AccountStatus, null);
         }
     }
 }

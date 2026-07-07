@@ -40,7 +40,7 @@ database Database as db
 
 act++
 act->view++: Click "Cancel" / "Remove Coupon" button
-view->fe_ctrl++: Send POST /Cart/RemoveCoupon (with courseId)
+view->fe_ctrl++: POST /Cart/RemoveCoupon
 
 fe_ctrl->fe_ctrl++: Retrieve applied coupon map from cookies
 fe_ctrl--
@@ -50,15 +50,15 @@ fe_ctrl->fe_ctrl++: Set success message
 fe_ctrl--
 
 fe_ctrl-->>view--: Return statusCode 302
-view->fe_ctrl++: Send GET /Cart
+view->fe_ctrl++: GET /Cart
 
-fe_ctrl->be_ctrl++: Send GET /api/cart/summary (with remaining coupons)
+fe_ctrl->be_ctrl++: GET /api/cart/summary
 
 be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
 
 sv->cart_repo++: Call GetCartItemsWithDetailsAsync(userId)
 cart_repo->ctx++: Query CartItems and Course details
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>cart_repo--: Return list
 cart_repo-->>sv--: Return list
@@ -68,17 +68,17 @@ sv--
 
 sv->coupon_repo++: Call GetActiveAvailableCouponsAsync(now)
 coupon_repo->ctx++: Query active coupons
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
 ctx-->>coupon_repo--: Return list
 coupon_repo-->>sv--: Return list
 
-sv-->>be_ctrl--: Return CartSummaryResponse DTO
+sv-->>be_ctrl--: Return CartSummaryResponse object
 be_ctrl-->>fe_ctrl--: Return statusCode 200
 
 fe_ctrl->fe_ctrl++: Map to CartViewModel
 fe_ctrl--
 
-fe_ctrl-->>view--: Return statusCode 200 (View with model)
+fe_ctrl-->>view--: Return statusCode 200
 view-->>act--: Display cart items with original prices and cleared coupon input
 @enduml

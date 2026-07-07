@@ -39,9 +39,9 @@ database Database as db
 
 act++
 act->view++: Access wishlist page
-view->fe_ctrl++: Send GET /Wishlist/Index
+view->fe_ctrl++: GET /Wishlist/Index
 
-fe_ctrl->be_ctrl++: Send GET /api/wishlist
+fe_ctrl->be_ctrl++: GET /api/wishlist
 
 be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
@@ -50,15 +50,15 @@ be_ctrl->sv++: Call GetWishlistAsync(userId)
 
 sv->w_repo++: Call GetByUserIdAsync(userId)
 w_repo->ctx++: Query WishlistItem
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
-ctx-->>w_repo--: Return list
-w_repo-->>sv--: Return list
+ctx-->>w_repo--: Return result
+w_repo-->>sv--: Return result
 
 sv->sv++: Fetch course stats and enrollment status
 sv--
 
-sv-->>be_ctrl--: Return list
+sv-->>be_ctrl--: Return result
 be_ctrl-->>fe_ctrl--: Return statusCode 200
 
 fe_ctrl->fe_ctrl++: Deserialize response

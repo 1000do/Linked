@@ -27,7 +27,7 @@
 hide footbox
 
 mainframe Logout
-actor User as act
+actor "User/Instructor/Staff/Admin" as act
 
 participant "NavbarView" as view
 participant "HomeIndexView" as home_view
@@ -40,38 +40,38 @@ database Database as db
 
 act++
 act->view++: Click "Logout" button
-view->fe_ctrl++: Send POST /Account/Logout (with Anti-forgery Token)
+view->fe_ctrl++: POST /Account/Logout
+deactivate view
 
-fe_ctrl->be_ctrl++: Send POST /api/auth/logout
+fe_ctrl->be_ctrl++: POST /api/auth/logout
 
 be_ctrl->be_ctrl++: Extract accountId from User claims
 be_ctrl--
 
-alt [accountId is valid]
+opt accountId is valid
     be_ctrl->sv++: Call LogoutAsync(accountId)
     sv->u_repo++: Call RevokeRefreshTokenAsync(accountId)
     u_repo->ctx++: Set RefreshToken = null
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute UPDATE query
+    ctx->db++: Save changes to database
     db-->>ctx--: Return result
     ctx-->>u_repo--: Return numberOfRowsAffected
     
-    u_repo-->>sv--: Return success
-    sv-->>be_ctrl--: Return true
+    u_repo-->>sv--: Return result
+    sv-->>be_ctrl--: Return result
 end
 
 be_ctrl->be_ctrl++: Clear API cookies (AccessToken, RefreshToken)
 be_ctrl--
 
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+be_ctrl-->>fe_ctrl--: Return statusCode 200
 
 fe_ctrl->fe_ctrl++: Delete FE cookies (AccessToken, RefreshToken, UserName, AvatarUrl, UserRole, UserId)
 fe_ctrl--
 
-fe_ctrl -> home_view++: Redirect to Home Index page
-deactivate fe_ctrl
-deactivate view
+fe_ctrl -->> home_view--: Redirect to Home Index page
+activate home_view
 home_view -->> act--: Display homepage in logged-out state
 @enduml

@@ -1,0 +1,119 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminAccountControllerFE["AdminAccountController"] {
+    <<frontend controller>>
+    + Index(keyword: string?, role: string?, page: int) Task~IActionResult~
+}
+
+class AccountListViewModel {
+    + Keyword : string?
+    + Role : string?
+    + CurrentPage : int
+    + TotalPages : int
+    + Accounts : List~AdminAccountListDto~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminAccountControllerBE["AdminAccountController"] {
+    <<backend controller>>
+    - _adminAccountService : IAdminAccountService
+    
+    + GetAccounts(keyword: string?, role: string?, page: int, pageSize: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class PagedResult~T~ {
+    + Items : List~T~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+}
+
+class AdminAccountListDto {
+    + AccountId : int
+    + Email : string
+    + Username : string
+    + AccountStatus : string
+    + Role : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string
+    + PasswordHash : string?
+    + AccountStatus : string
+    + IsVerified : bool
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminAccountService {
+    <<interface>>
+    + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~AdminAccountListDto~~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~Account~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminAccountService {
+    - _userRepository : IUserRepository
+    
+    + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~AdminAccountListDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~Account~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION (hollow diamond) ===
+AccountListViewModel o-- AdminAccountListDto
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminAccountControllerBE --> IAdminAccountService
+AdminAccountService --> IUserRepository
+UserRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AdminAccountService ..|> IAdminAccountService
+UserRepository ..|> IUserRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminAccountControllerFE ..> AdminAccountControllerBE
+AdminAccountControllerFE ..> AccountListViewModel
+AdminAccountControllerBE ..> PagedResult~T~
+AdminAccountControllerBE ..> AdminAccountListDto
+AdminAccountService ..> PagedResult~T~
+AdminAccountService ..> AdminAccountListDto
+UserRepository ..> PagedResult~T~
+UserRepository ..> Account
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -40,49 +40,37 @@ database Database as db
 
 act++
 act->view++: Fill updated details and click "Save"
-view->fe_ctrl++: Send POST /AdminAccount/EditStaff/{id} (AJAX)
+view->fe_ctrl++: POST /AdminAccount/EditStaff/{id}
 
 fe_ctrl->fe_ctrl++: Validate required fields
 fe_ctrl--
 
-alt [Validation failed]
-    fe_ctrl-->>view: Return JSON with success = false
-    view-->>act: Display error toast message
-else [Validation passed]
-    fe_ctrl->be_ctrl++: Send PUT /api/admin/accounts/staff/{id}
+alt Validation passed
+    fe_ctrl->be_ctrl++: PUT /api/admin/accounts/staff/{id}
     
     be_ctrl->be_ctrl++: Validate ModelState & Request
     be_ctrl--
     
-    alt [Validation failed]
-        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-        fe_ctrl-->>view: Return JSON with success = false
-        view-->>act: Display error toast message
-    else [Validation passed]
+    alt Validation passed
         be_ctrl->sv++: Call UpdateStaffAsync(id, request)
         
         sv->u_repo++: Call GetAccountByIdAsync(id)
         u_repo->ctx++: Query Account with Manager details
-        ctx->db++: Execute SELECT query
+        ctx->db++: Execute query
         db-->>ctx--: Return result
         ctx-->>u_repo--: Return Account entity
         u_repo-->>sv--: Return Account entity
         
-        alt [Account not found or not staff]
-            sv-->>be_ctrl: Return false
-            be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-            fe_ctrl-->>view: Return JSON with success = false
-            view-->>act: Display error toast message
-        else [Account is valid]
+        alt Account is valid
             sv->sv++: Update Account and Manager properties
             sv--
             
-            alt [Status changed to Banned]
+            alt Status changed to Banned
                 sv->lockout_repo++: Call AddAsync(lockout)
                 lockout_repo->ctx++: Add Lockout entity
                 ctx-->>lockout_repo--: Return tracking state
                 lockout_repo-->>sv--: Return success
-            else [Status changed from Banned to Active]
+            else Status changed from Banned to Active
                 sv->lockout_repo++: Call RemoveAccountLockoutsAsync(accountId)
                 lockout_repo->ctx++: Remove active Lockouts
                 ctx-->>lockout_repo--: Return tracking state
@@ -91,16 +79,28 @@ else [Validation passed]
             
             sv->u_repo++: Call SaveChangesAsync()
             u_repo->ctx++: Commit tracked changes
-            ctx->db++: Execute UPDATE statements
+            ctx->db++: Save changes to database
             db-->>ctx--: Return result
             ctx-->>u_repo--: Return numberOfRowsAffected
             u_repo-->>sv--: Return success
             
-            sv-->>be_ctrl--: Return true
-            be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-            fe_ctrl-->>view--: Return JSON with success = true
-            view-->>act--: Display success toast and reload table
+            sv-->>be_ctrl: Return result
+            be_ctrl-->>fe_ctrl: Return statusCode 200
+            fe_ctrl-->>view: Return JSON with success = true
+            view-->>act: Display success toast and reload table
+        else Account not found or not staff
+            sv-->>be_ctrl--: Return result
+            be_ctrl-->>fe_ctrl: Return statusCode 404
+            fe_ctrl-->>view: Return JSON with success = false
+            view-->>act: Display error toast message
         end
+    else Validation failed
+        be_ctrl-->>fe_ctrl--: Return statusCode 400
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
     end
+else Validation failed
+    fe_ctrl-->>view--: Return JSON with success = false
+    view-->>act--: Display error toast message
 end
 @enduml
