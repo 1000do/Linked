@@ -89,7 +89,11 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse?> GoogleLoginAsync(string idToken)
     {
-        var payload = await GoogleJsonWebSignature.ValidateAsync(idToken);
+        var settings = new GoogleJsonWebSignature.ValidationSettings
+        {
+            IssuedAtClockTolerance = TimeSpan.FromMinutes(5)
+        };
+        var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
         var email = payload.Email.ToLower();
         var account = await _userRepo.GetAccountByEmailAsync(email);
 

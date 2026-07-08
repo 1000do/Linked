@@ -1256,8 +1256,8 @@
                         body: JSON.stringify({ courseId, reason: formValues[i].reason, description: formValues[i].description })
                     });
                     lastResult = await response.json();
-                    if (!response.ok || !lastResult.success) {
-                        throw new Error(lastResult.message || 'Failed to submit report');
+                    if (!response.ok) {
+                        throw new Error(lastResult.message || lastResult.Message || 'Failed to submit report');
                     }
                 }
                 Swal.fire({
