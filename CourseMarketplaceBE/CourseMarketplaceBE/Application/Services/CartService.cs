@@ -235,7 +235,22 @@ public class CartService : ICartService
                 .Sum(c => c.Price ?? c.Course?.Price ?? 0m);
 
             bool isEligible = eligibleSubTotal >= cp.MinOrderValue && eligibleSubTotal > 0;
-            string conditionMessage = GenerateCouponConditionMessage(cp, eligibleSubTotal, isEligible);
+
+            string conditionMessage;
+            if (eligibleSubTotal == 0)
+            {
+                conditionMessage = "Not applicable to any course in the cart";
+            }
+            else if (!isEligible)
+            {
+                conditionMessage = $"Spend another ${(cp.MinOrderValue - eligibleSubTotal):N2} to use this coupon";
+            }
+            else
+            {
+                conditionMessage = cp.CouponType == "percentage"
+                    ? $"Off {cp.DiscountValue:0.##}%"
+                    : $"Off ${cp.DiscountValue:N2}";
+            }
 
             return new AvailableCouponDto
             {
@@ -251,4 +266,3 @@ public class CartService : ICartService
         }).ToList();
     }
 }
-
