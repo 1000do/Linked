@@ -599,21 +599,13 @@ namespace CourseMarketplaceFE.Controllers
         [Authorize(Roles = "instructor")]
         public async Task<IActionResult> ModerateCourse([FromForm] int courseId)
         {
-            try
-            {
-                var payload = new { CourseId = courseId };
-                var resp = await _api.PostJsonAsync("courses/moderate", payload);
-                if (resp.IsSuccessStatusCode)
-                {
-                    return Json(new { success = true });
-                }
-                var error = await resp.Content.ReadAsStringAsync();
-                return Json(new { success = false, message = error });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
+
+            var payload = new { CourseId = courseId };
+            var resp = await _api.PostJsonAsync("courses/moderate", payload);
+            var content = await resp.Content.ReadAsStringAsync();
+            
+            var jsonContent = JsonSerializer.Deserialize<object>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return StatusCode((int)resp.StatusCode, jsonContent);
         }
 
         // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────

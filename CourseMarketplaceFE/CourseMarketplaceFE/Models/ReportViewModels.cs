@@ -29,11 +29,15 @@ namespace CourseMarketplaceFE.Models
     public class CreateReviewReportViewModel
     {
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Invalid Review ID.")]
         public int ReviewId { get; set; }
+        
         public string ReviewType { get; set; } = "course_review"; // "course_review" hoặc "lesson_review"
-        [Required]
+        
+        [Required(ErrorMessage = "Please select a reason for your report.", AllowEmptyStrings = false)]
         [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        
         [MaxLength(1000)]
         public string? Description { get; set; }
     }

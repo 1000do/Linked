@@ -35,45 +35,52 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        if (string.IsNullOrEmpty(request.UsernameOrEmail))
+        try
         {
-            return BadRequest(new { status = 400, message = "Username or Email is required." });
+            if (string.IsNullOrEmpty(request.UsernameOrEmail))
+            {
+                return BadRequest(new { status = 400, message = "Username or Email is required." });
+            }
+            var result = await _authService.LoginAsync(request);
+        
+            if (result == null)
+                return Unauthorized(new { status = 401, message = "Incorrect username/email or password." });
+
+            // Access token: HttpOnly cookie, dài hạn (24 giờ — khớp JWT)
+            Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddHours(24),
+                Path = "/"
+            });
+
+            // Refresh token: HttpOnly cookie, dài hạn (7 ngày)
+            Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7),
+                Path = "/api/auth/refresh" // Chỉ gửi đến endpoint refresh
+            });
+
+            return Ok(new
+            {
+                status = 200,
+                message = "Login successful",
+                accessToken = result.AccessToken,   // Trả về để FE lưu in-memory
+                refreshToken = result.RefreshToken,
+                fullName = result.FullName,
+                avatarUrl = result.AvatarUrl,
+                role = result.Role
+            });
         }
-        var result = await _authService.LoginAsync(request);
-    
-        if (result == null)
-            return Unauthorized(new { status = 401, message = "Incorrect username/email or password." });
-
-        // Access token: HttpOnly cookie, dài hạn (24 giờ — khớp JWT)
-        Response.Cookies.Append("AccessToken", result.AccessToken, new CookieOptions
+        catch (UnauthorizedAccessException ex)
         {
-            HttpOnly = true,
-            Secure = Request.IsHttps,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddHours(24),
-            Path = "/"
-        });
-
-        // Refresh token: HttpOnly cookie, dài hạn (7 ngày)
-        Response.Cookies.Append("RefreshToken", result.RefreshToken, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = Request.IsHttps,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddDays(7),
-            Path = "/api/auth/refresh" // Chỉ gửi đến endpoint refresh
-        });
-
-        return Ok(new
-        {
-            status = 200,
-            message = "Login successful",
-            accessToken = result.AccessToken,   // Trả về để FE lưu in-memory
-            refreshToken = result.RefreshToken,
-            fullName = result.FullName,
-            avatarUrl = result.AvatarUrl,
-            role = result.Role
-        });
+            return StatusCode(403,new { message = ex.Message });
+        }
     }
 
     // ─── REFRESH TOKEN ────────────────────────────────────────────────
@@ -141,20 +148,27 @@ public class AuthController : ControllerBase
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
     {
-        var result = await _authService.GoogleLoginAsync(request.IdToken);
-
-        if (result == null)
-            return Unauthorized(new { message = "Google login failed" });
-
-        return Ok(new
+        try
         {
-            accessToken = result.AccessToken,
-            refreshToken = result.RefreshToken,
-            role = result.Role,
-            fullName = result.FullName,
-            avatarUrl = result.AvatarUrl,
-            isVerified = result.IsVerified
-        });
+            var result = await _authService.GoogleLoginAsync(request.IdToken);
+
+            if (result == null)
+                return Unauthorized(new { message = "Google login failed" });
+
+            return Ok(new
+            {
+                accessToken = result.AccessToken,
+                refreshToken = result.RefreshToken,
+                role = result.Role,
+                fullName = result.FullName,
+                avatarUrl = result.AvatarUrl,
+                isVerified = result.IsVerified
+            });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode( 403, new{ message = ex.Message });
+        }
     }
 
     [HttpPost("send-otp")]

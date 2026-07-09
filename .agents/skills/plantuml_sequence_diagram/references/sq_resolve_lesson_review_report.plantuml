@@ -31,7 +31,6 @@ actor "Staff / Admin" as act
 participant "ReportCenterPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
-participant "HomePage" as home_view
 participant "AdminModerationController" as fe_ctrl <<frontend controller>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":IReportModerationService" as sv
@@ -43,7 +42,6 @@ act -> view++: Click "Moderate" on a lesson review report row
 view -->> act: Display Moderate Report popup
 
 act -> view: Select resolution status
-act -> view: Enter moderation notes
 act -> view: Click "Submit Decision"
 
 view -> fe_ctrl++: POST /AdminModeration/ResolveLessonReviewReport?reportId={id}
@@ -60,42 +58,68 @@ else Unauthorized Access
     activate error_view
     error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++: Validate ModelState
+    fe_ctrl--
+
+    opt Invalid ModelState
+        fe_ctrl -->> view: Return BadRequest()
+        view -->> act: Display error message
+    end
+
     fe_ctrl -> be_ctrl++: PATCH /api/admin/moderation/reports/lesson-reviews/{reportId}
     
-    be_ctrl -> sv++: Call ResolveLessonReviewReportAsync(reportId, request)
+    be_ctrl -> sv++: Call ResolveLessonReviewReportAsync()
     
-    sv->sv++: Update lesson review report fields
+    sv -> sv++: Validate report resolution request
     sv--
 
-    sv -> repo++: UpdateLessonReviewReport()
-    repo -->> sv--: Return updated report
-    
+    alt Report or entity not found
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return NotFound()
+        view -->> act: Display error message
+    else Unauthorized
+        sv -->> be_ctrl: Throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return Forbid()
+        view -->> act: Display error message
+    else Valid report resolution request
+        sv -> sv++: Update lesson review report fields
+        sv--
+
     opt Report is accepted
-    sv -> sv++: ApplyLessonReviewPenaltyAsync()
-    sv--
+        sv -> sv++: Call ApplyLessonReviewPenaltyAsync()
+        sv--
     end
-    sv -> sv++: SendResolutionNotificationsAsync()
-    sv--
-    
+
+    sv -> repo++: UpdateLessonReviewReport(report)
+    repo -->> sv--: Return result
+
+    sv -> sv++: SaveReportChangesAsync()
     sv -> repo++: SaveChangesAsync()
     repo -> db++: Save changes to database
-    
+
     alt Database Save Failure
         db -->> repo: Throw DbUpdateException
         repo -->> sv: Throw ReportException
         sv -->> be_ctrl: Throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
-        fe_ctrl -->> view: Return JSON error response
+        fe_ctrl -->> view: Return BadRequest()
         view -->> act: Display error popup
-    else Success
+    else Database Save Success
         db -->> repo--: Return numberOfRowsAffected
         repo -->> sv--: Return numberOfRowsAffected
+        sv--
+
+        sv -> sv++: Call SendResolutionNotificationsAsync()
+        sv--
         
         sv -->> be_ctrl--: Return true
         be_ctrl -->> fe_ctrl--: Return statusCode 200
-        fe_ctrl -->> view--: Return JSON success response
+        fe_ctrl -->> view--: Return Ok()
         
         view -->> act--: Display success message
+        end
     end
 end
 @enduml
