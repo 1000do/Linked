@@ -23,6 +23,7 @@ public class AdminAiServiceController : Controller
     {
         _api = api;
     }
+
     public async Task<IActionResult> Index(string tab = "models", string subtab = "course", int modelPage = 1, int coursePage = 1, int cReviewPage = 1, int lReviewPage = 1)
     {
         ViewBag.ActiveTab = tab;

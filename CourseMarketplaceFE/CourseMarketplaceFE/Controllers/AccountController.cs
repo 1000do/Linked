@@ -407,7 +407,11 @@ namespace CourseMarketplaceFE.Controllers
             var response = await client.PostAsJsonAsync("Auth/google-login", request);
 
             if (!response.IsSuccessStatusCode)
-                return BadRequest();
+            {
+                var errorJson = await response.Content.ReadAsStringAsync();
+                var msg = ParseErrorMessage(errorJson, "Google login failed");
+                return BadRequest(new { message = msg });
+            }
 
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>(_jsonOptions);
 

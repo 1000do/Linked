@@ -19,16 +19,16 @@ namespace CourseMarketplaceBE.Application.Services
 {
     public class CourseAiModerationService : ICourseAiModerationService
     {
-        private readonly IContentHashService _contentHashService;
         private readonly IAiModerationService _aiModerationService;
+        private readonly IAiModelManagementService _aiModelManagementService;
+        private readonly IAiModerationLogService _aiModerationLogService;
+        private readonly IAiConfigurationService _aiConfigurationService;
         private readonly ICourseQueryService _courseQueryService;
         private readonly ICourseCommandService _courseCommandService;
-        private readonly ILessonService _lessonService;
         private readonly IRedisService _redisService;
         private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
         private readonly IAiModelRepository _aiModelRepository;
         private readonly ISystemConfigRepository _systemConfigRepository;
-        private readonly ICourseModerationService _courseModerationService;
         private readonly ILogger<CourseAiModerationService> _logger;
         private readonly ICourseRepository _courseRepository;
         private readonly IMapper _mapper;
@@ -39,16 +39,16 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly INotificationService _notificationService;
 
         public CourseAiModerationService(
-            IContentHashService contentHashService,
             IAiModerationService aiModerationService,
+            IAiModelManagementService aiModelManagementService,
+            IAiModerationLogService aiModerationLogService,
+            IAiConfigurationService aiConfigurationService,
             ICourseQueryService courseQueryService,
             ICourseCommandService courseCommandService,
-            ILessonService lessonService,
             IRedisService redisService,
             ICourseAiIntegrationRepository aiIntegrationRepository,
             IAiModelRepository aiModelRepository,
             ISystemConfigRepository systemConfigRepository,
-            ICourseModerationService courseModerationService,
             ILogger<CourseAiModerationService> logger,
             ICourseRepository courseRepository,
             IMapper mapper,
@@ -58,16 +58,16 @@ namespace CourseMarketplaceBE.Application.Services
             IUserRepository userRepo,
             INotificationService notificationService)
         {
-            _contentHashService = contentHashService;
             _aiModerationService = aiModerationService;
+            _aiModelManagementService = aiModelManagementService;
+            _aiModerationLogService = aiModerationLogService;
+            _aiConfigurationService = aiConfigurationService;
             _courseQueryService = courseQueryService;
             _courseCommandService = courseCommandService;
-            _lessonService = lessonService;
             _redisService = redisService;
             _aiIntegrationRepository = aiIntegrationRepository;
             _aiModelRepository = aiModelRepository;
             _systemConfigRepository = systemConfigRepository;
-            _courseModerationService = courseModerationService;
             _logger = logger;
             _courseRepository = courseRepository;
             _mapper = mapper;
@@ -147,33 +147,22 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
+       
+
+        private async Task<Dictionary<string, float>> GetModerationThresholdsAsync()
         {
-            var res = new ExactDuplicationResult { CourseId = command.CourseExt.CourseId, IsDup = false };
-            foreach (var ext in command.ExistingCourseExts)
+            var config = await _aiConfigurationService.GetConfigurationsAsync();
+            return new Dictionary<string, float>
             {
-                if (ext.CourseId == command.CourseExt.CourseId) continue;
-                if (ext.TitleHash == command.CourseExt.TitleHash) res.DupFields.Add("title");
-                if (ext.DescriptionHash == command.CourseExt.DescriptionHash) res.DupFields.Add("description");
-                if (ext.WhatYouWillLearnHash == command.CourseExt.WhatYouWillLearnHash) res.DupFields.Add("what_you_will_learn");
-                if (ext.RequirementsHash == command.CourseExt.RequirementsHash) res.DupFields.Add("requirements");
-                if (ext.ThumbnailHash == command.CourseExt.ThumbnailHash && !string.IsNullOrEmpty(ext.ThumbnailHash)) res.DupFields.Add("thumbnail");
-            }
-            if (res.DupFields.Any()) { res.IsDup = true; res.DupFields = res.DupFields.Distinct().ToList(); }
-            return res;
-        }
-
-
-        private async Task<ExactDuplicationResult> CheckExactDuplication(int courseId)
-        {
-            var current = await _contentHashService.GetCourseHashesAsync(courseId);
-            var others = await _contentHashService.GetAllCourseHashesAsync();
-            return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
+                { AiModelConst.Similarity, config.SimilarityScoreThreshold },
+                { AiModelConst.Spam, config.SpamConfidenceThreshold },
+                { AiModelConst.Toxic, config.ToxicityConfidenceThreshold }
+            };
         }
 
         private async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models)
         {
-            var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
+            var thresholds = await GetModerationThresholdsAsync();
             var modelIds = models.Select(m => m.ModelId).ToList();
 
             foreach (var model in models)
@@ -210,7 +199,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var (classifiers, emb_generators) = await GetCourseModerationModelsAsync();
 
                 // Get existing course integrations
-                var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
+                var thresholds = await GetModerationThresholdsAsync();
 
                 await UpdateCourseAIIntegrationsAsync(courseId, classifiers, emb_generators, thresholds);
 
@@ -259,8 +248,8 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // If models are not configured in system configs, fetch active ones by type as fallback
-            if (classifiers.Count == 0) classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
-            if (emb_generators.Count == 0) emb_generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
+            if (classifiers.Count == 0) classifiers = await _aiModelManagementService.GetModelsByTypeAsync(AiModelConst.Classifier);
+            if (emb_generators.Count == 0) emb_generators = await _aiModelManagementService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
 
             return (classifiers, emb_generators);
         }
@@ -442,7 +431,7 @@ namespace CourseMarketplaceBE.Application.Services
 
                 });
                 _logger.LogInformation("Output JSON for course AI moderation for course {CourseId} and integration {IntegrationId}: {OutputJson}", command.CourseModerationResult.CourseId, integration.Id, outputJson);
-                await _aiModerationService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
+                await _aiModerationLogService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
                 {
                     IntegrationId = integration.Id,
                     InteractionType = command.InteractionType,
@@ -554,37 +543,61 @@ namespace CourseMarketplaceBE.Application.Services
         //      if(exactDeDupRes != null){
         //          return exactDeDupRes;
         //      }
-        private async Task<CourseModerationResult?> HandleExactDeDuplication(int courseId)
-        {
-            var dupResult = await CheckExactDuplication(courseId);
-            if (dupResult.IsDup)
-            {
-                var items = dupResult.DupFields.Select(f => new RejectCourseItemDto
-                {
-                    Target = $"course.{f}",
-                    Reason = "Exact duplication with an existing course found."
-                }).ToList();
+        // private async Task<CourseModerationResult?> HandleExactDeDuplication(int courseId)
+        // {
+        //     var dupResult = await CheckExactDuplication(courseId);
+        //     if (dupResult.IsDup)
+        //     {
+        //         var items = dupResult.DupFields.Select(f => new RejectCourseItemDto
+        //         {
+        //             Target = $"course.{f}",
+        //             Reason = "Exact duplication with an existing course found."
+        //         }).ToList();
 
-                await _courseModerationService.RejectCourseDetailedAsync(
-                    new RejectCourseDetailedRequest
-                    {
-                        CourseId = courseId,
-                        Items = items
-                    }
-                );
+        //         await _courseModerationService.RejectCourseDetailedAsync(
+        //             new RejectCourseDetailedRequest
+        //             {
+        //                 CourseId = courseId,
+        //                 Items = items
+        //             }
+        //         );
 
 
-                return new CourseModerationResult
-                {
-                    CourseId = courseId,
-                    ModerationStatus = ModerationStatus.Rejected.ToValue(),
-                    FlaggedFields = dupResult.DupFields,
-                    OverallConfidenceScore = 1.0f,
-                    TotalLatencyMs = 0,
-                    StageLogs = []
-                };
-            }
-            return null;
-        }
+        //         return new CourseModerationResult
+        //         {
+        //             CourseId = courseId,
+        //             ModerationStatus = ModerationStatus.Rejected.ToValue(),
+        //             FlaggedFields = dupResult.DupFields,
+        //             OverallConfidenceScore = 1.0f,
+        //             TotalLatencyMs = 0,
+        //             StageLogs = []
+        //         };
+        //     }
+        //     return null;
+        // }
+
+        // private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
+        // {
+        //     var res = new ExactDuplicationResult { CourseId = command.CourseExt.CourseId, IsDup = false };
+        //     foreach (var ext in command.ExistingCourseExts)
+        //     {
+        //         if (ext.CourseId == command.CourseExt.CourseId) continue;
+        //         if (ext.TitleHash == command.CourseExt.TitleHash) res.DupFields.Add("title");
+        //         if (ext.DescriptionHash == command.CourseExt.DescriptionHash) res.DupFields.Add("description");
+        //         if (ext.WhatYouWillLearnHash == command.CourseExt.WhatYouWillLearnHash) res.DupFields.Add("what_you_will_learn");
+        //         if (ext.RequirementsHash == command.CourseExt.RequirementsHash) res.DupFields.Add("requirements");
+        //         if (ext.ThumbnailHash == command.CourseExt.ThumbnailHash && !string.IsNullOrEmpty(ext.ThumbnailHash)) res.DupFields.Add("thumbnail");
+        //     }
+        //     if (res.DupFields.Any()) { res.IsDup = true; res.DupFields = res.DupFields.Distinct().ToList(); }
+        //     return res;
+        // }
+
+
+        // private async Task<ExactDuplicationResult> CheckExactDuplication(int courseId)
+        // {
+        //     var current = await _contentHashService.GetCourseHashesAsync(courseId);
+        //     var others = await _contentHashService.GetAllCourseHashesAsync();
+        //     return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
+        // }
     }
 }

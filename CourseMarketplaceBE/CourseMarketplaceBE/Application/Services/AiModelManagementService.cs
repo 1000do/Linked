@@ -10,6 +10,7 @@ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using AutoMapper;
+using System.Linq;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -17,11 +18,13 @@ public class AiModelManagementService : IAiModelManagementService
 {
     private readonly IAiModelRepository _aiModelRepo;
     private readonly IMapper _mapper;
+    private readonly IRedisService _redisService;
 
-    public AiModelManagementService(IAiModelRepository aiModelRepo, IMapper mapper)
+    public AiModelManagementService(IAiModelRepository aiModelRepo, IMapper mapper, IRedisService redisService)
     {
         _aiModelRepo = aiModelRepo;
         _mapper = mapper;
+        _redisService = redisService;
     }
 
     public async Task<List<AiModelAdminDto>> GetAllModelsAsync()
@@ -127,5 +130,38 @@ public class AiModelManagementService : IAiModelManagementService
         }
         /* zero rows exception removed */
         return true;
+    }
+
+    public async Task<List<int>> GetModelIdsByType(string type)
+    {
+        var models = await _aiModelRepo.GetByTypeAsync(type);
+        return models.Select(m => m.ModelId).ToList();
+    }
+
+    public async Task<List<AiModelDto>> GetModelsByTypeAsync(string modelType)
+    {
+        string cacheKey = CacheKeys.AiModelType.GetKey(modelType);
+        var cached = await _redisService.GetCacheAsync<List<AiModelDto>>(cacheKey);
+        if (cached != null)
+        {
+            return cached;
+        }
+
+        var dbModels = await _aiModelRepo.GetModelsByTypeAsync(modelType);
+        var result = dbModels.Select(m => new AiModelDto
+        {
+            ModelId = m.ModelId,
+            ModelName = m.ModelName,
+            ModelType = m.ModelType,
+            ModelProvider = m.ModelProvider,
+            ModelVersion = m.ModelVersion,
+            ModelStatus = m.ModelStatus,
+            Description = m.Description,
+            ModelPath = m.ModelPath,
+            ProcessType = m.ProcessType
+        }).ToList();
+
+        await _redisService.SetCacheAsync(cacheKey, result, CacheTtl.Medium.GetTtl());
+        return result;
     }
 }
