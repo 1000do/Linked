@@ -3046,48 +3046,49 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         isSubmitting = true;
-                        // fetch('/InstructorCourse/ModerateCourse', {  
-                        //    method: 'POST', 
-                        //    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        //    body: new URLSearchParams({ courseId: courseId })
-                        // })
-                        fetch('/InstructorCourse/UpdateCourseStatus', { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                            body: new URLSearchParams({ courseId: courseId, status: "pending" })
+                        fetch('/InstructorCourse/ModerateCourse', {  
+                           method: 'POST', 
+                           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                           body: new URLSearchParams({ courseId: courseId })
                         })
-                        .then(res => res.json())
-                        .then(json => {
-                            if (json.success) {
-                                Swal.fire({
-                                    title: 'Submitted for Review!',
-                                    html: `
-                                        <div class="text-left space-y-3">
-                                            <p class="text-slate-600">Your course has been submitted to the moderation team.</p>
-                                            <div class="bg-primary/5 border border-primary/10 p-4 rounded-xl">
-                                                <div class="flex items-center gap-2 text-primary mb-1">
-                                                    <span class="material-symbols-outlined text-[20px]">schedule</span>
-                                                    <span class="font-bold">Estimated time: 3-5 business days</span>
-                                                </div>
-                                                <p class="text-xs text-slate-500">We will notify you as soon as the review is complete.</p>
-                                            </div>
-                                            <p class="text-xs text-amber-600 font-medium italic">Note: The course details will be locked during the moderation process.</p>
-                                        </div>
-                                    `,
-                                    icon: 'success',
-                                    confirmButtonText: 'Got it',
-                                    confirmButtonColor: '#006a62'
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                isSubmitting = false;
-                                Swal.fire('Error', json.message || 'Failed to update course status.', 'error');
+                        // fetch('/InstructorCourse/UpdateCourseStatus', { 
+                        //     method: 'POST', 
+                        //     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        //     body: new URLSearchParams({ courseId: courseId, status: "pending" })
+                        // })
+                        .then(async res => {
+                            if (!res.ok) {
+                                const err = await res.json().catch(() => ({}));
+                                throw new Error(err.message || 'Failed to update course status.');
                             }
+                            return res.json();
+                        })
+                        .then(json => {
+                            Swal.fire({
+                                title: 'Submitted for Review!',
+                                html: `
+                                    <div class="text-left space-y-3">
+                                        <p class="text-slate-600">Your course has been submitted to the moderation team.</p>
+                                        <div class="bg-primary/5 border border-primary/10 p-4 rounded-xl">
+                                            <div class="flex items-center gap-2 text-primary mb-1">
+                                                <span class="material-symbols-outlined text-[20px]">schedule</span>
+                                                <span class="font-bold">Estimated time: 3-5 business days</span>
+                                            </div>
+                                            <p class="text-xs text-slate-500">We will notify you as soon as the review is complete.</p>
+                                        </div>
+                                        <p class="text-xs text-amber-600 font-medium italic">Note: The course details will be locked during the moderation process.</p>
+                                    </div>
+                                `,
+                                icon: 'success',
+                                confirmButtonText: 'Got it',
+                                confirmButtonColor: '#006a62'
+                            }).then(() => {
+                                location.reload();
+                            });
                         })
                         .catch(e => {
                             isSubmitting = false;
-                            Swal.fire('Error', 'An error occurred while communicating with the server.', 'error');
+                            Swal.fire('Error', e.message || 'An error occurred while communicating with the server.', 'error');
                         });
                     }
                 });
