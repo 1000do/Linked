@@ -68,7 +68,7 @@ else Valid actor's authentication and authorization
         repo -->> sv: Return empty list, totalCount = 0
         sv -->> be_ctrl: throw KeyNotFoundException
         be_ctrl -->> fe_ctrl: Return statusCode 404
-        fe_ctrl -->> view: Return empty PartialView
+        fe_ctrl -->> view: Return PartialView(empty viewModel)
         view -->> act: Display empty state message
     else Database Query Success
         db -->> repo: Return (reports, totalCount)
@@ -89,7 +89,7 @@ else Valid actor's authentication and authorization
         fe_ctrl -> view_model++: Deserialize JSON to populate ViewModel
         view_model -->> fe_ctrl--: Return populated ViewModel
         
-        fe_ctrl -->> view--: Return PartialView with ViewModel
+        fe_ctrl -->> view--: Return PartialView(populated viewModel)
         
         view -->> act: Display lesson review reports
         

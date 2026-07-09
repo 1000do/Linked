@@ -37,10 +37,13 @@ public class CreateCourseReportRequest
 public class CreateCourseReviewReportRequest
 {
     [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "Invalid Review ID.")]
     public int CourseReviewId { get; set; }
-    [Required]
+    
+    [Required(ErrorMessage = "Please select a reason for your report.", AllowEmptyStrings = false)]
     [MaxLength(255)]
     public string Reason { get; set; } = null!;
+    
     [MaxLength(1000)]
     public string? Description { get; set; }
 }
@@ -49,10 +52,13 @@ public class CreateCourseReviewReportRequest
 public class CreateLessonReviewReportRequest
 {
     [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "Invalid Review ID.")]
     public int LessonReviewId { get; set; }
-    [Required]
+    
+    [Required(ErrorMessage = "Please select a reason for your report.", AllowEmptyStrings = false)]
     [MaxLength(255)]
     public string Reason { get; set; } = null!;
+    
     [MaxLength(1000)]
     public string? Description { get; set; }
 }

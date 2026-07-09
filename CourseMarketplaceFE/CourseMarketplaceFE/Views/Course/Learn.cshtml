@@ -606,11 +606,11 @@
                         body: JSON.stringify({ reviewId, reason: formValues.reason, description: formValues.description })
                     });
                     const result = await response.json();
-                    if (result.success) {
+                    if (response.ok) {
                         Swal.fire({
                             icon: 'success',
                             title: 'Report Submitted',
-                            text: result.message || 'Thank you for your feedback, a moderator will review this.',
+                            text: result.Message || result.message || 'Thank you for your feedback, a moderator will review this.',
                             confirmButtonText: 'Got it',
                             confirmButtonColor: '#a435f0',
                             customClass: {
@@ -622,7 +622,7 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: result.message || 'Could not submit report at this time.',
+                            text: result.Message || result.message || 'Could not submit report at this time.',
                             confirmButtonColor: '#a435f0'
                         });
                     }
