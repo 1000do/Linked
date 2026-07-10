@@ -1,0 +1,96 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add Account
+actor Admin as act
+
+participant "AdminAccountView" as view
+participant "AdminAccountController" as fe_ctrl <<frontend controller>>
+participant "AdminAccountController" as be_ctrl <<backend controller>>
+participant ":AdminAccountService" as sv
+participant ":UserRepository" as u_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Fill staff details and click "Create"
+view->fe_ctrl++: POST /AdminAccount/CreateStaff
+
+fe_ctrl->fe_ctrl++: Validate required fields
+fe_ctrl--
+
+alt Validation passed
+    fe_ctrl->be_ctrl++: POST /api/admin/accounts/staff
+    
+    be_ctrl->sv++: Call IsUsernameExistsAsync(username)
+    sv->u_repo++: Call IsUsernameExistsAsync(username)
+    u_repo->ctx++: Query Account table
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return result
+    u_repo-->>sv--: Return boolean
+    sv-->>be_ctrl--: Return boolean
+    
+    alt Username is available
+        be_ctrl->sv++: Call CreateStaffAsync(request)
+        
+        sv->sv++: Hash password & map to Account and Manager entities
+        sv--
+        
+        sv->u_repo++: Call RegisterManagerAsync(newAccount, newManager)
+        u_repo->ctx++: Add entities to DbSets
+        ctx-->>u_repo--: Return tracking state
+        
+        u_repo->ctx++: Call SaveChangesAsync()
+        ctx->db++: Save changes to database
+        db-->>ctx--: Return result
+        ctx-->>u_repo--: Return numberOfRowsAffected
+        
+        u_repo-->>sv--: Return result
+        
+        alt Save successful
+            sv-->>be_ctrl: Return success
+            be_ctrl-->>fe_ctrl: Return statusCode 200
+            fe_ctrl-->>view: Return JSON with success = true
+            view-->>act: Display success toast and reload table
+        else Database save failed
+            sv-->>be_ctrl--: throw InvalidOperationException
+            be_ctrl-->>fe_ctrl: Return statusCode 400
+            fe_ctrl-->>view: Return JSON with success = false
+            view-->>act: Display error toast message
+        end
+    else Username already exists
+        be_ctrl-->>fe_ctrl--: Return statusCode 400
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    end
+else Validation failed
+    fe_ctrl-->>view--: Return JSON with success = false
+    view-->>act--: Display error toast message
+end
+@enduml

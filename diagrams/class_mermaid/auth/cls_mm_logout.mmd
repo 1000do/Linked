@@ -1,0 +1,88 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AccountController {
+    <<frontend controller>>
+    + Logout() Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AuthController {
+    <<backend controller>>
+    - _authService : IAuthService
+    
+    + Logout() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + PasswordHash : string?
+    + AccountStatus : string
+    + IsVerified : bool
+    + LastLoginDate : DateTime?
+    + RefreshToken : string?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAuthService {
+    <<interface>>
+    + LogoutAsync(accountId: int) Task~void~ *
+}
+
+class IUserRepository {
+    <<interface>>
+    + RevokeRefreshTokenAsync(accountId: int) Task~void~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AuthService {
+    - _userRepository : IUserRepository
+    
+    + LogoutAsync(accountId: int) Task~void~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    - _context : AppDbContext
+    
+    + RevokeRefreshTokenAsync(accountId: int) Task~void~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Accounts : DbSet~Account~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AuthController --> IAuthService
+AuthService --> IUserRepository
+UserRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AuthService ..|> IAuthService
+UserRepository ..|> IUserRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+AccountController ..> AuthController
+UserRepository ..> Account
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

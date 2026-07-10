@@ -113,7 +113,8 @@
                 window.location.href = "/";
             }
         } else {
-            Swal.fire('Error', 'Google login failed', 'error');
+            const errData = await res.json();
+            Swal.fire('Error', errData.message || 'Google login failed', 'error');
         }
     }
 </script>

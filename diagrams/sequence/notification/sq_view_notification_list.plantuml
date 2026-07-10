@@ -26,82 +26,51 @@
 
 hide footbox
 
-mainframe View Notification List
-actor Admin as act
+mainframe View Notification List (User/Instructor)
 
-participant "Notification/Admin.cshtml" as view
-participant "Login.cshtml" as login_view
+actor User as act
+participant "NotificationPage" as view
+participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
-participant ":NotificationService" as sv
-participant ":NotificationHub" as hub
-participant ":NotificationRepository" as repo
+participant ":INotificationService" as sv
+participant ":NotificationResponseDto" as notif_dto
+participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Access System Notifications page
-view->fe_ctrl++: Send GET /Notification/Admin
-fe_ctrl-->>view++: Return View
-deactivate fe_ctrl
+act->view++: Access "My Notifications" page
+view->fe_ctrl++: Send GET /Notification/Index
 
-view->view++: Validate Access Token
-view--
-group opt [Token is missing or expired]
-    view -> login_view++: Redirect to Login page
-    deactivate view
-    login_view -->> act: Display Login page
-    deactivate login_view
+fe_ctrl->be_ctrl++: Send GET /api/Notification (with Bearer Token)
+
+alt [Token is valid]
+    be_ctrl->sv++: Call GetNotificationsForUserAsync(userId, page, pageSize)
+    sv->repo++: Call GetByReceiverIdAsync(userId, page, pageSize)
+    repo->ctx++: Query notifications by receiverId
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return notification list
+    ctx-->>repo--: Return notification list & count
+    repo-->>sv--: Return notification list & count
+    
+    alt [notifications exist]
+        sv->notif_dto++: Call NotificationResponseDto()
+        notif_dto-->>sv--: Return NotificationResponseDto list
+        sv-->>be_ctrl: Return PagedResult<NotificationResponseDto>
+        be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
+        fe_ctrl-->>view: Return View with notifications
+        view-->>act: Display notification list
+    else [no notifications found (throws KeyNotFoundException)]
+        sv-->>be_ctrl--: throw KeyNotFoundException
+        be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok) with empty list
+        fe_ctrl-->>view: Return View with empty list
+        view-->>act: Display empty list message
+    end
+else [Token is missing or invalid]
+    be_ctrl-->>fe_ctrl--: Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>error_page++: Redirect to ErrorPage
+    error_page-->>act--: Display empty list / redirect to Login
 end
 
-view->hub++: Start SignalR connection to /notificationHub (with AccessToken)
-hub-->>view: Connection established successfully
-
-view->be_ctrl++: Send GET /api/Notification/all (with Bearer Token)
-
-be_ctrl->be_ctrl++: Authorize Admin or Staff role
-be_ctrl--
-group opt [Unauthorized]
-    be_ctrl-->>view: Return statusCode 401 (Unauthorized)
-    view-->>act: Display Access Denied message
-end
-
-be_ctrl->sv++: Call GetAllNotificationsForAdminAsync()
-sv->repo++: Call AutoCleanupAdminNotificationsAsync()
-repo->ctx++: Query old read notifications (> 90 days)
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return old notifications list
-ctx-->>repo--: Return old notifications list
-
-repo->repo++: Check if old notifications exist
-repo--
-group opt [Old notifications found]
-    repo->ctx++: Mark IsRemoved = true for old notifications
-    ctx-->>repo--: Return
-    repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute UPDATE statement
-    db-->>ctx--: Return numberOfRowsAffected
-    ctx-->>repo--: Return numberOfRowsAffected
-end
-repo-->>sv--: Return
-
-sv->repo++: Call GetAllAsync()
-repo->ctx++: Query active notifications
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return active notifications list
-ctx-->>repo--: Return active notifications list
-repo-->>sv--: Return active notifications list
-
-sv->sv++: Map to NotificationAdminResponseDto list
-sv--
-sv-->>be_ctrl--: Return NotificationAdminResponseDto list
-be_ctrl-->>view--: Return statusCode 200 (Ok) with JSON list
-
-view->view++: Validate and apply default filters/sorting
-view--
-
-view->view++: Render active notifications
-view--
-
-view-->>act--: Display system notifications list
 @enduml

@@ -1,0 +1,92 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Approve Instructor Application
+
+actor Staff as act
+participant "AdminApprovalIndexPage" as view
+participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
+participant "AdminApprovalController" as be_ctrl <<backend controller>>
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":INotificationService" as noti_sv
+
+act ++
+act -> view++: Click "Approve" on an instructor application row
+view -> view++: Prompt confirmation dialog
+view --
+
+act -> view: Confirm approval
+view -> fe_ctrl++: POST /AdminApproval/Process?id={id}&status=Approved&reason=
+
+fe_ctrl -> be_ctrl++: POST /api/AdminApproval/process (with Bearer Token)
+
+be_ctrl -> sv++: Call ApproveOrRejectAsync(dto)
+sv -> repo++: Call GetByIdAsync(dto.InstructorId)
+repo -> ctx++: Call GetByIdAsync(instructorId)
+ctx -> db++: Execute SELECT query
+
+db -->> ctx--: Return instructor entity
+ctx -->> repo--: Return instructor entity
+repo -->> sv--: Return instructor entity
+
+alt instructor == null
+    sv -->> be_ctrl: Return false
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display error message
+else instructor exists
+    sv -> sv++: Call UpdateInstructorStatus(instructor, dto)
+    sv --
+    
+    sv -> repo: Call Update(instructor)
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to database (Execute UPDATE)
+    db -->> ctx--: Return numberOfRowsAffected
+    ctx -->> repo--: Return numberOfRowsAffected
+    repo -->> sv--: Return numberOfRowsAffected
+    
+    sv -> sv++: Call SendApprovalResultNotificationAsync(instructorId, dto)
+    sv -> noti_sv++: Call SendNotificationAsync(instructorId, title, message, link)
+    noti_sv -->> sv--: Return result
+    sv --
+    
+    sv -->> be_ctrl--: Return true
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return JSON (success=true)
+    
+    view -> view++: Update row status / Remove row in DOM
+    view --
+    view -->> act--: Display success message
+end
+
+@enduml

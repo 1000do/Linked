@@ -144,7 +144,7 @@ public class CourseCommandService : ICourseCommandService
         _courseRepository.Add(await AddCourseFingerprintAsync(course));
 
         int numRows = await SaveChangesWithFingerprintAsync();
-        if (numRows == 0) throw new InvalidOperationException("Failed to create course and fingerprint");
+        /* zero rows exception removed */
 
 
         return _mapper.Map<CourseResponse>(course);
@@ -278,8 +278,7 @@ public class CourseCommandService : ICourseCommandService
 
         // Save course updates and hashes together to verify unique constraints before saving
         int rowsUpdate = await SaveChangesWithFingerprintAsync();
-        if (rowsUpdate <= 0)
-            throw new InvalidOperationException("Failed to save changes when updating course.");
+        /* zero rows exception removed */
 
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
 
@@ -361,9 +360,31 @@ public class CourseCommandService : ICourseCommandService
 
     public async Task UpdateCourseStatusAsync(int courseId, string status, int instructorId)
     {
+        var course = await ValidateCourseStatusUpdateAsync(courseId, status, instructorId);
+
+        course.CourseStatus = status.ToLower();
+        course.UpdatedAt = DateTime.UtcNow;
+
+        if (status.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
+        {
+            ValidateLandingPageRequirements(course);
+            await ValidateCourseDurationLimitsAsync(course, instructorId);
+            
+            await ReactivateCourseContentAsync(courseId);
+        }
+
+        _courseRepository.Update(course);
+        int rowsStatus = await _courseRepository.SaveChangesAsync();
+        /* zero rows exception removed */
+
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+    }
+
+    private async Task<Course> ValidateCourseStatusUpdateAsync(int courseId, string status, int instructorId)
+    {
         var course = await _courseRepository.GetByIdAsync(courseId);
         if (course == null)
-            throw new Exception("Course not found.");
+            throw new KeyNotFoundException("Course not found.");
 
         if (course.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You do not have permission to modify this course.");
@@ -389,111 +410,101 @@ public class CourseCommandService : ICourseCommandService
             throw new BadRequestException("Invalid status. Allowed values are 'pending', 'archived', or 'published' (for unarchiving).");
         }
 
-        course.CourseStatus = status.ToLower();
-        course.UpdatedAt = DateTime.UtcNow;
+        return course;
+    }
 
-        if (status.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
+    private void ValidateLandingPageRequirements(Course course)
+    {
+        if (string.IsNullOrWhiteSpace(course.WhatYouWillLearn) || StripHtml(course.WhatYouWillLearn).Length < 20)
         {
-            // Validate required landing page fields
-            if (string.IsNullOrWhiteSpace(course.WhatYouWillLearn) || StripHtml(course.WhatYouWillLearn).Length < 20)
+            throw new BadRequestException("What you will learn is required and must be at least 20 characters long.");
+        }
+
+        if (string.IsNullOrWhiteSpace(course.Requirements) || StripHtml(course.Requirements).Length < 20)
+        {
+            throw new BadRequestException("Requirements are required and must be at least 20 characters long.");
+        }
+
+        if (string.IsNullOrWhiteSpace(course.CourseThumbnailUrl))
+        {
+            throw new BadRequestException("Course thumbnail is required.");
+        }
+    }
+
+    private async Task ValidateCourseDurationLimitsAsync(Course course, int instructorId)
+    {
+        var instructor = await _instructorRepository.GetByIdAsync(instructorId);
+        var isStripeActive = instructor != null
+            && !string.IsNullOrEmpty(instructor.StripeAccountId)
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
+
+        var lessons = await _lessonRepository.GetByCourseIdAsync(course.CourseId);
+        var activeLessons = lessons.Where(l => !l.IsRemoved).ToList();
+
+        if (!activeLessons.Any())
+        {
+            throw new BadRequestException("Cannot submit course for review. The course must have at least one lesson.");
+        }
+
+        int totalDurationSeconds = 0;
+        foreach (var lesson in activeLessons)
+        {
+            bool hasVideo = lesson.LearningMaterials.Any(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null));
+            if (!hasVideo)
             {
-                throw new BadRequestException("What you will learn is required and must be at least 20 characters long.");
+                throw new BadRequestException($"Cannot submit course for review. Every lesson must contain at least one video. Lesson '{lesson.Title}' is missing a video.");
             }
 
-            if (string.IsNullOrWhiteSpace(course.Requirements) || StripHtml(course.Requirements).Length < 20)
+            foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
             {
-                throw new BadRequestException("Requirements are required and must be at least 20 characters long.");
-            }
-
-            if (string.IsNullOrWhiteSpace(course.CourseThumbnailUrl))
-            {
-                throw new BadRequestException("Course thumbnail is required.");
-            }
-
-            var instructor = await _instructorRepository.GetByIdAsync(instructorId);
-            var isStripeActive = instructor != null
-                && !string.IsNullOrEmpty(instructor.StripeAccountId)
-                && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
-
-            var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
-            var activeLessons = lessons.Where(l => !l.IsRemoved).ToList();
-
-            if (!activeLessons.Any())
-            {
-                throw new BadRequestException("Cannot submit course for review. The course must have at least one lesson.");
-            }
-
-            int totalDurationSeconds = 0;
-            foreach (var lesson in activeLessons)
-            {
-                bool hasVideo = lesson.LearningMaterials.Any(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null));
-                if (!hasVideo)
-                {
-                    throw new BadRequestException($"Cannot submit course for review. Every lesson must contain at least one video. Lesson '{lesson.Title}' is missing a video.");
-                }
-
-                foreach (var material in lesson.LearningMaterials.Where(m => m.LearningStatus != LearningStatus.Removed.ToValue() && (m.MaterialMetadata?.FileType == "video" || m.MaterialMetadata == null)))
-                {
-                    totalDurationSeconds += material.MaterialMetadata?.Duration ?? 0;
-                }
-            }
-
-            double totalMinutes = totalDurationSeconds / 60.0;
-
-            if (!isStripeActive && totalMinutes > 30)
-            {
-                throw new BadRequestException($"The total video duration of the course is currently {Math.Round(totalMinutes, 1)} minutes. Instructors who have not linked a Stripe account are only allowed a maximum of 30 minutes.");
-            }
-
-            bool isFreeCourse = course.Price == 0;
-            if (isFreeCourse && totalMinutes > 60)
-            {
-                throw new BadRequestException($"The total video duration of the free course is currently {Math.Round(totalMinutes, 1)} minutes. Free courses are only allowed a maximum of 60 minutes.");
-            }
-
-            // course.ModerationFeedback is intentionally kept
-            var materials = await _materialRepository.GetByCourseIdAsync(courseId);
-            if (materials != null)
-            {
-                foreach (var material in materials)
-                {
-                    if (material.LearningStatus != LearningStatus.Removed.ToValue())
-                    {
-                        if (material.LearningStatus == LearningStatus.Draft.ToValue())
-                        {
-                            material.LearningStatus = LearningStatus.Pending.ToValue();
-                        }
-                        _materialRepository.Update(material);
-                    }
-                }
-            }
-
-            lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
-            if (lessons != null)
-            {
-                foreach (var lesson in lessons)
-                {
-                    if (lesson.LessonStatus == LessonStatus.Draft.ToValue())
-                    {
-                        lesson.LessonStatus = LessonStatus.Pending.ToValue();
-                        _lessonRepository.Update(lesson);
-                    }
-                }
-            }
-            
-            var adminId = await _userRepository.GetAdminIdAsync();
-            if (adminId.HasValue) 
-            {
-                await _notificationService.SendNotificationAsync(adminId.Value, "Course Submitted", $"Course '{course.Title}' was submitted for review.", "/AdminModeration/Courses");
+                totalDurationSeconds += material.MaterialMetadata?.Duration ?? 0;
             }
         }
 
-        _courseRepository.Update(course);
-        int rowsStatus = await _courseRepository.SaveChangesAsync();
-        if (rowsStatus <= 0)
-            throw new InvalidOperationException("Failed to save changes when updating course status.");
+        double totalMinutes = totalDurationSeconds / 60.0;
 
-        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+        if (!isStripeActive && totalMinutes > 30)
+        {
+            throw new BadRequestException($"The total video duration of the course is currently {Math.Round(totalMinutes, 1)} minutes. Instructors who have not linked a Stripe account are only allowed a maximum of 30 minutes.");
+        }
+
+        bool isFreeCourse = course.Price == 0;
+        if (isFreeCourse && totalMinutes > 60)
+        {
+            throw new BadRequestException($"The total video duration of the free course is currently {Math.Round(totalMinutes, 1)} minutes. Free courses are only allowed a maximum of 60 minutes.");
+        }
+    }
+
+    private async Task ReactivateCourseContentAsync(int courseId)
+    {
+        var materials = await _materialRepository.GetByCourseIdAsync(courseId);
+        if (materials != null)
+        {
+            foreach (var material in materials)
+            {
+                if (material.LearningStatus != LearningStatus.Removed.ToValue())
+                {
+                    if (material.LearningStatus != LearningStatus.Active.ToValue())
+                    {
+                        material.LearningStatus = LearningStatus.Active.ToValue();
+                    }
+                    _materialRepository.Update(material);
+                }
+            }
+        }
+
+        var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+        if (lessons != null)
+        {
+            foreach (var lesson in lessons)
+            {
+                if (lesson.LessonStatus != LessonStatus.Active.ToValue())
+                {
+                    lesson.LessonStatus = LessonStatus.Active.ToValue();
+                    _lessonRepository.Update(lesson);
+                }
+            }
+        }
     }
 
     public async Task DeleteCourseAsync(int courseId, int instructorId)
@@ -535,8 +546,7 @@ public class CourseCommandService : ICourseCommandService
         }
         _courseRepository.Update(course);
         int rowsDelete = await _courseRepository.SaveChangesAsync();
-        if (rowsDelete <= 0)
-            throw new InvalidOperationException("Failed to save changes when deleting course.");
+        /* zero rows exception removed */
 
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
@@ -554,8 +564,7 @@ public class CourseCommandService : ICourseCommandService
 
         await _aiIntegrationRepository.AddAsync(integration);
         int rowsAi = await _aiIntegrationRepository.SaveChangesAsync();
-        if (rowsAi <= 0)
-            throw new InvalidOperationException("Failed to save changes when integrating AI to course.");
+        /* zero rows exception removed */
         return new CourseAIIntegrationResult
         {
             CourseId = command.CourseId,
@@ -586,8 +595,7 @@ public class CourseCommandService : ICourseCommandService
         course.UpdatedAt = DateTime.UtcNow;
         _courseRepository.Update(course);
         int rowsFeedback = await _courseRepository.SaveChangesAsync();
-        if (rowsFeedback <= 0)
-            throw new InvalidOperationException("Failed to save changes when updating course status and feedback.");
+        /* zero rows exception removed */
 
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }

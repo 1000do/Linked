@@ -182,8 +182,8 @@ public class UserRepository : IUserRepository
 
         var isInstructor = await _context.Instructors.AnyAsync(i =>
             i.InstructorId == accountId
-            && i.ApprovalStatus == "Approved"
-            && i.StripeOnboardingStatus == "Active");
+            && i.ApprovalStatus == "Approved");
+            //  i.StripeOnboardingStatus == "Active");
         if (isInstructor) return "instructor";
 
         return "user";
@@ -225,6 +225,11 @@ public class UserRepository : IUserRepository
     {
         var admin = await _context.Managers.FirstOrDefaultAsync(m => m.Role == "admin");
         return admin?.ManagerId;
+    }
+
+    public async Task<List<int>> GetAllManagerIdsAsync()
+    {
+        return await _context.Managers.Select(m => m.ManagerId).ToListAsync();
     }
 
     public async Task<int> GetTotalStudentsCountAsync()
@@ -330,10 +335,6 @@ public class UserRepository : IUserRepository
             if (roleLower == "staff")
             {
                 query = query.Where(a => a.Manager != null && a.Manager.Role == "staff");
-            }
-            else if (roleLower == "registered_staff")
-            {
-                query = query.Where(a => a.Manager != null && a.Manager.Role == "staff" && a.IsVerified);
             }
             else if (roleLower == "user")
             {

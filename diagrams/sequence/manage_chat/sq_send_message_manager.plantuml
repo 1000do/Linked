@@ -1,0 +1,153 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Send Messages (Manager)
+
+actor Staff as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
+participant ":ICloudinaryUploadService" as upload_sv
+participant "ChatHub" as hub
+participant ":IChatService" as sv
+participant ":Message" as msg_ett
+participant ":MessageAttachment" as msg_att_ett
+participant ":MessageDto" as msg_dto
+participant ":IChatRepository" as repo
+
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Enter message text
+act->view: Select files (Optional)
+act->view: Click "Send" button (or press Enter)
+
+opt With Attachments
+    loop for each selected file f
+        view->fe_ctrl++: Send POST /Chat/UploadAttachment with file
+        fe_ctrl->be_att_ctrl++: Send POST /api/ChatAttachment/upload (with Bearer Token)
+        
+        be_att_ctrl->be_att_ctrl++: Check ChatSettings:EnableAttachments
+        be_att_ctrl--
+        
+        alt EnableAttachments = false
+            be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return BadRequest
+            view-->>act: Display feature disabled warning
+        else EnableAttachments = true
+            alt file size > 10MB
+                be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view: Return BadRequest
+                view-->>act: Display file size validation error
+            else file size <= 10MB
+                be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+                upload_sv->upload_sv++: Upload to Cloudinary
+                upload_sv--
+                upload_sv-->>be_att_ctrl--: Return SecureUrl
+                
+                be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
+                fe_ctrl-->>view--: Return JSON with attachment metadata
+            end
+        end
+    end
+end
+
+view->view++: sendMsg()
+view--
+
+view->hub++: Invoke SendMessage(dto) via SignalR
+hub->hub++: GetAccountId()
+hub--
+
+hub->sv++: Call SaveMessageAsync(senderId, dto)
+    sv->sv++: Call ValidateMessageSendingAccessAsync(senderId, dto.ChatId)
+    sv--
+
+alt isParticipant == false && hasActiveReport == false
+    sv-->>hub: Throw UnauthorizedAccessException
+    hub->hub++: Send error message to Caller
+    hub--
+    hub-->>view: Send error event via SignalR
+    view-->>act: Display permission error message
+else Valid Permissions
+    sv->msg_ett++: Call Message(dto)
+    msg_ett-->>sv--: Return Message object
+
+    opt EnableAttachments == true && dto.Attachments is not empty
+        sv->msg_att_ett++: Call MessageAttachment()
+        msg_att_ett-->>sv--: Return MessageAttachments list
+    end
+    
+    sv->repo++: Call AddMessageAsync(message)
+    repo->ctx++: Call AddAsync(message)
+    ctx-->>repo--: Return success
+    repo-->>sv--: Return success
+    
+    sv->sv++: Call UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt)
+    sv--
+    
+    sv->repo++: Call SaveChangesAsync()
+    repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes (Execute INSERT & UPDATE statements)
+    
+    alt Database Save Fails (throws DbUpdateException)
+        db-->>ctx: Throw DbUpdateException
+        ctx-->>repo: Throw DbUpdateException
+        repo-->>sv: Throw DbUpdateException
+        sv-->>hub: Throw DbUpdateException
+        hub->hub++: Send error message to Caller
+        hub--
+        hub-->>view: Send error event via SignalR
+        view-->>act: Display database error message
+    else Database Save Succeeds
+        db-->>ctx--: Return result
+        ctx-->>repo--: Return result
+        repo-->>sv--: Return result
+        
+        sv->sv++: Fetch sender details
+        sv--
+        
+        sv->msg_dto++: Call MessageDto()
+        msg_dto-->>sv--: Return MessageDto object
+        
+        sv-->>hub--: Return MessageDto
+        
+        hub->hub++: Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
+        hub--
+        hub-->>view--: Broadcast message via SignalR Group
+        
+        view->view++: appendMessage(msg)
+        view--
+        view->view++: scrollToBottom()
+        view--
+        view-->>act--: Display sent message on UI
+    end
+end
+
+@enduml

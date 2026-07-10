@@ -1,0 +1,57 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Coupon List
+actor Admin as act
+
+participant "AdminCouponView" as view
+participant "CouponController" as be_ctrl <<backend controller>>
+participant ":CouponService" as sv
+participant ":CouponRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Access "Voucher Center" page / Search & Filter Coupons
+view->be_ctrl++: GET /api/coupon?isActive={isActive}&type={type}&search={search}
+
+be_ctrl->sv++: Call GetAll(managerId, isActive, type, search, isAdmin=true)
+sv->repo++: Call GetAllAsync(managerId=null, isActive, type, search)
+repo->ctx++: Query Coupons
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return list of Coupons
+repo-->>sv--: Return list of Coupons
+
+sv->sv++: Map to list of CouponResponse
+sv--
+
+sv-->>be_ctrl--: Return result
+be_ctrl-->>view--: Return statusCode 200
+view-->>act--: Render Coupon List table
+@enduml

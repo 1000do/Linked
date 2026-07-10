@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-22 - Update Personal Info</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-22. Update Personal Info</strong></p>
+
+    <p><strong>Function Trigger:</strong> User clicks "Edit Profile" button, enters personal profile details, and clicks the "Save Changes" button on the Edit Profile form.</p>
+
+    <p><strong>Function Description:</strong> Allows an authenticated User to update their personal details. The system processes validations, handles image upload, updates information within a transaction, and synchronizes frontend display cookies.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>User must be logged in with a valid session.</li>
+                <li>User has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Update Personal Info Successfully:</strong>
+                    <ul>
+                        <li>User enters personal info.</li>
+                        <li>User clicks the Save Changes button.</li>
+                        <li>The system validates the input formats.</li>
+                        <li>The system verifies that the User has a valid AccessToken cookie.</li>
+                        <li>The system extracts the user ID from the session.</li>
+                        <li>The system retrieves the User and Account records from the database.</li>
+                        <li>The system validates the email format (ends with "@gmail.com") and ensures it is not already taken (if modified).</li>
+                        <li>The system uploads the avatar image file (if provided) and retrieves the uploaded image URL.</li>
+                        <li>The system updates the User and Account entities and saves the changes in a database transaction.</li>
+                        <li>The system queries the updated user profile from the database.</li>
+                        <li>The system updates local display cookies (UserName, AvatarUrl, IsVerified) with the new details.</li>
+                        <li>The system redirects the User to the Profile view with a success message.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The user profile information is updated in the database.</li>
+                <li>Local display cookies are synchronized, and the User is redirected to their Profile page with a success message.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>No Access Token / Invalid Session:</strong> The system detects that the AccessToken cookie is missing or invalid. The system redirects the User to the Login page.</li>
+                <li><strong>User Not Found:</strong> The system detects that the user profile does not exist. The system displays an error message.</li>
+                <li><strong>Google Account Email Modification Blocked:</strong> The system detects that the user registered via Google OAuth and attempted to modify their email address. The system displays a block message indicating email changes are disabled for Google accounts.</li>
+                <li><strong>Invalid Email Format:</strong> The system detects that the modified email does not end with "@gmail.com". The system displays an email format error message.</li>
+                <li><strong>Avatar Upload Failure:</strong> The system detects that the avatar file upload failed. The system displays an image upload error message.</li>
+                <li><strong>Email Already Taken:</strong> The system detects that the modified email is already in use by another account. The system rolls back the database transaction and displays an error message.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Google Email Lock:</strong> Email modification is strictly locked for Google OAuth accounts to prevent authorization mismatches.</li>
+                <li><strong>Transactional Integrity:</strong> Profile modifications spanning User and Account database tables must be executed within a single transaction. If any part of the query fails (e.g., duplicate email checks), the transaction rolls back completely.</li>
+                <li><strong>Session Synchronization:</strong> Client-side display cookies (such as UserName and AvatarUrl) must be immediately updated on success to ensure the page headers dynamically reflect the changes.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

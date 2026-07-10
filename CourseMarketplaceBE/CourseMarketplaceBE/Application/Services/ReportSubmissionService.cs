@@ -20,19 +20,25 @@ public class ReportSubmissionService : IReportSubmissionService
     private readonly ICourseRepository _courseRepo;
     private readonly IReviewRepository _reviewRepo;
     private readonly IMapper _mapper;
+    private readonly INotificationService _notificationService;
+    private readonly IUserRepository _userRepo;
 
     public ReportSubmissionService(
         IReportRepository reportRepo,
         IEnrollmentRepository enrollmentRepo,
         ICourseRepository courseRepo,
         IReviewRepository reviewRepo,
-        IMapper mapper)
+        IMapper mapper,
+        INotificationService notificationService,
+        IUserRepository userRepo)
     {
         _reportRepo = reportRepo;
         _enrollmentRepo = enrollmentRepo;
         _courseRepo = courseRepo;
         _reviewRepo = reviewRepo;
         _mapper = mapper;
+        _notificationService = notificationService;
+        _userRepo = userRepo;
     }
 
     public async Task<bool> CreateCourseReportAsync(int reporterId, CreateCourseReportRequest request)
@@ -51,6 +57,11 @@ public class ReportSubmissionService : IReportSubmissionService
 
         await _reportRepo.AddCourseReportAsync(report);
         await SaveChangesAndHandleExceptionsAsync();
+        
+        await NotifyManagersAsync(
+            "New Course Report",
+            $"A new report has been submitted for Course #{request.CourseId}.",
+            "/AdminModeration/Reports?tab=course-reports");
             
         return true;
     }
@@ -71,6 +82,11 @@ public class ReportSubmissionService : IReportSubmissionService
 
         await _reportRepo.AddCourseReviewReportAsync(report);
         await SaveChangesAndHandleExceptionsAsync();
+
+        await NotifyManagersAsync(
+            "New Course Review Report",
+            $"A course review has been reported.",
+            "/AdminModeration/Reports?tab=review-reports&subtab=course");
             
         return true;
     }
@@ -91,6 +107,11 @@ public class ReportSubmissionService : IReportSubmissionService
 
         await _reportRepo.AddLessonReviewReportAsync(report);
         await SaveChangesAndHandleExceptionsAsync();
+
+        await NotifyManagersAsync(
+            "New Lesson Review Report",
+            $"A lesson review has been reported.",
+            "/AdminModeration/Reports?tab=review-reports&subtab=lesson");
             
         return true;
     }
@@ -126,70 +147,99 @@ public class ReportSubmissionService : IReportSubmissionService
 
     private async Task ValidateCourseReportAsync(int reporterId, int courseId, string reason)
     {
-        var course = await _courseRepo.GetByIdAsync(courseId)
-            ?? throw new InvalidOperationException("Course not found.");
+        var role = await _userRepo.GetRoleByAccountIdAsync(reporterId);
+        if (role == "manager")
+            throw new BadRequestException("Managers cannot report courses.");
 
-        if (course.CourseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) || 
-            course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("This course is currently under review and cannot be reported.");
+        var course = await _courseRepo.GetByIdAsync(courseId)
+            ?? throw new KeyNotFoundException("Course not found.");
+
+        if (course.CourseStatus.Equals(CourseStatus.Draft.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            course.CourseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            course.CourseStatus.Equals("under_review", StringComparison.OrdinalIgnoreCase) ||
+            course.CourseStatus.Equals(CourseStatus.Rejected.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new BadRequestException("This course is currently in draft, pending, under review, or rejected and cannot be reported.");
 
         if (course.CourseStatus.Equals(CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently locked and cannot be reported.");
+            throw new BadRequestException("This course is permanently locked and cannot be reported.");
 
         if (course.InstructorId == reporterId)
-            throw new InvalidOperationException("You cannot report your own course.");
+            throw new BadRequestException("You cannot report your own course.");
 
         var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(reporterId, courseId);
         if (enrollment == null)
-            throw new InvalidOperationException("You must be enrolled in the course before reporting it.");
+            throw new BadRequestException("You must be enrolled in the course before reporting it.");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
+            throw new BadRequestException("Report reason cannot be empty.");
 
         var existing = await _reportRepo.GetPendingCourseReportAsync(reporterId, courseId, reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this course.");
+            throw new BadRequestException("You already have a pending report with this reason for this course.");
     }
 
     private async Task ValidateCourseReviewReportAsync(int reporterId, int courseReviewId, string reason)
     {
         var review = await _reviewRepo.GetCourseReviewByIdAsync(courseReviewId)
-            ?? throw new InvalidOperationException("Review not found.");
+            ?? throw new KeyNotFoundException("Review not found.");
+
+        if (review.IsRemoved == true || 
+            review.CourseReviewStatus.Equals(ReviewStatus.Removed.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            review.CourseReviewStatus.Equals(ReviewStatus.Violating.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new BadRequestException("This review has been removed and cannot be reported.");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
+            throw new BadRequestException("Report reason cannot be empty.");
 
         var existing = await _reportRepo.GetPendingCourseReviewReportAsync(reporterId, courseReviewId, reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+            throw new BadRequestException("You already have a pending report with this reason for this review.");
     }
 
     private async Task ValidateLessonReviewReportAsync(int reporterId, int lessonReviewId, string reason)
     {
         var review = await _reviewRepo.GetLessonReviewByIdAsync(lessonReviewId)
-            ?? throw new InvalidOperationException("Review not found.");
+            ?? throw new KeyNotFoundException("Review not found.");
+
+        if (review.IsRemoved == true || 
+            review.LessonReviewStatus.Equals(ReviewStatus.Removed.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            review.LessonReviewStatus.Equals(ReviewStatus.Violating.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new BadRequestException("This review has been removed and cannot be reported.");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
+            throw new BadRequestException("Report reason cannot be empty.");
 
         var existing = await _reportRepo.GetPendingLessonReviewReportAsync(reporterId, lessonReviewId, reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+            throw new BadRequestException("You already have a pending report with this reason for this review.");
     }
 
     private async Task SaveChangesAndHandleExceptionsAsync()
     {
-        int numRowsAffected;
         try
         {
-            numRowsAffected = await _reportRepo.SaveChangesAsync();
+            await _reportRepo.SaveChangesAsync();
         }
         catch (ReportException ex)
         {
             throw new BadRequestException(ex.Message);
         }
+    }
 
-        if (numRowsAffected == 0)
-            throw new InvalidOperationException("Failed to save changes.");
+    private async Task NotifyManagersAsync(string title, string content, string? linkAction)
+    {
+        var managerIds = await _userRepo.GetAllManagerIdsAsync();
+        if (managerIds.Any())
+        {
+            var dtos = managerIds.Select(id => new NotificationBulkDto
+            {
+                ReceiverId = id,
+                Title = title,
+                Content = content,
+                LinkAction = linkAction
+            }).ToList();
+
+            await _notificationService.SendBulkNotificationsAsync(dtos);
+        }
     }
 }

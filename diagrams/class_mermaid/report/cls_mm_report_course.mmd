@@ -1,0 +1,124 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class ReportControllerFE["ReportController"] {
+    <<frontend controller>>
+    + ReportCourse(model: CreateCourseReportViewModel) Task~IActionResult~
+}
+
+class CreateCourseReportViewModel {
+    <<view model>>
+    + CourseId : int
+    + Reason : string
+    + Description : string?
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ReportControllerBE["ReportController"] {
+    <<backend controller>>
+    - _reportService : IReportSubmissionService
+    
+    + ReportCourse(request: CreateCourseReportRequest) Task~IActionResult~
+    - GetUserId() int?
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CreateCourseReportRequest {
+    <<dto>>
+    + CourseId : int
+    + Reason : string
+    + Description : string?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReport {
+    + CourseReportId : int
+    + ReporterId : int?
+    + CourseId : int?
+    + ResolverId : int?
+    + Reason : string?
+    + Description : string?
+    + CourseReportsStatus : string?
+    + ResolutionNote : string?
+    + ResolvedAt : DateTime?
+    + AccessGrantedUntil : DateTime?
+    + CreatedAt : DateTime?
+    + Reporter : Account?
+    + Resolver : Account?
+    + Course : Course?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IReportSubmissionService {
+    <<interface>>
+    + CreateCourseReportAsync(reporterId: int, request: CreateCourseReportRequest) Task~bool~ *
+}
+
+class IReportRepository {
+    <<interface>>
+    + GetPendingCourseReportAsync(reporterId: int, courseId: int, reason: string) Task~CourseReport?~ *
+    + AddCourseReportAsync(report: CourseReport) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReportSubmissionService {
+    - _reportRepo : IReportRepository
+    
+    + CreateCourseReportAsync(reporterId: int, request: CreateCourseReportRequest) Task~bool~
+    - ValidateCourseReportAsync(reporterId: int, courseId: int, reason: string) Task
+    - SaveChangesAndHandleExceptionsAsync() Task
+    - NotifyManagersAsync(title: string, content: string, linkAction: string?) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReportRepository {
+    - _context : AppDbContext
+    
+    + GetPendingCourseReportAsync(reporterId: int, courseId: int, reason: string) Task~CourseReport?~
+    + AddCourseReportAsync(report: CourseReport) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseReports : DbSet~CourseReport~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+ReportControllerBE --> IReportSubmissionService
+ReportSubmissionService --> IReportRepository
+ReportRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ReportSubmissionService ..|> IReportSubmissionService
+ReportRepository ..|> IReportRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+ReportControllerFE ..> ReportControllerBE
+ReportControllerFE ..> CreateCourseReportViewModel
+
+ReportControllerBE ..> CreateCourseReportRequest
+
+ReportSubmissionService ..> CreateCourseReportRequest
+ReportSubmissionService ..> CourseReport
+
+ReportRepository ..> CourseReport
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

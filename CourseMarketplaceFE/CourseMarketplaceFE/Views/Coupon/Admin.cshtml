@@ -67,6 +67,15 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination UI (Client Side) -->
+    <div id="coupon-pagination" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/30 hidden">
+        <p class="text-xs font-semibold text-slate-500">
+            Showing <span class="font-bold text-slate-800" id="page-start">0</span> to <span class="font-bold text-slate-800" id="page-end">0</span> of <span class="font-bold text-slate-800" id="total-items">0</span>
+        </p>
+        <div class="flex items-center gap-1.5" id="pagination-links">
+        </div>
+    </div>
 </div>
 
 <!-- Modal Create / Edit Coupon -->
@@ -97,7 +106,7 @@
                 <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Campaign Promo Code</label>
                 <div class="relative group">
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors text-[20px]">qr_code_2</span>
-                    <input id="code" class="w-full border-2 border-slate-100 rounded-2xl pl-12 pr-4 py-3.5 text-base font-black focus:outline-none focus:ring-0 focus:border-primary uppercase transition-all bg-slate-50/50 focus:bg-white placeholder:font-bold placeholder:text-slate-300" placeholder="e.g. SUMMERFLASH" />
+                    <input id="code" class="w-full border-2 border-slate-100 rounded-2xl pl-12 pr-4 py-3.5 text-base font-black focus:outline-none focus:ring-0 focus:border-primary uppercase transition-all bg-slate-50/50 focus:bg-white placeholder:font-bold placeholder:text-slate-300 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100" placeholder="e.g. SUMMERFLASH" />
                 </div>
                 <p id="err-code" class="text-rose-500 text-[10px] font-black mt-1.5 hidden flex items-center gap-1.5 ml-1 animate-pulse uppercase tracking-tight"><span class="material-symbols-outlined text-[14px]">report_problem</span> This field is required</p>
             </div>
@@ -107,7 +116,7 @@
                 <div class="space-y-2">
                     <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Discount Type</label>
                     <div class="relative">
-                        <select id="type" class="w-full appearance-none border-2 border-slate-100 rounded-2xl pl-4 pr-10 py-3.5 text-sm font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white cursor-pointer hover:border-slate-200">
+                        <select id="type" class="w-full appearance-none border-2 border-slate-100 rounded-2xl pl-4 pr-10 py-3.5 text-sm font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white cursor-pointer hover:border-slate-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100">
                             <option value="percentage">Percentage (%)</option>
                             <option value="fixed">Fixed Value ($)</option>
                         </select>
@@ -117,7 +126,7 @@
                 <div class="space-y-2">
                     <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Discount Value</label>
                     <div class="relative group">
-                        <input id="value" type="number" step="0.01" class="w-full border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white" placeholder="0.00" />
+                        <input id="value" type="number" step="0.01" class="w-full border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100" placeholder="0.00" />
                     </div>
                     <p id="err-value" class="text-rose-500 text-[10px] font-black mt-1.5 hidden flex items-center gap-1.5 ml-1 uppercase tracking-tight"><span class="material-symbols-outlined text-[14px]">error</span> Invalid discount value</p>
                 </div>
@@ -127,7 +136,7 @@
             <div class="grid grid-cols-2 gap-6 p-5 bg-slate-50/50 rounded-2xl border border-slate-100">
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Date</label>
-                    <input id="startDate" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 focus:outline-none focus:border-primary transition-all bg-white" />
+                    <input id="startDate" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 focus:outline-none focus:border-primary transition-all bg-white disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100" />
                 </div>
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">End Date</label>
@@ -140,7 +149,7 @@
                 <div class="space-y-2">
                     <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Minimum Order</label>
                     <div class="relative group">
-                        <input id="minOrderValue" type="number" min="0" step="0.01" class="w-full border-2 border-slate-100 rounded-2xl pl-4 pr-12 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white" placeholder="0" />
+                        <input id="minOrderValue" type="number" min="0" step="0.01" class="w-full border-2 border-slate-100 rounded-2xl pl-4 pr-12 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100" placeholder="0" />
                         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-300 group-focus-within:text-primary">USD</span>
                     </div>
                 </div>
@@ -346,11 +355,31 @@
         }
 
         function openModal(isEdit = false) {
+            const codeInput = document.getElementById("code");
+            const typeInput = document.getElementById("type");
+            const valueInput = document.getElementById("value");
+            const startDateInput = document.getElementById("startDate");
+            const minOrderValueInput = document.getElementById("minOrderValue");
+
             if (!isEdit) {
                 document.getElementById("modal-title").innerText = "Create Coupon";
                 document.getElementById("coupon-form").reset();
                 document.getElementById("isActive").checked = true;
                 editId = null;
+                
+                // Enable restricted inputs for create
+                codeInput.disabled = false;
+                typeInput.disabled = false;
+                valueInput.disabled = false;
+                startDateInput.disabled = false;
+                minOrderValueInput.disabled = false;
+            } else {
+                // Disable restricted inputs for edit
+                codeInput.disabled = true;
+                typeInput.disabled = true;
+                valueInput.disabled = true;
+                startDateInput.disabled = true;
+                minOrderValueInput.disabled = true;
             }
             document.querySelectorAll("[id^='err-']").forEach(e => e.classList.add("hidden"));
             const modal = document.getElementById("modal-coupon");
@@ -461,7 +490,12 @@
             return dateStr ? dateStr + "T23:59:59" : null;
         }
 
-        function applyFilter() {
+        let currentPage = 1;
+        const pageSize = 5;
+
+        function applyFilter(resetPage = true) {
+            if (resetPage) currentPage = 1;
+
             const filterVal = document.getElementById("filter").value;
             const searchVal = document.getElementById("search").value.toLowerCase().trim();
             const sortVal = document.getElementById("coupon-sort").value;
@@ -502,7 +536,62 @@
                 filtered.sort((a, b) => (b.usedCount || 0) - (a.usedCount || 0));
             }
 
-            renderCouponsTable(filtered);
+            // Pagination
+            const totalItems = filtered.length;
+            const totalPages = Math.ceil(totalItems / pageSize);
+            
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const pagedData = filtered.slice(startIndex, endIndex);
+
+            renderCouponsTable(pagedData);
+            renderPagination(totalItems, totalPages);
+        }
+
+        function renderPagination(totalItems, totalPages) {
+            const paginationContainer = document.getElementById("coupon-pagination");
+            const linksContainer = document.getElementById("pagination-links");
+            
+            if (totalPages <= 1) {
+                paginationContainer.classList.add("hidden");
+                return;
+            }
+            
+            paginationContainer.classList.remove("hidden");
+            
+            document.getElementById("page-start").innerText = (currentPage - 1) * pageSize + 1;
+            document.getElementById("page-end").innerText = Math.min(currentPage * pageSize, totalItems);
+            document.getElementById("total-items").innerText = totalItems;
+            
+            let html = "";
+            
+            if (currentPage > 1) {
+                html += `<button type="button" onclick="goToPage(${currentPage - 1})" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5"><span class="material-symbols-outlined text-[16px]">chevron_left</span></button>`;
+            }
+            
+            for (let p = Math.max(1, currentPage - 2); p <= Math.min(totalPages, currentPage + 2); p++) {
+                if (p === currentPage) {
+                    html += `<span class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-600 text-white font-extrabold text-xs shadow-md shadow-emerald-600/10">${p}</span>`;
+                } else {
+                    html += `<button type="button" onclick="goToPage(${p})" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-semibold text-xs">${p}</button>`;
+                }
+            }
+            
+            if (currentPage < totalPages) {
+                html += `<button type="button" onclick="goToPage(${currentPage + 1})" class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5"><span class="material-symbols-outlined text-[16px]">chevron_right</span></button>`;
+            }
+            
+            linksContainer.innerHTML = html;
+        }
+        
+        function goToPage(page) {
+            currentPage = page;
+            applyFilter(false);
+            
+            const scrollContainer = document.querySelector('.custom-scrollbar');
+            if (scrollContainer) scrollContainer.scrollTop = 0;
         }
 
         function clearCouponFilters() {

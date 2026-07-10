@@ -1,0 +1,52 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Search Notifications (Staff/Admin)
+
+actor Admin as act
+participant "NotificationManagementPage" as view
+
+act++
+act->view++: Enter keyword in search input field
+view->view++: EventListener: input event triggered
+
+view->view++: applyFilters() (runs client-side search on cached notifications)
+note over view
+    Filters allNotifications by checking if:
+    n.receiverFullName, n.receiverEmail,
+    n.title, or n.content contains search value
+end note
+view--
+
+view->view++: renderTable() (paginates and renders matching results)
+view--
+
+view-->>act: Display filtered notification list matching search criteria
+deactivate view
+deactivate view
+@enduml

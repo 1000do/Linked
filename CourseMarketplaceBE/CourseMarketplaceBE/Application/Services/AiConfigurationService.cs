@@ -69,7 +69,7 @@ public class AiConfigurationService : IAiConfigurationService
         {
             throw new BadRequestException(ex.Message);
         }
-        if (affected == 0) throw new InvalidOperationException("Failed to update moderation thresholds: No changes were saved to the database.");
+        /* zero rows exception removed */
         return true;
     }
 
@@ -84,7 +84,7 @@ public class AiConfigurationService : IAiConfigurationService
         {
             throw new BadRequestException(ex.Message);
         }
-        if (affected == 0) throw new InvalidOperationException($"Failed to update {req.ConfigKey}: No changes were saved to the database.");
+        /* zero rows exception removed */
         return true;
     }
 }

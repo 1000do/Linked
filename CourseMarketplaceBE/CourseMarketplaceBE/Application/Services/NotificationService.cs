@@ -64,20 +64,11 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int numberOfRowsAffected = await _repo.SaveChangesAsync();
-                if (numberOfRowsAffected == 0) throw new InvalidOperationException("Failed to send notification.");
+                /* zero rows exception removed */
 
-                await _hubContext.Clients.User(receiverId.ToString())
-                    .SendAsync("ReceiveNotification", new
-                    {
-                        notificationId = noti.NotificationId,
-                        title = noti.Title,
-                        content = noti.Content,
-                        linkAction = noti.LinkAction,
-                        createdAt = noti.CreatedAt,
-                        isRead = false,
-                        receiverId = noti.ReceiverId
-                    });
-                await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
+                await DispatchSingleNotificationAsync(noti);
+                await NotifyRemainingManagersAsync(new[] { receiverId });
+                
                 return true;
             }
             catch (NotificationException ex)
@@ -88,15 +79,13 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<bool> DeleteNotificationAsync(int notiId, int userId)
         {
-            var noti = await _repo.GetByIdAsync(notiId);
-            if (noti == null || noti.ReceiverId != userId)
-                throw new KeyNotFoundException("Notification not found.");
+            var noti = await GetNotificationAndVerifyOwnershipAsync(notiId, userId);
 
             _repo.Delete(noti);
             try
             {
                 int n = await _repo.SaveChangesAsync();
-                if (n == 0) throw new InvalidOperationException("Failed to delete notification.");
+                /* zero rows exception removed */
 
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -109,9 +98,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<bool> MarkAsReadAsync(int notificationId, int userId)
         {
-            var noti = await _repo.GetByIdAsync(notificationId);
-            if (noti == null || noti.ReceiverId != userId)
-                throw new KeyNotFoundException("Notification not found.");
+            var noti = await GetNotificationAndVerifyOwnershipAsync(notificationId, userId);
 
             noti.IsRead = true;
             _repo.Update(noti);
@@ -119,7 +106,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int n = await _repo.SaveChangesAsync();
-                if (n == 0) throw new InvalidOperationException("Failed to mark as read.");
+                /* zero rows exception removed */
 
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -128,6 +115,14 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 throw new BadRequestException(ex.Message);
             }
+        }
+
+        private async Task<Notification> GetNotificationAndVerifyOwnershipAsync(int notificationId, int userId)
+        {
+            var noti = await _repo.GetByIdAsync(notificationId);
+            if (noti == null || noti.ReceiverId != userId)
+                throw new KeyNotFoundException("Notification not found.");
+            return noti;
         }
 
         public async Task<bool> MarkAllAsReadAsync(int userId)
@@ -144,7 +139,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int n = await _repo.SaveChangesAsync();
-                if (n == 0) throw new InvalidOperationException("Failed to save changes.");
+                /* zero rows exception removed */
                 await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveNotification", null);
                 await _hubContext.Clients.All.SendAsync("ReceiveNotification");
                 return true;
@@ -162,58 +157,27 @@ namespace CourseMarketplaceBE.Application.Services
             var (notifications, count) = await _repo.GetAllAsync(page, pageSize);
             if (!notifications.Any()) throw new KeyNotFoundException("No notifications found.");
 
-            var dtos = notifications.Select(n => {
-                string role = "broadcast";
-                if (n.Receiver != null)
-                {
-                    if (n.Receiver.Manager != null)
-                    {
-                        role = n.Receiver.Manager.Role?.ToLower() ?? "staff";
-                    }
-                    else if (n.Receiver.User != null)
-                    {
-                        role = n.Receiver.User.Instructor != null ? "instructor" : "student";
-                    }
-                    else
-                    {
-                        role = "student";
-                    }
-                }
-
-                string senderRole = "system";
-                if (n.Sender != null)
-                {
-                    if (n.Sender.Manager != null)
-                    {
-                        senderRole = n.Sender.Manager.Role?.ToLower() ?? "staff";
-                    }
-                    else if (n.Sender.User != null)
-                    {
-                        senderRole = n.Sender.User.Instructor != null ? "instructor" : "student";
-                    }
-                    else
-                    {
-                        senderRole = "student";
-                    }
-                }
-
-                return new NotificationAdminResponseDto
-                {
-                    NotificationId = n.NotificationId,
-                    Title = n.Title,
-                    Content = n.Content,
-                    IsRead = n.IsRead,
-                    CreatedAt = n.CreatedAt,
-                    ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
-                    ReceiverFullName = n.Receiver?.User?.FullName ?? "System",
-                    ReceiverRole = role,
-                    ReceiverId = n.ReceiverId,
-                    SenderId = n.SenderId,
-                    SenderRole = senderRole,
-                    LinkAction = n.LinkAction
-                };
-            }).ToList();
+            var dtos = MapToAdminResponseDtos(notifications);
             return new PagedResult<NotificationAdminResponseDto> { Items = dtos, TotalCount = count };
+        }
+
+        private List<NotificationAdminResponseDto> MapToAdminResponseDtos(IEnumerable<Notification> notifications)
+        {
+            return notifications.Select(n => new NotificationAdminResponseDto
+            {
+                NotificationId = n.NotificationId,
+                Title = n.Title,
+                Content = n.Content,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt,
+                ReceiverEmail = n.Receiver?.Email ?? "all-users@system.com",
+                ReceiverFullName = n.Receiver?.User?.FullName ?? "System",
+                ReceiverRole = GetAccountRole(n.Receiver, "broadcast"),
+                ReceiverId = n.ReceiverId,
+                SenderId = n.SenderId,
+                SenderRole = GetAccountRole(n.Sender, "system"),
+                LinkAction = n.LinkAction
+            }).ToList();
         }
 
         public async Task<List<string>> SearchEmailsAsync(string query, int senderId, string senderRole)
@@ -226,63 +190,153 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<int> SendAdvancedAsync(NotificationAdvancedDto dto, int senderId, string senderRole)
         {
-            var targetUserIds = new List<int>();
-
-            if (dto.TargetType == "ALL")
-            {
-                if (senderRole == "staff")
-                {
-                    targetUserIds = await _userRepo.GetUserIdsForStaffSenderAsync();
-                }
-                else if (senderRole == "admin")
-                {
-                    targetUserIds = await _userRepo.GetUserIdsForAdminSenderAsync();
-                }
-                else
-                {
-                    targetUserIds = await _userRepo.GetAllUserIdsAsync();
-                }
-
-                targetUserIds.Remove(senderId);
-            }
-            else if (dto.Emails != null && dto.Emails.Any())
-            {
-                foreach (var email in dto.Emails)
-                {
-                    var acc = await _userRepo.GetAccountByEmailAsync(email);
-                    if (acc != null)
-                    {
-                        if (acc.AccountId == senderId)
-                        {
-                            throw new InvalidOperationException("You cannot send a notification to yourself.");
-                        }
-
-                        var recipientRole = await _userRepo.GetRoleByAccountIdAsync(acc.AccountId);
-                        if (senderRole == "staff")
-                        {
-                            if (recipientRole == "staff" || recipientRole == "admin")
-                            {
-                                throw new InvalidOperationException("Staff cannot send notifications to staff or admin.");
-                            }
-                        }
-                        else if (senderRole == "admin")
-                        {
-                            if (recipientRole == "admin")
-                            {
-                                throw new InvalidOperationException("Admin cannot send notifications to other admins.");
-                            }
-                        }
-
-                        targetUserIds.Add(acc.AccountId);
-                    }
-                }
-            }
-
+            var targetUserIds = await ResolveTargetUserIdsAsync(dto, senderId, senderRole);
             if (!targetUserIds.Any()) return 0;
 
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+            var notifications = CreateAdvancedNotifications(targetUserIds, dto, senderId, now);
 
-            var notifications = targetUserIds.Select(uid => new Notification
+            await _repo.AddRangeAsync(notifications);
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            /* zero rows exception removed */
+
+            await DispatchAdvancedNotificationsAsync(targetUserIds, dto, senderId, senderRole, now);
+            await NotifyRemainingManagersAsync(targetUserIds);
+
+            return targetUserIds.Count;
+        }
+
+        public async Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
+        {
+            if (dtos == null || !dtos.Any()) return true;
+
+            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+            var notifications = CreateBulkNotifications(dtos, now);
+
+            await _repo.AddRangeAsync(notifications);
+            int numberOfRowsAffected = await _repo.SaveChangesAsync();
+            /* zero rows exception removed */
+
+            await DispatchBulkNotificationsAsync(notifications);
+            await NotifyRemainingManagersAsync(ExtractReceiverIds(notifications));
+
+            return true;
+        }
+
+        private List<Notification> CreateBulkNotifications(IEnumerable<NotificationBulkDto> dtos, DateTime now)
+        {
+            return dtos.Select(dto => new Notification
+            {
+                ReceiverId = dto.ReceiverId,
+                Title = dto.Title,
+                Content = dto.Content,
+                LinkAction = dto.LinkAction,
+                IsRead = false,
+                CreatedAt = now
+            }).ToList();
+        }
+
+        private async Task DispatchBulkNotificationsAsync(IEnumerable<Notification> notifications)
+        {
+            foreach (var noti in notifications)
+            {
+                await DispatchSingleNotificationAsync(noti);
+            }
+        }
+
+        private IEnumerable<int> ExtractReceiverIds(IEnumerable<Notification> notifications)
+        {
+            return notifications.Where(n => n.ReceiverId.HasValue).Select(n => n.ReceiverId.Value);
+        }
+
+
+        private string GetAccountRole(Account? account, string defaultRole)
+        {
+            if (account == null) return defaultRole;
+            if (account.Manager != null) return account.Manager.Role?.ToLower() ?? "staff";
+            if (account.User != null) return account.User.Instructor != null ? "instructor" : "student";
+            return "student";
+        }
+
+        private async Task<List<int>> ResolveTargetUserIdsAsync(NotificationAdvancedDto dto, int senderId, string senderRole)
+        {
+            if (dto.TargetType == "ALL")
+            {
+                return await GetTargetUserIdsForAllTypeAsync(senderId, senderRole);
+            }
+            
+            if (dto.Emails != null && dto.Emails.Any())
+            {
+                return await GetTargetUserIdsForEmailsAsync(dto.Emails, senderId, senderRole);
+            }
+
+            return new List<int>();
+        }
+
+        private async Task<List<int>> GetTargetUserIdsForAllTypeAsync(int senderId, string senderRole)
+        {
+            List<int> targetUserIds;
+
+            if (senderRole == "staff")
+            {
+                targetUserIds = await _userRepo.GetUserIdsForStaffSenderAsync();
+            }
+            else if (senderRole == "admin")
+            {
+                targetUserIds = await _userRepo.GetUserIdsForAdminSenderAsync();
+            }
+            else
+            {
+                targetUserIds = await _userRepo.GetAllUserIdsAsync();
+            }
+
+            targetUserIds.Remove(senderId);
+            return targetUserIds;
+        }
+
+        private async Task<List<int>> GetTargetUserIdsForEmailsAsync(IEnumerable<string> emails, int senderId, string senderRole)
+        {
+            var targetUserIds = new List<int>();
+            
+            foreach (var email in emails)
+            {
+                var acc = await _userRepo.GetAccountByEmailAsync(email);
+                if (acc != null)
+                {
+                    var recipientRole = await _userRepo.GetRoleByAccountIdAsync(acc.AccountId);
+                    ValidateRecipient(acc.AccountId, senderId, senderRole, recipientRole);
+                    targetUserIds.Add(acc.AccountId);
+                }
+            }
+
+            return targetUserIds;
+        }
+
+        private void ValidateRecipient(int recipientId, int senderId, string senderRole, string recipientRole)
+        {
+            if (recipientId == senderId)
+            {
+                throw new InvalidOperationException("You cannot send a notification to yourself.");
+            }
+            
+            ValidateRecipientPermission(senderRole, recipientRole);
+        }
+
+        private void ValidateRecipientPermission(string senderRole, string recipientRole)
+        {
+            if (senderRole == "staff" && (recipientRole == "staff" || recipientRole == "admin"))
+            {
+                throw new InvalidOperationException("Staff cannot send notifications to staff or admin.");
+            }
+            if (senderRole == "admin" && recipientRole == "admin")
+            {
+                throw new InvalidOperationException("Admin cannot send notifications to other admins.");
+            }
+        }
+
+        private List<Notification> CreateAdvancedNotifications(List<int> targetUserIds, NotificationAdvancedDto dto, int senderId, DateTime now)
+        {
+            return targetUserIds.Select(uid => new Notification
             {
                 SenderId = senderId,
                 ReceiverId = uid,
@@ -292,14 +346,10 @@ namespace CourseMarketplaceBE.Application.Services
                 CreatedAt = now,
                 IsRead = false
             }).ToList();
+        }
 
-            await _repo.AddRangeAsync(notifications);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-            {
-                throw new InvalidOperationException("Failed to save changes");
-            }
-
+        private async Task DispatchAdvancedNotificationsAsync(List<int> targetUserIds, NotificationAdvancedDto dto, int senderId, string senderRole, DateTime now)
+        {
             foreach (var uid in targetUserIds)
             {
                 await _hubContext.Clients.User(uid.ToString()).SendAsync("ReceiveNotification", new
@@ -315,52 +365,36 @@ namespace CourseMarketplaceBE.Application.Services
                     senderRole = senderRole
                 });
             }
-
-            await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
-
-            return targetUserIds.Count;
         }
 
-        public async Task<bool> SendBulkNotificationsAsync(IEnumerable<NotificationBulkDto> dtos)
+        private async Task DispatchSingleNotificationAsync(Notification noti)
         {
-            if (dtos == null || !dtos.Any()) return true;
+            await _hubContext.Clients.User(noti.ReceiverId.ToString())
+                .SendAsync("ReceiveNotification", new
+                {
+                    notificationId = noti.NotificationId,
+                    title = noti.Title,
+                    content = noti.Content,
+                    linkAction = noti.LinkAction,
+                    createdAt = noti.CreatedAt,
+                    isRead = false,
+                    receiverId = noti.ReceiverId
+                });
+        }
 
-            var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
+        private async Task NotifyRemainingManagersAsync(IEnumerable<int> explicitlyNotifiedUserIds)
+        {
+            var allManagerIds = await _userRepo.GetAllManagerIdsAsync();
+            var explicitlyNotified = explicitlyNotifiedUserIds.ToHashSet();
+            var remainingManagerIds = allManagerIds
+                .Where(id => !explicitlyNotified.Contains(id))
+                .Select(id => id.ToString())
+                .ToList();
 
-            var notifications = dtos.Select(dto => new Notification
+            if (remainingManagerIds.Any())
             {
-                ReceiverId = dto.ReceiverId,
-                Title = dto.Title,
-                Content = dto.Content,
-                LinkAction = dto.LinkAction,
-                IsRead = false,
-                CreatedAt = now
-            }).ToList();
-
-            await _repo.AddRangeAsync(notifications);
-            int numberOfRowsAffected = await _repo.SaveChangesAsync();
-            if (numberOfRowsAffected <= 0)
-            {
-                throw new InvalidOperationException("Failed to save changes");
+                await _hubContext.Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification");
             }
-
-            foreach (var noti in notifications)
-            {
-                await _hubContext.Clients.User(noti.ReceiverId.ToString())
-                    .SendAsync("ReceiveNotification", new
-                    {
-                        notificationId = noti.NotificationId,
-                        title = noti.Title,
-                        content = noti.Content,
-                        linkAction = noti.LinkAction,
-                        createdAt = noti.CreatedAt,
-                        isRead = false,
-                        receiverId = noti.ReceiverId
-                    });
-            }
-
-            await _hubContext.Clients.Group("managers").SendAsync("ReceiveNotification");
-            return true;
         }
     }
 }

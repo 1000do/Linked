@@ -8,7 +8,7 @@ public interface IEmbeddingService
 {
     Task<List<MaterialEmbeddingResponse>> GetAllMaterialEmbeddingsAsync();
     Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding, string embeddingType);
-    Task SaveValidDuplicateEmbeddingsAsync(int courseId, HashSet<int> excludedMaterialIds);
+    Task PersistPendingMaterialEmbeddingsAsync(int courseId, HashSet<int> excludedMaterialIds);
     Task PrepareMaterialEmbeddingsAsync();
     Task PersistMaterialEmbeddingsAsync(int courseId);
 }

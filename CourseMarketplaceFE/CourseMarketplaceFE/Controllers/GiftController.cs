@@ -182,53 +182,8 @@ public class GiftController : Controller
             return Redirect("/");
         }
 
-        // Gọi Backend API tạo Stripe payment intent cho quà tặng
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
-        var response = await _api.PostJsonAsync("checkout/gift-intent", new
-        {
-            courseId = courseId,
-            recipientEmail = recipientEmail,
-            recipientName = recipientName,
-            giftMessage = giftMessage,
-            cardTheme = cardTheme,
-            successUrl = $"{baseUrl}/Gift/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
-            cancelUrl = $"{baseUrl}/Gift/CheckoutCancel"
-        });
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var errJson = await response.Content.ReadAsStringAsync();
-            string errorMsg = "Failed to create gift payment intent.";
-            try
-            {
-                using var doc = JsonDocument.Parse(errJson);
-                if (doc.RootElement.TryGetProperty("message", out var m))
-                    errorMsg = m.GetString() ?? errorMsg;
-            }
-            catch { }
-
-            TempData["Error"] = errorMsg;
-            return Redirect($"/Gift/Setup?courseId={courseId}");
-        }
-
-        var intentJson = await response.Content.ReadAsStringAsync();
         string clientSecret = "";
         string paymentIntentId = "";
-
-        try
-        {
-            using var doc = JsonDocument.Parse(intentJson);
-            if (doc.RootElement.TryGetProperty("data", out var dataEl))
-            {
-                clientSecret = dataEl.TryGetProperty("sessionUrl", out var csEl) ? csEl.GetString() ?? "" : "";
-                paymentIntentId = dataEl.TryGetProperty("sessionId", out var idEl) ? idEl.GetString() ?? "" : "";
-            }
-        }
-        catch
-        {
-            TempData["Error"] = "Failed to parse checkout server data.";
-            return Redirect($"/Gift/Setup?courseId={courseId}");
-        }
 
         // Lấy thông tin email người dùng
         string userEmail = "";
@@ -281,6 +236,45 @@ public class GiftController : Controller
         ViewBag.CardTheme = cardTheme;
 
         return View(model);
+    }
+
+    // ─── 1.5. DYNAMIC GIFT PAYMENT INTENT CREATION VIA AJAX ───────────────
+    [HttpPost]
+    public async Task<IActionResult> CreateGiftPaymentIntentAjax(
+        int courseId,
+        string recipientEmail,
+        string? recipientName,
+        string? giftMessage,
+        string cardTheme)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        var scheme = Request.Headers.ContainsKey("X-Forwarded-Proto") 
+            ? Request.Headers["X-Forwarded-Proto"].ToString() 
+            : Request.Scheme;
+        var host = Request.Headers.ContainsKey("X-Forwarded-Host") 
+            ? Request.Headers["X-Forwarded-Host"].ToString() 
+            : Request.Host.ToString();
+        var baseUrl = $"{scheme}://{host}";
+        var response = await _api.PostJsonAsync("checkout/gift-intent", new
+        {
+            courseId = courseId,
+            recipientEmail = recipientEmail,
+            recipientName = recipientName,
+            giftMessage = giftMessage,
+            cardTheme = cardTheme,
+            successUrl = $"{baseUrl}/Gift/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
+            cancelUrl = $"{baseUrl}/Gift/CheckoutCancel"
+        });
+
+        var json = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            return BadRequest(json);
+        }
+
+        return Content(json, "application/json");
     }
 
     // ─── 2. MÀN HÌNH NHẬN QUÀ TẶNG (UC-17) ──────────────────────────────────
@@ -417,35 +411,3 @@ public class GiftController : Controller
     }
 }
 
-// ─── Models bổ trợ ─────────────────────────────────────────────────────────
-public class GiftSetupViewModel
-{
-    public int CourseId { get; set; }
-
-    [Required(ErrorMessage = "Recipient email is required.")]
-    [EmailAddress(ErrorMessage = "Invalid email address format.")]
-    [Display(Name = "Recipient's Email")]
-    public string RecipientEmail { get; set; } = null!;
-
-    [Display(Name = "Recipient's Name (Optional)")]
-    public string? RecipientName { get; set; }
-
-    [MaxLength(1000, ErrorMessage = "Message cannot exceed 1000 characters.")]
-    [Display(Name = "Gift Message (Optional)")]
-    public string? GiftMessage { get; set; }
-
-    [Display(Name = "Card Design Theme")]
-    public string CardTheme { get; set; } = "classic"; // classic, birthday, thanks, congrats
-}
-
-public class GiftValidationViewModel
-{
-    public int GiftId { get; set; }
-    public string SenderName { get; set; } = null!;
-    public string? RecipientName { get; set; }
-    public string? GiftMessage { get; set; }
-    public string CardTheme { get; set; } = "classic";
-    public string CourseTitle { get; set; } = null!;
-    public string? CourseThumbnailUrl { get; set; }
-    public bool IsClaimed { get; set; }
-}

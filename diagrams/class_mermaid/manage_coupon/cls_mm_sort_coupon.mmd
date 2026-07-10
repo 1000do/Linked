@@ -1,0 +1,100 @@
+classDiagram
+direction LR
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CouponController {
+    <<backend controller>>
+    - _couponService : ICouponService
+    
+    + GetCoupons() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CouponResponse {
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Coupon {
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICouponService {
+    <<interface>>
+    + GetAllAsync(userId: int, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponse~~ *
+}
+
+class ICouponRepository {
+    <<interface>>
+    + GetAllAsync(filterId: int?, isActive: bool?, type: string?, search: string?) Task~List~Coupon~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CouponService {
+    - _couponRepository : ICouponRepository
+    
+    + GetAllAsync(userId: int, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CouponRepository {
+    - _context : AppDbContext
+    
+    + GetAllAsync(filterId: int?, isActive: bool?, type: string?, search: string?) Task~List~Coupon~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Coupons : DbSet~Coupon~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CouponController --> ICouponService
+CouponService --> ICouponRepository
+CouponRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CouponService ..|> ICouponService
+CouponRepository ..|> ICouponRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+CouponController ..> CouponResponse
+CouponService ..> CouponResponse
+CouponRepository ..> Coupon
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

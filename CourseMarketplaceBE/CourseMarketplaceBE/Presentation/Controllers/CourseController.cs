@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -203,6 +204,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPost("moderate")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> ModerateCourse([FromBody] CourseModerationRequest request)
     {
         try
@@ -213,6 +215,9 @@ public class CourseController : ControllerBase
             await _courseAiModerationService.StartCourseModerationAsync(request, instructorId);
 
             return Ok(ApiResponse<object>.SuccessResponse(new { }, "Moderation has been successfully submitted and is processing in the background."));
+        }
+        catch (KeyNotFoundException ex){
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (BadRequestException ex)
         {

@@ -1,4 +1,4 @@
-@startuml 
+@startuml
 <style>
     sequenceDiagram{
         actor{
@@ -27,116 +27,145 @@
 hide footbox
 
 mainframe Send Messages
-actor User as act
 
-participant "Chat/Index.cshtml" as view
+actor User as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
+participant ":ICloudinaryUploadService" as upload_sv
 participant "ChatHub" as hub
-participant ":ChatService" as sv
-participant ":RedisService" as redis
-participant ":ChatRepository" as repo
+participant ":IChatService" as sv
+participant ":Message" as msg_ett
+participant ":MessageAttachment" as msg_att_ett
+participant ":MessageDto" as msg_dto
+participant ":IChatRepository" as repo
+participant ":IUserRepository" as user_repo
+participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Enter message and click "Send"
-view->view++: Validate input
-view--
+act->view++: Enter message text
+act->view: Select files (Optional)
+act->view: Click "Send" button (or press Enter)
 
-alt [Valid input]
-    view->hub++: Call SendMessage(dto) via SignalR
-    hub->hub++: Get senderId from Connection Context
-    hub--
-    
-    hub->sv++: Call SaveMessageAsync(senderId, dto)
-    sv->repo++: Call IsParticipantAsync(chatId, senderId)
-    repo->ctx++: Check participant existence
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return result
-    ctx-->>repo--: Return boolean
-    repo-->>sv--: Return isParticipant
-    
-    group opt [isParticipant == false]
-        sv->repo++: Call HasActiveReportForChatAsync(chatId)
-        repo->ctx++: Query Active Reports for Chat
-        ctx->db++: Execute SELECT query
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return boolean
-        repo-->>sv--: Return hasActiveReport
-    end
-    
-    alt [isParticipant == false AND hasActiveReport == false]
-        sv-->>hub: throw UnauthorizedAccessException
-        hub-->>view: Broadcast error message
-        view-->>act: Display error message
-    else [Authorized (isParticipant == true OR hasActiveReport == true)]
-        sv->sv++: Create Message entity
-        sv--
-        sv->repo++: Call AddMessageAsync(message)
-        repo->ctx++: Add Message entity
-        ctx-->>repo--: Return
-        repo-->>sv--: Return
+opt With Attachments
+    loop for each selected file f
+        view->fe_ctrl++: Send POST /Chat/UploadAttachment with file
+        fe_ctrl->be_att_ctrl++: Send POST /api/ChatAttachment/upload (with Bearer Token)
         
-        sv->repo++: Call GetChatByIdAsync(chatId)
-        repo->ctx++: Query Chat details
-        ctx->db++: Execute SELECT query
-        db-->>ctx--: Return Chat
-        ctx-->>repo--: Return Chat
-        repo-->>sv--: Return Chat
+        be_att_ctrl->be_att_ctrl++: Check ChatSettings:EnableAttachments
+        be_att_ctrl--
         
-        alt [Chat not found]
-            sv-->>hub: throw InvalidOperationException
-            hub-->>view: Broadcast error message
-            view-->>act: Display error message
-        else [Chat found]
-            sv->sv++: Set chat.LastMessageAt = message.SentAt
-            sv--
-            sv->repo++: Call UpdateChatAsync(chat)
-            repo->ctx++: Mark Chat as modified
-            ctx-->>repo--: Return
-            repo-->>sv--: Return
-            
-            sv->repo++: Call SaveChangesAsync()
-            repo->ctx++: Call SaveChangesAsync()
-            ctx->db++: Execute INSERT and UPDATE statements
-            db-->>ctx--: Return result
-            ctx-->>repo--: Return numberOfRowsAffected
-            repo-->>sv--: Return numberOfRowsAffected
-            
-            repo->repo++: Check numberOfRowsAffected
-            repo--
-            
-            alt [numberOfRowsAffected > 0]
-                repo-->>sv: Return true
-                sv->repo++: Call GetParticipantIdsAsync(chatId)
-                repo->ctx++: Query Participant IDs
-                ctx->db++: Execute SELECT query
-                db-->>ctx--: Return list of IDs
-                ctx-->>repo--: Return List<int>
-                repo-->>sv--: Return List<int>
+        alt EnableAttachments = false
+            be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return BadRequest
+            view-->>act: Display feature disabled warning
+        else EnableAttachments = true
+            alt file size > 10MB
+                be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view: Return BadRequest
+                view-->>act: Display file size validation error
+            else file size <= 10MB
+                be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+                upload_sv->upload_sv++: Upload to Cloudinary
+                upload_sv--
+                upload_sv-->>be_att_ctrl--: Return SecureUrl
                 
-                loop for each recipientId in participantIds (excluding senderId)
-                    sv->redis++: Call IncrementUnreadCountAsync(recipientId, chatId)
-                    redis-->>sv--: Return
-                end
-                
-                sv->sv++: Map to MessageDto
-                sv--
-                sv-->>hub: Return MessageDto
-                hub->hub++: Broadcast message via SignalR
-                hub--
-                hub-->>view: Broadcast ReceiveMessage(messageDto) to Clients in Group
-                view->view++: appendMessage(messageDto)
-                view--
-                view-->>act: Display sent message with single tick
-            else [numberOfRowsAffected = 0]
-                repo-->>sv--: Return false
-                sv->sv++: throw InvalidOperationException
-                sv--
-                sv-->>hub--: throw InvalidOperationException
-                hub-->>view--: Send error message to caller
-                view-->>act--: Display send error message
+                be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
+                fe_ctrl-->>view--: Return JSON with attachment metadata
             end
         end
     end
 end
+
+view->view++: sendMsg()
+view--
+
+view->hub++: Invoke SendMessage(dto) via SignalR
+hub->hub++: GetAccountId()
+hub--
+
+hub->sv++: Call SaveMessageAsync(senderId, dto)
+sv->repo++: Call IsParticipantAsync(dto.ChatId, senderId)
+repo->ctx++: Call IsParticipantAsync(chatId, senderId)
+ctx->db++: Execute SELECT query
+
+db-->>ctx--: Return isParticipant
+ctx-->>repo--: Return isParticipant
+repo-->>sv--: Return isParticipant
+
+alt isParticipant == false
+    sv->repo++: Call HasActiveReportForChatAsync(dto.ChatId)
+    repo->ctx++: Call HasActiveReportForChatAsync(chatId)
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return hasActiveReport
+    ctx-->>repo--: Return hasActiveReport
+    repo-->>sv--: Return hasActiveReport
+end
+
+alt isParticipant == false && hasActiveReport == false
+    sv-->>hub: Throw UnauthorizedAccessException
+    hub->hub++: Send error message to Caller
+    hub--
+    hub-->>view: Send error event via SignalR
+    view-->>act: Display permission error message
+else Valid Permissions
+    sv->msg_ett++: Call Message(dto)
+    msg_ett-->>sv--: Return Message object
+    
+    opt EnableAttachments == true && dto.Attachments is not empty
+        sv->msg_att_ett++: Call MessageAttachment()
+        msg_att_ett-->>sv--: Return MessageAttachments list
+    end
+    
+    sv->repo++: Call AddMessageAsync(message)
+    repo->ctx++: Call AddAsync(message)
+    ctx-->>repo--: Return success
+    repo-->>sv--: Return success
+    
+    sv->sv++: Update chat.LastMessageAt
+    sv--
+    
+    sv->sv++: Increment unread counts for participants in Redis
+    sv--
+    
+    sv->repo++: Call SaveChangesAsync()
+    repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes (Execute INSERT & UPDATE statements)
+    
+    alt Database Save Fails (throws DbUpdateException)
+        db-->>ctx: Throw DbUpdateException
+        ctx-->>repo: Throw DbUpdateException
+        repo-->>sv: Throw DbUpdateException
+        sv-->>hub: Throw DbUpdateException
+        hub->hub++: Send error message to Caller
+        hub--
+        hub-->>view: Send error event via SignalR
+        view-->>act: Display database error message
+    else Database Save Succeeds
+        db-->>ctx--: Return result
+        ctx-->>repo--: Return result
+        repo-->>sv--: Return result
+        
+        sv->sv++: Fetch sender details
+        sv--
+        
+        sv->msg_dto++: Call MessageDto()
+        msg_dto-->>sv--: Return MessageDto object
+        
+        sv-->>hub--: Return MessageDto
+        
+        hub->hub++: Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
+        hub--
+        hub-->>view--: Broadcast message via SignalR Group
+        
+        view->view++: appendMessage(msg)
+        view--
+        view->view++: scrollToBottom()
+        view--
+        view-->>act--: Display sent message on UI
+    end
+end
+
 @enduml

@@ -26,16 +26,17 @@
 
 hide footbox
 
-mainframe Delete Notification
-actor User as act
+mainframe Delete Notifications (User/Instructor)
 
-participant "Notification/Index.cshtml" as view
+actor User as act
+participant "NotificationPage" as view
+participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
-participant ":NotificationService" as sv
-participant ":NotificationHub" as hub
-participant ":NotificationRepository" as repo
+participant ":INotificationService" as sv
+participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
+participant "NotificationHub" as hub
 
 act++
 act->view++: Click "Delete" button on notification
@@ -43,22 +44,21 @@ view->view++: Show Confirm Delete dialog
 view--
 act->view: Click "Delete" to confirm
 
-view->be_ctrl++: Send DELETE /api/Notification/{id} (with Bearer Token)
+view->fe_ctrl++: Send DELETE /Notification/Delete/{id}
+fe_ctrl->be_ctrl++: Send DELETE /api/Notification/{id} (with Bearer Token)
 
 be_ctrl->sv++: Call DeleteNotificationAsync(id, userId)
 sv->repo++: Call GetByIdAsync(id)
 repo->ctx++: Call GetByIdAsync(id)
 ctx->db++: Execute SELECT query
-db-->>ctx--: Return notification record
+db-->>ctx--: Return notification entity
 ctx-->>repo--: Return notification entity
 repo-->>sv--: Return notification entity
 
-sv->sv++: Validate notification ownership
-sv--
-
-alt [notification == null || notification.UserId != userId]
-    sv-->>be_ctrl: Return false
-    be_ctrl-->>view: Return statusCode 400 (BadRequest)
+alt [notification == null || notification.ReceiverId != userId]
+    sv-->>be_ctrl: throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
+    fe_ctrl-->>view: Return JSON error response
     view-->>act: Display deletion failure message
 else [notification exists and belongs to user]
     sv->repo++: Call Delete(noti)
@@ -69,26 +69,31 @@ else [notification exists and belongs to user]
     sv->repo++: Call SaveChangesAsync()
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Execute UPDATE statement
-    db-->>ctx--: Return result
-    ctx-->>repo--: Return numberOfRowsAffected
-    repo-->>sv--: Return numberOfRowsAffected
     
-    repo->repo++: Check numberOfRowsAffected
-    repo--
-    
-    alt [numberOfRowsAffected > 0]
+    alt [Database Save Fails (throws DbUpdateException)]
+        db-->>ctx: Throw DbUpdateException
+        ctx-->>repo: Throw DbUpdateException
+        repo-->>sv: Throw NotificationException
+        sv-->>be_ctrl: Throw BadRequestException
+        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view: Return JSON error response
+        view-->>act: Display deletion failure message
+    else [Database Save Succeeds]
+        db-->>ctx--: Return result
+        ctx-->>repo--: Return result
+        repo-->>sv--: Return result
+        
         sv->hub++: Call Clients.All.SendAsync("ReceiveNotification")
         hub-->>sv: Broadcast notification via SignalR
         hub--
-        sv-->>be_ctrl: Return true
-        be_ctrl-->>view: Return statusCode 200 (Ok)
+        
+        sv-->>be_ctrl--: Return true
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+        fe_ctrl-->>view--: Return JSON success response
         view->view++: Remove notification from local list
         view--
-        view-->>act: Display success alert
-    else [numberOfRowsAffected = 0]
-        sv-->>be_ctrl--: throw InvalidOperationException
-        be_ctrl-->>view--: Return statusCode 400 (BadRequest)
-        view-->>act--: Display deletion failure message
+        view-->>act--: Display success alert
     end
 end
+
 @enduml

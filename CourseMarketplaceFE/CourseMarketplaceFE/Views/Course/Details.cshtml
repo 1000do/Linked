@@ -121,6 +121,7 @@
                             var isPermanentlyLocked = Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && Model.FlagCount >= 3;
                             var hideReportBtn = (Model.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 (Model.CourseStatus?.Equals("draft", StringComparison.OrdinalIgnoreCase) == true) || 
+                                                (Model.CourseStatus?.Equals("rejected", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 isPermanentlyLocked;
                           
                             if (!hideReportBtn)
@@ -1256,8 +1257,8 @@
                         body: JSON.stringify({ courseId, reason: formValues[i].reason, description: formValues[i].description })
                     });
                     lastResult = await response.json();
-                    if (!response.ok || !lastResult.success) {
-                        throw new Error(lastResult.message || 'Failed to submit report');
+                    if (!response.ok) {
+                        throw new Error(lastResult.message || lastResult.Message || 'Failed to submit report');
                     }
                 }
                 Swal.fire({
@@ -1337,11 +1338,11 @@
                     body: JSON.stringify({ reviewId, reason: formValues.reason, description: formValues.description })
                 });
                 const result = await response.json();
-                if (result.success) {
+                if (response.ok) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Report Submitted',
-                        text: result.message || 'Thank you for your feedback, a moderator will review this.',
+                        text: result.Message || result.message || 'Thank you for your feedback, a moderator will review this.',
                         confirmButtonColor: '#10b981',
                         customClass: { popup: 'rounded-3xl' }
                     });
@@ -1349,7 +1350,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Submission Failed',
-                        text: result.message || 'Could not submit report at this time.',
+                        text: result.Message || result.message || 'Could not submit report at this time.',
                         confirmButtonColor: '#ef4444',
                         customClass: { popup: 'rounded-3xl' }
                     });

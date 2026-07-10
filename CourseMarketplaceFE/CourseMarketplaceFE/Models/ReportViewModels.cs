@@ -13,10 +13,14 @@ namespace CourseMarketplaceFE.Models
     public class CreateCourseReportViewModel
     {
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Invalid Course ID.")]
         public int CourseId { get; set; }
-        [Required]
+        
+        [Required(ErrorMessage = "Please select a reason for your report.", AllowEmptyStrings = false)]
         [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        [Required(ErrorMessage = "Description is required.")]
+        [MinLength(20, ErrorMessage = "Description must be at least 20 characters long.")]
         [MaxLength(1000)]
         public string? Description { get; set; }
     }
@@ -25,11 +29,15 @@ namespace CourseMarketplaceFE.Models
     public class CreateReviewReportViewModel
     {
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Invalid Review ID.")]
         public int ReviewId { get; set; }
+        
         public string ReviewType { get; set; } = "course_review"; // "course_review" hoặc "lesson_review"
-        [Required]
+        
+        [Required(ErrorMessage = "Please select a reason for your report.", AllowEmptyStrings = false)]
         [MaxLength(255)]
         public string Reason { get; set; } = null!;
+        
         [MaxLength(1000)]
         public string? Description { get; set; }
     }

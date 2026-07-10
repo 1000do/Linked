@@ -12,7 +12,6 @@ namespace CourseMarketplaceFE.Controllers;
 /// Không cần Session, không cần AddDistributedMemoryCache().
 /// ApiClient tự động gắn Bearer Token của user đang login khi gọi BE.
 /// </summary>
-[Authorize(Roles = "user,instructor")]
 public class CartController : Controller
 {
     private readonly ApiClient _api;
@@ -70,6 +69,7 @@ public class CartController : Controller
     /// Đọc couponCode từ Cookie → gọi API summary → render View.
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Index()
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -179,6 +179,7 @@ public class CartController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "user,instructor")]
     public IActionResult ApplyCoupon(string couponCode, int? courseId)
     {
         if (!string.IsNullOrWhiteSpace(couponCode) && courseId.HasValue)
@@ -199,6 +200,7 @@ public class CartController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "user,instructor")]
     public IActionResult RemoveCoupon(int courseId)
     {
         var map = GetCouponMapFromCookie();
@@ -217,6 +219,7 @@ public class CartController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> AddToCart(int courseId, string? returnUrl = null)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -249,6 +252,7 @@ public class CartController : Controller
     }
 
     [HttpPost]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> AddToCartAjax(int id)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -278,6 +282,7 @@ public class CartController : Controller
     /// </summary>
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> RemoveFromCart(int courseId)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -295,6 +300,7 @@ public class CartController : Controller
 
     // --- BFF PROXY FOR AJAX --- //
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GetSummaryAjax(string? couponCode)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -314,6 +320,7 @@ public class CartController : Controller
     /// Hiển thị trang thanh toán và tạo Stripe PaymentIntent.
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Checkout()
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -359,45 +366,8 @@ public class CartController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // 6.2 Gọi BE API tạo Stripe PaymentIntent
-        var intentResponse = await _api.PostJsonAsync("checkout/create-intent", new
-        {
-            couponCode = couponCode
-        });
-
-        if (!intentResponse.IsSuccessStatusCode)
-        {
-            var errorJson = await intentResponse.Content.ReadAsStringAsync();
-            string errorMsg = "An error occurred while creating checkout intent.";
-            try
-            {
-                using var doc = JsonDocument.Parse(errorJson);
-                if (doc.RootElement.TryGetProperty("message", out var m))
-                    errorMsg = m.GetString() ?? errorMsg;
-            }
-            catch { }
-            TempData["CartError"] = errorMsg;
-            return RedirectToAction(nameof(Index));
-        }
-
-        var intentJson = await intentResponse.Content.ReadAsStringAsync();
         string clientSecret = "";
         string paymentIntentId = "";
-
-        try
-        {
-            using var doc = JsonDocument.Parse(intentJson);
-            if (doc.RootElement.TryGetProperty("data", out var dataEl))
-            {
-                clientSecret = dataEl.TryGetProperty("sessionUrl", out var csEl) ? csEl.GetString() ?? "" : "";
-                paymentIntentId = dataEl.TryGetProperty("sessionId", out var idEl) ? idEl.GetString() ?? "" : "";
-            }
-        }
-        catch
-        {
-            TempData["CartError"] = "Failed to parse checkout server data.";
-            return RedirectToAction(nameof(Index));
-        }
 
         // 6.3 Lấy thông tin email người dùng từ Profile API
         string userEmail = "";
@@ -431,14 +401,43 @@ public class CartController : Controller
         return View(model);
     }
 
+    // ─── 6.25. DYNAMIC PAYMENT INTENT CREATION VIA AJAX ───────────────────
+    [HttpPost]
+    [Authorize(Roles = "user,instructor")]
+    public async Task<IActionResult> CreatePaymentIntentAjax(string? couponCode)
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        var response = await _api.PostJsonAsync("checkout/create-intent", new
+        {
+            couponCode = couponCode
+        });
+
+        var json = await response.Content.ReadAsStringAsync();
+        if (!response.IsSuccessStatusCode)
+        {
+            return BadRequest(json);
+        }
+
+        return Content(json, "application/json");
+    }
+
     // ─── 6.5. DIRECT CHECKOUT (MUA NGAY KHÔNG QUA GIỎ HÀNG) ──────────────
     [HttpPost]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> DirectCheckout(int id)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Json(new { success = false, message = "Please login before purchasing." });
 
-        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        var scheme = Request.Headers.ContainsKey("X-Forwarded-Proto") 
+            ? Request.Headers["X-Forwarded-Proto"].ToString() 
+            : Request.Scheme;
+        var host = Request.Headers.ContainsKey("X-Forwarded-Host") 
+            ? Request.Headers["X-Forwarded-Host"].ToString() 
+            : Request.Host.ToString();
+        var baseUrl = $"{scheme}://{host}";
 
         var response = await _api.PostJsonAsync("checkout/direct", new
         {
@@ -486,6 +485,7 @@ public class CartController : Controller
     /// Hỗ trợ cả Stripe Checkout (session_id) và Stripe Elements (payment_intent hoặc payment_intent_id).
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> CheckoutSuccess(
         [FromQuery(Name = "session_id")] string? sessionId,
         [FromQuery(Name = "payment_intent")] string? paymentIntent,
@@ -567,6 +567,7 @@ public class CartController : Controller
     /// GET /Cart/CheckoutCancel?order_id=123
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> CheckoutCancel([FromQuery(Name = "order_id")] int orderId)
     {
         if (orderId > 0)

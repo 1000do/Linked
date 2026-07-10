@@ -43,6 +43,7 @@ public class ReportController : ControllerBase
     /// User/Instructor: cần đã enrolled (không thể report course của mình).
     /// </summary>
     [HttpPost("courses")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> ReportCourse([FromBody] CreateCourseReportRequest request)
     {
         var userId = GetUserId();
@@ -61,10 +62,6 @@ public class ReportController : ControllerBase
         {
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
-        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
@@ -75,6 +72,7 @@ public class ReportController : ControllerBase
 
     /// <summary>Tạo báo cáo cho một đánh giá khóa học.</summary>
     [HttpPost("course-reviews")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> ReportCourseReview([FromBody] CreateCourseReviewReportRequest request)
     {
         var userId = GetUserId();
@@ -93,10 +91,6 @@ public class ReportController : ControllerBase
         {
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
-        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
@@ -107,6 +101,7 @@ public class ReportController : ControllerBase
 
     /// <summary>Tạo báo cáo cho một đánh giá bài học.</summary>
     [HttpPost("lesson-reviews")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> ReportLessonReview([FromBody] CreateLessonReviewReportRequest request)
     {
         var userId = GetUserId();
@@ -122,10 +117,6 @@ public class ReportController : ControllerBase
             return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (BadRequestException ex)
-        {
-            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
-        }
-        catch (InvalidOperationException ex)
         {
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }

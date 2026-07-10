@@ -9,6 +9,7 @@ class AdminApprovalControllerFE["AdminApprovalController"] {
 }
 
 class InstructorApprovalViewModel {
+    <<view model>>
     + InstructorId : int
     + FullName : string
     + Email : string
@@ -33,6 +34,7 @@ class AdminApprovalControllerBE["AdminApprovalController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class InstructorApprovalDto {
+    <<dto>>
     + InstructorId : int
     + FullName : string
     + Email : string
@@ -101,7 +103,7 @@ class IInstructorApprovalService {
 
 class IInstructorRepository {
     <<interface>>
-    + GetPendingInstructorsAsync(page: int, pageSize: int) Task~Tuple~IEnumerable~Instructor~~int~~ *
+    + GetPendingInstructorsAsync(page: int, pageSize: int) Task~(IEnumerable~Instructor~, int)~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
@@ -115,7 +117,7 @@ class InstructorApprovalService {
 
 class InstructorRepository {
     - _context : AppDbContext
-    + GetPendingInstructorsAsync(page: int, pageSize: int) Task~Tuple~IEnumerable~Instructor~~int~~
+    + GetPendingInstructorsAsync(page: int, pageSize: int) Task~(IEnumerable~Instructor~, int)~
 }
 
 %% ==================== BACKEND - DbContext ====================
@@ -124,6 +126,9 @@ class AppDbContext {
     + Instructors : DbSet~Instructor~
     + Users : DbSet~User~
     + Accounts : DbSet~Account~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -149,4 +154,5 @@ InstructorApprovalService ..> InstructorApprovalDto
 InstructorRepository ..> Instructor
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

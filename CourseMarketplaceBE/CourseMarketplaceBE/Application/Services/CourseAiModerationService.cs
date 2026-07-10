@@ -19,57 +19,63 @@ namespace CourseMarketplaceBE.Application.Services
 {
     public class CourseAiModerationService : ICourseAiModerationService
     {
-        private readonly IContentHashService _contentHashService;
         private readonly IAiModerationService _aiModerationService;
+        private readonly IAiModelManagementService _aiModelManagementService;
+        private readonly IAiModerationLogService _aiModerationLogService;
+        private readonly IAiConfigurationService _aiConfigurationService;
         private readonly ICourseQueryService _courseQueryService;
         private readonly ICourseCommandService _courseCommandService;
-        private readonly ILessonService _lessonService;
         private readonly IRedisService _redisService;
         private readonly ICourseAiIntegrationRepository _aiIntegrationRepository;
         private readonly IAiModelRepository _aiModelRepository;
         private readonly ISystemConfigRepository _systemConfigRepository;
-        private readonly ICourseModerationService _courseModerationService;
         private readonly ILogger<CourseAiModerationService> _logger;
         private readonly ICourseRepository _courseRepository;
         private readonly IMapper _mapper;
         private readonly IHtmlTextManipulationService _htmlTextManipulationService;
         private readonly IEmbeddingService _embeddingService;
         private readonly IBackgroundTaskQueue _taskQueue;
+        private readonly IUserRepository _userRepo;
+        private readonly INotificationService _notificationService;
 
         public CourseAiModerationService(
-            IContentHashService contentHashService,
             IAiModerationService aiModerationService,
+            IAiModelManagementService aiModelManagementService,
+            IAiModerationLogService aiModerationLogService,
+            IAiConfigurationService aiConfigurationService,
             ICourseQueryService courseQueryService,
             ICourseCommandService courseCommandService,
-            ILessonService lessonService,
             IRedisService redisService,
             ICourseAiIntegrationRepository aiIntegrationRepository,
             IAiModelRepository aiModelRepository,
             ISystemConfigRepository systemConfigRepository,
-            ICourseModerationService courseModerationService,
             ILogger<CourseAiModerationService> logger,
             ICourseRepository courseRepository,
             IMapper mapper,
             IHtmlTextManipulationService htmlTextManipulationService,
             IEmbeddingService embeddingService,
-            IBackgroundTaskQueue taskQueue)
+            IBackgroundTaskQueue taskQueue,
+            IUserRepository userRepo,
+            INotificationService notificationService)
         {
-            _contentHashService = contentHashService;
             _aiModerationService = aiModerationService;
+            _aiModelManagementService = aiModelManagementService;
+            _aiModerationLogService = aiModerationLogService;
+            _aiConfigurationService = aiConfigurationService;
             _courseQueryService = courseQueryService;
             _courseCommandService = courseCommandService;
-            _lessonService = lessonService;
             _redisService = redisService;
             _aiIntegrationRepository = aiIntegrationRepository;
             _aiModelRepository = aiModelRepository;
             _systemConfigRepository = systemConfigRepository;
-            _courseModerationService = courseModerationService;
             _logger = logger;
             _courseRepository = courseRepository;
             _mapper = mapper;
             _htmlTextManipulationService = htmlTextManipulationService;
             _embeddingService = embeddingService;
             _taskQueue = taskQueue;
+            _userRepo = userRepo;
+            _notificationService = notificationService;
         }
 
         public async Task StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
@@ -82,7 +88,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 try
                 {
-                    await moderationService.HandleCourseModerationAsync(request);
+                    await moderationService.HandleCourseModerationWithAIAsync(request);
                 }
                 catch (Exception)
                 {
@@ -91,7 +97,7 @@ namespace CourseMarketplaceBE.Application.Services
             });
         }
 
-        public async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
+        private async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
         {
             string cacheKey = CacheKeys.CourseModerationDetail.GetKey(courseId);
             _logger.LogInformation("GetCourseForModerationAsync: {CacheKey}", cacheKey);
@@ -113,12 +119,13 @@ namespace CourseMarketplaceBE.Application.Services
             return response;
         }
 
-        public async Task UpdateCourseStatusAndClearCacheAsync(int courseId, string status, int instructorId)
+        private async Task UpdateCourseStatusAndClearCacheAsync(int courseId, string status, int instructorId)
         {
             await _courseCommandService.UpdateCourseStatusAsync(courseId, status, instructorId);
             await _redisService.RemoveCacheAsync(CacheKeys.CourseModerationDetail.GetKey(courseId));
         }
 
+       
         private void ExtractPlainTextForModerationResponse(CourseModerationDetailResponse response)
         {
             response.Description = _htmlTextManipulationService.ExtractPlainText(response.Description ?? "");
@@ -140,33 +147,22 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
+       
+
+        private async Task<Dictionary<string, float>> GetModerationThresholdsAsync()
         {
-            var res = new ExactDuplicationResult { CourseId = command.CourseExt.CourseId, IsDup = false };
-            foreach (var ext in command.ExistingCourseExts)
+            var config = await _aiConfigurationService.GetConfigurationsAsync();
+            return new Dictionary<string, float>
             {
-                if (ext.CourseId == command.CourseExt.CourseId) continue;
-                if (ext.TitleHash == command.CourseExt.TitleHash) res.DupFields.Add("title");
-                if (ext.DescriptionHash == command.CourseExt.DescriptionHash) res.DupFields.Add("description");
-                if (ext.WhatYouWillLearnHash == command.CourseExt.WhatYouWillLearnHash) res.DupFields.Add("what_you_will_learn");
-                if (ext.RequirementsHash == command.CourseExt.RequirementsHash) res.DupFields.Add("requirements");
-                if (ext.ThumbnailHash == command.CourseExt.ThumbnailHash && !string.IsNullOrEmpty(ext.ThumbnailHash)) res.DupFields.Add("thumbnail");
-            }
-            if (res.DupFields.Any()) { res.IsDup = true; res.DupFields = res.DupFields.Distinct().ToList(); }
-            return res;
-        }
-
-
-        private async Task<ExactDuplicationResult> CheckExactDuplication(int courseId)
-        {
-            var current = await _contentHashService.GetCourseHashesAsync(courseId);
-            var others = await _contentHashService.GetAllCourseHashesAsync();
-            return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
+                { AiModelConst.Similarity, config.SimilarityScoreThreshold },
+                { AiModelConst.Spam, config.SpamConfidenceThreshold },
+                { AiModelConst.Toxic, config.ToxicityConfidenceThreshold }
+            };
         }
 
         private async Task<AssignAIModeratorsToCourseResult> AssignAIModeratorsToCourseAsync(int courseId, List<AiModelDto> models)
         {
-            var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
+            var thresholds = await GetModerationThresholdsAsync();
             var modelIds = models.Select(m => m.ModelId).ToList();
 
             foreach (var model in models)
@@ -203,7 +199,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var (classifiers, emb_generators) = await GetCourseModerationModelsAsync();
 
                 // Get existing course integrations
-                var thresholds = await _aiModerationService.GetScoreThresholdConfigAsync(SystemConfigKeys.ModerationThreshold);
+                var thresholds = await GetModerationThresholdsAsync();
 
                 await UpdateCourseAIIntegrationsAsync(courseId, classifiers, emb_generators, thresholds);
 
@@ -252,8 +248,8 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // If models are not configured in system configs, fetch active ones by type as fallback
-            if (classifiers.Count == 0) classifiers = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.Classifier);
-            if (emb_generators.Count == 0) emb_generators = await _aiModerationService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
+            if (classifiers.Count == 0) classifiers = await _aiModelManagementService.GetModelsByTypeAsync(AiModelConst.Classifier);
+            if (emb_generators.Count == 0) emb_generators = await _aiModelManagementService.GetModelsByTypeAsync(AiModelConst.EmbeddingGenerator);
 
             return (classifiers, emb_generators);
         }
@@ -314,7 +310,7 @@ namespace CourseMarketplaceBE.Application.Services
             try
             {
                 int rowsAffected = await _aiIntegrationRepository.SaveChangesAsync();
-                if (rowsAffected == 0) throw new InvalidOperationException("Failed to save course AI integration");
+                /* zero rows exception removed */
                 return rowsAffected;
             }
             catch (CourseAiIntegrationException ex)
@@ -337,8 +333,6 @@ namespace CourseMarketplaceBE.Application.Services
         {
             _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
 
-            await _embeddingService.PersistMaterialEmbeddingsAsync(result.CourseId);
-
             var (threatLevel, feedback) = EvaluateModerationFeedback(result);
 
             await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(
@@ -348,7 +342,7 @@ namespace CourseMarketplaceBE.Application.Services
                 threatLevel);
 
             var notificationContent = $"Course {result.CourseId} requires manual review following AI Moderation. Threat Level: {threatLevel}.\n\nDetails:\n{feedback}";
-            await _courseModerationService.NotifyAdminAsync("Manual Audit Required", notificationContent, UrlConst.AdminCourseModerationURL);
+            await NotifyManagersAsync("Manual Review Required", notificationContent, UrlConst.AdminCourseModerationURL);
         }
 
         private (AiThreatLevel ThreatLevel, string Feedback) EvaluateModerationFeedback(CourseModerationResult result)
@@ -389,7 +383,8 @@ namespace CourseMarketplaceBE.Application.Services
             else if (statusStr == ModerationStatus.ManualAudit.ToValue())
             {
                 threatLevel = AiThreatLevel.ManualAudit;
-                feedback = "AI suggested manual audit.";
+                feedback = "AI suggested manual audit due to low confidence in its moderation result";
+                
             }
 
             return (threatLevel, feedback);
@@ -436,7 +431,7 @@ namespace CourseMarketplaceBE.Application.Services
 
                 });
                 _logger.LogInformation("Output JSON for course AI moderation for course {CourseId} and integration {IntegrationId}: {OutputJson}", command.CourseModerationResult.CourseId, integration.Id, outputJson);
-                await _aiModerationService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
+                await _aiModerationLogService.SaveCourseAiUsageLog(new SaveCourseAiUsageLogCommand
                 {
                     IntegrationId = integration.Id,
                     InteractionType = command.InteractionType,
@@ -452,14 +447,14 @@ namespace CourseMarketplaceBE.Application.Services
 
 
 
-        private async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CourseModerationRequest request)
+        public async Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CourseModerationRequest request)
         {
             try
             {
                 var isHealthy = await _aiModerationService.HealthCheckAsync();
                 if (!isHealthy)
                 {
-                    await _courseModerationService.NotifyAdminAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
+                    await NotifyManagersAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
                     return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
@@ -470,14 +465,8 @@ namespace CourseMarketplaceBE.Application.Services
                 var result = await _aiModerationService.ModerateCourseFullPipelineAsync(semanticReq, harmfulReq);
 
                 _logger.LogInformation("AI Moderation Result: {result}", JsonSerializer.Serialize(result));
-                if (result.ModerationStatus == ModerationStatus.ManualAudit.ToValue())
-                {
-                    await _courseModerationService.NotifyAdminAsync("Manual Audit Required", $"Course {request.CourseId} flagged for manual review by AI.", UrlConst.AdminCourseModerationURL);
-                }
-                else
-                {
-                    await ResolveCourseAIModerationResult(result);
-                }
+                
+                await ResolveCourseAIModerationResult(result);
 
                 await LogCourseAiModeration(new LogCourseAiModerationCommand
                 {
@@ -492,8 +481,8 @@ namespace CourseMarketplaceBE.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during AI moderation for course {CourseId}", request.CourseId);
-                await _courseModerationService.NotifyAdminAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
-                throw;
+                await NotifyManagersAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
+                return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
             }
         }
 
@@ -531,55 +520,84 @@ namespace CourseMarketplaceBE.Application.Services
             return (semanticReq, harmfulReq);
         }
 
-        public async Task<CourseModerationResult> HandleCourseModerationAsync(CourseModerationRequest request)
+        private async Task NotifyManagersAsync(string title, string content, string? linkAction)
         {
-            try
+            var managerIds = await _userRepo.GetAllManagerIdsAsync();
+            if (managerIds.Any())
             {
-                return await HandleCourseModerationWithAIAsync(request);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in HandleCourseModerationAsync for course {CourseId}", request.CourseId);
-                throw;
+                var dtos = managerIds.Select(id => new NotificationBulkDto
+                {
+                    ReceiverId = id,
+                    Title = title,
+                    Content = content,
+                    LinkAction = linkAction
+                }).ToList();
+
+                await _notificationService.SendBulkNotificationsAsync(dtos);
             }
         }
+
 
         // Legacy hash dedup logic in HandleCourseModerationAsync: 
         //      var exactDeDupRes = await HandleExactDeDuplication(request.CourseId);
         //      if(exactDeDupRes != null){
         //          return exactDeDupRes;
         //      }
-        private async Task<CourseModerationResult?> HandleExactDeDuplication(int courseId)
-        {
-            var dupResult = await CheckExactDuplication(courseId);
-            if (dupResult.IsDup)
-            {
-                var items = dupResult.DupFields.Select(f => new RejectCourseItemDto
-                {
-                    Target = $"course.{f}",
-                    Reason = "Exact duplication with an existing course found."
-                }).ToList();
+        // private async Task<CourseModerationResult?> HandleExactDeDuplication(int courseId)
+        // {
+        //     var dupResult = await CheckExactDuplication(courseId);
+        //     if (dupResult.IsDup)
+        //     {
+        //         var items = dupResult.DupFields.Select(f => new RejectCourseItemDto
+        //         {
+        //             Target = $"course.{f}",
+        //             Reason = "Exact duplication with an existing course found."
+        //         }).ToList();
 
-                await _courseModerationService.RejectCourseDetailedAsync(
-                    new RejectCourseDetailedRequest
-                    {
-                        CourseId = courseId,
-                        Items = items
-                    }
-                );
+        //         await _courseModerationService.RejectCourseDetailedAsync(
+        //             new RejectCourseDetailedRequest
+        //             {
+        //                 CourseId = courseId,
+        //                 Items = items
+        //             }
+        //         );
 
 
-                return new CourseModerationResult
-                {
-                    CourseId = courseId,
-                    ModerationStatus = ModerationStatus.Rejected.ToValue(),
-                    FlaggedFields = dupResult.DupFields,
-                    OverallConfidenceScore = 1.0f,
-                    TotalLatencyMs = 0,
-                    StageLogs = []
-                };
-            }
-            return null;
-        }
+        //         return new CourseModerationResult
+        //         {
+        //             CourseId = courseId,
+        //             ModerationStatus = ModerationStatus.Rejected.ToValue(),
+        //             FlaggedFields = dupResult.DupFields,
+        //             OverallConfidenceScore = 1.0f,
+        //             TotalLatencyMs = 0,
+        //             StageLogs = []
+        //         };
+        //     }
+        //     return null;
+        // }
+
+        // private async Task<ExactDuplicationResult> GetExactDuplicationResult(ExactDuplicationCommand command)
+        // {
+        //     var res = new ExactDuplicationResult { CourseId = command.CourseExt.CourseId, IsDup = false };
+        //     foreach (var ext in command.ExistingCourseExts)
+        //     {
+        //         if (ext.CourseId == command.CourseExt.CourseId) continue;
+        //         if (ext.TitleHash == command.CourseExt.TitleHash) res.DupFields.Add("title");
+        //         if (ext.DescriptionHash == command.CourseExt.DescriptionHash) res.DupFields.Add("description");
+        //         if (ext.WhatYouWillLearnHash == command.CourseExt.WhatYouWillLearnHash) res.DupFields.Add("what_you_will_learn");
+        //         if (ext.RequirementsHash == command.CourseExt.RequirementsHash) res.DupFields.Add("requirements");
+        //         if (ext.ThumbnailHash == command.CourseExt.ThumbnailHash && !string.IsNullOrEmpty(ext.ThumbnailHash)) res.DupFields.Add("thumbnail");
+        //     }
+        //     if (res.DupFields.Any()) { res.IsDup = true; res.DupFields = res.DupFields.Distinct().ToList(); }
+        //     return res;
+        // }
+
+
+        // private async Task<ExactDuplicationResult> CheckExactDuplication(int courseId)
+        // {
+        //     var current = await _contentHashService.GetCourseHashesAsync(courseId);
+        //     var others = await _contentHashService.GetAllCourseHashesAsync();
+        //     return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
+        // }
     }
 }

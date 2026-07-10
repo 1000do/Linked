@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-115 - Add Account</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-115. Add Account</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin clicks the "Add Staff Member" button, fills in details, and saves.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to register a new Staff account within the account management panel by specifying details.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Add Account Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the Manage Accounts page.</li>
+                        <li>Admin clicks the Add Staff Member button.</li>
+                        <li>The system displays the account creation form.</li>
+                        <li>Admin enters the staff details: Email, Display Name, Temporary Password, Phone Number.</li>
+                        <li>Admin clicks the Save button.</li>
+                        <li>The system checks that the mandatory fields are provided.</li>
+                        <li>The system checks if the email is already registered in the database.</li>
+                        <li>The system hashes the password using BCrypt.</li>
+                        <li>The system saves the new Account details to the database.</li>
+                        <li>The system displays a success message and redirects to the account list view.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>A new Account and Manager record (role = "staff") are successfully created in the database.</li>
+                <li>The system displays a success message and redirects to the account list view.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+                <li><strong>Mandatory Fields Missing:</strong> The system detects that Email, Password, or Display Name is empty. The system displays a validation error message.</li>
+                <li><strong>Email Already Registered:</strong> The system detects that the entered email address already exists in the database. The system displays the error message: "Email is already registered."</li>
+                <li><strong>Database Save Failure:</strong> The system detects that saving the account or manager details to the database failed. The system displays an error message.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Required Credentials:</strong> Email, Password, and Display Name are mandatory fields that cannot be empty.</li>
+                <li><strong>Email Uniqueness:</strong> The email must be unique across all accounts in the system.</li>
+                <li><strong>Password Security:</strong> The user password must be hashed using BCrypt before database persistence.</li>
+                <li><strong>Auto-Verification:</strong> Since the account is directly created by the Admin, the new Staff account is initialized as verified (IsVerified = true) and active (AccountStatus = "Active") by default.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

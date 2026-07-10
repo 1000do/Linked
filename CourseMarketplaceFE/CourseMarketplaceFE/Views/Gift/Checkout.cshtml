@@ -46,14 +46,14 @@
                     </h2>
 
                     <!-- Recipient details info -->
-                    <div class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm">
-                        <div>
+                    <div class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-sm overflow-hidden">
+                        <div class="min-w-0">
                             <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Recipient Name</span>
-                            <span class="font-bold text-slate-800">@(string.IsNullOrEmpty(recipientName) ? "Someone Special" : recipientName)</span>
+                            <span class="font-bold text-slate-800 break-words block">@(string.IsNullOrEmpty(recipientName) ? "Someone Special" : recipientName)</span>
                         </div>
-                        <div>
+                        <div class="min-w-0">
                             <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Recipient Email</span>
-                            <span class="font-bold text-slate-800">@recipientEmail</span>
+                            <span class="font-bold text-slate-800 break-all block">@recipientEmail</span>
                         </div>
                         <div>
                             <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Card Theme</span>
@@ -61,9 +61,9 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(giftMessage))
                         {
-                            <div>
+                            <div class="min-w-0">
                                 <span class="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Personal Message</span>
-                                <span class="font-medium text-slate-600 italic">“@giftMessage”</span>
+                                <span class="font-medium text-slate-600 italic break-words block">“@giftMessage”</span>
                             </div>
                         }
                     </div>
@@ -265,11 +265,9 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const publishableKey = "@Model.PublishableKey";
-            const clientSecret = "@Model.ClientSecret";
-            const paymentIntentId = "@Model.PaymentIntentId";
 
-            if (!publishableKey || !clientSecret) {
-                console.error("Missing Stripe key or ClientSecret!");
+            if (!publishableKey) {
+                console.error("Missing Stripe key!");
                 Swal.fire({
                     icon: 'error',
                     title: 'Payment Error',
@@ -343,13 +341,6 @@
                 e.preventDefault();
                 submitBtn.disabled = true;
 
-                // Show processing overlay
-                processingBackdrop.classList.remove('hidden');
-                setTimeout(() => { processingBackdrop.classList.add('opacity-100'); }, 10);
-
-                // Hide previous errors
-                errorBox.classList.add('hidden');
-
                 // Validate cardholder name
                 const cardholderName = cardholderInput.value.trim();
                 const billingCountry = document.getElementById('billing-country').value;
@@ -360,8 +351,59 @@
                     errorBox.classList.remove('hidden');
                     errorMsg.innerText = 'Please enter the cardholder name.';
                     submitBtn.disabled = false;
+                    return;
+                }
+
+                // Show processing overlay
+                processingBackdrop.classList.remove('hidden');
+                setTimeout(() => { processingBackdrop.classList.add('opacity-100'); }, 10);
+
+                // Hide previous errors
+                errorBox.classList.add('hidden');
+
+                // Dynamic PaymentIntent Creation
+                let clientSecret = "";
+                let paymentIntentId = "";
+                try {
+                    const response = await fetch('/Gift/CreateGiftPaymentIntentAjax', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            courseId: "@courseId",
+                            recipientEmail: "@recipientEmail",
+                            recipientName: "@recipientName",
+                            giftMessage: "@giftMessage",
+                            cardTheme: "@cardTheme"
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        let msg = "Failed to initiate payment. Please try again.";
+                        try {
+                            const parsed = JSON.parse(errText);
+                            msg = parsed.message || msg;
+                        } catch(e) {}
+                        throw new Error(msg);
+                    }
+
+                    const resData = await response.json();
+                    if (resData.success && resData.data) {
+                        clientSecret = resData.data.sessionUrl;
+                        paymentIntentId = resData.data.sessionId;
+                    } else {
+                        throw new Error(resData.message || "Failed to create payment intent.");
+                    }
+                } catch (err) {
                     processingBackdrop.classList.remove('opacity-100');
                     setTimeout(() => { processingBackdrop.classList.add('hidden'); }, 300);
+
+                    errorBox.classList.remove('hidden');
+                    errorMsg.innerText = err.message || "An error occurred while setting up payment.";
+                    submitBtn.disabled = false;
                     return;
                 }
 

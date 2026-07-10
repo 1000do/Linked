@@ -215,7 +215,27 @@
     const currentRole = '@userRole';
 
     document.addEventListener("DOMContentLoaded", () => {
-        // Initial reports and stats are loaded via Razor Pages (Task.WhenAll)
+        // Parse URL params to open correct tab
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        const subtabParam = urlParams.get('subtab');
+
+        if (subtabParam) {
+            activeReviewSubTab = subtabParam;
+            document.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                if (btn.getAttribute('data-subtab') === subtabParam) {
+                    btn.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
+                    btn.classList.remove('text-slate-500');
+                } else {
+                    btn.classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
+                    btn.classList.add('text-slate-500');
+                }
+            });
+        }
+        
+        if (tabParam && tabParam !== 'course-reports') {
+            switchTab(tabParam);
+        }
     });
 
     function switchTab(tab) {
@@ -440,27 +460,18 @@
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Report Moderated',
-                            text: 'The course report has been successfully resolved.',
-                            confirmButtonColor: '#10b981',
-                            customClass: { popup: 'rounded-3xl' }
-                        });
-                        loadCourseReports();
-                        refreshStats();
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Moderate',
-                            text: result.message || 'The server rejected this action.',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Report Moderated',
+                        text: 'The course report has been successfully resolved.',
+                        confirmButtonColor: '#10b981',
+                        customClass: { popup: 'rounded-3xl' }
+                    });
+                    loadCourseReports();
+                    refreshStats();
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                    const errResult = await response.json().catch(() => ({}));
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: errResult?.message || errResult?.Message || 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
                 }
             } catch (err) {
                 console.error(err);
@@ -586,27 +597,18 @@
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Report Moderated',
-                            text: 'The review report has been successfully resolved.',
-                            confirmButtonColor: '#10b981',
-                            customClass: { popup: 'rounded-3xl' }
-                        });
-                        loadReviewReports();
-                        refreshStats();
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Moderate',
-                            text: result.message || 'The server rejected this action.',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Report Moderated',
+                        text: 'The review report has been successfully resolved.',
+                        confirmButtonColor: '#10b981',
+                        customClass: { popup: 'rounded-3xl' }
+                    });
+                    loadReviewReports();
+                    refreshStats();
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                    const errResult = await response.json().catch(() => ({}));
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: errResult?.message || errResult?.Message || 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
                 }
             } catch (err) {
                 console.error(err);

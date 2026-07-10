@@ -152,9 +152,10 @@
                     Coupons & Offers
                 </a>
             }
-            <a href="/Chat/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/Chat/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">forum</span> 
                 Monitor Chats
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-chat-badge"></span>
             </a>
             <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">military_tech</span> 
@@ -299,6 +300,7 @@
             if (ADMIN_LAYOUT_TOKEN) {
                 // Initialize unread badge and top notifications on load
                 loadAdminTopNotifications();
+                loadAdminUnreadChatsCount();
 
                 const connection = new signalR.HubConnectionBuilder()
                     .withUrl("/notificationHub", {
@@ -322,20 +324,22 @@
 
                     // Show a premium real-time toast alert
                     if (noti && noti.title) {
-                        const truncateText = (text, maxLength = 20) => {
+                        const truncateText = (text, maxLength = 100) => {
                             if (!text) return "";
                             return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
                         };
 
-                        const displayTitle = truncateText(noti.title, 20);
-                        const displayContent = truncateText(noti.content, 20);
+                        const displayTitle = truncateText(noti.title, 255);
+                        const displayContent = truncateText(noti.content, 100);
 
                          const Toast = Swal.mixin({
                             toast: true,
                             position: 'top-end',
                             showConfirmButton: false,
-                            timer: 6000,
+                            timer: 10000,
                             timerProgressBar: true,
+                            width: '600px',
+                            padding: '24px',
                             didOpen: (toast) => {
                                 toast.addEventListener('mouseenter', Swal.stopTimer);
                                 toast.addEventListener('mouseleave', Swal.resumeTimer);
@@ -365,6 +369,27 @@
                 });
 
                 connection.start().catch(err => console.error("Admin Notification Hub connection error: ", err));
+
+                const chatConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/chatHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                chatConnection.on("ReceiveMessage", function (msg) {
+                    if (typeof loadAdminUnreadChatsCount === 'function') {
+                        loadAdminUnreadChatsCount();
+                    }
+                });
+
+                chatConnection.on("MessageRead", function (data) {
+                    if (typeof loadAdminUnreadChatsCount === 'function') {
+                        loadAdminUnreadChatsCount();
+                    }
+                });
+
+                chatConnection.start().catch(err => console.error("Admin Chat Hub connection error: ", err));
             }
         });
 
@@ -399,6 +424,22 @@
                 }
             } catch (err) {
                 console.error("Fetch error:", err);
+            }
+        }
+
+        async function loadAdminUnreadChatsCount() {
+            const chatBadge = document.getElementById('admin-chat-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN) return;
+
+            try {
+                const response = await fetch("/Chat/GetUnreadCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || result.Count || 0;
+                    if (chatBadge) count > 0 ? chatBadge.classList.remove('hidden') : chatBadge.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Fetch chat unread count error:", err);
             }
         }
     </script>

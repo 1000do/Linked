@@ -358,6 +358,10 @@ public class InstructorController : Controller
                     // ★ Set cookie UserRole = instructor ngay khi Approved (không chờ Stripe)
                     if (model.ApprovalStatus == "Approved")
                     {
+                        if (Request.Cookies["UserRole"] != "instructor")
+                        {
+                            await _api.TryRefreshTokenAsync();
+                        }
                         Response.Cookies.Append("UserRole", "instructor", statusCookieOpts);
                     }
 

@@ -1,0 +1,133 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Update AI Model
+
+actor Admin as act
+participant "AiServiceManagementPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
+participant "AdminAiServiceController" as be_ctrl <<backend controller>>
+participant ":IAiModelManagementService" as sv
+participant ":AiModelAdminDto" as res
+participant ":IAiModelRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click the edit icon on a model entry
+view -> view++: Open edit modal with pre-filled details
+view--
+act -> view: Modify model details and click "Save Changes"
+
+
+
+view -> view++: Validate form inputs
+view--
+
+opt Form Validation Failed
+    view -->> act: Display validation error message
+end
+
+view -> fe_ctrl++: Send POST request to /AdminAiService/EditModel?id={id}
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++: Validate ModelState
+    fe_ctrl--
+
+    opt Invalid ModelState
+        fe_ctrl -->> view: Return BadRequest()
+        view -->> act: Display validation error message
+    end
+    fe_ctrl -> be_ctrl++: Send PUT request to /api/admin/ai-service/models/{id}
+    
+    be_ctrl -> sv++: Call UpdateModelAsync(id, req)
+    
+    sv -> repo++: Call GetByIdAsync(id)
+    repo -> ctx++: Call FindAsync()
+    ctx -> db++: Query AI Model
+    db -->> ctx--: Return model or null
+    ctx -->> repo--: Return model or null
+    repo -->> sv--: Return model or null
+    
+    sv -> sv++: Validate model update request
+    sv--
+    
+    alt Model Not Found
+        sv -->> be_ctrl: throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return BadRequest()
+        view -->> act: Display error message
+    else Valid model update request
+        sv -> sv++: Update model fields
+        sv--
+        
+        sv -> repo++: Call Update(model)
+        repo -->> sv--: Return updated model
+        
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw AiModelException
+            sv -->> be_ctrl: throw BadRequestException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Return BadRequest()
+            view -->> act: Display error message
+        else Database Save Success
+            db -->> ctx--: Return numberOfRowsAffected
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return numberOfRowsAffected
+            
+            sv -> res++: Call AiModelAdminDto()
+            res -->> sv--: Return AiModelAdminDto object
+            
+            sv -->> be_ctrl--: Return AiModelAdminDto object
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return Ok()
+            view -->> act--: Display success notification
+        end
+    end
+end
+
+@enduml

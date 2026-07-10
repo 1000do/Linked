@@ -94,11 +94,17 @@
                     <li>The system displays an authentication error message.</li>
                     <li>The system redirects the user to the login page.</li>
                 </ol>
+                <p style="margin: 0 0 5px 0;"><strong>EX-7 Duplicate Pending Report</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system detects that the user has already reported this course with the exact same reason and the report is still pending.</li>
+                    <li>The system displays a duplicate report error message and prevents submission.</li>
+                    
+                </ol>
                 <p style="margin: 0 0 5px 0;"><strong>EX-9 Database Save Failed</strong></p>
                 <ol style="margin: 0; padding-left: 20px;">
                     <li>The system fails to save the report to the database.</li>
-                    <li>The system displays an error message regarding report submission failure.</li>
-                    <li>Back to step 2.</li>
+                    <li>The system displays an error message regarding report submission failure and prevents submission.</li>
+                    
                 </ol>
             </td>
         </tr>
@@ -113,7 +119,7 @@
         <tr>
             <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
             <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
-                BR-1, BR-2
+                BR-1, BR-2, BR-4
             </td>
         </tr>
         <tr>

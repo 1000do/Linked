@@ -108,7 +108,7 @@ namespace CourseMarketplaceFE.Helpers
         /// Gọi POST /api/auth/refresh kèm RefreshToken cookie.
         /// Nếu thành công → Set-Cookie AccessToken mới lên response FE.
         /// </summary>
-        private async Task<bool> TryRefreshTokenAsync()
+        public async Task<bool> TryRefreshTokenAsync()
         {
             var httpCtx = _ctx.HttpContext;
             if (httpCtx == null) return false;
@@ -192,6 +192,7 @@ namespace CourseMarketplaceFE.Helpers
         private void AttachAccessToken(HttpRequestMessage req)
         {
             var token = _ctx.HttpContext?.Request.Cookies["AccessToken"];
+
             if (!string.IsNullOrEmpty(token))
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         }

@@ -3,14 +3,16 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class NotificationControllerFE["NotificationController"] {
+class FrontendController["NotificationController"] {
     <<frontend controller>>
+    - _client : HttpClient
     + Index() Task~IActionResult~
     + GetListTiny() Task~IActionResult~
     + Admin() IActionResult
 }
 
 class NotificationViewModel {
+    <<view model>>
     + NotificationId : int
     + ReceiverId : int
     + ReceiverFullName : string?
@@ -27,7 +29,7 @@ class NotificationViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class NotificationControllerBE["NotificationController"] {
+class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     + Delete(id: int) Task~IActionResult~
@@ -67,6 +69,7 @@ class INotificationRepository {
 
 class NotificationService {
     - _repo : INotificationRepository
+    - _hubContext : IHubContext~NotificationHub~
     + DeleteNotificationAsync(notiId: int, userId: int) Task~bool~
 }
 
@@ -89,7 +92,7 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
-NotificationControllerBE --> INotificationService
+BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -98,8 +101,8 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 %% === DEPENDENCY ===
-NotificationControllerFE ..> NotificationControllerBE
-NotificationControllerFE ..> NotificationViewModel
+FrontendController ..> BackendController
+FrontendController ..> NotificationViewModel
 NotificationRepository ..> Notification
 
 %% ==================== STYLES ====================

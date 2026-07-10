@@ -1,0 +1,84 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add Coupon
+actor Admin as act
+
+participant "AdminCouponView" as view
+participant "CouponController" as be_ctrl <<backend controller>>
+participant ":CouponService" as sv
+participant ":CouponRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Click "Add Coupon" & enter details
+view->be_ctrl++: POST /api/coupon
+
+be_ctrl->sv++: Call Create(req, managerId)
+sv->sv++: Call NormalizeType() & ValidateCreate()
+sv--
+
+alt Valid Request Data
+    sv->repo++: Call GetByCodeAsync(req.CouponCode)
+    repo->ctx++: Query Coupon
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>repo--: Return Coupon entity
+    repo-->>sv--: Return Coupon entity
+    
+    alt Coupon Code is Unique
+        sv->sv++: Instantiate new Coupon entity
+        sv--
+        
+        sv->repo++: Call AddAsync(coupon)
+        repo->ctx++: Add Coupon entity to ChangeTracker
+        ctx-->>repo--: Completed
+        repo-->>sv--: Completed
+        
+        sv->repo++: Call SaveChangesAsync()
+        repo->ctx++: Commit tracked changes
+        ctx->db++: Save changes to database
+        db-->>ctx--: Return result
+        ctx-->>repo--: Return numberOfRowsAffected
+        repo-->>sv--: Return success
+        
+        sv-->>be_ctrl: Return result
+        be_ctrl-->>view: Return statusCode 200
+        view-->>act: Render updated Coupon List / Display success message
+    else Coupon Code Already Exists
+        sv-->>be_ctrl: Throw InvalidOperationException
+        be_ctrl-->>view: Return statusCode 400
+        view-->>act: Display error toast message
+    end
+else Invalid Request Data
+    sv-->>be_ctrl--: Throw ArgumentException
+    be_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display error toast message
+end
+@enduml

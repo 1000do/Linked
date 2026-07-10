@@ -3490,7 +3490,7 @@
 <script>
 async function viewStudentAttempts(quizId) {
     try {
-        const res = await fetch(/Quiz/StudentAttempts/ + quizId);
+        const res = await fetch(`/Quiz/StudentAttempts/` + quizId);
         const result = await res.json();
         if (result.success && result.data) {
             renderStudentAttemptsModal(result.data, quizId);
@@ -3504,7 +3504,7 @@ async function viewStudentAttempts(quizId) {
 }
 
 function renderStudentAttemptsModal(attempts, quizId) {
-    let html = \
+    let html = `
         <div id="student-attempts-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeStudentAttemptsModal()"></div>
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden">
@@ -3516,16 +3516,16 @@ function renderStudentAttemptsModal(attempts, quizId) {
                 </div>
                 <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
                     <div class="space-y-4">
-    \;
+    `;
     
     if (attempts.length === 0) {
-        html += \
+        html += `
             <div class="text-center py-12 text-slate-500 text-sm">
                 <span class="material-symbols-outlined text-[48px] text-slate-200 mb-4 block">history</span>
                 <p class="text-lg font-bold text-slate-600 mb-1">No attempts yet</p>
                 <p>No students have attempted this quiz yet.</p>
             </div>
-        \;
+        `;
     } else {
         attempts.forEach(a => {
             const dateStr = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : 'Incomplete';
@@ -3533,34 +3533,34 @@ function renderStudentAttemptsModal(attempts, quizId) {
                 ? '<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">Passed</span>' 
                 : '<span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-200">Failed</span>';
             
-            html += \
+            html += `
                 <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-indigo-300 transition-colors">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold uppercase">
-                            \
+                            ${a.studentName.charAt(0)}
                         </div>
                         <div>
-                            <p class="font-bold text-slate-900">\</p>
-                            <p class="text-xs text-slate-500">\</p>
+                            <p class="font-bold text-slate-900">${a.studentName}</p>
+                            <p class="text-xs text-slate-500">${dateStr}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-4">
                         <div class="text-right">
-                            <p class="font-black text-slate-900">\%</p>
-                            \
+                            <p class="font-black text-slate-900">${a.score.toFixed(1)}%</p>
+                            ${statusHtml}
                         </div>
                     </div>
                 </div>
-            \;
+            `;
         });
     }
 
-    html += \
+    html += `
                     </div>
                 </div>
             </div>
         </div>
-    \;
+    `;
 
     const div = document.createElement('div');
     div.id = 'student-attempts-wrapper';

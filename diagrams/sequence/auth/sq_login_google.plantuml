@@ -27,62 +27,131 @@
 hide footbox
 
 mainframe Login with Google
-actor User as act
+actor "User/Instructor" as act
 
-participant "Login.cshtml" as view
-participant "AdminNotification.cshtml" as admin_view
-participant "Index.cshtml" as home_view
+participant "LoginView" as view
+participant "AdminNotificationView" as admin_view
+participant "HomeIndexView" as home_view
 participant "Google Identity" as Google
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
 participant ":AuthService" as sv
+participant ":UserRepository" as u_repo
+participant ":LockoutRepository" as lock_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Click "Sign in with Google" button
 view->Google++: Request Google Authentication
-Google-->>view--: Return Google IdToken credential
+Google-->>view--: Return Google IdToken
 
-view->fe_ctrl++: Send POST /Account/GoogleLogin with IdToken in JSON body
-fe_ctrl->be_ctrl++: Send POST /api/auth/google-login with IdToken DTO
+view->fe_ctrl++: POST /Account/GoogleLogin
+
+fe_ctrl->be_ctrl++: POST /api/auth/google-login
 
 be_ctrl->sv++: Call GoogleLoginAsync(idToken)
-sv->Google++: Validate IdToken structure & signature
-Google-->>sv--: Return validated profile (Email, Name, Picture)
 
-sv->ctx++: Query Accounts table for Email
-ctx->db++: Execute select query
-db-->>ctx--: Return Account entity details or null
-ctx-->>sv--: Return Account entity or null
+sv->Google++: Validate IdToken signature
+Google-->>sv--: Return payload
 
-alt [New User (First time login)]
-    sv->ctx++: Add new Account & User with default "user" role
-    ctx->db++: Execute insert queries
-    db-->>ctx--: Return saved details
-    ctx-->>sv--: Return saved Account entity
-else [Existing User]
-    sv->sv++: Retrieve account role (user / instructor / staff / admin)
-    sv--
+sv->u_repo++: Call GetAccountByEmailAsync(email)
+u_repo->ctx++: Query Account
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>u_repo--: Return account
+u_repo-->>sv--: Return account
+
+sv->sv++: Check account
+sv--
+
+opt account == null
+    sv->u_repo++: Call RegisterUserAsync(acc, user)
+    u_repo->ctx++: Add Account and User entities
+    ctx-->>u_repo--: Return result
+    
+    u_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes to database
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return numberOfRowsAffected
+    u_repo-->>sv--: Return isCreated
+    
+    sv->u_repo++: Call GetAccountByEmailAsync(email)
+    u_repo->ctx++: Query Account
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return account
+    u_repo-->>sv--: Return account
 end
 
-sv->sv++: Generate JWT AccessToken (24h) & RefreshToken (7d)
+sv->lock_repo++: Call GetActiveLockoutAsync(accountId, "account")
+lock_repo->ctx++: Query active lockout
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>lock_repo--: Return lockout
+lock_repo-->>sv--: Return activeLockout
+
+sv->sv++: Check activeLockout
 sv--
-sv-->>be_ctrl--: Return LoginResponse DTO
 
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with LoginResponse JSON
-
-fe_ctrl->fe_ctrl++: Append HttpOnly cookies (AccessToken, RefreshToken)\nand client-readable cookies (UserRole, UserName, AvatarUrl, UserId)
-fe_ctrl--
-fe_ctrl-->>view--: Return statusCode 200 (Ok)
-
-alt [UserRole is Admin or Staff]
-    view -> admin_view++: Redirect to Admin Notification page
-    deactivate view
-    admin_view -->> act--: Display Admin Notification page
-else [UserRole is Learner (User) or Instructor]
-    view -> home_view++: Redirect to Home Index page
-    deactivate view
-    home_view -->> act--: Display Homepage
+alt Account is active
+    sv->u_repo++: Call UpdateLastLoginAsync(accountId)
+    u_repo->ctx++: Update LastLoginDate
+    ctx-->>u_repo--: Return result
+    
+    u_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes to database
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return numberOfRowsAffected
+    u_repo-->>sv--: Return result
+    
+    sv->u_repo++: Call GetRoleByAccountIdAsync(accountId)
+    u_repo->ctx++: Query Role
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return role
+    u_repo-->>sv--: Return role
+    
+    sv->sv++: Generate JWT tokens
+    sv--
+    
+    sv->u_repo++: Call SaveRefreshTokenAsync(accountId, refreshToken)
+    u_repo->ctx++: Update RefreshToken
+    ctx-->>u_repo--: Return result
+    
+    u_repo->ctx++: Call SaveChangesAsync()
+    ctx->db++: Save changes to database
+    db-->>ctx--: Return result
+    ctx-->>u_repo--: Return numberOfRowsAffected
+    u_repo-->>sv--: Return result
+    
+    sv-->>be_ctrl: Return LoginResponse object
+    
+    be_ctrl-->>fe_ctrl: Return statusCode 200
+    
+    fe_ctrl->fe_ctrl++: Append HttpOnly cookies and user info cookies
+    fe_ctrl--
+    
+    fe_ctrl-->>view: Return statusCode 200
+    
+    view->view++: Check user role from cookies
+    view--
+    
+    alt role == admin or staff
+        view -->> admin_view: Redirect to Admin Notification page
+        activate admin_view
+        admin_view -->> act: Display Admin Notification page
+        deactivate admin_view
+    else role == user or instructor
+        view -->> home_view: Redirect to Home Index page
+        activate home_view
+        home_view -->> act: Display Homepage
+        deactivate home_view
+    end
+else Account is locked out
+    sv-->>be_ctrl--: throw UnauthorizedAccessException
+    be_ctrl-->>fe_ctrl--: Return statusCode 500
+    fe_ctrl-->>view--: Return statusCode 400
+    view-->>act--: Display error message
 end
 @enduml

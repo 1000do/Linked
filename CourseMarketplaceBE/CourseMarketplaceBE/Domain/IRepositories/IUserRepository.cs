@@ -37,6 +37,7 @@ public interface IUserRepository
     Task<bool> UpdateAccountAsync(Account account);
     Task<int?> GetStaffAccountIdAsync();
     Task<int?> GetAdminIdAsync();
+    Task<List<int>> GetAllManagerIdsAsync();
     Task<int> GetTotalStudentsCountAsync();
 
     // Migrated from INotificationRepository

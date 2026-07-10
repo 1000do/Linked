@@ -85,7 +85,7 @@ namespace CourseMarketplaceBE.Application.Services
                     }
                 }
 
-                await _embeddingService.SaveValidDuplicateEmbeddingsAsync(courseId, new HashSet<int>());
+                await _embeddingService.PersistPendingMaterialEmbeddingsAsync(courseId, new HashSet<int>());
             }
 
             var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
@@ -103,8 +103,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             _courseRepository.Update(course);
             int rowsApprove = await _courseRepository.SaveChangesAsync();
-            if (rowsApprove <= 0)
-                throw new InvalidOperationException("Failed to save changes when approving course.");
+            /* zero rows exception removed */
 
             if (course.InstructorId.HasValue)
             {
@@ -146,8 +145,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             _courseRepository.Update(course);
             int rowsReject = await _courseRepository.SaveChangesAsync();
-            if (rowsReject <= 0)
-                throw new InvalidOperationException("Failed to save changes when rejecting course.");
+            /* zero rows exception removed */
 
             if (course.InstructorId.HasValue)
             {
@@ -178,8 +176,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             _courseRepository.Update(course);
             int rowsFlag = await _courseRepository.SaveChangesAsync();
-            if (rowsFlag <= 0)
-                throw new InvalidOperationException("Failed to save changes when flagging course.");
+            /* zero rows exception removed */
 
             if (course.InstructorId.HasValue)
             {
@@ -204,8 +201,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     int rowsArchive1 = await _courseRepository.SaveChangesAsync();
-                    if (rowsArchive1 <= 0)
-                        throw new InvalidOperationException("Failed to save changes when archiving course after 3rd flag.");
+                    /* zero rows exception removed */
                 }
 
                 await _notificationService.SendNotificationAsync(
@@ -241,8 +237,7 @@ namespace CourseMarketplaceBE.Application.Services
                 course.UpdatedAt = DateTime.Now;
                 _courseRepository.Update(course);
                 int rows = await _courseRepository.SaveChangesAsync();
-                if (rows <= 0)
-                    throw new InvalidOperationException("Failed to save changes when unflagging course.");
+                /* zero rows exception removed */
 
                 if (course.InstructorId.HasValue)
                 {
@@ -363,8 +358,8 @@ namespace CourseMarketplaceBE.Application.Services
                 : "Course rejected. Please check flagged files.";
             course.UpdatedAt = DateTime.Now;
 
-            // Conditionally restore duplicate embeddings for materials that were NOT rejected
-            await _embeddingService.SaveValidDuplicateEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
+            // Conditionally persist pending embeddings for materials that were NOT rejected
+            await _embeddingService.PersistPendingMaterialEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
 
             _courseRepository.Update(course);
             int rowsRejectDetailed = await _courseRepository.SaveChangesAsync();
@@ -521,8 +516,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
                     int rowsArchive2 = await _courseRepository.SaveChangesAsync();
-                    if (rowsArchive2 <= 0)
-                        throw new InvalidOperationException("Failed to save changes when archiving course after 3rd detailed flag.");
+                    /* zero rows exception removed */
                 }
 
                 await _notificationService.SendNotificationAsync(

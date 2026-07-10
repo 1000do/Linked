@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>UC-119 - View Account List</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <p><strong>UC-119. View Account List</strong></p>
+
+    <p><strong>Function Trigger:</strong> Admin accesses the Manage Accounts page.</p>
+
+    <p><strong>Function Description:</strong> Allows an Admin to view a paginated list of all registered accounts. The Admin can search for accounts, filter them by role, and navigate through the pages.</p>
+
+    <p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>Admin must be logged in with Admin role privileges.</li>
+                <li>Admin has stable internet connection.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>View Account List Successfully:</strong>
+                    <ul>
+                        <li>Admin accesses the Account List page.</li>
+                        <li>The system checks if the Admin is authenticated.</li>
+                        <li>The system requests the account list using default query parameters (page = 1, pageSize = 10, all roles).</li>
+                        <li>The system queries the database to fetch account records, including associated manager, user, and instructor details, ordered by creation date descending.</li>
+                        <li>The system maps the account records to list details.</li>
+                        <li>The system calculates pagination values and total record counts.</li>
+                        <li>The system renders and displays the Account List table and navigation controls.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Filter Accounts)</strong>
+            <ul>
+                <li>If the Admin filters accounts:
+                    <ul>
+                        <li>Admin selects a role filter value from the dropdown menu.</li>
+                        <li>The system queries the database using the selected role filter criteria.</li>
+                        <li>The process returns to displaying the Account List table and navigation controls.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Search Accounts)</strong>
+            <ul>
+                <li>If the Admin searches accounts:
+                    <ul>
+                        <li>Admin enters a keyword in the search input box.</li>
+                        <li>The system queries the database for accounts whose email, phone, display name, or full name match the keyword.</li>
+                        <li>The process returns to displaying the Account List table and navigation controls.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Paginate Accounts)</strong>
+            <ul>
+                <li>If the Admin paginates accounts:
+                    <ul>
+                        <li>Admin clicks a page number or page navigation button.</li>
+                        <li>The system requests the page index using page parameter.</li>
+                        <li>The process returns to displaying the Account List table and navigation controls.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The paginated account list is successfully displayed on the screen.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system detects that the Admin is not authenticated or lacks admin privileges. The system redirects the Admin to the Login page.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Default Ordering:</strong> The list is ordered by creation date descending (AccountCreatedAt desc) by default.</li>
+                <li><strong>Search Criteria:</strong> Search keywords are matched (case-insensitive substring) against the account's Email, Phone Number, Manager Display Name, or User Full Name.</li>
+                <li><strong>Role Filters:</strong> Supported role filters include: "user" (students), "instructor" (instructors), "staff" (all staff members), "registered_staff" (verified staff members), or "all" roles.</li>
+                <li><strong>Default Pagination:</strong> The page size defaults to 10 accounts per page if not specified otherwise.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

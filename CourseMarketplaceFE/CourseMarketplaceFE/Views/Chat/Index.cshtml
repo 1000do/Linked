@@ -255,6 +255,13 @@
                 loadPendingRequests();
             });
 
+            chatPageConnection.on("MessageDeleted", (data) => {
+                if (activeChatId === data.chatId) {
+                    const msgEl = document.getElementById(`msg-${data.messageId}`);
+                    if (msgEl) msgEl.remove();
+                }
+            });
+
             try {
                 await chatPageConnection.start();
                 console.log("SignalR Connected.");
@@ -617,7 +624,7 @@
             }
 
             const html = `
-                <div class="msg-row ${isMe ? 'me' : 'them'}">
+                <div class="msg-row ${isMe ? 'me' : 'them'}" id="msg-${m.messageId || m.MessageId}">
                     <div class="avatar-container ${frameClass}">
                         <img src="${m.senderAvatar || fallback}" 
                              onerror="this.src='${fallback}'"
@@ -625,7 +632,15 @@
                     </div>
                     <div class="bubble-container">
                         <div class="sender-name">${isMe ? 'You' : m.senderName}</div>
-                        <div class="bubble shadow-sm"><div class="bubble-text">${m.content}</div>${attachmentHtml}<div class="msg-time">${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}${tickHtml}</div></div>
+                        <div class="bubble shadow-sm">
+                            <div class="bubble-text">${m.content}</div>
+                            ${attachmentHtml}
+                            <div class="msg-time d-flex align-items-center justify-content-end gap-1">
+                                ${new Date(m.sentAt || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                ${tickHtml}
+                                ${isMe ? `<button onclick="deleteMsg(${m.messageId || m.MessageId})" class="text-slate-300 hover:text-red-500 bg-transparent border-0 p-0 m-0 d-flex align-items-center" title="Delete for me"><span class="material-symbols-outlined" style="font-size: 14px;">delete</span></button>` : ''}
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -685,6 +700,40 @@
             }
         }
 
+        async function deleteMsg(messageId) {
+            if (!messageId) return;
+
+            const confirmResult = await Swal.fire({
+                title: 'Delete Message?',
+                text: "This message will be removed from your view.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Delete for me',
+                cancelButtonText: 'Cancel',
+                background: '#ffffff',
+                customClass: { popup: 'rounded-2xl shadow-xl' }
+            });
+
+            if (confirmResult.isConfirmed) {
+                try {
+                    const res = await fetch(`/Chat/DeleteMessage?messageId=${messageId}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        const msgEl = document.getElementById(`msg-${messageId}`);
+                        if (msgEl) msgEl.remove();
+                    } else {
+                        Swal.fire('Error', 'Failed to delete message.', 'error');
+                    }
+                } catch (err) {
+                    console.error("Delete message error:", err);
+                    Swal.fire('Error', 'An error occurred.', 'error');
+                }
+            }
+        }
+
         async function uploadFile(file) {
             const formData = new FormData();
             formData.append('file', file);
@@ -703,7 +752,17 @@
 
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
-                selectedFiles.push(input.files[0]);
+                const file = input.files[0];
+                
+                // 10MB Limit Check
+                const maxSize = 10 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    Swal.fire('Error', 'File size must not exceed 10MB.', 'error');
+                    input.value = "";
+                    return;
+                }
+
+                selectedFiles.push(file);
                 console.log('In handleFileSelect, selectedFiles',selectedFiles);  
                 renderAttachmentPreview();
                 input.value = ""; // Reset để chọn lại cùng file

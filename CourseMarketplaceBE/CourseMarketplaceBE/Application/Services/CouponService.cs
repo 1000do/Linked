@@ -39,7 +39,123 @@ public class CouponService : ICouponService
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // HELPERS
+    // UC-63: DANH SÁCH COUPON (ADMIN)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task<List<CouponResponse>> GetAll(int managerId, bool? isActive, string? type, string? search, bool isAdmin = false)
+    {
+        int? filterId = isAdmin ? null : managerId;
+        var data = await _repo.GetAllAsync(filterId, isActive, type, search);
+        return data.Select(MapToResponse).ToList();
+    }
+
+    public async Task<CouponResponse?> GetById(int id, int managerId, bool isAdmin = false)
+    {
+        int? filterId = isAdmin ? null : managerId;
+        var x = await _repo.GetByIdAsync(id, filterId);
+        return x == null ? null : MapToResponse(x);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // UC-62: TẠO MÃ GIẢM GIÁ (ADMIN)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task Create(CreateCouponRequest req, int managerId)
+    {
+        var type = NormalizeType(req.CouponType);
+        ValidateCreate(type, req.DiscountValue, req.StartDate, req.EndDate, req.UsageLimit);
+
+        await EnsureCouponCodeIsUniqueAsync(req.CouponCode);
+
+        var coupon = BuildNewCoupon(req, type, managerId);
+
+        await _repo.AddAsync(coupon);
+        await _repo.SaveChangesAsync();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // UC-64: SỬA MÃ GIẢM GIÁ (ADMIN)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task Update(int id, UpdateCouponRequest req, int managerId, bool isAdmin = false)
+    {
+        int? filterId = isAdmin ? null : managerId;
+        var coupon = await _repo.GetByIdAsync(id, filterId);
+        if (coupon == null)
+            throw new KeyNotFoundException($"Coupon #{id} not found.");
+
+        UpdateCouponProperties(coupon, req);
+
+        _repo.Update(coupon);
+        await _repo.SaveChangesAsync();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // UC-65: XÓA MỀM (ADMIN)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task SoftDelete(int id, int managerId, bool isAdmin = false)
+    {
+        int? filterId = isAdmin ? null : managerId;
+        var coupon = await _repo.GetByIdAsync(id, filterId);
+        if (coupon == null)
+            throw new KeyNotFoundException($"Coupon #{id} not found.");
+
+        coupon.IsActive = false;
+        coupon.EndDate = DateTime.Now.AddDays(-1); // Hết hạn ngay lập tức
+
+        _repo.Update(coupon);
+        await _repo.SaveChangesAsync();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // INSTRUCTOR: Browse coupons active trên nền tảng
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task<List<CouponResponse>> GetActivePlatformCouponsAsync()
+    {
+        var data = await _repo.GetActivePlatformCouponsAsync();
+        return data.Select(MapToResponse).ToList();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // INSTRUCTOR: Gắn coupon vào khóa học
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task ApplyCouponToCourseAsync(int courseId, int couponId, int instructorUserId)
+    {
+        var course = await ValidateCourseOwnershipAndCartStatusAsync(courseId, instructorUserId, "apply");
+
+        if (course.Price == 0)
+            throw new InvalidOperationException("Coupons cannot be applied to free courses.");
+
+        var coupon = await ValidateAndGetCouponForApplicationAsync(couponId);
+        
+        await AssignCouponToCourseAsync(course, couponId);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // INSTRUCTOR: Gỡ coupon khỏi khóa học
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task RemoveCouponFromCourseAsync(int courseId, int instructorUserId)
+    {
+        var course = await ValidateCourseOwnershipAndCartStatusAsync(courseId, instructorUserId, "remove");
+        await UnassignCouponFromCourseAsync(course);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // CHECKOUT: Tính giá sau coupon (gọi bởi CheckoutService)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public decimal ApplyCoupon(Coupon coupon, decimal originalPrice)
+    {
+        ValidateCouponForCheckout(coupon, originalPrice);
+        return CalculateFinalPrice(coupon, originalPrice);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PRIVATE HELPERS
     // ═══════════════════════════════════════════════════════════════════════
 
     private static string NormalizeType(string? type)
@@ -86,40 +202,16 @@ public class CouponService : ICouponService
         IsActive      = x.IsActive
     };
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // UC-63: DANH SÁCH COUPON (ADMIN)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task<List<CouponResponse>> GetAll(int managerId, bool? isActive, string? type, string? search, bool isAdmin = false)
+    private async Task EnsureCouponCodeIsUniqueAsync(string couponCode)
     {
-        // Nếu là Admin thì lấy tất cả (managerId = null)
-        int? filterId = isAdmin ? null : managerId;
-        var data = await _repo.GetAllAsync(filterId, isActive, type, search);
-        return data.Select(MapToResponse).ToList();
-    }
-
-    public async Task<CouponResponse?> GetById(int id, int managerId, bool isAdmin = false)
-    {
-        int? filterId = isAdmin ? null : managerId;
-        var x = await _repo.GetByIdAsync(id, filterId);
-        return x == null ? null : MapToResponse(x);
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // UC-62: TẠO MÃ GIẢM GIÁ (ADMIN)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task Create(CreateCouponRequest req, int managerId)
-    {
-        var type = NormalizeType(req.CouponType);
-        ValidateCreate(type, req.DiscountValue, req.StartDate, req.EndDate, req.UsageLimit);
-
-        // ★ Kiểm tra coupon_code UNIQUE
-        var existing = await _repo.GetByCodeAsync(req.CouponCode.Trim());
+        var existing = await _repo.GetByCodeAsync(couponCode.Trim());
         if (existing != null)
-            throw new InvalidOperationException($"Coupon code '{req.CouponCode.Trim()}' already exists.");
+            throw new InvalidOperationException($"Coupon code '{couponCode.Trim()}' already exists.");
+    }
 
-        var coupon = new Coupon
+    private static Coupon BuildNewCoupon(CreateCouponRequest req, string type, int managerId)
+    {
+        return new Coupon
         {
             CouponCode    = req.CouponCode.Trim().ToUpper(),
             CouponType    = type,
@@ -128,32 +220,14 @@ public class CouponService : ICouponService
             StartDate     = req.StartDate,
             EndDate       = req.EndDate,
             UsageLimit    = req.UsageLimit,
-            UsedCount     = 0,       // ★ Luôn khởi tạo = 0
-            IsActive      = true,    // ★ Luôn active khi tạo mới
+            UsedCount     = 0,
+            IsActive      = true,
             ManagerId     = managerId
         };
-
-        await _repo.AddAsync(coupon);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // UC-64: SỬA MÃ GIẢM GIÁ (ADMIN)
-    //
-    // ★ CHỈ cho phép sửa: end_date, usage_limit, is_active
-    // ★ KHÓA: coupon_code, coupon_type, discount_value, min_order_value
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task Update(int id, UpdateCouponRequest req, int managerId, bool isAdmin = false)
+    private static void UpdateCouponProperties(Coupon coupon, UpdateCouponRequest req)
     {
-        int? filterId = isAdmin ? null : managerId;
-        var coupon = await _repo.GetByIdAsync(id, filterId);
-        if (coupon == null)
-            throw new KeyNotFoundException($"Coupon #{id} not found.");
-
-        // Chỉ sửa end_date nếu được truyền
         if (req.EndDate.HasValue)
         {
             if (coupon.StartDate.HasValue && req.EndDate < coupon.StartDate)
@@ -161,7 +235,6 @@ public class CouponService : ICouponService
             coupon.EndDate = req.EndDate;
         }
 
-        // Chỉ sửa usage_limit nếu được truyền
         if (req.UsageLimit.HasValue)
         {
             if (req.UsageLimit < (coupon.UsedCount ?? 0))
@@ -170,61 +243,12 @@ public class CouponService : ICouponService
             coupon.UsageLimit = req.UsageLimit;
         }
 
-        // Bật/tắt trạng thái
         if (req.IsActive.HasValue)
             coupon.IsActive = req.IsActive;
-
-        _repo.Update(coupon);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // UC-65: XÓA MỀM (ADMIN)
-    //
-    // ★ Nếu used_count > 0: CHỈ soft-delete (is_active = false)
-    //   Tuyệt đối KHÔNG hard delete để giữ đối soát kế toán.
-    // ★ Nếu used_count == 0: Vẫn chỉ soft-delete cho nhất quán.
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task SoftDelete(int id, int managerId, bool isAdmin = false)
+    private async Task<Course> ValidateCourseOwnershipAndCartStatusAsync(int courseId, int instructorUserId, string action)
     {
-        int? filterId = isAdmin ? null : managerId;
-        var coupon = await _repo.GetByIdAsync(id, filterId);
-        if (coupon == null)
-            throw new KeyNotFoundException($"Coupon #{id} not found.");
-
-        // ★ Luôn soft-delete: set is_active = false + end_date = hôm qua
-        coupon.IsActive = false;
-        coupon.EndDate = DateTime.Now.AddDays(-1); // Hết hạn ngay lập tức
-
-        _repo.Update(coupon);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // INSTRUCTOR: Browse coupons active trên nền tảng
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task<List<CouponResponse>> GetActivePlatformCouponsAsync()
-    {
-        var data = await _repo.GetActivePlatformCouponsAsync();
-        return data.Select(MapToResponse).ToList();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // INSTRUCTOR: Gắn coupon vào khóa học
-    //
-    // ★ Kiểm tra JWT ownership: instructorUserId PHẢI là chủ khóa học
-    // ★ Kiểm tra coupon vẫn còn hợp lệ (active, chưa hết hạn, còn slot)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task ApplyCouponToCourseAsync(int courseId, int couponId, int instructorUserId)
-    {
-        // 1. Kiểm tra khóa học tồn tại + JWT ownership
         var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
         if (course == null)
             throw new KeyNotFoundException($"Course #{courseId} not found.");
@@ -234,18 +258,18 @@ public class CouponService : ICouponService
 
         if (await _cartRepo.IsCourseInAnyCartAsync(courseId))
         {
-            throw new InvalidOperationException("Cannot apply coupon. This course is currently in a user's shopping cart.");
+            throw new InvalidOperationException($"Cannot {action} coupon. This course is currently in a user's shopping cart.");
         }
 
-        if (course.Price == 0)
-            throw new InvalidOperationException("Coupons cannot be applied to free courses.");
+        return course;
+    }
 
-        // 2. Kiểm tra coupon tồn tại
+    private async Task<Coupon> ValidateAndGetCouponForApplicationAsync(int couponId)
+    {
         var coupon = await _repo.GetByIdGlobalAsync(couponId);
         if (coupon == null)
             throw new KeyNotFoundException($"Coupon #{couponId} not found.");
 
-        // 3. Kiểm tra coupon còn hợp lệ
         var now = DateTime.UtcNow;
         if (coupon.IsActive != true)
             throw new InvalidOperationException("This coupon has been disabled.");
@@ -259,55 +283,31 @@ public class CouponService : ICouponService
         if (coupon.UsageLimit.HasValue && (coupon.UsedCount ?? 0) >= coupon.UsageLimit)
             throw new InvalidOperationException("This coupon usage limit has been reached.");
 
-        // 4. Gắn coupon vào course
+        return coupon;
+    }
+
+    private async Task AssignCouponToCourseAsync(Course course, int couponId)
+    {
         course.CouponId = couponId;
-        if (string.Equals(course.CourseStatus, "published", System.StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(course.CourseStatus, "published", StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
 
         }
         _courseRepo.Update(course);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
-
-        // 5. Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+        await _repo.SaveChangesAsync();
+        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // INSTRUCTOR: Gỡ coupon khỏi khóa học
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public async Task RemoveCouponFromCourseAsync(int courseId, int instructorUserId)
+    private async Task UnassignCouponFromCourseAsync(Course course)
     {
-        var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
-        if (course == null)
-            throw new KeyNotFoundException($"Course #{courseId} not found.");
-
-        if (course.Instructor == null || course.Instructor.InstructorId != instructorUserId)
-            throw new UnauthorizedAccessException("You are not the owner of this course.");
-
-        if (await _cartRepo.IsCourseInAnyCartAsync(courseId))
-        {
-            throw new InvalidOperationException("Cannot remove coupon. This course is currently in a user's shopping cart.");
-        }
-
         course.CouponId = null;
         _courseRepo.Update(course);
-        int numberOfRowsAffected = await _repo.SaveChangesAsync();
-        if (numberOfRowsAffected <= 0)
-            throw new InvalidOperationException("Failed to save changes");
-
-        // Invalidate Cache
-        await _redisService.RemoveCacheAsync($"course:detail:{courseId}");
+        await _repo.SaveChangesAsync();
+        await _redisService.RemoveCacheAsync($"course:detail:{course.CourseId}");
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // CHECKOUT: Tính giá sau coupon (gọi bởi CheckoutService)
-    // ═══════════════════════════════════════════════════════════════════════
-
-    public decimal ApplyCoupon(Coupon coupon, decimal originalPrice)
+    private static void ValidateCouponForCheckout(Coupon coupon, decimal originalPrice)
     {
         if (coupon.IsActive != true)
             throw new InvalidOperationException("Coupon is not active.");
@@ -324,7 +324,10 @@ public class CouponService : ICouponService
         if (coupon.MinOrderValue > 0 && originalPrice < coupon.MinOrderValue)
             throw new InvalidOperationException(
                 $"Minimum order value required to use this coupon is ${coupon.MinOrderValue:N2} USD.");
+    }
 
+    private static decimal CalculateFinalPrice(Coupon coupon, decimal originalPrice)
+    {
         var finalPrice = coupon.CouponType == "percentage"
             ? originalPrice - (originalPrice * coupon.DiscountValue / 100)
             : originalPrice - coupon.DiscountValue;

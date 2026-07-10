@@ -24,14 +24,14 @@ skinparam arrowColor #333333
 
 ' ==================== FRONTEND ====================
 
-class "CartController" as CartControllerFE #FFE6E6 {
+class "CartController" as CartControllerFE <<frontend controller>> #FFE6E6 {
     + AddToCart(courseId: int, returnUrl: string?) : Task<IActionResult>
     + AddToCartAjax(id: int) : Task<IActionResult>
 }
 
 ' ==================== BACKEND - CONTROLLER ====================
 
-class "CartController" as CartControllerBE #FFE6E6 {
+class "CartController" as CartControllerBE <<backend controller>> #FFE6E6 {
     - _cartService : ICartService
     - _authService : IAuthService
     + AddToCart(courseId: int) : Task<IActionResult>
@@ -40,9 +40,9 @@ class "CartController" as CartControllerBE #FFE6E6 {
 ' ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CartItem #CCFFE6 {
-    + Id : int <<PK>>
-    + UserId : int? <<FK>>
-    + CourseId : int? <<FK>>
+    + Id : int
+    + UserId : int?
+    + CourseId : int?
     + AddedDate : DateTime?
     + Price : decimal?
     + Course : Course?
@@ -50,10 +50,10 @@ class CartItem #CCFFE6 {
 }
 
 class Course #CCFFE6 {
-    + CourseId : int <<PK>>
-    + InstructorId : int? <<FK>>
-    + CategoryId : int? <<FK>>
-    + CouponId : int? <<FK>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
     + Title : string
     + Description : string?
     + Price : decimal
@@ -152,9 +152,9 @@ CartRepository ..|> ICartRepository
 CourseRepository ..|> ICourseRepository
 
 ' === DEPENDENCY ===
-CartControllerFE ..> CartControllerBE : calls via HTTP
-CartService ..> CartItem : instantiates
-CartRepository ..> CartItem : uses
-CourseRepository ..> Course : queries
+CartControllerFE ..> CartControllerBE
+CartService ..> CartItem
+CartRepository ..> CartItem
+CourseRepository ..> Course
 
 @enduml

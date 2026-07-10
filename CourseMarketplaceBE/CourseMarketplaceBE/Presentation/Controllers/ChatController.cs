@@ -10,7 +10,6 @@ using CourseMarketplaceBE.Hubs;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
-[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ChatController : ControllerBase
@@ -25,6 +24,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("support-account")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GetSupportAccount()
     {
         var support = await _chatService.GetSupportAccountAsync();
@@ -34,6 +34,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("admin-account")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> GetAdminAccount()
     {
         var admin = await _chatService.GetAdminAccountAsync();
@@ -43,6 +44,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("list")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetMyChats()
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -51,6 +53,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("search")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> SearchChats([FromQuery] string q)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -64,6 +67,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("history")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetChatHistory([FromQuery] int roomId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -79,6 +83,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("unread-count")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetTotalUnreadCount()
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -87,6 +92,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("create")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> CreateChat([FromBody] CreateChatDto dto)
     {
         var accountIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -116,7 +122,7 @@ public class ChatController : ControllerBase
         }
     }
 
-    [Authorize] // Cả User và Instructor đều có thể báo cáo
+    [Authorize(Roles = "user,instructor")] // Cả User và Instructor đều có thể báo cáo
     [HttpPost("report")]
     public async Task<IActionResult> SubmitReport([FromBody] SubmitReportDto dto)
     {
@@ -133,6 +139,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("grant-access/{chatId}")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GrantAccess(int chatId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -153,6 +160,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpDelete("{chatId}/clear")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> ClearChatHistory(int chatId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -168,6 +176,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("{chatId}/read")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> MarkAsRead(int chatId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -183,6 +192,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("request-support")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> RequestSupport([FromBody] SupportRequestDto dto)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -202,6 +212,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("accept-support/{ticketId}")]
+    [Authorize(Roles = "admin,staff")]
     public async Task<IActionResult> AcceptSupport(string ticketId)
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
@@ -237,7 +248,32 @@ public class ChatController : ControllerBase
         }
     }
 
+    [HttpDelete("message/{messageId}")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
+    public async Task<IActionResult> DeleteMessage(int messageId)
+    {
+        var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        try
+        {
+            var chatId = await _chatService.DeleteMessageAsync(messageId, accountId);
+            
+            // Broadcast to the user's other tabs
+            await _hubContext.Clients.Group($"User_{accountId}").SendAsync("MessageDeleted", new { MessageId = messageId, ChatId = chatId });
+            
+            return Ok();
+        }
+        catch (System.Collections.Generic.KeyNotFoundException) 
+        { 
+            return NotFound(); 
+        }
+        catch (System.UnauthorizedAccessException ex) 
+        { 
+            return StatusCode(403, new { message = ex.Message }); 
+        }
+    }
+
     [HttpGet("pending-requests")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetPendingRequests()
     {
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");

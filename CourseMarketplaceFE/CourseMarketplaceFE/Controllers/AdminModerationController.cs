@@ -4,11 +4,12 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
-
+using Microsoft.AspNetCore.Authorization;
 using CourseMarketplaceFE.Models.Common;
 
 namespace CourseMarketplaceFE.Controllers
 {
+    [Authorize(Roles = "admin,staff")]
     public class AdminModerationController : Controller
     {
         private readonly ApiClient _apiClient;
@@ -236,27 +237,51 @@ namespace CourseMarketplaceFE.Controllers
         [HttpPost]
         public async Task<IActionResult> ResolveCourseReport(int reportId, [FromBody] ResolveReportViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Message = "Validation failed", Errors = errors });
+            }
+
             var response = await _apiClient.PatchJsonAsync($"/api/admin/moderation/reports/courses/{reportId}", model);
             var content = await response.Content.ReadAsStringAsync();
-            return Content(content, "application/json");
+            var jsonContent = JsonSerializer.Deserialize<object>(content, _jsonOptions);
+
+            return StatusCode((int)response.StatusCode, jsonContent);
         }
 
         // Resolve course review report
         [HttpPost]
         public async Task<IActionResult> ResolveCourseReviewReport(int reportId, [FromBody] ResolveReportViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Message = "Validation failed", Errors = errors });
+            }
+
             var response = await _apiClient.PatchJsonAsync($"/api/admin/moderation/reports/course-reviews/{reportId}", model);
             var content = await response.Content.ReadAsStringAsync();
-            return Content(content, "application/json");
+            var jsonContent = JsonSerializer.Deserialize<object>(content, _jsonOptions);
+
+            return StatusCode((int)response.StatusCode, jsonContent);
         }
 
         // Resolve lesson review report
         [HttpPost]
         public async Task<IActionResult> ResolveLessonReviewReport(int reportId, [FromBody] ResolveReportViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Message = "Validation failed", Errors = errors });
+            }
+
             var response = await _apiClient.PatchJsonAsync($"/api/admin/moderation/reports/lesson-reviews/{reportId}", model);
             var content = await response.Content.ReadAsStringAsync();
-            return Content(content, "application/json");
+            var jsonContent = JsonSerializer.Deserialize<object>(content, _jsonOptions);
+
+            return StatusCode((int)response.StatusCode, jsonContent);
         }
 
         // Admin only: remove course

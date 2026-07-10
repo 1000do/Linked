@@ -37,4 +37,6 @@ public class LockoutRepository : ILockoutRepository
             .ToListAsync();
         _context.Lockouts.RemoveRange(activeLockouts);
     }
+
+    public async Task<int> SaveChangesAsync() => await _context.SaveChangesAsync();
 }

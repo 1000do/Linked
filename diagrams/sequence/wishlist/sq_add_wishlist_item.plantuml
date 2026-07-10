@@ -29,19 +29,20 @@ hide footbox
 mainframe Add Wishlist Item
 actor User as act
 
-participant "Course/Details.cshtml" as view
+participant "CourseDetailsView" as view
 participant "WishlistController" as fe_ctrl <<frontend controller>>
 participant "WishlistController" as be_ctrl <<backend controller>>
 participant ":WishlistService" as sv
+participant ":CourseRepository" as c_repo
 participant ":WishlistRepository" as w_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Click "Add to Wishlist" button
-view->fe_ctrl++: Send POST /Wishlist/ToggleAjax (with courseId)
+view->fe_ctrl++: POST /Wishlist/ToggleAjax
 
-fe_ctrl->be_ctrl++: Send GET /api/wishlist/check/{courseId}
+fe_ctrl->be_ctrl++: GET /api/wishlist/check/{courseId}
 
 be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
@@ -49,73 +50,82 @@ be_ctrl--
 be_ctrl->sv++: Call IsInWishlistAsync(userId, courseId)
 sv->w_repo++: Call ExistsAsync(userId, courseId)
 w_repo->ctx++: Query WishlistItem
-ctx->db++: Execute SELECT query
+ctx->db++: Execute query
 db-->>ctx--: Return result
-ctx-->>w_repo--: Return exists
-w_repo-->>sv--: Return exists
-sv-->>be_ctrl--: Return exists
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (isInWishlist = false)
+ctx-->>w_repo--: Return result
+w_repo-->>sv--: Return result
+sv-->>be_ctrl--: Return result
+be_ctrl-->>fe_ctrl--: Return statusCode 200
 
 fe_ctrl->fe_ctrl++: Check isInWishlist
 fe_ctrl--
 
-group opt [!isInWishlist]
-    fe_ctrl->be_ctrl++: Send POST /api/wishlist/{courseId}
+alt !isInWishlist
+    fe_ctrl->be_ctrl++: POST /api/wishlist/{courseId}
     
     be_ctrl->be_ctrl++: Parse userId from token
     be_ctrl--
     
-    group opt [userId == null]
-        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-        fe_ctrl-->>view: Redirect to /Account/Login
-        view-->>act: Display login page
-    end
-    
     be_ctrl->sv++: Call AddToWishlistAsync(userId, courseId)
+    
+    sv->c_repo++: Call GetByIdAsync(courseId)
+    c_repo->ctx++: Query Course
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>c_repo--: Return result
+    c_repo-->>sv--: Return result
     
     sv->w_repo++: Call ExistsAsync(userId, courseId)
     w_repo->ctx++: Query WishlistItem
-    ctx->db++: Execute SELECT query
+    ctx->db++: Execute query
     db-->>ctx--: Return result
-    ctx-->>w_repo--: Return exists
-    w_repo-->>sv--: Return exists
+    ctx-->>w_repo--: Return result
+    w_repo-->>sv--: Return result
     
-    group opt [exists == true]
-        sv-->>be_ctrl: throw InvalidOperationException
-        be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-        fe_ctrl-->>view: Return JSON (success = false)
-        view-->>act: Display error message
-    end
+    sv->sv++: Validate wishlist addition
+    sv--
     
-    sv->w_repo++: Call AddAsync(newItem)
-    w_repo->ctx++: Add WishlistItem entity
-    ctx-->>w_repo--: Return
-    w_repo-->>sv--: Return
-    
-    sv->w_repo++: Call SaveChangesAsync()
-    w_repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Execute INSERT statement
-    db-->>ctx--: Return result
-    ctx-->>w_repo--: Return numberOfRowsAffected
-    w_repo-->>sv--: Return numberOfRowsAffected
-    
-    w_repo->w_repo++: Check numberOfRowsAffected
-    w_repo--
-    
-    alt [numberOfRowsAffected > 0]
-        w_repo-->>sv: Return true
-        sv-->>be_ctrl: Return success
-        be_ctrl-->>fe_ctrl: Return statusCode 200 (Success)
-        fe_ctrl-->>view: Return JSON (success = true)
-        view-->>act: Update Wishlist icon
-    else [numberOfRowsAffected = 0]
-        w_repo-->>sv--: Return false
-        sv->sv++: throw InvalidOperationException
+    alt Valid wishlist addition
+        sv->w_repo++: Call AddAsync(newItem)
+        w_repo->ctx++: Add WishlistItem entity
+        ctx-->>w_repo--: Return result
+        w_repo-->>sv--: Return result
+        
+        sv->w_repo++: Call SaveChangesAsync()
+        w_repo->ctx++: Commit tracked changes
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
+        ctx-->>w_repo--: Return numberOfRowsAffected
+        w_repo-->>sv--: Return numberOfRowsAffected
+        
+        sv->sv++: Check numberOfRowsAffected
         sv--
+        
+        alt numberOfRowsAffected > 0
+            sv-->>be_ctrl--: Return success
+            be_ctrl-->>fe_ctrl--: Return statusCode 200
+            
+            fe_ctrl-->>view--: Return JSON (success = true, isInWishlist = true)
+            view-->>act--: Update Wishlist icon
+        else numberOfRowsAffected == 0
+            sv-->>be_ctrl--: throw InvalidOperationException
+            be_ctrl-->>fe_ctrl--: Return statusCode 400
+            fe_ctrl-->>view--: Return JSON (success = false)
+            view-->>act--: Display error message
+        end
+    else exists == true
         sv-->>be_ctrl--: throw InvalidOperationException
-        be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+        be_ctrl-->>fe_ctrl--: Return statusCode 400
+        fe_ctrl-->>view--: Return JSON (success = false)
+        view-->>act--: Display error message
+    else course == null || status != Published
+        sv-->>be_ctrl--: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl--: Return statusCode 400
         fe_ctrl-->>view--: Return JSON (success = false)
         view-->>act--: Display error message
     end
+else isInWishlist == true
+    fe_ctrl-->>view--: Return JSON (success = true, isInWishlist = true)
+    view-->>act--: Update Wishlist icon
 end
 @enduml

@@ -116,22 +116,18 @@
                                         </form>
                                     </div>
                                 }
-                                else if (Model.AvailableCoupons.Any(c => c.CourseId == item.CourseId))
+                                else
                                 {
                                     <div class="mt-2">
-                                        <button type="button" onclick="openVoucherModalForItem(@item.CourseId, '@Html.Raw(item.Title.Replace("'", "\\'"))')"
-                                                class="flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-primary/40 hover:border-primary hover:bg-emerald-50/20 rounded-xl transition-all group/btn text-left">
-                                            <span class="text-xs">🎫</span>
-                                            <span class="text-xs font-bold text-primary group-hover/btn:text-secondary transition-colors">
-                                                Apply Voucher
-                                            </span>
-                                            @if (Model.AvailableCoupons.Any(c => c.CourseId == item.CourseId && c.IsEligible))
-                                            {
-                                                <span class="text-[9px] font-extrabold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full ml-1 uppercase">
-                                                    Applicable
-                                                </span>
-                                            }
-                                        </button>
+                                        <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="flex items-center gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="courseId" value="@item.CourseId" />
+                                            <div class="relative flex-1 max-w-[200px]">
+                                                <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[16px]">local_offer</span>
+                                                <input type="text" name="couponCode" placeholder="Enter coupon code" class="w-full pl-8 pr-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all uppercase placeholder:normal-case placeholder:font-normal" required />
+                                            </div>
+                                            <button type="submit" class="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-lg transition-colors">Apply</button>
+                                        </form>
                                     </div>
                                 }
                             </div>
@@ -213,58 +209,7 @@
     </div>
 </div>
 
-@* ════ VOUCHER WALLET MODAL ════ *@
-@* ════ VOUCHER POPUP MODAL (CENTERED & HIGHLY PREMIUM) ════ *@
-<div id="voucher-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 animate-in fade-in duration-300" aria-modal="true" role="dialog">
-    @* Backdrop click to close *@
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="closeVoucherModal()"></div>
 
-    @* Centered Modal Card *@
-    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden transform scale-95 opacity-0 transition-all duration-300 ease-out" id="voucher-modal-content">
-        @* Modal Header *@
-        <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-slate-50/50">
-            <div>
-                <h3 class="text-base font-black text-slate-900 flex items-center gap-2 tracking-tight">
-                    <span class="text-xl">🎫</span> Apply Voucher Code
-                </h3>
-                <p class="text-xs text-slate-500 mt-1 font-bold text-primary truncate max-w-[300px]" id="modal-course-title"></p>
-            </div>
-            <button type="button" onclick="closeVoucherModal()"
-                    class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors shadow-sm bg-white border border-slate-100">
-                <span class="material-symbols-outlined text-xl">close</span>
-            </button>
-        </div>
-
-        @* Manual Code Input *@
-        <div class="p-6 bg-white space-y-4">
-            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Enter coupon code below</p>
-            <form asp-action="ApplyCoupon" asp-controller="Cart" method="post" class="flex flex-col gap-3" id="manual-coupon-form">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="courseId" id="manual-coupon-course-id" />
-                <div class="relative flex items-center">
-                    <span class="absolute left-3 text-slate-400 font-bold material-symbols-outlined text-[20px] pointer-events-none select-none">confirmation_number</span>
-                    <input type="text" name="couponCode" id="manual-coupon-input"
-                           placeholder="e.g. DISCOUNT50..."
-                           class="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase font-mono font-bold tracking-widest text-slate-800 bg-slate-50 hover:bg-slate-100/50 focus:bg-white"
-                           style="text-transform:uppercase"
-                           autocomplete="off" />
-                </div>
-                <button type="submit"
-                        class="w-full py-3 bg-primary text-white text-xs font-black rounded-xl hover:bg-secondary transition-all uppercase tracking-widest shadow-md shadow-primary/20 active:scale-[0.98] flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-[16px]">check_circle</span> Apply Voucher
-                </button>
-            </form>
-        </div>
-
-        @* Modal Footer *@
-        <div class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-center">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-center gap-1.5">
-                <span class="material-symbols-outlined text-[14px] text-amber-500">info</span>
-                Only one voucher can be applied per course
-            </p>
-        </div>
-    </div>
-</div>
 
 <script>
     async function handleRemoveFromCart(event) {
@@ -321,60 +266,12 @@
         }
     }
 
-    function openVoucherModalForItem(courseId, courseTitle) {
-        // Cập nhật tiêu đề modal với tên khóa học
-        document.getElementById('modal-course-title').innerText = courseTitle;
-        
-        // Cập nhật courseId cho input nhập thủ công
-        document.getElementById('manual-coupon-course-id').value = courseId;
-        
-        const modal = document.getElementById('voucher-modal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-        
-        // Auto-focus manual coupon input
-        const couponInput = document.getElementById('manual-coupon-input');
-        if (couponInput) {
-            couponInput.value = '';
-            setTimeout(() => couponInput.focus(), 150);
-        }
 
-        // Force reflow and add active transition classes for smooth popup scaling
-        setTimeout(() => {
-            const content = document.getElementById('voucher-modal-content');
-            if (content) {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }
-        }, 10);
-        
-        document.body.style.overflow = 'hidden';
-    }
 
-    function closeVoucherModal() {
-        const content = document.getElementById('voucher-modal-content');
-        if (content) {
-            content.classList.remove('scale-100', 'opacity-100');
-            content.classList.add('scale-95', 'opacity-0');
-        }
-        
-        setTimeout(() => {
-            const modal = document.getElementById('voucher-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.body.style.overflow = '';
-        }, 300);
-    }
-
-    // Đóng modal khi bấm Escape
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') closeVoucherModal();
-    });
-
-    // Intercept form submissions inside cart-main-container and voucher-modal for AJAX updates
+    // Intercept form submissions inside cart-main-container for AJAX updates
     document.addEventListener('submit', async function(e) {
         const form = e.target;
-        if (form.closest('#cart-main-container') || form.closest('#voucher-modal') || form.id === 'manual-coupon-form') {
+        if (form.closest('#cart-main-container') || form.id === 'manual-coupon-form') {
             if (form.id === 'checkout-form') return;
             
             e.preventDefault();
@@ -420,7 +317,6 @@
     async function refreshCartDOM(htmlText = null) {
         const mainContainer = document.getElementById('cart-main-container');
         const toastsContainer = document.getElementById('cart-toasts-container');
-        const modalContainer = document.getElementById('voucher-modal');
         
         if (mainContainer) {
             mainContainer.style.opacity = '0.5';
@@ -464,25 +360,7 @@
                 }
             }
             
-            const newModal = doc.getElementById('voucher-modal');
-            if (newModal && modalContainer) {
-                // Preserving classes/modal states while updating
-                const isHidden = modalContainer.classList.contains('hidden');
-                modalContainer.innerHTML = newModal.innerHTML;
-                if (isHidden) {
-                    modalContainer.classList.add('hidden');
-                    modalContainer.classList.remove('flex');
-                } else {
-                    modalContainer.classList.remove('hidden');
-                    modalContainer.classList.add('flex');
-                    // Ensure scale-100 opacity-100 is applied
-                    const content = modalContainer.querySelector('#voucher-modal-content');
-                    if (content) {
-                        content.classList.remove('scale-95', 'opacity-0');
-                        content.classList.add('scale-100', 'opacity-100');
-                    }
-                }
-            }
+
             
             // Dispatch global event so the header badge and header mini-dropdown updates too!
             document.dispatchEvent(new CustomEvent('cartUpdated'));

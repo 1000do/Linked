@@ -8,6 +8,7 @@ using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using CourseMarketplaceBE.Application.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -45,6 +46,11 @@ public class ModerationPenaltyService : IModerationPenaltyService
         if (course == null) return false;
 
         var currentFlags = (course.CourseFlagCount ?? 0) + 1;
+        if (currentFlags > 3)
+        {
+            currentFlags = 3;
+        }
+
         course.CourseFlagCount = currentFlags;
 
         if (currentFlags < 3)
@@ -59,7 +65,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                 );
             }
         }
-        else if (currentFlags >= 3)
+        else if (currentFlags == 3)
         {
             course.CourseStatus = CourseStatus.Archived.ToValue();
             if (course.InstructorId.HasValue)
@@ -74,6 +80,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                         LockoutLevel = "severe",
                         LockoutEnd = DateTime.Now.AddDays(30)
                     });
+                    await _lockoutRepo.SaveChangesAsync();
                     await NotifyStudentsAboutInstructorSuspensionAsync(course.InstructorId.Value);
                 }
                 
@@ -93,7 +100,13 @@ public class ModerationPenaltyService : IModerationPenaltyService
         var account = await _userRepo.GetAccountByIdAsync(userId);
         if (account == null) return false;
 
-        account.AccountFlagCount = (account.AccountFlagCount ?? 0) + 1;
+        var currentFlags = (account.AccountFlagCount ?? 0) + 1;
+        if (currentFlags > 3)
+        {
+            currentFlags = 3;
+        }
+
+        account.AccountFlagCount = currentFlags;
 
         if (account.AccountFlagCount == 1)
         {
@@ -108,9 +121,10 @@ public class ModerationPenaltyService : IModerationPenaltyService
                 LockoutLevel = "moderate",
                 LockoutEnd = DateTime.Now.AddDays(7)
             });
+            await _lockoutRepo.SaveChangesAsync();
             await _notificationService.SendNotificationAsync(userId, "Commenting Restricted (2nd Violation)", "Due to repeated violations, you are restricted from posting comments or reviews for 7 days.", linkAction!);
         }
-        else if (account.AccountFlagCount >= 3)
+        else if (account.AccountFlagCount == 3)
         {
             await _lockoutRepo.AddAsync(new Lockout
             {
@@ -119,6 +133,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                 LockoutLevel = "severe",
                 LockoutEnd = DateTime.Now.AddDays(30)
             });
+            await _lockoutRepo.SaveChangesAsync();
             account.AccountStatus = AccountStatus.Banned.ToValue();
             await _notificationService.SendNotificationAsync(userId, "Account Suspended (3rd Violation)", "Your account has been suspended for 30 days due to repeated and severe community standards violations.", linkAction!);
             await _hubContext.Clients.User(userId.ToString()).SendAsync("AccountLockedOut");

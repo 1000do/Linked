@@ -1,0 +1,86 @@
+classDiagram
+direction LR
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CouponController {
+    <<backend controller>>
+    - _couponService : ICouponService
+    
+    + DeleteCoupon(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Coupon {
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICouponService {
+    <<interface>>
+    + SoftDeleteAsync(id: int, userId: int, isAdmin: bool) Task~bool~ *
+}
+
+class ICouponRepository {
+    <<interface>>
+    + GetByIdAsync(id: int, filterId: int?) Task~Coupon?~ *
+    + Update(coupon: Coupon) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CouponService {
+    - _couponRepository : ICouponRepository
+    
+    + SoftDeleteAsync(id: int, userId: int, isAdmin: bool) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CouponRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int, filterId: int?) Task~Coupon?~
+    + Update(coupon: Coupon) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Coupons : DbSet~Coupon~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CouponController --> ICouponService
+CouponService --> ICouponRepository
+CouponRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CouponService ..|> ICouponService
+CouponRepository ..|> ICouponRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+CouponRepository ..> Coupon
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

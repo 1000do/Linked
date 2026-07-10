@@ -232,7 +232,7 @@ public class ReportModerationServiceTests
     // ── ResolveCourseReportAsync ─────────────────────────────────────────────
 
     [Fact]
-    public async Task ResolveCourseReportAsync_ValidRequest_ShouldReturnTrueAndNotify()
+    public async Task ResolveCourseReportAsync_StatusResolvedAndRemoveContentTrue_AppliesStrikeRemovesCacheAndNotifies()
     {
         //Arrange 1
         int reportId = 1;
@@ -244,7 +244,7 @@ public class ReportModerationServiceTests
         //Arrange 2
         _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
         _courseRepoMock.GetByIdAsync(10).Returns(course);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("staff");
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
         _reportRepoMock.SaveChangesAsync().Returns(1);
 
         //Act
@@ -261,27 +261,6 @@ public class ReportModerationServiceTests
         await _notificationServiceMock.Received(1).SendNotificationAsync(report.ReporterId.Value, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
-    [Fact]
-    public async Task ResolveCourseReportAsync_UnauthorizedRole_ShouldThrowUnauthorizedAccessException()
-    {
-        //Arrange 1
-        int reportId = 1;
-        int resolverId = 2;
-        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Noted", RemoveContent = true };
-        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue() };
-        var course = new Course { CourseId = 10 };
-
-        //Arrange 2
-        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
-        _courseRepoMock.GetByIdAsync(10).Returns(course);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("user");
-
-        //Act
-        Func<Task> act = async () => await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
-
-        //Assert
-        await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("Only staff or admin can resolve reports.");
-    }
 
     [Fact]
     public async Task ResolveCourseReportAsync_ReportMissingCourseId_ShouldThrowBadRequestException()
@@ -315,7 +294,7 @@ public class ReportModerationServiceTests
         //Arrange 2
         _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
         _courseRepoMock.GetByIdAsync(10).Returns(course);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("staff");
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
         _reportRepoMock.When(x => x.SaveChangesAsync()).Throw(new ReportException("DB Error"));
 
         //Act
@@ -325,10 +304,197 @@ public class ReportModerationServiceTests
         await act.Should().ThrowAsync<BadRequestException>().WithMessage("DB Error");
     }
 
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_ReportNotFound_ThrowsKeyNotFoundException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue() };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns((CourseReport)null);
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Report not found.");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_CourseNotFoundInRepo_ThrowsKeyNotFoundException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue() };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns((Course)null);
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Course not found.");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_StatusResolvedAndRemoveContentFalse_NotifiesInstructorOfPolicyWarning()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Warn", RemoveContent = false };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test", InstructorId = 4 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _penaltyServiceMock.DidNotReceive().ProcessCourseStrikeAsync(Arg.Any<int>(), Arg.Any<string>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(4, "Course Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_StatusRejected_SendsNotificationToReporterWithDismissedMessage()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Rejected.ToValue(), ResolutionNote = "No issue" };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("dismissed")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_StatusUnderReview_SendsNotificationToReporterWithUnderReviewMessage()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.UnderReview.ToValue(), ResolutionNote = "Checking" };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("under review")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_WhenCurrentStatusIsEscalatedAndResolverIsStaff_ThrowsUnauthorizedAccessException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Fixing" };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Escalated.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("Only admins can resolve escalated reports.");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_WhenCurrentStatusIsEscalatedAndResolverIsAdmin_ResolvesSuccessfully()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        int adminId = 99;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Fixed" };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Escalated.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "admin" } });
+        _userRepoMock.GetAdminIdAsync().Returns(adminId);
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("accepted")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_StatusEscalated_SendsNotificationToReporterWithEscalatedMessage_AndToAdmin()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        int adminId = 99;
+        var req = new ResolveReportRequest { Status = ReportStatus.Escalated.ToValue(), ResolutionNote = "Need admin" };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _userRepoMock.GetAdminIdAsync().Returns(adminId);
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("escalated")), Arg.Any<string>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(adminId, "Report Escalated", Arg.Any<string>(), Arg.Any<string>());
+    }
+
     // ── ResolveCourseReviewReportAsync ───────────────────────────────────────
 
     [Fact]
-    public async Task ResolveCourseReviewReportAsync_ValidRequest_ShouldReturnTrueAndNotify()
+    public async Task ResolveCourseReviewReportAsync_StatusResolvedAndRemoveContentTrueWithEnrollment_AppliesStrikeAndRemovesReview()
     {
         //Arrange 1
         int reportId = 1;
@@ -340,7 +506,7 @@ public class ReportModerationServiceTests
         //Arrange 2
         _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
         _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("staff");
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
         _reportRepoMock.SaveChangesAsync().Returns(1);
 
         //Act
@@ -358,7 +524,7 @@ public class ReportModerationServiceTests
     }
 
     [Fact]
-    public async Task ResolveCourseReviewReportAsync_WarnOnly_ShouldNotifyOwner()
+    public async Task ResolveCourseReviewReportAsync_StatusResolvedAndRemoveContentFalse_NotifiesReviewAuthorOfPolicyWarning()
     {
         //Arrange 1
         int reportId = 1;
@@ -370,7 +536,7 @@ public class ReportModerationServiceTests
         //Arrange 2
         _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
         _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("staff");
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
         _reportRepoMock.SaveChangesAsync().Returns(1);
 
         //Act
@@ -403,10 +569,124 @@ public class ReportModerationServiceTests
         await act.Should().ThrowAsync<BadRequestException>().WithMessage("Course Review ID is missing from the report.");
     }
 
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_ReportNotFound_ThrowsKeyNotFoundException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue() };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns((CourseReviewReport)null);
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Report not found.");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_ReviewNotFoundInRepo_ThrowsKeyNotFoundException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue() };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns((CourseReview)null);
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Course review not found.");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_StatusRejected_SendsNotificationToReporterWithDismissedMessage()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Rejected.ToValue(), ResolutionNote = "No issue" };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("dismissed")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_StatusUnderReview_SendsNotificationToReporterWithUnderReviewMessage()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.UnderReview.ToValue(), ResolutionNote = "Checking" };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("under review")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_StatusEscalated_SendsNotificationToReporterWithEscalatedMessage_AndToAdmin()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        int adminId = 99;
+        var req = new ResolveReportRequest { Status = ReportStatus.Escalated.ToValue(), ResolutionNote = "Need admin" };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _userRepoMock.GetAdminIdAsync().Returns(adminId);
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("escalated")), Arg.Any<string>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(adminId, "Report Escalated", Arg.Any<string>(), Arg.Any<string>());
+    }
+
     // ── ResolveLessonReviewReportAsync ───────────────────────────────────────
 
     [Fact]
-    public async Task ResolveLessonReviewReportAsync_ValidRequest_ShouldReturnTrueAndNotify()
+    public async Task ResolveLessonReviewReportAsync_StatusResolvedAndRemoveContentTrueWithEnrollment_AppliesStrikeAndRemovesReview()
     {
         //Arrange 1
         int reportId = 1;
@@ -418,7 +698,7 @@ public class ReportModerationServiceTests
         //Arrange 2
         _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
         _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("staff");
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
         _reportRepoMock.SaveChangesAsync().Returns(1);
 
         //Act
@@ -436,7 +716,7 @@ public class ReportModerationServiceTests
     }
 
     [Fact]
-    public async Task ResolveLessonReviewReportAsync_WarnOnly_ShouldNotifyOwner()
+    public async Task ResolveLessonReviewReportAsync_StatusResolvedAndRemoveContentFalse_NotifiesReviewAuthorOfPolicyWarning()
     {
         //Arrange 1
         int reportId = 1;
@@ -448,7 +728,7 @@ public class ReportModerationServiceTests
         //Arrange 2
         _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
         _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
-        _userRepoMock.GetRoleByAccountIdAsync(resolverId).Returns("staff");
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
         _reportRepoMock.SaveChangesAsync().Returns(1);
 
         //Act
@@ -479,5 +759,542 @@ public class ReportModerationServiceTests
 
         //Assert
         await act.Should().ThrowAsync<BadRequestException>().WithMessage("Lesson Review ID is missing from the report.");
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_ReportNotFound_ThrowsKeyNotFoundException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue() };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns((LessonReviewReport)null);
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Report not found.");
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_ReviewNotFoundInRepo_ThrowsKeyNotFoundException()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue() };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns((LessonReview)null);
+
+        //Act
+        Func<Task> act = async () => await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Lesson review not found.");
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_StatusRejected_SendsNotificationToReporterWithDismissedMessage()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Rejected.ToValue(), ResolutionNote = "No issue" };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("dismissed")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_StatusUnderReview_SendsNotificationToReporterWithUnderReviewMessage()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.UnderReview.ToValue(), ResolutionNote = "Checking" };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("under review")), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_StatusEscalated_SendsNotificationToReporterWithEscalatedMessage_AndToAdmin()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        int adminId = 99;
+        var req = new ResolveReportRequest { Status = ReportStatus.Escalated.ToValue(), ResolutionNote = "Need admin" };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _userRepoMock.GetAdminIdAsync().Returns(adminId);
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(3, "Report Resolution Update", Arg.Is<string>(s => s.Contains("escalated")), Arg.Any<string>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(adminId, "Report Escalated", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    // --- Additional Coverage Tests ---
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_ResolutionNoteIsNull_UsesDefaultNote()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Rejected.ToValue() };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        report.ResolutionNote.Should().Be("Report has been resolved");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_ResolutionNoteIsNull_UsesDefaultNote()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Rejected.ToValue() };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        report.ResolutionNote.Should().Be("Report has been resolved");
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_ResolutionNoteIsNull_UsesDefaultNote()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Rejected.ToValue() };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10 };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        report.ResolutionNote.Should().Be("Report has been resolved");
+    }
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_ReporterIdIsNull_DoesNotNotifyReporter()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Fixing" };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = null };
+        var course = new Course { CourseId = 10, Title = "Test" };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.DidNotReceiveWithAnyArgs().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_EnrollmentIsNull_RemovesReviewWithoutStrike()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = true };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10, Enrollment = null };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        _reviewRepoMock.Received(1).UpdateCourseReview(Arg.Is<CourseReview>(r => r.IsRemoved == true));
+        await _penaltyServiceMock.DidNotReceiveWithAnyArgs().ProcessReviewStrikeAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_UserIdIsZero_RemovesReviewWithoutStrike()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = true };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10, Enrollment = new Enrollment { UserId = 0 } };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        _reviewRepoMock.Received(1).UpdateCourseReview(Arg.Is<CourseReview>(r => r.IsRemoved == true));
+        await _penaltyServiceMock.DidNotReceiveWithAnyArgs().ProcessReviewStrikeAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_EnrollmentIsNull_RemovesReviewWithoutStrike()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = true };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10, Enrollment = null };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        _reviewRepoMock.Received(1).UpdateLessonReview(Arg.Is<LessonReview>(r => r.IsRemoved == true));
+        await _penaltyServiceMock.DidNotReceiveWithAnyArgs().ProcessReviewStrikeAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_UserIdIsZero_RemovesReviewWithoutStrike()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = true };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10, Enrollment = new Enrollment { UserId = 0 } };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        _reviewRepoMock.Received(1).UpdateLessonReview(Arg.Is<LessonReview>(r => r.IsRemoved == true));
+        await _penaltyServiceMock.DidNotReceiveWithAnyArgs().ProcessReviewStrikeAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    // --- Last 4% Coverage Tests ---
+
+    [Fact]
+    public async Task ResolveCourseReportAsync_RemoveContentIsFalse_AppliesWarningToInstructor()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Fixing", RemoveContent = false };
+        var report = new CourseReport { CourseReportId = 1, CourseId = 10, CourseReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var course = new Course { CourseId = 10, Title = "Test", InstructorId = 5 };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReportByIdAsync(reportId).Returns(report);
+        _courseRepoMock.GetByIdAsync(10).Returns(course);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(5, "Course Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_RemoveContentIsFalse_SendsWarningNotification()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = false };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10, Enrollment = new Enrollment { UserId = 5 } };
+
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(5, "Review Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_RemoveContentIsFalse_SendsWarningNotification()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = false };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10, Enrollment = new Enrollment { UserId = 5 } };
+
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+        result.Should().BeTrue();
+        await _notificationServiceMock.Received(1).SendNotificationAsync(5, "Review Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_RemoveContentIsFalse_EnrollmentIsNull_DoesNotSendWarning()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = false };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10, Enrollment = null };
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+
+        result.Should().BeTrue();
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), "Review Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveCourseReviewReportAsync_RemoveContentIsFalse_UserIdIsZero_DoesNotSendWarning()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = false };
+        var report = new CourseReviewReport { CourseReviewReportId = 1, CourseReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new CourseReview { CourseReviewId = 10, Enrollment = new Enrollment { UserId = 0 } };
+        //Arrange 2
+        _reportRepoMock.GetCourseReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetCourseReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+
+        var result = await _sut.ResolveCourseReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+
+        result.Should().BeTrue();
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), "Review Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_RemoveContentIsFalse_EnrollmentIsNull_DoesNotSendWarning()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = false };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10, Enrollment = null };
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+
+        result.Should().BeTrue();
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), "Review Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLessonReviewReportAsync_RemoveContentIsFalse_UserIdIsZero_DoesNotSendWarning()
+    {
+        //Arrange 1
+        int reportId = 1;
+        int resolverId = 2;
+        var req = new ResolveReportRequest { Status = ReportStatus.Resolved.ToValue(), ResolutionNote = "Violation", RemoveContent = false };
+        var report = new LessonReviewReport { LessonReviewReportId = 1, LessonReviewId = 10, UserReportsStatus = ReportStatus.Pending.ToValue(), ReporterId = 3 };
+        var review = new LessonReview { LessonReviewId = 10, Enrollment = new Enrollment { UserId = 0 } };
+        //Arrange 2
+        _reportRepoMock.GetLessonReviewReportByIdAsync(reportId).Returns(report);
+        _reviewRepoMock.GetLessonReviewByIdAsync(10).Returns(review);
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = new CourseMarketplaceBE.Domain.Entities.Manager { Role = "staff" } });
+        _reportRepoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+
+        var result = await _sut.ResolveLessonReviewReportAsync(reportId, resolverId, req);
+
+        //Assert
+
+        result.Should().BeTrue();
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), "Review Policy Warning", Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ResolveLinkActionAsync_UnknownType_ReturnsRoot()
+    {
+        //Arrange 1
+        //Arrange 2
+        var method = typeof(ReportModerationService).GetMethod("ResolveLinkActionAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        //Act
+        var result = await (Task<string>)method!.Invoke(_sut, new object[] { "unknown", 1 })!;
+        //Assert
+        result.Should().Be("/");
+    }
+
+
+    [Fact]
+    public async Task ValidateReportResolutionAccessAsync_AccountIsNull_ThrowsUnauthorized()
+    {
+        //Arrange 1
+        int resolverId = 2;
+        //Arrange 2
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns((CourseMarketplaceBE.Domain.Entities.Account)null!);
+        var method = typeof(ReportModerationService).GetMethod("ValidateReportResolutionAccessAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        //Act
+        
+        Func<Task> act = async () => await (Task)method!.Invoke(_sut, new object[] { "Pending", resolverId })!;
+        
+        //Assert
+        
+        var ex = await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        ex.WithMessage("Only staff or admin can resolve reports.");
+    }
+
+    [Fact]
+    public async Task ValidateReportResolutionAccessAsync_ManagerIsNull_ThrowsUnauthorized()
+    {
+        //Arrange 1
+        int resolverId = 2;
+        //Arrange 2
+        _userRepoMock.GetAccountByIdAsync(resolverId).Returns(new CourseMarketplaceBE.Domain.Entities.Account { Manager = null! });
+        var method = typeof(ReportModerationService).GetMethod("ValidateReportResolutionAccessAsync", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        
+        //Act
+        
+        Func<Task> act = async () => await (Task)method!.Invoke(_sut, new object[] { "Pending", resolverId })!;
+        
+        //Assert
+        
+        var ex = await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        ex.WithMessage("Only staff or admin can resolve reports.");
     }
 }

@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers
 {
-    [Authorize(Roles = "admin,staff")]
     public class AdminApprovalController : Controller
     {
         private readonly ApiClient _apiClient;
@@ -14,6 +13,7 @@ namespace CourseMarketplaceFE.Controllers
 
         public AdminApprovalController(ApiClient apiClient) => _apiClient = apiClient;
 
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> Index(int page = 1, int pageSize = 10)
         {
             ViewBag.Page = page;
@@ -34,6 +34,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // Trang chi tiết
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> Detail(int id)
         {
             var response = await _apiClient.GetAsync($"/api/AdminApproval/{id}");
@@ -48,6 +49,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // Action xử lý duyệt/từ chối
         [HttpPost]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> Process(int id, string status, string? reason)
         {
             var payload = new { instructorId = id, status = status, reason = reason };

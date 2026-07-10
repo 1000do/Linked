@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class NotificationController : ControllerBase
@@ -22,6 +21,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> GetMyNotifications([FromQuery] int page = 1, [FromQuery] int pageSize = int.MaxValue)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -49,6 +49,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpPut("mark-all-as-read")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> MarkAllAsRead()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -67,6 +68,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpPut("mark-as-read/{id}")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -89,6 +91,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> Delete(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -111,6 +114,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("search-emails")]
+        [Authorize(Roles = "admin,staff")]
         public async Task<IActionResult> SearchEmails([FromQuery] string query)
         {
             if (string.IsNullOrWhiteSpace(query)) return Ok(new List<string>());
@@ -162,6 +166,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpGet("unread-summary")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> GetUnreadSummary()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
