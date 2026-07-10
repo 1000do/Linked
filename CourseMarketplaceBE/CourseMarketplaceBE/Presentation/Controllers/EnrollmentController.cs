@@ -10,7 +10,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class EnrollmentController : ControllerBase
 {
     private readonly IEnrollmentService _enrollmentService;
@@ -29,6 +28,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost("free-enroll/{courseId}")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> FreeEnroll(int courseId)
     {
         var userId = GetUserId();
@@ -54,6 +54,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpGet("progress/{courseId}")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> GetProgress(int courseId)
     {
         var userId = GetUserId();
@@ -66,6 +67,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost("progress")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> UpdateProgress([FromBody] UpdateProgressRequest request)
     {
         var userId = GetUserId();
@@ -87,6 +89,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpGet("my-courses")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> GetMyCourses()
     {
         var userId = GetUserId();

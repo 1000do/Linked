@@ -15,7 +15,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/courses")]
-[Authorize] // Requires authentication
 public class CourseController : ControllerBase
 {
     private readonly ICourseQueryService _courseQueryService;
@@ -44,6 +43,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpGet("my-courses")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetMyCourses(
         [FromQuery] string? search = null,
         [FromQuery] string? status = null,
@@ -72,6 +72,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetCourse(int id)
     {
         try
@@ -96,6 +97,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> CreateCourse([FromForm] CourseCreateRequest request)
     {
         try
@@ -123,6 +125,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> UpdateCourse(int id, [FromForm] CourseUpdateRequest request)
     {
         try
@@ -150,6 +153,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = "instructor,staff,admin")]
     public async Task<IActionResult> UpdateCourseStatus(int id, [FromBody] UpdateStatusRequest request)
     {
         try
@@ -177,6 +181,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> DeleteCourse(int id)
     {
         try
@@ -205,6 +210,7 @@ public class CourseController : ControllerBase
 
     [HttpPost("moderate")]
     [Authorize(Roles = "instructor")]
+    [Authorize(Roles = "instructor,staff,admin")]
     public async Task<IActionResult> ModerateCourse([FromBody] CourseModerationRequest request)
     {
         try

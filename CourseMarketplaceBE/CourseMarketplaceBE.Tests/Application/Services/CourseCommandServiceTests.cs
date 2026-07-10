@@ -128,7 +128,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task UpdateCourseStatusAsync_WhenStatusIsPending_ShouldChangeDraftMaterialsAndLessonsToPending_AndNotifyAdmin()
+        public async Task UpdateCourseStatusAsync_WhenStatusIsPending_ShouldChangeDraftMaterialsAndLessonsToActive_AndNotifyAdmin()
         {
             //Arrange 1
             int courseId = 1;
@@ -183,14 +183,14 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             course.CourseStatus.Should().Be(CourseStatus.Pending.ToValue());
-            materials[0].LearningStatus.Should().Be(LearningStatus.Pending.ToValue());
+            materials[0].LearningStatus.Should().Be(LearningStatus.Active.ToValue());
             materials[1].LearningStatus.Should().Be(LearningStatus.Active.ToValue()); // Should not be modified
-            lessons[0].LessonStatus.Should().Be(LessonStatus.Pending.ToValue());
+            lessons[0].LessonStatus.Should().Be(LessonStatus.Active.ToValue());
             
-            _materialRepoMock.Received(1).Update(Arg.Is<LearningMaterial>(m => m.MaterialId == 1 && m.LearningStatus == LearningStatus.Pending.ToValue()));
+            _materialRepoMock.Received(1).Update(Arg.Is<LearningMaterial>(m => m.MaterialId == 1 && m.LearningStatus == LearningStatus.Active.ToValue()));
             _materialRepoMock.Received(1).Update(Arg.Is<LearningMaterial>(m => m.MaterialId == 2 && m.LearningStatus == LearningStatus.Active.ToValue()));
             
-            _lessonRepoMock.Received(1).Update(Arg.Is<Lesson>(l => l.LessonId == 1 && l.LessonStatus == LessonStatus.Pending.ToValue()));
+            _lessonRepoMock.Received(1).Update(Arg.Is<Lesson>(l => l.LessonId == 1 && l.LessonStatus == LessonStatus.Active.ToValue()));
             
             _courseRepoMock.Received(1).Update(Arg.Is<Course>(c => c.CourseId == courseId && c.CourseStatus == CourseStatus.Pending.ToValue()));
             await _courseRepoMock.Received(1).SaveChangesAsync();

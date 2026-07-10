@@ -7,7 +7,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
 public class WishlistController : ControllerBase
 {
     private readonly IWishlistService _wishlistService;
@@ -18,6 +17,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> GetWishlist()
     {
         var userId = GetUserId();
@@ -28,6 +28,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpPost("{courseId}")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> AddToWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -45,6 +46,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpDelete("{courseId}")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> RemoveFromWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -66,6 +68,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpPost("toggle/{courseId}")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> ToggleWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -87,6 +90,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet("check/{courseId}")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> CheckWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -98,6 +102,7 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet("count")]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> GetWishlistCount()
     {
         var userId = GetUserId();

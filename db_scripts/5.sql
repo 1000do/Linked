@@ -38,8 +38,6 @@ DROP TABLE IF EXISTS course_exts CASCADE;
 DROP TABLE IF EXISTS lesson_reviews CASCADE;
 DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
 DROP TABLE IF EXISTS message_moderation_logs CASCADE;
-DROP TABLE IF EXISTS user_avatar_frames CASCADE;
-DROP TABLE IF EXISTS avatar_frames CASCADE;
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
@@ -128,26 +126,6 @@ CREATE TABLE managers (
     phone_number VARCHAR(50),
     avatar_url TEXT,
     bio TEXT
-);
-
--- ─── AVATAR FRAMES SYSTEM ────────────────────────────────────────────────
-CREATE TABLE avatar_frames (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    image_url TEXT NOT NULL,
-    description TEXT,
-    requirement_type VARCHAR(50),
-    requirement_value INT DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE user_avatar_frames (
-    user_id INT REFERENCES accounts(account_id) ON DELETE CASCADE,
-    frame_id INT REFERENCES avatar_frames(id) ON DELETE CASCADE,
-    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_equipped BOOLEAN DEFAULT FALSE,
-    PRIMARY KEY (user_id, frame_id)
 );
 
 CREATE TABLE instructors (
@@ -931,7 +909,6 @@ SELECT setval(pg_get_serial_sequence('learning_materials', 'material_id'), (SELE
 SELECT setval(pg_get_serial_sequence('chats', 'chat_id'), (SELECT COALESCE(MAX(chat_id), 1) FROM chats));
 SELECT setval(pg_get_serial_sequence('messages', 'message_id'), (SELECT COALESCE(MAX(message_id), 1) FROM messages));
 SELECT setval(pg_get_serial_sequence('material_completions', 'id'), (SELECT COALESCE(MAX(id), 1) FROM material_completions));
-SELECT setval(pg_get_serial_sequence('avatar_frames', 'id'), (SELECT COALESCE(MAX(id), 1) FROM avatar_frames));
 SELECT setval(pg_get_serial_sequence('gifts', 'gift_id'), (SELECT COALESCE(MAX(gift_id), 1) FROM gifts));
 SELECT setval(pg_get_serial_sequence('quizzes', 'quiz_id'), (SELECT COALESCE(MAX(quiz_id), 1) FROM quizzes));
 SELECT setval(pg_get_serial_sequence('quiz_questions', 'question_id'), (SELECT COALESCE(MAX(question_id), 1) FROM quiz_questions));
@@ -985,12 +962,6 @@ BEGIN
     -- Tạo manager (Staff)
     INSERT INTO managers (manager_id, role, display_name)
     VALUES (new_account_id, 'staff', 'Hỗ trợ kỹ thuật');
-
-    -- Seeding Avatar Frames
-    INSERT INTO avatar_frames (name, image_url, description, requirement_type, requirement_value)
-    VALUES 
-    ('Khung Admin Tối Thượng', '/img/frames/admin_gold.webp', 'Dành cho quản trị viên cao cấp', 'MANUAL_GRANT', 0),
-    ('Tân Binh Chăm Chỉ', '/img/frames/newbie_teal.webp', 'Hoàn thành khóa học đầu tiên', 'FINISH_COURSE', 1);
 
     RAISE NOTICE 'Seeding Admin, Staff & Avatar Frames hoàn tất!';
 END $$;

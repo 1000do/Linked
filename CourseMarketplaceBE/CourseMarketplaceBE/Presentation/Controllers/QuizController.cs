@@ -11,7 +11,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 /// <summary>Instructor quản lý bộ quiz độc lập của mình.</summary>
 [ApiController]
 [Route("api/quizzes")]
-[Authorize]
 public class QuizController : ControllerBase
 {
     private readonly IQuizService _quizService;
@@ -32,6 +31,7 @@ public class QuizController : ControllerBase
     // ── GET api/quizzes ────────────────────────────────────────────────────────
 
     [HttpGet]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetMyQuizzes()
     {
         try
@@ -47,6 +47,7 @@ public class QuizController : ControllerBase
     // ── GET api/quizzes/{id} ───────────────────────────────────────────────────
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetQuizDetail(int id)
     {
         try
@@ -61,6 +62,7 @@ public class QuizController : ControllerBase
     }
 
     [HttpGet("{quizId}/attempts")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetStudentAttempts(int quizId, [FromQuery] CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto request)
     {
         try
@@ -83,6 +85,7 @@ public class QuizController : ControllerBase
     }
 
     [HttpGet("{id:int}/question-pool")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetQuizQuestionPool(int id)
     {
         try
@@ -100,6 +103,7 @@ public class QuizController : ControllerBase
     // ── POST api/quizzes ───────────────────────────────────────────────────────
 
     [HttpPost]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> CreateQuiz([FromBody] QuizCreateRequest request)
     {
         try
@@ -116,6 +120,7 @@ public class QuizController : ControllerBase
     // ── PATCH api/quizzes/{id} ─────────────────────────────────────────────────
 
     [HttpPatch("{id:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> UpdateQuizSettings(int id, [FromBody] QuizUpdateRequest request)
     {
         try
@@ -132,6 +137,7 @@ public class QuizController : ControllerBase
     // ── PATCH api/quizzes/{id}/hide ────────────────────────────────────────────
 
     [HttpPatch("{id:int}/hide")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SetHidden(int id, [FromQuery] bool hide)
     {
         try
@@ -148,6 +154,7 @@ public class QuizController : ControllerBase
     // ── DELETE api/quizzes/{id} ────────────────────────────────────────────────
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SoftDelete(int id)
     {
         try

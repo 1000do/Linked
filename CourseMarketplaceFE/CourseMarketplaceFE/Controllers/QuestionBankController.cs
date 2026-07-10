@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> GetCourses(string? search = null, int page = 1, int pageSize = 6)
         {
             var url = $"courses/my-courses?page={page}&pageSize={pageSize}";
@@ -59,6 +61,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> GetLessons(int courseId)
         {
             var resp = await _api.GetAsync($"courses/{courseId}");
@@ -68,6 +71,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> CourseLessonsSummary(int courseId)
         {
             var resp = await _api.GetAsync($"questionbank/courses/{courseId}/lessons-summary");
@@ -77,6 +81,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> GetQuestions(int lessonId)
         {
             var resp = await _api.GetAsync($"QuestionBank/lessons/{lessonId}/questions");
@@ -87,6 +92,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> CreateQuestion(int courseId, [FromBody] object request)
         {
             var resp = await _api.PostJsonAsync($"QuestionBank/courses/{courseId}/questions", request);
@@ -96,6 +102,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateQuestion(int qId, [FromBody] object request)
         {
             var resp = await _api.PutJsonAsync($"QuestionBank/questions/{qId}", request);
@@ -105,6 +112,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpDelete]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> DeleteQuestion(int qId)
         {
             var resp = await _api.DeleteAsync($"QuestionBank/questions/{qId}");

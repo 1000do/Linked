@@ -8,6 +8,7 @@ using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Application.Exceptions;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -329,5 +330,186 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _materialRepoMock.Received(1).Delete(material);
             await _materialRepoMock.Received(1).SaveChangesAsync();
         }
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_MaterialNotFound_ThrowsException()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns((LearningMaterial)null);
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            await act.Should().ThrowAsync<Exception>().WithMessage("Material not found.");
+            _materialRepoMock.DidNotReceive().Update(Arg.Any<LearningMaterial>());
+        }
+
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_InstructorDoesNotOwnCourse_ThrowsUnauthorized()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+            var material = new LearningMaterial { MaterialId = materialId, LessonId = 10 };
+            
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns(material);
+            var lesson = new Lesson { Course = new Course { InstructorId = 999 } }; // Different instructor
+            _lessonRepoMock.GetByIdAsync(material.LessonId.Value).Returns(lesson);
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You do not have permission to update materials.");
+        }
+
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_InstructorLockedOut_ThrowsBadRequest()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+            var material = new LearningMaterial { MaterialId = materialId, LessonId = 10 };
+            var course = new Course { CourseId = 20, InstructorId = instructorId };
+            var lesson = new Lesson { LessonId = 10, CourseId = 20, Course = course };
+            var lockout = new Lockout { LockoutEnd = DateTime.UtcNow.AddDays(1) };
+
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns(material);
+            _lessonRepoMock.GetByIdAsync(material.LessonId.Value).Returns(lesson);
+            _lockoutRepoMock.GetActiveLockoutAsync(instructorId, "instructor").Returns(lockout);
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage($"Your instructor rights are locked until *");
+        }
+
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_CourseIsPending_ThrowsInvalidOperation()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+            var material = new LearningMaterial { MaterialId = materialId, LessonId = 10 };
+            var course = new Course { CourseId = 20, InstructorId = instructorId, CourseStatus = CourseStatus.Pending.ToValue() };
+            var lesson = new Lesson { LessonId = 10, CourseId = 20, Course = course };
+
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns(material);
+            _lessonRepoMock.GetByIdAsync(material.LessonId.Value).Returns(lesson);
+            _lockoutRepoMock.GetActiveLockoutAsync(instructorId, "instructor").Returns((Lockout)null);
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Cannot update materials while the course is pending review.");
+        }
+
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_CourseIsArchivedAndFlagged_ThrowsInvalidOperation()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+            var material = new LearningMaterial { MaterialId = materialId, LessonId = 10 };
+            var course = new Course { CourseId = 20, InstructorId = instructorId, CourseStatus = CourseStatus.Archived.ToValue(), CourseFlagCount = 3 };
+            var lesson = new Lesson { LessonId = 10, CourseId = 20, Course = course };
+
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns(material);
+            _lessonRepoMock.GetByIdAsync(material.LessonId.Value).Returns(lesson);
+            _lockoutRepoMock.GetActiveLockoutAsync(instructorId, "instructor").Returns((Lockout)null);
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This course is permanently archived due to policy violations and cannot be modified.");
+        }
+
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_CourseIsPublished_UpdatesStatusesToDraftAndClearsCache()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+            var material = new LearningMaterial { MaterialId = materialId, LessonId = 10 };
+            var course = new Course { CourseId = 20, InstructorId = instructorId, CourseStatus = CourseStatus.Published.ToValue(), CourseFlagCount = 0 };
+            var lesson = new Lesson { LessonId = 10, CourseId = 20, Course = course };
+
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns(material);
+            _lessonRepoMock.GetByIdAsync(material.LessonId.Value).Returns(lesson);
+            _lockoutRepoMock.GetActiveLockoutAsync(instructorId, "instructor").Returns((Lockout)null);
+            _materialRepoMock.SaveChangesAsync().Returns(1);
+
+            //Act
+            var result = await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Be("New Title");
+            result.LearningStatus.Should().Be(LearningStatus.Draft.ToValue());
+            course.CourseStatus.Should().Be(CourseStatus.Draft.ToValue());
+
+            _materialRepoMock.Received(1).Update(material);
+            _courseRepoMock.Received(1).Update(course);
+            await _materialRepoMock.Received(1).SaveChangesAsync();
+            await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
+        }
+
+        [Fact]
+        public async Task UpdateMaterialDetailsAsync_CourseIsDraft_UpdatesMaterialAndClearsCacheWithoutChangingCourseStatus()
+        {
+            //Arrange 1
+            int materialId = 1;
+            int instructorId = 2;
+            var request = new MaterialUpdateRequest { Title = "New Title", Description = "New Desc" };
+            var material = new LearningMaterial { MaterialId = materialId, LessonId = 10, LearningStatus = LearningStatus.Active.ToValue() };
+            var course = new Course { CourseId = 20, InstructorId = instructorId, CourseStatus = CourseStatus.Draft.ToValue(), CourseFlagCount = 0 };
+            var lesson = new Lesson { LessonId = 10, CourseId = 20, Course = course };
+
+            //Arrange 2
+            _htmlServiceMock.SanitizeHtml(request.Description).Returns(request.Description);
+            _materialRepoMock.GetByIdAsync(materialId).Returns(material);
+            _lessonRepoMock.GetByIdAsync(material.LessonId.Value).Returns(lesson);
+            _lockoutRepoMock.GetActiveLockoutAsync(instructorId, "instructor").Returns((Lockout)null);
+            _materialRepoMock.SaveChangesAsync().Returns(1);
+
+            //Act
+            var result = await _sut.UpdateMaterialDetailsAsync(materialId, request, instructorId);
+
+            //Assert
+            result.Should().NotBeNull();
+            result.Title.Should().Be("New Title");
+            result.LearningStatus.Should().Be(LearningStatus.Active.ToValue());
+            course.CourseStatus.Should().Be(CourseStatus.Draft.ToValue());
+
+            _materialRepoMock.Received(1).Update(material);
+            _courseRepoMock.DidNotReceive().Update(course);
+            await _materialRepoMock.Received(1).SaveChangesAsync();
+            await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(course.CourseId));
+        }
     }
 }
+

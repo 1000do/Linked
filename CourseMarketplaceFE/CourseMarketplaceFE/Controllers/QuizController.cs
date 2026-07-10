@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -38,6 +39,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── INDEX ────────────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Index(string? searchTerm, int page = 1)
         {
             var viewModel = new QuizListViewModel
@@ -102,6 +104,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── CREATE (AJAX) ────────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Create([FromBody] QuizCreateViewModel model)
         {
             if (!ModelState.IsValid)
@@ -134,6 +137,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet("Quiz/QuestionPool/{id:int}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> QuestionPool(int id)
         {
             try
@@ -155,6 +159,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── SETTINGS (PATCH) ────────────────────────────────────────────────
         [HttpPatch("Quiz/Update/{id:int}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Update(int id, [FromBody] QuizUpdateViewModel model)
         {
             if (!ModelState.IsValid)
@@ -180,6 +185,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── DELETE (AJAX) ────────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -206,6 +212,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> ToggleHidden([FromBody] ToggleHiddenRequest request)
         {
             try
@@ -226,6 +233,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── EDITOR (GET) ────────────────────────────────────────────────
         [HttpGet("Quiz/Editor/{id:int}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Editor(int id)
         {
             var viewModel = new QuizEditorViewModel { QuizId = id };
@@ -282,6 +290,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── UPDATE QUIZ SETTINGS (AJAX) ─────────────────────────────────
         [HttpPatch("Quiz/Settings/{id:int}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateSettings(int id, [FromBody] QuizUpdateViewModel model)
         {
             if (!ModelState.IsValid) return Json(new { success = false, message = "Invalid input." });
@@ -296,6 +305,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── ADD QUESTION (AJAX) ─────────────────────────────────────────
         [HttpPost("Quiz/{id:int}/Questions")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AddQuestion(int id, [FromBody] object payload)
         {
             try
@@ -315,6 +325,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── ADD TO COURSE (AJAX) ────────────────────────────────────────
         [HttpPost("Quiz/{id:int}/AddToCourse")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AddToCourse(int id, [FromBody] JsonElement payload)
         {
             int courseId = payload.TryGetProperty("courseId", out var cProp) && cProp.ValueKind == JsonValueKind.Number 
@@ -341,6 +352,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── DELETE QUESTION (AJAX) ──────────────────────────────────────
         [HttpDelete("Quiz/Questions/{questionId:int}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> DeleteQuestion(int questionId)
         {
             try
@@ -354,6 +366,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── UPDATE QUESTION (AJAX) ──────────────────────────────────────
         [HttpPut("Quiz/Questions/{questionId:int}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateQuestion(int questionId, [FromBody] object payload)
         {
             try
@@ -369,6 +382,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── ATTEMPTS HISTORY VIEW ─────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AttemptsHistory()
         {
             var viewModel = new QuizListViewModel();
@@ -396,6 +410,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── STUDENT ATTEMPTS AJAX ─────────────────────────────────────────
         [HttpGet("Quiz/StudentAttempts/{quizId}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> StudentAttempts(int quizId, int page = 1, int pageSize = 5)
         {
             try

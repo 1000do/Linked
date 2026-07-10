@@ -39,21 +39,7 @@ public class QuizService : IQuizService
         if (request.TotalQuestions <= 0)
             throw new ArgumentException("Total questions must be greater than 0.");
             
-        if (request.Distributions != null && request.Distributions.Any())
-        {
-            if (request.Distributions.Sum(d => d.QuestionCount) != request.TotalQuestions)
-                throw new ArgumentException("Total questions distributed across lessons must equal the quiz's Total Questions.");
-
-            foreach (var dist in request.Distributions)
-            {
-                var questionsInBank = await _questionBankRepository.GetQuestionsByLessonAsync(dist.LessonId);
-                if (questionsInBank.Count < dist.QuestionCount)
-                {
-                    // get lesson name? We might not have lesson repo here easily, just throw error with ID.
-                    throw new ArgumentException($"Lesson ID {dist.LessonId} only has {questionsInBank.Count} questions in Question Bank, but you requested {dist.QuestionCount} questions. Please reduce the number or add more questions to the lesson.");
-                }
-            }
-        }
+        await ValidateQuizDistributionsAsync(request.Distributions, request.TotalQuestions);
 
         var quiz = new Quiz
         {
@@ -83,20 +69,7 @@ public class QuizService : IQuizService
         if (request.TotalQuestions <= 0)
             throw new ArgumentException("Total questions must be greater than 0.");
             
-        if (request.Distributions != null && request.Distributions.Any())
-        {
-            if (request.Distributions.Sum(d => d.QuestionCount) != request.TotalQuestions)
-                throw new ArgumentException("Total questions distributed across lessons must equal the quiz's Total Questions.");
-
-            foreach (var dist in request.Distributions)
-            {
-                var questionsInBank = await _questionBankRepository.GetQuestionsByLessonAsync(dist.LessonId);
-                if (questionsInBank.Count < dist.QuestionCount)
-                {
-                    throw new ArgumentException($"Lesson ID {dist.LessonId} only has {questionsInBank.Count} questions in Question Bank, but you requested {dist.QuestionCount} questions. Please reduce the number or add more questions to the lesson.");
-                }
-            }
-        }
+        await ValidateQuizDistributionsAsync(request.Distributions, request.TotalQuestions);
 
         var quiz = await _quizRepo.GetByIdWithQuestionsAsync(quizId)
             ?? throw new KeyNotFoundException($"Quiz {quizId} does not exist.");
@@ -243,15 +216,7 @@ public class QuizService : IQuizService
         
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
         
-        // Update Course Status to Draft if Published
-        var course = await _courseRepository.GetByIdAsync(request.CourseId);
-        if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
-        {
-            course.CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue();
-
-            _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
-        }
+        await UpdateCourseStatusToDraftIfPublishedAsync(request.CourseId);
 
         return MapToCourseQuizResponse(created, quiz);
     }
@@ -272,15 +237,7 @@ public class QuizService : IQuizService
         
         await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
         
-        // Update Course Status to Draft if Published
-        var course = await _courseRepository.GetByIdAsync(courseId);
-        if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
-        {
-            course.CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue();
-
-            _courseRepository.Update(course);
-            await _courseRepository.SaveChangesAsync();
-        }
+        await UpdateCourseStatusToDraftIfPublishedAsync(courseId);
     }
 
     public async Task SetCourseQuizHiddenAsync(int courseId, int quizId, bool isHidden, int instructorId)
@@ -566,6 +523,35 @@ public class QuizService : IQuizService
         if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("Cannot modify course quizzes while the course is under review.");
+        }
+    }
+
+    private async Task ValidateQuizDistributionsAsync(IEnumerable<QuizLessonDistributionRequest>? distributions, int totalQuestions)
+    {
+        if (distributions != null && distributions.Any())
+        {
+            if (distributions.Sum(d => d.QuestionCount) != totalQuestions)
+                throw new ArgumentException("Total questions distributed across lessons must equal the quiz's Total Questions.");
+
+            foreach (var dist in distributions)
+            {
+                var questionsInBank = await _questionBankRepository.GetQuestionsByLessonAsync(dist.LessonId);
+                if (questionsInBank.Count < dist.QuestionCount)
+                {
+                    throw new ArgumentException($"Lesson ID {dist.LessonId} only has {questionsInBank.Count} questions in Question Bank, but you requested {dist.QuestionCount} questions. Please reduce the number or add more questions to the lesson.");
+                }
+            }
+        }
+    }
+
+    private async Task UpdateCourseStatusToDraftIfPublishedAsync(int courseId)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
+        {
+            course.CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue();
+            _courseRepository.Update(course);
+            await _courseRepository.SaveChangesAsync();
         }
     }
 

@@ -30,7 +30,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _courseRepoMock = Substitute.For<ICourseRepository>();
             _redisMock = Substitute.For<IRedisService>();
 
-            var inMemorySettings = new Dictionary<string, string> {
+            var inMemorySettings = new Dictionary<string, string?> {
                 {"ChatSettings:EnableAttachments", "true"}
             };
             _configMock = new ConfigurationBuilder()

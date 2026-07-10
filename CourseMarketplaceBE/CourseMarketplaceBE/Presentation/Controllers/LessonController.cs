@@ -10,7 +10,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/lessons")]
-[Authorize]
 public class LessonController : ControllerBase
 {
     private readonly ILessonService _lessonService;
@@ -31,6 +30,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> CreateLesson([FromForm] LessonCreateRequest request)
     {
         try
@@ -54,6 +54,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPost("{lessonId}/materials")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> AddMaterial(int lessonId, [FromForm] MaterialCreateRequest request)
     {
         try
@@ -77,6 +78,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPatch("{lessonId}/title")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> UpdateLessonTitle(int lessonId, [FromBody] LessonUpdateTitleRequest request)
     {
         try
@@ -100,6 +102,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPatch("materials/{materialId}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] MaterialUpdateRequest request)
     {
         try
@@ -123,6 +126,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPatch("materials/{materialId}/remove")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> RemoveMaterial(int materialId)
     {
         try
@@ -146,6 +150,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> DeleteLesson(int id)
     {
         try
@@ -169,6 +174,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpGet("materials/trash")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetTrashMaterials()
     {
         try
@@ -184,6 +190,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpDelete("materials/{materialId}/permanent")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> PermanentDeleteMaterial(int materialId)
     {
         try
@@ -207,6 +214,7 @@ public class LessonController : ControllerBase
     }
 
     [HttpPost("materials/{materialId}/restore")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> RestoreMaterial(int materialId)
     {
         try

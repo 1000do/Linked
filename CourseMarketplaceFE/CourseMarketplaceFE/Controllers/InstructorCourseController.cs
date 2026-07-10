@@ -95,6 +95,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── LIST COURSES ─────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Index(string? searchTerm, string? status, int page = 1)
         {
             var viewModel = new InstructorStudioViewModel
@@ -209,6 +210,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── CREATE (GET) ─────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Create()
         {
             // Kiểm tra Stripe status & Transfer Rate
@@ -224,6 +226,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── CREATE (POST) ────────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Create(CreateCourseViewModel model)
         {
             if (!ModelState.IsValid)
@@ -312,6 +315,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── EDITOR ──────────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Editor(int id)
         {
             ViewBag.CourseId = id;
@@ -411,6 +415,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── DELETE COURSE (AJAX) ─────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -430,6 +435,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD LESSON (AJAX) ────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AddLesson([FromForm] int courseId, [FromForm] string title)
         {
             try
@@ -458,6 +464,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── REMOVE LESSON (AJAX) ────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> RemoveLesson([FromForm] int lessonId)
         {
             try
@@ -475,6 +482,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AddMaterial([FromForm] AddMaterialViewModel model)
         {
             if (!ModelState.IsValid)
@@ -517,6 +525,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── REMOVE MATERIAL (soft-delete, AJAX) ─────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> RemoveMaterial([FromForm] int materialId)
         {
             try
@@ -535,6 +544,7 @@ namespace CourseMarketplaceFE.Controllers
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor,staff,admin")]
         public async Task<IActionResult> UpdateCourseStatus([FromForm] int courseId, [FromForm] string status)
         {
             try
@@ -602,7 +612,7 @@ namespace CourseMarketplaceFE.Controllers
         // }
 
         [HttpPost]
-        [Authorize(Roles = "instructor")]
+        [Authorize(Roles = "instructor,staff,admin")]
         public async Task<IActionResult> ModerateCourse([FromForm] int courseId)
         {
 
@@ -616,6 +626,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateDetails([FromForm] UpdateCourseDetailsViewModel model)
         {
             if (!ModelState.IsValid)
@@ -673,6 +684,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── CHECK STRIPE STATUS (AJAX) ───────────────────────────────────
         [HttpGet]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> CheckStripeStatus()
         {
             try
@@ -743,6 +755,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── TRASH VIEW ──────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Trash()
         {
             try
@@ -767,6 +780,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── PERMANENT DELETE MATERIAL (AJAX) ────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> PermanentDeleteMaterial(int materialId)
         {
             try
@@ -784,6 +798,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── RESTORE MATERIAL (AJAX) ─────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> RestoreMaterial(int materialId)
         {
             try
@@ -801,6 +816,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateLessonTitle(int lessonId, [FromBody] object requestBody)
         {
             try
@@ -820,6 +836,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateLessonDescription(int lessonId, [FromBody] object requestBody)
         {
             try
@@ -839,6 +856,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] object requestBody)
         {
             try

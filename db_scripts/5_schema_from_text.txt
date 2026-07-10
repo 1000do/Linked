@@ -44,25 +44,7 @@ phone_number: VARCHAR
 avatar_url: TEXT
 bio: TEXT
 
-avatar_frames
-id: SERIAL PK
---
-name: VARCHAR
-image_url: TEXT
-description: TEXT
-requirement_type: VARCHAR
-requirement_value: INT
-is_active: BOOLEAN
-created_at: TIMESTAMP
 
-user_avatar_frames
-user_id: INT PK
-user_id: INT FK
-frame_id: INT PK
-frame_id: INT FK
---
-unlocked_at: TIMESTAMP
-is_equipped: BOOLEAN
 
 instructors
 instructor_id: INT PK

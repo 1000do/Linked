@@ -186,7 +186,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var dto = new UpdateApprovalStatusDto { InstructorId = 1, Status = InstructorApprovalStatus.Approved.ToValue() };
 
             //Arrange 2
-            _repoMock.GetByIdAsync(dto.InstructorId).Returns((Instructor)null);
+            _repoMock.GetByIdAsync(dto.InstructorId).Returns((Instructor)null!);
 
             //Act
             var result = await _sut.ApproveOrRejectAsync(dto);
@@ -302,7 +302,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             int id = 1;
 
             //Arrange 2
-            _repoMock.GetByIdAsync(id).Returns((Instructor)null);
+            _repoMock.GetByIdAsync(id).Returns((Instructor)null!);
 
             //Act
             var result = await _sut.GetDetailAsync(id);

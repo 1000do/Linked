@@ -86,7 +86,7 @@ public class ReviewController : ControllerBase
 
     /// <summary>Kiểm tra trạng thái enrollment + quyền review của user</summary>
     [HttpGet("eligibility/{courseId}")]
-    [Authorize]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> GetReviewEligibility(int courseId)
     {
         var userId = GetUserId();
@@ -104,7 +104,7 @@ public class ReviewController : ControllerBase
     /// source=learn  → yêu cầu đã học ít nhất 1 bài
     /// </summary>
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> SubmitReview(
         [FromBody] ReviewRequest request,
         [FromQuery] string source = "learn")
@@ -136,7 +136,7 @@ public class ReviewController : ControllerBase
 
     /// <summary>Chỉnh sửa review (chỉ chủ review được phép)</summary>
     [HttpPut("{reviewId}")]
-    [Authorize]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] UpdateReviewRequest request)
     {
         var userId = GetUserId();
@@ -167,7 +167,7 @@ public class ReviewController : ControllerBase
 
     /// <summary>Xóa mềm review (chỉ chủ review được phép). type = course | lesson</summary>
     [HttpDelete("{reviewId}")]
-    [Authorize]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> DeleteReview(int reviewId, [FromQuery] string type = "course")
     {
         var userId = GetUserId();
@@ -200,7 +200,7 @@ public class ReviewController : ControllerBase
 
     /// <summary>Báo cáo review vi phạm</summary>
     [HttpPost("report")]
-    [Authorize]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> Report([FromBody] ReportRequest request)
     {
         var userId = GetUserId();
