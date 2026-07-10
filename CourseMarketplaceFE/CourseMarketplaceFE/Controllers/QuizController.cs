@@ -367,5 +367,52 @@ namespace CourseMarketplaceFE.Controllers
             }
             catch (Exception ex) { return Json(new { success = false, message = ex.Message }); }
         }
+
+        // ─── ATTEMPTS HISTORY VIEW ─────────────────────────────────────────
+        public async Task<IActionResult> AttemptsHistory()
+        {
+            var viewModel = new QuizListViewModel();
+            try
+            {
+                var resp = await _api.GetAsync("quizzes");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var root = doc.RootElement;
+                    if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)
+                    {
+                        var quizzes = JsonSerializer.Deserialize<List<QuizSummaryItem>>(dataEl.GetRawText(), _jsonOpts);
+                        if (quizzes != null) viewModel.Quizzes = quizzes;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = "Failed to load quizzes: " + ex.Message;
+            }
+            return View(viewModel);
+        }
+
+        // ─── STUDENT ATTEMPTS AJAX ─────────────────────────────────────────
+        [HttpGet("Quiz/StudentAttempts/{quizId}")]
+        public async Task<IActionResult> StudentAttempts(int quizId, int page = 1, int pageSize = 5)
+        {
+            try
+            {
+                var resp = await _api.GetAsync($"quizzes/{quizId}/attempts?page={page}&pageSize={pageSize}");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    return Json(new { success = true, data = doc.RootElement.GetProperty("data").Clone() });
+                }
+                return Json(new { success = false, message = await resp.Content.ReadAsStringAsync() });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
     }
 }

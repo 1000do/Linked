@@ -115,8 +115,8 @@ public class LessonService : ILessonService
 
         if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            lesson.LessonStatus = LessonStatus.Draft.ToValue();
             course.CourseStatus = CourseStatus.Draft.ToValue();
-            course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
 
@@ -174,8 +174,8 @@ public class LessonService : ILessonService
         
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            lesson.LessonStatus = LessonStatus.Draft.ToValue();
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
         }
 
@@ -340,8 +340,8 @@ public class LessonService : ILessonService
         
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            material.LearningStatus = LearningStatus.Draft.ToValue();
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             int rows3 = await _courseRepository.SaveChangesAsync();
             if (rows3 <= 0) throw new InvalidOperationException("Failed to save changes");
@@ -363,7 +363,8 @@ public class LessonService : ILessonService
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt,
-            CourseStatus = lesson.Course?.CourseStatus
+            CourseStatus = lesson.Course?.CourseStatus,
+            LearningStatus = material.LearningStatus
         };
     }
 
@@ -399,8 +400,8 @@ public class LessonService : ILessonService
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            material.LearningStatus = LearningStatus.Draft.ToValue();
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
         }
 
@@ -421,7 +422,8 @@ public class LessonService : ILessonService
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt,
-            CourseStatus = lesson.Course?.CourseStatus
+            CourseStatus = lesson.Course?.CourseStatus,
+            LearningStatus = material.LearningStatus
         };
     }
 
@@ -470,7 +472,6 @@ public class LessonService : ILessonService
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             int rows5 = await _courseRepository.SaveChangesAsync();
             if (rows5 <= 0) throw new InvalidOperationException("Failed to save changes");
@@ -533,7 +534,6 @@ public class LessonService : ILessonService
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
             int rows7 = await _courseRepository.SaveChangesAsync();
             if (rows7 <= 0) throw new InvalidOperationException("Failed to save changes");
@@ -636,9 +636,9 @@ public class LessonService : ILessonService
         if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = CourseStatus.Draft.ToValue();
-            course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
+        bool wasPublished = string.Equals(course.CourseStatus, CourseStatus.Draft.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         // Check if restoring a video and an active video already exists
         var fileType = material.MaterialMetadata?.FileType ?? "video";
@@ -688,7 +688,7 @@ public class LessonService : ILessonService
             }
         }
 
-        material.LearningStatus = LearningStatus.Active.ToValue();
+        material.LearningStatus = wasPublished ? LearningStatus.Draft.ToValue() : LearningStatus.Active.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
         int rows9 = await _materialRepository.SaveChangesAsync();

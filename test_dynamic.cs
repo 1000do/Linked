@@ -1,9 +1,10 @@
 using System;
+using System.Dynamic;
 public class Program
 {
     public static void Main()
     {
-        dynamic viewBag = new System.Dynamic.ExpandoObject();
+        dynamic viewBag = new ExpandoObject();
         try
         {
             var x = (string)viewBag.DoesNotExist ?? "[]";

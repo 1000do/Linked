@@ -39,12 +39,23 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetCourses()
+        public async Task<IActionResult> GetCourses(string? search = null, int page = 1, int pageSize = 6)
         {
-            var resp = await _api.GetAsync("courses/my-courses?pageSize=100");
-            var json = await resp.Content.ReadAsStringAsync();
-            HttpContext.Response.StatusCode = (int)resp.StatusCode;
-            return Content(json, "application/json");
+            var url = $"courses/my-courses?page={page}&pageSize={pageSize}";
+            if (!string.IsNullOrEmpty(search)) url += $"&search={Uri.EscapeDataString(search)}";
+
+            var resp = await _api.GetAsync(url);
+            if (resp.IsSuccessStatusCode)
+            {
+                var json = await resp.Content.ReadAsStringAsync();
+                var apiResponse = JsonSerializer.Deserialize<CourseMarketplaceFE.Models.Common.BaseApiResponse<CourseMarketplaceFE.Models.PagedResult<CourseMarketplaceFE.Models.CourseListViewModel>>>(json, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+                
+                if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
+                {
+                    return PartialView("_CourseGridPartial", apiResponse.Data);
+                }
+            }
+            return PartialView("_CourseGridPartial", new CourseMarketplaceFE.Models.PagedResult<CourseMarketplaceFE.Models.CourseListViewModel>());
         }
 
         [HttpGet]

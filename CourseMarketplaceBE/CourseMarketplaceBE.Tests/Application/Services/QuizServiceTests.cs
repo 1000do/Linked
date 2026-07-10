@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Application.IServices;
 
 namespace CourseMarketplaceBE.Tests.Application.Services;
 
@@ -18,6 +19,7 @@ public class QuizServiceTests
     private readonly IEnrollmentRepository _enrollmentRepoMock;
     private readonly IQuestionBankRepository _questionBankRepoMock;
     private readonly ICourseRepository _courseRepoMock;
+    private readonly IRedisService _redisServiceMock;
     private readonly QuizService _sut;
 
     public QuizServiceTests()
@@ -26,7 +28,8 @@ public class QuizServiceTests
         _enrollmentRepoMock = Substitute.For<IEnrollmentRepository>();
         _questionBankRepoMock = Substitute.For<IQuestionBankRepository>();
         _courseRepoMock = Substitute.For<ICourseRepository>();
-        _sut = new QuizService(_quizRepoMock, _enrollmentRepoMock, _questionBankRepoMock, _courseRepoMock);
+        _redisServiceMock = Substitute.For<IRedisService>();
+        _sut = new QuizService(_quizRepoMock, _enrollmentRepoMock, _questionBankRepoMock, _courseRepoMock, _redisServiceMock);
     }
 
     [Fact]
@@ -43,8 +46,7 @@ public class QuizServiceTests
         };
 
         // Arrange 2
-        // No mocks needed before exception
-
+        _quizRepoMock.IsTitleUniqueAsync(request.Title, 100, 1).Returns(true);
         // Act
         Func<Task> act = async () => await _sut.UpdateQuizSettingsAsync(1, request, 100);
 
@@ -70,8 +72,7 @@ public class QuizServiceTests
         };
 
         // Arrange 2
-        // No mocks needed before exception
-
+        _quizRepoMock.IsTitleUniqueAsync(request.Title, 100, 1).Returns(true);
         // Act
         Func<Task> act = async () => await _sut.UpdateQuizSettingsAsync(1, request, 100);
 

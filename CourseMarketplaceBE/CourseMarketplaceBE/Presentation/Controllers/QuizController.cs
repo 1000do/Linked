@@ -60,6 +60,28 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
+    [HttpGet("{quizId}/attempts")]
+    public async Task<IActionResult> GetStudentAttempts(int quizId, [FromQuery] CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto request)
+    {
+        try
+        {
+            var instructorIdStr = (User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) ?? User.FindFirst("UserId"))?.Value;
+            if (!int.TryParse(instructorIdStr, out int instructorId))
+                return Unauthorized(new { message = "Invalid token payload." });
+
+            var result = await _quizService.GetStudentQuizAttemptsAsync(quizId, instructorId, request);
+            return Ok(new { success = true, data = result });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { success = false, message = ex.Message });
+        }
+        catch (System.Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("{id:int}/question-pool")]
     public async Task<IActionResult> GetQuizQuestionPool(int id)
     {
@@ -73,6 +95,7 @@ public class QuizController : ControllerBase
         catch (UnauthorizedAccessException ex) { return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message)); }
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
+
 
     // ── POST api/quizzes ───────────────────────────────────────────────────────
 

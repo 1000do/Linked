@@ -34,6 +34,8 @@ public class CourseCommandService : ICourseCommandService
     private readonly ILockoutRepository _lockoutRepo;
     private readonly ICourseExtRepository _courseExtRepo;
     private readonly IHtmlTextManipulationService _htmlTextManipulationService;
+    private readonly INotificationService _notificationService;
+    private readonly IUserRepository _userRepository;
 
     public CourseCommandService(
         ICourseRepository courseRepository,
@@ -50,7 +52,9 @@ public class CourseCommandService : ICourseCommandService
         IMapper mapper,
         ILockoutRepository lockoutRepo,
         ICourseExtRepository courseExtRepo,
-        IHtmlTextManipulationService htmlTextManipulationService)
+        IHtmlTextManipulationService htmlTextManipulationService,
+        INotificationService notificationService,
+        IUserRepository userRepository)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -66,6 +70,8 @@ public class CourseCommandService : ICourseCommandService
         _lockoutRepo = lockoutRepo;
         _courseExtRepo = courseExtRepo;
         _htmlTextManipulationService = htmlTextManipulationService;
+        _notificationService = notificationService;
+        _userRepository = userRepository;
     }
 
     private async Task<(int, bool)> CheckInstructorRights(int instructorId)
@@ -130,7 +136,7 @@ public class CourseCommandService : ICourseCommandService
             CourseThumbnailUrl = thumbnailUrl,
             WhatYouWillLearn = _htmlTextManipulationService.SanitizeHtml(request.WhatYouWillLearn),
             Requirements = _htmlTextManipulationService.SanitizeHtml(request.Requirements),
-            CourseStatus = CourseStatus.Draft.ToValue(),
+            CourseStatus = CourseStatus.Pending.ToValue(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -263,7 +269,6 @@ public class CourseCommandService : ICourseCommandService
             if (CourseStatus.Published.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             {
                 course.CourseStatus = CourseStatus.Draft.ToValue();
-                course.ModerationFeedback = null;
             }
         }
 
@@ -446,8 +451,7 @@ public class CourseCommandService : ICourseCommandService
                 throw new BadRequestException($"The total video duration of the free course is currently {Math.Round(totalMinutes, 1)} minutes. Free courses are only allowed a maximum of 60 minutes.");
             }
 
-            course.ModerationFeedback = null;
-
+            // course.ModerationFeedback is intentionally kept
             var materials = await _materialRepository.GetByCourseIdAsync(courseId);
             if (materials != null)
             {
@@ -455,10 +459,9 @@ public class CourseCommandService : ICourseCommandService
                 {
                     if (material.LearningStatus != LearningStatus.Removed.ToValue())
                     {
-                        material.ModerationFeedback = null;
-                        if (material.LearningStatus != LearningStatus.Active.ToValue())
+                        if (material.LearningStatus == LearningStatus.Draft.ToValue())
                         {
-                            material.LearningStatus = LearningStatus.Active.ToValue();
+                            material.LearningStatus = LearningStatus.Pending.ToValue();
                         }
                         _materialRepository.Update(material);
                     }
@@ -470,14 +473,21 @@ public class CourseCommandService : ICourseCommandService
             {
                 foreach (var lesson in lessons)
                 {
-                    if (lesson.LessonStatus != LessonStatus.Active.ToValue())
+                    if (lesson.LessonStatus == LessonStatus.Draft.ToValue())
                     {
-                        lesson.LessonStatus = LessonStatus.Active.ToValue();
+                        lesson.LessonStatus = LessonStatus.Pending.ToValue();
                         _lessonRepository.Update(lesson);
                     }
                 }
             }
+            
+            var adminId = await _userRepository.GetAdminIdAsync();
+            if (adminId.HasValue) 
+            {
+                await _notificationService.SendNotificationAsync(adminId.Value, "Course Submitted", $"Course '{course.Title}' was submitted for review.", "/AdminModeration/Courses");
+            }
         }
+
         _courseRepository.Update(course);
         int rowsStatus = await _courseRepository.SaveChangesAsync();
         if (rowsStatus <= 0)
@@ -588,3 +598,4 @@ public class CourseCommandService : ICourseCommandService
         return System.Text.RegularExpressions.Regex.Replace(input, "<.*?>", string.Empty).Trim();
     }
 }
+

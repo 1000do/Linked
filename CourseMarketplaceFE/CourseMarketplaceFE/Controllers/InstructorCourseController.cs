@@ -231,7 +231,7 @@ namespace CourseMarketplaceFE.Controllers
                     var errorMsg = string.Join("<br/>", errors);
                     return Json(new { success = false, message = errorMsg });
                 }
-                    
+
                 await LoadStripeStatusAsync();
                 await LoadTransferRateAsync();
                 model.AvailableCategories = await GetCategoriesAsync();
@@ -340,6 +340,12 @@ namespace CourseMarketplaceFE.Controllers
                         ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
                         ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
                         ViewBag.ModerationFeedback = data.TryGetProperty("moderationFeedback", out var mf) ? mf.GetString() : "";
+                        
+                        if (data.TryGetProperty("fieldFeedbacks", out var ff) && ff.ValueKind == JsonValueKind.Array)
+                        {
+                            var feedbacks = JsonSerializer.Deserialize<List<CourseFieldFeedbackViewModel>>(ff.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                            ViewBag.FieldFeedbacks = feedbacks;
+                        }
 
                         // Applied Coupon
                         ViewBag.CouponCode = data.TryGetProperty("appliedCouponCode", out var ccode) && ccode.ValueKind != JsonValueKind.Null ? ccode.GetString() : null;
@@ -475,7 +481,7 @@ namespace CourseMarketplaceFE.Controllers
                     formData.Add(new StringContent(model.Description), "Description");
                 if (!string.IsNullOrEmpty(model.MaterialUrl))
                     formData.Add(new StringContent(model.MaterialUrl), "MaterialUrl");
-                
+
                 formData.Add(new StringContent(model.Type), "MaterialMetadata.FileType");
                 if (model.Duration.HasValue) formData.Add(new StringContent(model.Duration.Value.ToString()), "MaterialMetadata.Duration");
                 if (model.FileSize.HasValue) formData.Add(new StringContent(model.FileSize.Value.ToString()), "MaterialMetadata.FileSize");
@@ -653,7 +659,7 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         // Fallback to raw error response if not valid JSON
                     }
-                   
+
                     return Json(new { success = false, message = cleanMessage });
                 }
             }

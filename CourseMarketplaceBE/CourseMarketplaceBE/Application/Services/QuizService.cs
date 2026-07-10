@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Enums;
@@ -17,19 +18,24 @@ public class QuizService : IQuizService
     private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly IQuestionBankRepository _questionBankRepository;
     private readonly ICourseRepository _courseRepository;
+    private readonly IRedisService _redisService;
 
-    public QuizService(IQuizRepository quizRepo, IEnrollmentRepository enrollmentRepo, IQuestionBankRepository questionBankRepository, ICourseRepository courseRepository)
+    public QuizService(IQuizRepository quizRepo, IEnrollmentRepository enrollmentRepo, IQuestionBankRepository questionBankRepository, ICourseRepository courseRepository, IRedisService redisService)
     {
         _quizRepo = quizRepo;
         _enrollmentRepo = enrollmentRepo;
         _questionBankRepository = questionBankRepository;
         _courseRepository = courseRepository;
+        _redisService = redisService;
     }
 
     // ── Instructor: Quản lý Quiz ──────────────────────────────────────────────
 
     public async Task<QuizDetailResponse> CreateQuizAsync(QuizCreateRequest request, int instructorId)
     {
+        if (!await _quizRepo.IsTitleUniqueAsync(request.Title, instructorId))
+            throw new ArgumentException("You already have a quiz with this title. Please choose a unique title.");
+            
         if (request.TotalQuestions <= 0)
             throw new ArgumentException("Total questions must be greater than 0.");
             
@@ -71,6 +77,9 @@ public class QuizService : IQuizService
 
     public async Task<QuizDetailResponse> UpdateQuizSettingsAsync(int quizId, QuizUpdateRequest request, int instructorId)
     {
+        if (!await _quizRepo.IsTitleUniqueAsync(request.Title, instructorId, quizId))
+            throw new ArgumentException("You already have another quiz with this title. Please choose a unique title.");
+            
         if (request.TotalQuestions <= 0)
             throw new ArgumentException("Total questions must be greater than 0.");
             
@@ -93,6 +102,9 @@ public class QuizService : IQuizService
             ?? throw new KeyNotFoundException($"Quiz {quizId} does not exist.");
 
         EnsureOwnership(quiz, instructorId);
+        
+        if (await _quizRepo.HasActiveAttemptsAsync(quizId))
+            throw new InvalidOperationException("Cannot update quiz because a student is currently taking it.");
 
         quiz.Title = request.Title;
         quiz.Description = request.Description;
@@ -181,6 +193,9 @@ public class QuizService : IQuizService
 
         EnsureOwnership(quiz, instructorId);
         
+        if (await _quizRepo.HasActiveAttemptsAsync(quizId))
+            throw new InvalidOperationException("Cannot delete quiz because a student is currently taking it.");
+
         if (await _quizRepo.IsQuizInEnrolledCourseAsync(quizId))
             throw new InvalidOperationException("Cannot delete this quiz because it belongs to a course that has enrolled students.");
 
@@ -204,6 +219,8 @@ public class QuizService : IQuizService
 
     public async Task<CourseQuizResponse> AddQuizToCourseAsync(AddQuizToCourseRequest request, int instructorId)
     {
+        await EnsureCourseNotPendingAsync(request.CourseId);
+
         var quiz = await _quizRepo.GetByIdWithQuestionsAsync(request.QuizId)
             ?? throw new KeyNotFoundException($"Quiz {request.QuizId} does not exist.");
 
@@ -218,17 +235,20 @@ public class QuizService : IQuizService
         {
             CourseId = request.CourseId,
             QuizId = request.QuizId,
-            OrderIndex = request.OrderIndex
+            OrderIndex = request.OrderIndex,
+            IsHidden = quiz.IsHidden
         };
 
         var created = await _quizRepo.AddToCourseAsync(courseQuiz);
+        
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
         
         // Update Course Status to Draft if Published
         var course = await _courseRepository.GetByIdAsync(request.CourseId);
         if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue();
-            course.ModerationFeedback = null;
+
             _courseRepository.Update(course);
             await _courseRepository.SaveChangesAsync();
         }
@@ -238,18 +258,26 @@ public class QuizService : IQuizService
 
     public async Task RemoveQuizFromCourseAsync(int courseId, int quizId, int instructorId)
     {
+        await EnsureCourseNotPendingAsync(courseId);
+
         var quiz = await _quizRepo.GetByIdAsync(quizId)
             ?? throw new KeyNotFoundException($"Quiz {quizId} does not exist.");
 
         EnsureOwnership(quiz, instructorId);
+        
+        if (await _quizRepo.HasActiveAttemptsAsync(quizId))
+            throw new InvalidOperationException("Cannot remove quiz from course because a student is currently taking the quiz.");
+
         await _quizRepo.RemoveFromCourseAsync(courseId, quizId);
+        
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
         
         // Update Course Status to Draft if Published
         var course = await _courseRepository.GetByIdAsync(courseId);
         if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue();
-            course.ModerationFeedback = null;
+
             _courseRepository.Update(course);
             await _courseRepository.SaveChangesAsync();
         }
@@ -257,6 +285,8 @@ public class QuizService : IQuizService
 
     public async Task SetCourseQuizHiddenAsync(int courseId, int quizId, bool isHidden, int instructorId)
     {
+        await EnsureCourseNotPendingAsync(courseId);
+
         var quiz = await _quizRepo.GetByIdAsync(quizId)
             ?? throw new KeyNotFoundException($"Quiz {quizId} does not exist.");
 
@@ -266,6 +296,8 @@ public class QuizService : IQuizService
             throw new InvalidOperationException("Cannot toggle quiz visibility because a student is currently taking the quiz.");
 
         await _quizRepo.SetCourseQuizHiddenAsync(courseId, quizId, isHidden);
+        
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
     }
 
     public async Task<List<CourseQuizResponse>> GetCourseQuizzesAsync(int courseId, int instructorId)
@@ -347,7 +379,7 @@ public class QuizService : IQuizService
                 QuestionId = q.QuestionId,
                 QuestionText = q.QuestionText,
                 QuestionType = q.QuestionType,
-                Options = q.QuizOptions.OrderBy(o => o.OrderIndex).Select(o => new QuizOptionForStudentResponse
+                Options = q.QuizOptions.OrderBy(o => rand.Next()).Select(o => new QuizOptionForStudentResponse
                 {
                     OptionId = o.OptionId,
                     OptionText = o.OptionText,
@@ -480,10 +512,61 @@ public class QuizService : IQuizService
 
     // ── Private Helpers ───────────────────────────────────────────────────────
 
-    private static void EnsureOwnership(Quiz quiz, int instructorId)
+    public async Task<PagedResult<QuizAttemptSummaryResponse>> GetMyQuizAttemptsAsync(int quizId, int userId, PagedRequestDto request)
+    {
+        var (items, total) = await _quizRepo.GetAttemptsByQuizAndUserAsync(quizId, userId, request.Page, request.PageSize);
+        var mappedItems = items.Select(a => new QuizAttemptSummaryResponse
+        {
+            AttemptId = a.AttemptId,
+            QuizId = a.QuizId,
+            QuizTitle = a.Quiz?.Title ?? string.Empty,
+            UserId = a.UserId,
+            UserFullName = a.User?.FullName ?? string.Empty,
+            Score = a.Score ?? 0,
+            IsPassed = a.IsPassed ?? false,
+            StartedAt = a.StartedAt,
+            SubmittedAt = a.SubmittedAt
+        }).ToList();
+        
+        return new PagedResult<QuizAttemptSummaryResponse>(mappedItems, total, request.Page, request.PageSize);
+    }
+
+    public async Task<PagedResult<QuizAttemptSummaryResponse>> GetStudentQuizAttemptsAsync(int quizId, int instructorId, PagedRequestDto request)
+    {
+        var quiz = await _quizRepo.GetByIdAsync(quizId);
+        if (quiz == null) throw new KeyNotFoundException("Quiz not found.");
+        EnsureOwnership(quiz, instructorId);
+
+        var (items, total) = await _quizRepo.GetAttemptsByQuizAsync(quizId, request.Page, request.PageSize);
+        var mappedItems = items.Select(a => new QuizAttemptSummaryResponse
+        {
+            AttemptId = a.AttemptId,
+            QuizId = a.QuizId,
+            QuizTitle = quiz.Title,
+            UserId = a.UserId,
+            UserFullName = a.User?.FullName ?? string.Empty,
+            Score = a.Score ?? 0,
+            IsPassed = a.IsPassed ?? false,
+            StartedAt = a.StartedAt,
+            SubmittedAt = a.SubmittedAt
+        }).ToList();
+        
+        return new PagedResult<QuizAttemptSummaryResponse>(mappedItems, total, request.Page, request.PageSize);
+    }
+
+    private void EnsureOwnership(Quiz quiz, int instructorId)
     {
         if (quiz.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to modify this quiz.");
+            throw new UnauthorizedAccessException("You are not the owner of this quiz.");
+    }
+
+    private async Task EnsureCourseNotPendingAsync(int courseId)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course != null && string.Equals(course.CourseStatus, CourseMarketplaceBE.Domain.Constants.CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Cannot modify course quizzes while the course is under review.");
+        }
     }
 
     private static QuizSummaryResponse MapToSummary(Quiz quiz) => new()
@@ -559,3 +642,4 @@ public class QuizService : IQuizService
         AddedAt = cq.AddedAt
     };
 }
+

@@ -120,6 +120,14 @@ namespace CourseMarketplaceFE.Controllers
                     var list = new System.Collections.Generic.List<object>();
                     foreach (var item in items)
                     {
+                        if (item.TryGetProperty("courseId", out var cIdProp))
+                        {
+                            if (cIdProp.GetInt32() != courseId)
+                            {
+                                continue;
+                            }
+                        }
+
                         list.Add(new {
                             quizId = item.GetProperty("quizId").GetInt32(),
                             title = item.GetProperty("title").GetString(),

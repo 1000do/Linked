@@ -144,6 +144,33 @@ public class QuizAttemptController : Controller
         }
     }
 
+    [HttpGet("QuizAttempt/History/{quizId:int}")]
+    public async Task<IActionResult> History(int quizId, int page = 1, int pageSize = 10)
+    {
+        if (!Request.Cookies.ContainsKey("AccessToken"))
+        {
+            return Json(new { success = false, message = "Please log in first." });
+        }
+
+        try
+        {
+            var resp = await _api.GetAsync($"quiz-attempts/quiz/{quizId}/history?page={page}&pageSize={pageSize}");
+            var content = await resp.Content.ReadAsStringAsync();
+            var doc = JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            if (resp.IsSuccessStatusCode && root.TryGetProperty("data", out var dataEl))
+            {
+                return Json(new { success = true, data = dataEl });
+            }
+            return Json(new { success = false, message = "Failed to load history." });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("QuizAttempt/Details/{attemptId:int}")]
     public async Task<IActionResult> Details(int attemptId)
     {
@@ -173,5 +200,36 @@ public class QuizAttemptController : Controller
         {
             return Json(new { success = false, message = "System error: " + ex.Message });
         }
+    }
+
+    [HttpGet("QuizAttempt/Review/{attemptId:int}")]
+    public async Task<IActionResult> Review(int attemptId)
+    {
+        if (!Request.Cookies.ContainsKey("AccessToken"))
+        {
+            return RedirectToAction("Login", "Account");
+        }
+
+        try
+        {
+            var resp = await _api.GetAsync($"quiz-attempts/{attemptId}/details");
+            if (resp.IsSuccessStatusCode)
+            {
+                var content = await resp.Content.ReadAsStringAsync();
+                var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                {
+                    ViewBag.AttemptDataJson = dataEl.GetRawText();
+                    return View();
+                }
+            }
+            ViewBag.Error = "Failed to load attempt details.";
+        }
+        catch (Exception ex)
+        {
+            ViewBag.Error = "System error: " + ex.Message;
+        }
+
+        return View();
     }
 }

@@ -264,7 +264,7 @@ public class CouponService : ICouponService
         if (string.Equals(course.CourseStatus, "published", System.StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
-            course.ModerationFeedback = null;
+
         }
         _courseRepo.Update(course);
         int numberOfRowsAffected = await _repo.SaveChangesAsync();

@@ -226,6 +226,7 @@ CREATE TABLE lessons (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     lesson_status VARCHAR(50),
+    moderation_feedback TEXT,
     is_removed BOOLEAN DEFAULT FALSE
 );
 
@@ -829,6 +830,14 @@ LEFT JOIN course_reviews cr ON cr.enrollment_id = e.enrollment_id AND cr.is_remo
 LEFT JOIN instructor_payouts ip ON ip.instructor_id = i.instructor_id
 GROUP BY i.instructor_id;
 
+CREATE TABLE course_field_moderation_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    course_id INT NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexing
 CREATE INDEX idx_course_reviews_enrollment ON course_reviews(enrollment_id);
 CREATE INDEX idx_lesson_reviews_enrollment ON lesson_reviews(enrollment_id);
@@ -1125,3 +1134,5 @@ BEGIN
     END LOOP;
 END $$;
 
+
+CREATE UNIQUE INDEX ix_quizzes_title_instructor_id ON quizzes (title, instructor_id) WHERE is_removed = false;

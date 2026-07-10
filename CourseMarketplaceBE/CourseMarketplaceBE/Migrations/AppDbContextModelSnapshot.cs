@@ -1528,6 +1528,9 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("lesson_status");
 
+                    b.Property<string>("ModerationFeedback")
+                        .HasColumnType("text");
+
                     b.Property<string>("ThumbnailUrl")
                         .HasColumnType("text")
                         .HasColumnName("thumbnail_url");
@@ -2308,6 +2311,11 @@ namespace CourseMarketplaceBE.Migrations
 
                     b.HasIndex("InstructorId");
 
+                    b.HasIndex("Title", "InstructorId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_quizzes_title_instructor_id")
+                        .HasFilter("is_removed = false");
+
                     b.ToTable("quizzes", (string)null);
                 });
 
@@ -2394,7 +2402,7 @@ namespace CourseMarketplaceBE.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnName("attempt_question_id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
@@ -2417,7 +2425,7 @@ namespace CourseMarketplaceBE.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.HasIndex(new[] { "AttemptId", "QuestionId" }, "uq_quiz_attempt_question")
+                    b.HasIndex(new[] { "AttemptId", "QuestionId" }, "uq_attempt_question")
                         .IsUnique();
 
                     b.ToTable("quiz_attempt_questions", (string)null);
@@ -2428,7 +2436,7 @@ namespace CourseMarketplaceBE.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
-                        .HasColumnName("id");
+                        .HasColumnName("distribution_id");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
@@ -2436,11 +2444,11 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("lesson_id");
 
-                    b.Property<int>("Percentage")
+                    b.Property<int>("QuestionCount")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0)
-                        .HasColumnName("percentage");
+                        .HasColumnName("question_count");
 
                     b.Property<int>("QuizId")
                         .HasColumnType("integer")
@@ -2451,7 +2459,7 @@ namespace CourseMarketplaceBE.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.HasIndex(new[] { "QuizId", "LessonId" }, "uq_quiz_lesson_dist")
+                    b.HasIndex(new[] { "QuizId", "LessonId" }, "uq_quiz_lesson")
                         .IsUnique();
 
                     b.ToTable("quiz_lesson_distributions", (string)null);
@@ -2514,15 +2522,13 @@ namespace CourseMarketplaceBE.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
+                    b.Property<string>("Explanation")
+                        .HasColumnType("text")
+                        .HasColumnName("explanation");
+
                     b.Property<int>("LessonId")
                         .HasColumnType("integer")
                         .HasColumnName("lesson_id");
-
-                    b.Property<int>("OrderIndex")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("order_index");
 
                     b.Property<string>("QuestionText")
                         .IsRequired()
@@ -3530,7 +3536,7 @@ namespace CourseMarketplaceBE.Migrations
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttemptQuestion", b =>
                 {
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.QuizAttempt", "Attempt")
-                        .WithMany()
+                        .WithMany("QuizAttemptQuestions")
                         .HasForeignKey("AttemptId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -3593,7 +3599,7 @@ namespace CourseMarketplaceBE.Migrations
                     b.HasOne("CourseMarketplaceBE.Domain.Entities.Lesson", "Lesson")
                         .WithMany()
                         .HasForeignKey("LessonId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
                         .HasConstraintName("quiz_questions_lesson_id_fkey");
 
@@ -3890,6 +3896,8 @@ namespace CourseMarketplaceBE.Migrations
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizAttempt", b =>
                 {
                     b.Navigation("QuizAttemptAnswers");
+
+                    b.Navigation("QuizAttemptQuestions");
                 });
 
             modelBuilder.Entity("CourseMarketplaceBE.Domain.Entities.QuizOption", b =>

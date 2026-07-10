@@ -7,6 +7,7 @@ using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services
@@ -64,6 +65,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             course.CourseStatus = CourseStatus.Published.ToValue();
             course.ModerationFeedback = null;
+            course.FieldModerationFeedbacks.Clear();
             course.UpdatedAt = DateTime.Now;
             course.LastApprovedAt = DateTime.Now;
 
@@ -267,6 +269,7 @@ namespace CourseMarketplaceBE.Application.Services
             var rejectedMaterialIds = new HashSet<int>();
 
             course.ModerationFeedback = null;
+            course.FieldModerationFeedbacks.Clear();
             var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
             if (allMaterials != null)
             {
@@ -333,6 +336,13 @@ namespace CourseMarketplaceBE.Application.Services
                         _ => item.Target
                     };
                     courseFeedbackParts.Add($"[@{label}] {item.Reason}");
+                    course.FieldModerationFeedbacks.Add(new CourseFieldModerationFeedback
+                    {
+                        CourseId = course.CourseId,
+                        FieldName = item.Target,
+                        FeedbackText = item.Reason,
+                        DateAdded = DateTime.Now
+                    });
                 }
             }
 
@@ -386,6 +396,7 @@ namespace CourseMarketplaceBE.Application.Services
             var flaggedLessonIds = new HashSet<int>();
 
             course.ModerationFeedback = null;
+            course.FieldModerationFeedbacks.Clear();
             var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
             if (allMaterials != null)
             {
@@ -451,6 +462,13 @@ namespace CourseMarketplaceBE.Application.Services
                         _ => item.Target
                     };
                     courseFeedbackParts.Add($"[@{label}] {item.Reason}");
+                    course.FieldModerationFeedbacks.Add(new CourseFieldModerationFeedback
+                    {
+                        CourseId = course.CourseId,
+                        FieldName = item.Target,
+                        FeedbackText = item.Reason,
+                        DateAdded = DateTime.Now
+                    });
                 }
             }
 

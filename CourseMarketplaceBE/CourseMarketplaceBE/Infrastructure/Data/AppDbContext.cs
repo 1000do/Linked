@@ -35,6 +35,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Coupon> Coupons { get; set; }
     public virtual DbSet<Course> Courses { get; set; }
+    public virtual DbSet<CourseFieldModerationFeedback> CourseFieldModerationFeedbacks { get; set; }
     public virtual DbSet<Enrollment> Enrollments { get; set; }
     public virtual DbSet<Instructor> Instructors { get; set; }
     public virtual DbSet<InstructorPayout> InstructorPayouts { get; set; }
@@ -689,6 +690,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
             entity.Property(e => e.LessonStatus).HasMaxLength(50).HasColumnName("lesson_status");
+            entity.Property(e => e.ModerationFeedback).HasColumnName("moderation_feedback");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -1450,6 +1452,11 @@ public partial class AppDbContext : DbContext
             entity.HasKey(e => e.QuizId).HasName("quizzes_pkey");
             entity.ToTable("quizzes");
 
+            entity.HasIndex(e => new { e.Title, e.InstructorId })
+                  .IsUnique()
+                  .HasDatabaseName("ix_quizzes_title_instructor_id")
+                  .HasFilter("is_removed = false");
+
             entity.Property(e => e.QuizId).HasColumnName("quiz_id");
             entity.Property(e => e.InstructorId).HasColumnName("instructor_id");
             entity.Property(e => e.CourseId).HasColumnName("course_id");
@@ -1646,6 +1653,26 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.SelectedOptionId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("quiz_attempt_answers_selected_option_id_fkey");
+        });
+
+        modelBuilder.Entity<CourseFieldModerationFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("course_field_moderation_feedbacks_pkey");
+            entity.ToTable("course_field_moderation_feedbacks");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.CourseId).HasColumnName("course_id");
+            entity.Property(e => e.FieldName).HasMaxLength(100).HasColumnName("field_name");
+            entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.DateAdded)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("date_added");
+
+            entity.HasOne(d => d.Course).WithMany(p => p.FieldModerationFeedbacks)
+                  .HasForeignKey(d => d.CourseId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("course_field_moderation_feedbacks_course_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
