@@ -78,7 +78,7 @@ namespace CourseMarketplaceBE.Application.Services
             _notificationService = notificationService;
         }
 
-        public async Task StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
+        public async Task<bool> StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
         {
             // 1. Enforce all business validation checks, lockouts, and reset rejected statuses synchronously
             await UpdateCourseStatusAndClearCacheAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
@@ -95,6 +95,8 @@ namespace CourseMarketplaceBE.Application.Services
                     // Exceptions should be logged internally by the moderation service
                 }
             });
+
+            return true;
         }
 
         private async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)

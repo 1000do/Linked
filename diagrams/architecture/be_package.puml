@@ -1,0 +1,46 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Back - End" {
+    folder "Application" {
+        folder "DTOs"
+        folder "Exceptions" as AppExceptions
+        folder "IServices"
+        folder "Mappings"
+        folder "Services" as AppServices
+    }
+    
+    folder "Domain" {
+        folder "Constants"
+        folder "Entities"
+        folder "Enums"
+        folder "Exceptions" as DomainExceptions
+        folder "IRepositories"
+    }
+
+    folder "Infrastructure" {
+        folder "BackgroundServices"
+        folder "Data"
+        folder "Repositories"
+        folder "Services" as InfraServices
+    }
+
+    folder "Presentation" {
+        folder "Controllers"
+    }
+
+    folder "Share" {
+        folder "Helpers"
+    }
+}
+
+Presentation ..> Application : <<import>>
+Application ..> Domain : <<import>>
+Infrastructure ..> Domain : <<import>>
+Infrastructure ..> Application : <<import>>
+Presentation ..> Share : <<import>>
+Application ..> Share : <<import>>
+Infrastructure ..> Share : <<import>>
+@enduml

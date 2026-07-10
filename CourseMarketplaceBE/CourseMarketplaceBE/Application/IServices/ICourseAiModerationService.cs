@@ -15,6 +15,6 @@ namespace CourseMarketplaceBE.Application.IServices
         // Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId);
         // Task UpdateCourseStatusAndClearCacheAsync(int courseId, string status, int instructorId);
         Task<CourseModerationResult> HandleCourseModerationWithAIAsync(CourseModerationRequest request);
-        Task StartCourseModerationAsync(CourseModerationRequest request, int instructorId);
+        Task<bool> StartCourseModerationAsync(CourseModerationRequest request, int instructorId);
     }
 }
