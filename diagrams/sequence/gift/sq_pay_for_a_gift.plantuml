@@ -32,13 +32,13 @@ participant "GiftCheckoutPage" as view
 participant "MyCoursesPage" as my_courses_view
 participant "GiftController" as fe_gift_ctrl <<frontend controller>>
 participant "CheckoutController" as be_ctrl <<backend controller>>
-participant ":ICheckoutService" as sv
+participant ":IGiftCheckoutService" as sv
 participant ":CheckoutResponse" as res_dto
 participant ":OrderInfo" as order_ett
 participant ":OrderItem" as item_ett
 participant ":Transaction" as tx_ett
 participant ":IPaymentGatewayService" as stripe
-participant ":IOrderRepository" as order_repo
+participant ":ICheckoutRepository" as repo
 
 participant ":AppDbContext" as ctx
 database Database as db
@@ -99,94 +99,56 @@ alt Payment declined
     view -->> act: Display payment error message
 else Payment Successful
     view -> fe_gift_ctrl++: GET /Gift/CheckoutSuccess?payment_intent_id=...
-    fe_gift_ctrl -> be_ctrl++: GET /api/checkout/success-intent
+    fe_gift_ctrl -> be_ctrl++: GET /api/checkout/gift-success-intent
+    
     be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
-    
-    sv -> sv++: IsTransactionAlreadyProcessedAsync(paymentIntentId)
-    sv--
-    
-    sv -> stripe++: GetPaymentIntentMetadataAsync(paymentIntentId)
-    stripe -->> sv--: Return metadata
-    
-    sv -> sv++: ProcessSuccessfulPaymentCoreAsync
-    
-    sv -> order_repo++: BeginTransactionAsync()
-    order_repo -> ctx++: Database.BeginTransactionAsync()
-    ctx -> db++: Begin transaction
-    db -->> ctx--: Transaction started
-    ctx -->> order_repo--: Return IDbContextTransaction
-    order_repo -->> sv--: Return transaction
-    
-    sv -> order_ett++: Call OrderInfo(...)
-    order_ett -->> sv--: Return OrderInfo object
-    
-    sv -> order_repo++: AddOrderAsync(order)
-    order_repo -->> sv--: Return result
-    
-    sv -> order_repo++: SaveChangesAsync()
-    order_repo -> ctx++: SaveChangesAsync()
-    ctx -> db++: Save changes to database
-    db -->> ctx--: Return numberOfRowsAffected
-    ctx -->> order_repo--: Return numberOfRowsAffected
-    order_repo -->> sv--: Return numberOfRowsAffected
-    
-    loop for each course in courseIds
+        
+
+        sv -> stripe++: GetPaymentIntentMetadataAsync(paymentIntentId)
+        stripe -->> sv--: Return metadata
+        
+        sv -> sv++: Call ProcessSuccessfulGiftPaymentCoreAsync
+        
+
+        sv -> sv++: Call CreateGiftEntitiesAsync
+        
+        sv -> order_ett++: Call OrderInfo(...)
+        order_ett -->> sv--: Return OrderInfo object
+        
+
         sv -> item_ett++: Call OrderItem(...)
         item_ett -->> sv--: Return OrderItem object
-        
-        sv -> order_repo++: AddOrderItemAsync(orderItem)
-        order_repo -->> sv--: Return result
-        
-        sv -> order_repo++: SaveChangesAsync()
-        order_repo -> ctx++: SaveChangesAsync()
-        ctx -> db++: Save changes to database
-        db -->> ctx--: Return numberOfRowsAffected
-        ctx -->> order_repo--: Return numberOfRowsAffected
-        order_repo -->> sv--: Return numberOfRowsAffected
         
         sv -> tx_ett++: Call Transaction(...)
         tx_ett -->> sv--: Return Transaction object
         
-        sv -> order_repo++: AddTransactionAsync(transaction)
-        order_repo -->> sv--: Return result
+        sv -> sv++: Call AddEntitiesToContext(order, orderItem, transaction)
+        sv--
         
-        sv -> order_repo++: SaveChangesAsync()
-        order_repo -> ctx++: SaveChangesAsync()
+        sv -> repo++: SaveChangesAsync()
+        repo -> ctx++: SaveChangesAsync()
         ctx -> db++: Save changes to database
         db -->> ctx--: Return numberOfRowsAffected
-        ctx -->> order_repo--: Return numberOfRowsAffected
-        order_repo -->> sv--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
         
-        sv -> sv++: ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
         sv--
         
-        sv -> sv++: ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv -> sv++: Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
         sv--
-    end
+        
+        sv -> sv++: Call ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv--
+        
+
+        sv--
+        sv -->> be_ctrl--: Return result
     
-    sv -> order_repo++: SaveChangesAsync()
-    order_repo -> ctx++: SaveChangesAsync()
-    ctx -> db++: Save changes to database
-    db -->> ctx--: Return numberOfRowsAffected
-    ctx -->> order_repo--: Return numberOfRowsAffected
-    order_repo -->> sv--: Return numberOfRowsAffected
-    
-    sv -> sv++: Commit transaction
-    sv -> ctx++: transaction.CommitAsync()
-    ctx -> db++: Commit
-    db -->> ctx--: Return result
-    ctx -->> sv--: Return result
-    sv--
-    
-    sv--
-    sv -->> be_ctrl--: Return result
     be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
     
     fe_gift_ctrl -->> my_courses_view--: Redirect to My Courses page
     activate my_courses_view
-    my_courses_view -->> act: Display checkout success message
-    deactivate my_courses_view
-    deactivate view
+    my_courses_view -->> act--: Display checkout success message
 end
 
 @enduml

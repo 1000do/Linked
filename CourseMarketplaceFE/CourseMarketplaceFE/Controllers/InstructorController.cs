@@ -330,6 +330,7 @@ public class InstructorController : Controller
     // ═══════════════════════════════════════════════════════════════════
     [HttpGet]
     [Route("Instructor/ApplicationStatus")]
+
     public async Task<IActionResult> ApplicationStatus()
     {
         try

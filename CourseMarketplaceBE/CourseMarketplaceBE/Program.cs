@@ -206,6 +206,7 @@ public class Program
         builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
         builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
         builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
+        builder.Services.AddScoped<CourseMarketplaceBE.Application.IServices.IGiftCheckoutService, CourseMarketplaceBE.Application.Services.GiftCheckoutService>();
         builder.Services.AddScoped<IStripeConnectService, StripeConnectService>();
         builder.Services.AddScoped<IPaymentGatewayService, StripePaymentService>();
         // OCP: Đổi sang VNPay chỉ cần tạo VNPayPaymentService và đổi dòng trên.

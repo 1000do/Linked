@@ -1,87 +1,22 @@
 classDiagram
 direction LR
 
-%% ==================== FRONTEND - CONTROLLER ====================
+%% ==================== FRONTEND ====================
 
-class AdminFinanceControllerFE["AdminFinanceController"] {
+class TransactionControllerFE["TransactionController"] {
     <<frontend controller>>
-    + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
+    + History(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~IActionResult~
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
-
-class TransactionControllerBE["TransactionController"] {
-    <<backend controller>>
-    - _transactionService : ITransactionService
-    - _financeService : IAdminFinanceService
-    + GetTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
+class TransactionPagedVM {
+    + Items : List~TransactionListItemVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
 }
 
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class ITransactionService {
-    <<interface>>
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
-}
-
-class ITransactionRepository {
-    <<interface>>
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~Tuple~List~TransactionListDto~, int~~ *
-}
-
-%% ==================== BACKEND - SERVICE/REPO IMPLEMENTATIONS ====================
-
-class TransactionService {
-    - _repo : ITransactionRepository
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
-}
-
-class TransactionRepository {
-    - _context : AppDbContext
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~Tuple~List~TransactionListDto~, int~~
-}
-
-%% ==================== BACKEND - DB CONTEXT ====================
-
-class AppDbContext {
-    + Transactions : DbSet~Transaction~
-}
-
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Transaction {
-    <<entity>>
-    + TransactionId : int
-    + OrderItemId : int?
-    + AccountFrom : int?
-    + AccountTo : int?
-    + Amount : decimal
-    + TransferRate : decimal
-    + StripeSessionId : string?
-    + StripePaymentintentId : string?
-    + Currency : string?
-    + TransactionsStatus : string?
-    + TransactionType : string?
-    + TransactionCreatedAt : DateTime?
-}
-
-%% ==================== FRONTEND - VIEW MODELS ====================
-
-class AdminFinanceUnifiedVM {
-    <<view model>>
-    + Dashboard : FinanceDashboardVM
-    + Withdraw : WithdrawPageVM
-    + Transactions : TransactionPagedVM
-    + Payouts : PagedResult~PayoutDetailVM~
-    + Withdrawals : PagedResult~WithdrawalHistoryVM~
-    + PendingRefunds : PagedResult~RefundRequestVM~
-    + PayoutDays : string
-}
-
-%% ==================== BACKEND - DTOs ====================
-
-class TransactionListDto {
-    <<dto>>
+class TransactionListItemVM {
     + TransactionId : int
     + StripeSessionId : string?
     + Date : DateTime?
@@ -100,8 +35,18 @@ class TransactionListDto {
     + IsGiftClaimed : bool
 }
 
-class PagedResult~TransactionListDto~ {
-    <<dto>>
+%% ==================== BACKEND - CONTROLLER ====================
+
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    
+    + GetMyTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class PagedResultTransactionListDto["PagedResult~TransactionListDto~"] {
     + Items : IEnumerable~TransactionListDto~
     + TotalCount : int
     + Page : int
@@ -109,31 +54,105 @@ class PagedResult~TransactionListDto~ {
     + TotalPages : int
 }
 
-class ApiResponse {
-    <<dto>>
-    + Success : bool
-    + Data : T?
-    + Message : string?
+class TransactionListDto {
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Transaction {
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ITransactionService {
+    <<interface>>
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~PagedResult~TransactionListDto~~ *
+}
+
+class ITransactionRepository {
+    <<interface>>
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~Tuple~List~TransactionListDto~, int~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class TransactionService {
+    - _transactionRepository : ITransactionRepository
+    
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~PagedResult~TransactionListDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class TransactionRepository {
+    - _context : AppDbContext
+    
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~Tuple~List~TransactionListDto~, int~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Transactions : DbSet~Transaction~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === ASSOCIATION (solid arrow) ===
+%% === AGGREGATION ===
+TransactionPagedVM o-- TransactionListItemVM
+PagedResultTransactionListDto o-- TransactionListDto
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
 TransactionControllerBE --> ITransactionService
 TransactionService --> ITransactionRepository
 TransactionRepository --> AppDbContext
 
-%% === REALIZATION (hollow arrow) ===
+%% === INTERFACE REALIZATION ===
 TransactionService ..|> ITransactionService
 TransactionRepository ..|> ITransactionRepository
 
-%% === DEPENDENCY (dashed arrow) ===
-AdminFinanceControllerFE ..> TransactionControllerBE
-TransactionRepository ..> Transaction
+%% === DEPENDENCY ===
+TransactionControllerFE ..> TransactionPagedVM
+TransactionControllerFE ..> TransactionControllerBE
+TransactionControllerBE ..> PagedResultTransactionListDto
+ITransactionService ..> PagedResultTransactionListDto
+TransactionService ..> PagedResultTransactionListDto
+ITransactionRepository ..> TransactionListDto
 TransactionRepository ..> TransactionListDto
-AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
-TransactionService ..> PagedResult~TransactionListDto~
-TransactionControllerBE ..> ApiResponse
+TransactionRepository ..> Transaction
 
 %% ==================== STYLES ====================
 

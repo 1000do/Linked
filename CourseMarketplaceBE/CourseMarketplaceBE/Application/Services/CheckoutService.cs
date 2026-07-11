@@ -34,8 +34,6 @@ public class CheckoutService : ICheckoutService
     private readonly ICouponRepository _couponRepo;
     private readonly IUserRepository _userRepo;
     private readonly IAdminFinanceService _adminFinanceService;
-    private readonly IGiftRepository _giftRepo;
-    private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
 
     public CheckoutService(
@@ -49,8 +47,6 @@ public class CheckoutService : ICheckoutService
         ICourseRepository courseRepo,
         ICouponRepository couponRepo,
         IUserRepository userRepo,
-        IGiftRepository giftRepo,
-        IEmailService emailService,
         IConfiguration configuration)
     {
         _repo = repo;
@@ -63,8 +59,6 @@ public class CheckoutService : ICheckoutService
         _couponRepo = couponRepo;
         _userRepo = userRepo;
         _adminFinanceService = adminFinanceService;
-        _giftRepo = giftRepo;
-        _emailService = emailService;
         _configuration = configuration;
     }
 
@@ -203,82 +197,7 @@ public class CheckoutService : ICheckoutService
         };
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // BƯỚC 1.6: INITIATE GIFT CHECKOUT
-    // ═══════════════════════════════════════════════════════════════════════════
-    public async Task<CheckoutResponse> InitiateGiftCheckoutAsync(
-        int userId,
-        GiftCheckoutRequest request)
-    {
-        var course = await _courseRepo.GetCourseWithInstructorAsync(request.CourseId);
-        await ValidateCourseForGiftAsync(course, request.RecipientEmail, request.CourseId);
 
-        var stripeAccountId = await _userRepo.GetInstructorStripeAccountIdAsync(course!.InstructorId ?? 0);
-        if (string.IsNullOrEmpty(stripeAccountId))
-            throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
-
-        decimal purchasePrice = Math.Round(course.Price, 2);
-        var userEmail = await _userRepo.GetUserEmailAsync(userId);
-
-        var paymentLineItems = new List<PaymentLineItem>
-        {
-            new PaymentLineItem
-            {
-                CourseName = $"Gift: {course.Title}",
-                ThumbnailUrl = course.CourseThumbnailUrl,
-                UnitPrice = purchasePrice
-            }
-        };
-
-        var instructorCountry = await _userRepo.GetInstructorStripeCountryAsync(course.InstructorId ?? 0);
-        var sessionCurrency = GetCurrencyFromCountry(instructorCountry);
-
-        var orderReference = $"gift_{Guid.NewGuid().ToString("N")}";
-        var metadata = BuildGiftMetadata(userId, request, course.CourseId);
-
-        var paymentResult = await _paymentGateway.CreateCheckoutSessionAsync(
-            paymentLineItems,
-            request.SuccessUrl,
-            request.CancelUrl,
-            userEmail,
-            orderReference,
-            sessionCurrency,
-            null,
-            null,
-            metadata);
-
-        return new CheckoutResponse
-        {
-            SessionUrl = paymentResult.SessionUrl,
-            SessionId = paymentResult.SessionId
-        };
-    }
-
-    public async Task<CheckoutResponse> InitiateGiftPaymentIntentAsync(
-        int userId,
-        GiftCheckoutRequest request)
-    {
-        var course = await _courseRepo.GetCourseWithInstructorAsync(request.CourseId);
-        await ValidateCourseForGiftAsync(course, request.RecipientEmail, request.CourseId);
-
-        var stripeAccountId = await _userRepo.GetInstructorStripeAccountIdAsync(course!.InstructorId ?? 0);
-        if (string.IsNullOrEmpty(stripeAccountId))
-            throw new InvalidOperationException("Instructor has not connected a Stripe payment account.");
-
-        decimal purchasePrice = Math.Round(course.Price, 2);
-        var metadata = BuildGiftMetadata(userId, request, course.CourseId);
-
-        var paymentResult = await _paymentGateway.CreatePaymentIntentAsync(
-            purchasePrice,
-            "usd",
-            metadata);
-
-        return new CheckoutResponse
-        {
-            SessionUrl = paymentResult.ClientSecret,
-            SessionId = paymentResult.PaymentIntentId
-        };
-    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // BƯỚC 2: PROCESS PAYMENT SUCCESS
@@ -408,75 +327,9 @@ public class CheckoutService : ICheckoutService
         await using var dbTransaction = await _repo.BeginTransactionAsync();
         try
         {
-            var order = new OrderInfo
-            {
-                UserId = userId,
-                OrderDate = DateTime.Now,
-                OrderStatus = "paid",
-                PaymentMethod = checkoutType == "direct" ? "stripe_direct" : "stripe"
-            };
-            await _repo.AddOrderAsync(order);
-            await _repo.SaveChangesAsync();
+            var order = await CreateOrderAsync(userId, checkoutType);
 
-            foreach (var courseId in courseIds)
-            {
-                var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
-                if (course == null) continue;
-
-                if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
-                    throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
-
-                decimal originalPrice = course.Price;
-                bool isDiscounted = (coupon != null && course.CouponId == coupon.CouponId && originalPrice >= coupon.MinOrderValue);
-                decimal purchasePrice = CalculatePurchasePrice(originalPrice, isDiscounted ? coupon : null);
-
-                var orderItem = new OrderItem
-                {
-                    OrderId = order.OrderId,
-                    CourseId = courseId,
-                    PurchasePrice = purchasePrice,
-                    CouponUsed = isDiscounted,
-                    OriginalPrice = originalPrice,
-                    CouponCode = isDiscounted ? coupon?.CouponCode : null,
-                    CouponType = isDiscounted ? coupon?.CouponType : null,
-                    DiscountAmount = Math.Round(originalPrice - purchasePrice, 2)
-                };
-                await _repo.AddOrderItemAsync(orderItem);
-                await _repo.SaveChangesAsync();
-
-                if (isDiscounted && coupon != null)
-                {
-                    await _repo.IncrementCouponUsageAsync(coupon.CouponId);
-                }
-
-                var transaction = new Transaction
-                {
-                    OrderItemId = orderItem.Id,
-                    AccountFrom = userId,
-                    AccountTo = course.InstructorId,
-                    Amount = purchasePrice,
-                    TransferRate = currentTransferRate,
-                    StripeSessionId = sessionId,
-                    StripePaymentintentId = paymentIntentId,
-                    Currency = "usd",
-                    TransactionsStatus = "succeeded",
-                    TransactionType = "payment",
-                    TransactionCreatedAt = DateTime.Now
-                };
-                await _repo.AddTransactionAsync(transaction);
-                await _repo.SaveChangesAsync();
-
-                if (checkoutType == "gift")
-                {
-                    await ProcessGiftFulfillmentAsync(userId, orderItem.Id, course, metadata);
-                }
-                else
-                {
-                    await ProcessEnrollmentAsync(userId, courseId, course.Title);
-                }
-
-                await ProcessPayoutAndNotificationAsync(transaction, course.InstructorId, course.Title, purchasePrice, currentTransferRate);
-            }
+            await ProcessOrderItemsAndTransactionsAsync(order.OrderId, courseIds, coupon, currentTransferRate, userId, sessionId, paymentIntentId);
 
             if (checkoutType == "cart")
             {
@@ -497,6 +350,75 @@ public class CheckoutService : ICheckoutService
             Console.WriteLine(ex.StackTrace);
             await dbTransaction.RollbackAsync();
             throw;
+        }
+    }
+
+    private async Task<OrderInfo> CreateOrderAsync(int userId, string checkoutType)
+    {
+        var order = new OrderInfo
+        {
+            UserId = userId,
+            OrderDate = DateTime.Now,
+            OrderStatus = "paid",
+            PaymentMethod = checkoutType == "direct" ? "stripe_direct" : "stripe"
+        };
+        await _repo.AddOrderAsync(order);
+        await _repo.SaveChangesAsync();
+        return order;
+    }
+
+    private async Task ProcessOrderItemsAndTransactionsAsync(int orderId, List<int> courseIds, Coupon? coupon, decimal currentTransferRate, int userId, string sessionId, string? paymentIntentId)
+    {
+        foreach (var courseId in courseIds)
+        {
+            var course = await _courseRepo.GetCourseWithInstructorAsync(courseId);
+            if (course == null) continue;
+
+            if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
+                throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
+
+            decimal originalPrice = course.Price;
+            bool isDiscounted = (coupon != null && course.CouponId == coupon.CouponId && originalPrice >= coupon.MinOrderValue);
+            decimal purchasePrice = CalculatePurchasePrice(originalPrice, isDiscounted ? coupon : null);
+
+            var orderItem = new OrderItem
+            {
+                OrderId = orderId,
+                CourseId = courseId,
+                PurchasePrice = purchasePrice,
+                CouponUsed = isDiscounted,
+                OriginalPrice = originalPrice,
+                CouponCode = isDiscounted ? coupon?.CouponCode : null,
+                CouponType = isDiscounted ? coupon?.CouponType : null,
+                DiscountAmount = Math.Round(originalPrice - purchasePrice, 2)
+            };
+            await _repo.AddOrderItemAsync(orderItem);
+            await _repo.SaveChangesAsync();
+
+            if (isDiscounted && coupon != null)
+            {
+                await _repo.IncrementCouponUsageAsync(coupon.CouponId);
+            }
+
+            var transaction = new Transaction
+            {
+                OrderItemId = orderItem.Id,
+                AccountFrom = userId,
+                AccountTo = course.InstructorId,
+                Amount = purchasePrice,
+                TransferRate = currentTransferRate,
+                StripeSessionId = sessionId,
+                StripePaymentintentId = paymentIntentId,
+                Currency = "usd",
+                TransactionsStatus = "succeeded",
+                TransactionType = "payment",
+                TransactionCreatedAt = DateTime.Now
+            };
+            await _repo.AddTransactionAsync(transaction);
+            await _repo.SaveChangesAsync();
+
+            await ProcessEnrollmentAsync(userId, courseId, course.Title);
+            await ProcessPayoutAndNotificationAsync(transaction, course.InstructorId, course.Title, purchasePrice, currentTransferRate);
         }
     }
 
@@ -524,20 +446,7 @@ public class CheckoutService : ICheckoutService
         }
     }
 
-    private async Task ValidateCourseForGiftAsync(Course? course, string recipientEmail, int courseId)
-    {
-        if (course == null)
-            throw new InvalidOperationException("Course not found.");
 
-        if (course.CourseStatus != CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue())
-            throw new InvalidOperationException($"The course \"{course.Title}\" is not published and cannot be purchased.");
-
-        var recipientAccount = await _userRepo.GetAccountByEmailAsync(recipientEmail);
-        if (recipientAccount != null && await _courseRepo.IsEnrolledAsync(recipientAccount.AccountId, courseId))
-        {
-            throw new InvalidOperationException("The recipient has already owned/joined this course.");
-        }
-    }
 
     private async Task<List<Coupon>> GetValidCouponsForCartAsync(string? couponCode, IEnumerable<CartItem> cartItems)
     {
@@ -609,31 +518,7 @@ public class CheckoutService : ICheckoutService
         return Math.Round(Math.Max(originalPrice - discountAmount, 0m), 2);
     }
 
-    private Dictionary<string, string> BuildGiftMetadata(int userId, GiftCheckoutRequest request, int courseId)
-    {
-        var feBaseUrl = request.SuccessUrl;
-        int idx = feBaseUrl.IndexOf("/Gift/CheckoutSuccess", StringComparison.OrdinalIgnoreCase);
-        if (idx >= 0)
-        {
-            feBaseUrl = feBaseUrl.Substring(0, idx);
-        }
-        else
-        {
-            feBaseUrl = _configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208";
-        }
 
-        return new Dictionary<string, string>
-        {
-            { "userId", userId.ToString() },
-            { "checkoutType", "gift" },
-            { "courseIds", courseId.ToString() },
-            { "recipientEmail", request.RecipientEmail },
-            { "recipientName", request.RecipientName ?? "" },
-            { "giftMessage", request.GiftMessage ?? "" },
-            { "cardTheme", request.CardTheme },
-            { "feBaseUrl", feBaseUrl }
-        };
-    }
 
     private async Task<bool> IsTransactionAlreadyProcessedAsync(string stripeId)
     {
@@ -652,98 +537,7 @@ public class CheckoutService : ICheckoutService
         return false;
     }
 
-    private async Task ProcessGiftFulfillmentAsync(int userId, int orderItemId, Course course, Dictionary<string, string> metadata)
-    {
-        string recipientEmail = metadata.TryGetValue("recipientEmail", out var re) ? re : "";
-        string recipientName = metadata.TryGetValue("recipientName", out var rn) ? rn : null;
-        string giftMessage = metadata.TryGetValue("giftMessage", out var gm) ? gm : null;
-        string cardTheme = metadata.TryGetValue("cardTheme", out var theme) ? theme : "classic";
-        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : (_configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208");
 
-        var token = Guid.NewGuid().ToString("N");
-
-        var gift = new Gift
-        {
-            OrderItemId = orderItemId,
-            SenderId = userId,
-            RecipientEmail = recipientEmail,
-            RecipientName = recipientName,
-            GiftMessage = giftMessage,
-            CardTheme = cardTheme,
-            RedemptionToken = token,
-            IsClaimed = false,
-            DeliveryStatus = "sent",
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
-
-        await _giftRepo.AddAsync(gift);
-        await _giftRepo.SaveChangesAsync();
-
-        var claimLink = $"{feBaseUrl}/Gift/Claim?token={token}";
-        var senderName = "A Friend";
-        var senderAccount = await _userRepo.GetAccountByIdAsync(userId);
-        if (senderAccount != null)
-        {
-            senderName = senderAccount.User?.FullName ?? senderAccount.Username ?? senderAccount.Email ?? "A Friend";
-        }
-
-        var subject = $"🎁 You received a gift course from {senderName}!";
-        var body = $@"
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
-                <div style='background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 30px; text-align: center; color: white;'>
-                    <h1 style='margin: 0; font-size: 24px;'>A Special Gift For You!</h1>
-                </div>
-                <div style='padding: 30px;'>
-                    <p>Hi {(string.IsNullOrEmpty(recipientName) ? "" : recipientName)},</p>
-                    <p>Great news! <strong>{senderName}</strong> has sent you a course gift card on LinkedLearn:</p>
-                    <div style='background-color: #f8fafc; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; border-radius: 4px;'>
-                        <p style='margin: 0; font-weight: bold;'>Course:</p>
-                        <p style='margin: 5px 0 15px 0; font-size: 18px; color: #0f172a;'>{course.Title}</p>
-                        {(string.IsNullOrWhiteSpace(giftMessage) ? "" : $@"
-                        <p style='margin: 0; font-weight: bold;'>Personal Message:</p>
-                        <p style='margin: 5px 0 0 0; font-style: italic; color: #475569;'>""{giftMessage}""</p>")}
-                    </div>
-                    <p>Click the button below to claim your gift and start learning now:</p>
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{claimLink}' style='background-color: #059669; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);'>Claim Your Gift Course</a>
-                    </div>
-                    <p style='font-size: 12px; color: #64748b;'>If you cannot click the button, copy and paste this link into your browser:<br/><a href='{claimLink}'>{claimLink}</a></p>
-                </div>
-                <div style='background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;'>
-                    <p style='margin: 0;'>LinkedLearn Course Marketplace</p>
-                </div>
-            </div>";
-
-        try
-        {
-            await _emailService.SendEmailAsync(recipientEmail, subject, body);
-        }
-        catch (Exception emailEx)
-        {
-            _logger.LogError(emailEx, $"Failed to send gift email to {recipientEmail}");
-        }
-
-        try
-        {
-            var recipientAccount = await _userRepo.GetAccountByEmailAsync(recipientEmail);
-            if (recipientAccount != null)
-            {
-                var notiTitle = $"🎁 You received a gift course from {senderName}!";
-                var notiContent = $"{senderName} has sent you the course '{course.Title}'. Click here to claim your gift card.";
-                await _notificationService.SendNotificationAsync(
-                    recipientAccount.AccountId,
-                    notiTitle,
-                    notiContent,
-                    claimLink
-                );
-            }
-        }
-        catch (Exception notiEx)
-        {
-            _logger.LogError(notiEx, $"Failed to send in-app notification to {recipientEmail}");
-        }
-    }
 
     private async Task ProcessEnrollmentAsync(int userId, int courseId, string? title)
     {

@@ -320,72 +320,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await dbTransactionMock.Received(1).RollbackAsync();
         }
 
-        [Fact]
-        public async Task ProcessPaymentIntentSuccessAsync_GiftCheckout_ProcessesSuccessfully()
-        {
-            //Arrange 1
-            string piId = "pi_1";
-            var metadata = new Dictionary<string, string> { 
-                { "userId", "1" }, 
-                { "courseIds", "1" }, 
-                { "checkoutType", "gift" },
-                { "recipientEmail", "rec@test.com" }
-            };
-            var dbTransactionMock = Substitute.For<IDbContextTransaction>();
-            var course = new Course { Title = "Test", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), Price = 100m, InstructorId = 2 };
 
-            //Arrange 2
-            _repoMock.GetTransactionsBySessionIdAsync(piId).Returns(new List<Transaction>());
-            _paymentGatewayMock.GetPaymentIntentMetadataAsync(piId).Returns(metadata);
-            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
-            _courseRepoMock.GetCourseWithInstructorAsync(1).Returns(course);
-            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { AccountId = 1 });
-            _userRepoMock.GetAccountByEmailAsync("rec@test.com").Returns(new Account { AccountId = 4 });
-
-            //Act
-            await _sut.ProcessPaymentIntentSuccessAsync(piId);
-
-            //Assert
-            await _repoMock.Received(1).AddTransactionAsync(Arg.Is<Transaction>(t => t.StripeSessionId == piId && t.StripePaymentintentId == piId));
-            await _giftRepoMock.Received(1).AddAsync(Arg.Any<Gift>());
-            await dbTransactionMock.Received(1).CommitAsync();
-        }
-
-        [Fact]
-        public async Task ProcessPaymentIntentSuccessAsync_GiftCheckout_EmailAndNotiThrow_LogsErrorAndProcessesSuccessfully()
-        {
-            //Arrange 1
-            string piId = "pi_1";
-            var metadata = new Dictionary<string, string> { 
-                { "userId", "1" }, 
-                { "courseIds", "1" }, 
-                { "checkoutType", "gift" },
-                { "recipientEmail", "rec@test.com" }
-            };
-            var dbTransactionMock = Substitute.For<IDbContextTransaction>();
-            var course = new Course { Title = "Test", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), Price = 100m, InstructorId = 2 };
-
-            //Arrange 2
-            _repoMock.GetTransactionsBySessionIdAsync(piId).Returns(new List<Transaction>());
-            _paymentGatewayMock.GetPaymentIntentMetadataAsync(piId).Returns(metadata);
-            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
-            _courseRepoMock.GetCourseWithInstructorAsync(1).Returns(course);
-            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { AccountId = 1 });
-            _userRepoMock.GetAccountByEmailAsync("rec@test.com").Returns(new Account { AccountId = 4 });
-
-            _emailServiceMock.When(x => x.SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())).Throw(new Exception("Email Error"));
-            _notificationServiceMock.When(x => x.SendNotificationAsync(4, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())).Throw(new Exception("Noti Error"));
-
-            //Act
-            await _sut.ProcessPaymentIntentSuccessAsync(piId);
-
-            //Assert
-            await _repoMock.Received(1).AddTransactionAsync(Arg.Is<Transaction>(t => t.StripeSessionId == piId && t.StripePaymentintentId == piId));
-            await _giftRepoMock.Received(1).AddAsync(Arg.Any<Gift>());
-            await _emailServiceMock.Received(1).SendEmailAsync("rec@test.com", Arg.Any<string>(), Arg.Any<string>());
-            await _notificationServiceMock.Received(1).SendNotificationAsync(4, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-            await dbTransactionMock.Received(1).CommitAsync();
-        }
 
         [Fact]
         public async Task ProcessPaymentIntentSuccessAsync_CartCheckout_ProcessesSuccessfully()
