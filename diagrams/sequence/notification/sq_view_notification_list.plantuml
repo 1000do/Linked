@@ -30,22 +30,34 @@ mainframe View Notification List (User/Instructor)
 
 actor User as act
 participant "NotificationPage" as view
+participant "LoginPage" as login_view
 participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":INotificationService" as sv
-participant ":NotificationResponseDto" as notif_dto
 participant ":INotificationRepository" as repo
+participant ":NotificationResponseDto" as notif_dto
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Access "My Notifications" page
-view->fe_ctrl++: Send GET /Notification/Index
+view->fe_ctrl++: GET /Notification/Index
 
-fe_ctrl->be_ctrl++: Send GET /api/Notification (with Bearer Token)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-alt [Token is valid]
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++: GET /api/Notification
+    
     be_ctrl->sv++: Call GetNotificationsForUserAsync(userId, page, pageSize)
     sv->repo++: Call GetByReceiverIdAsync(userId, page, pageSize)
     repo->ctx++: Query notifications by receiverId
@@ -54,23 +66,19 @@ alt [Token is valid]
     ctx-->>repo--: Return notification list & count
     repo-->>sv--: Return notification list & count
     
-    alt [notifications exist]
+    alt notifications exist
         sv->notif_dto++: Call NotificationResponseDto()
         notif_dto-->>sv--: Return NotificationResponseDto list
-        sv-->>be_ctrl: Return PagedResult<NotificationResponseDto>
-        be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok)
-        fe_ctrl-->>view: Return View with notifications
-        view-->>act: Display notification list
-    else [no notifications found (throws KeyNotFoundException)]
+        sv-->>be_ctrl--: Return PagedResult<NotificationResponseDto>
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+        fe_ctrl-->>view--: Return View with notifications
+        view-->>act--: Display notification list
+    else no notifications found (throws KeyNotFoundException)
         sv-->>be_ctrl--: throw KeyNotFoundException
-        be_ctrl-->>fe_ctrl: Return statusCode 200 (Ok) with empty list
-        fe_ctrl-->>view: Return View with empty list
-        view-->>act: Display empty list message
+        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with empty list
+        fe_ctrl-->>view--: Return View with empty list
+        view-->>act--: Display empty list message
     end
-else [Token is missing or invalid]
-    be_ctrl-->>fe_ctrl--: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>error_page++: Redirect to ErrorPage
-    error_page-->>act--: Display empty list / redirect to Login
 end
 
 @enduml

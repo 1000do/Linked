@@ -30,6 +30,8 @@ mainframe Clear Chat History (Manager)
 
 actor Staff as act
 participant "ChatIndexPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant ":IChatService" as sv
@@ -46,10 +48,23 @@ view--
 alt [User cancels]
     view-->>act: Do nothing
 else [User confirms]
-    view->fe_ctrl++: Send DELETE /Chat/ClearHistory?chatId={chatId}
-    fe_ctrl->be_ctrl++: Send DELETE /api/Chat/{chatId}/clear (with Bearer Token)
+    view->fe_ctrl++: DELETE /Chat/ClearHistory?chatId={chatId}
     
-    be_ctrl->sv++: Call ClearChatHistoryAsync(chatId, accountId)
+    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+    fe_ctrl--
+    
+    alt Session Invalid
+        fe_ctrl -->> login_view: Redirect to LoginPage
+        activate login_view
+        login_view -->> act--: Display login form
+    else Unauthorized Access
+        fe_ctrl -->> error_page: Redirect to ErrorPage
+        activate error_page
+        error_page -->> act--: Display error message
+    else Valid actor's authentication and authorization
+        fe_ctrl->be_ctrl++: DELETE /api/Chat/{chatId}/clear
+        
+        be_ctrl->sv++: Call ClearChatHistoryAsync(chatId, accountId)
     
     sv->repo++: Call GetParticipantAsync(chatId, accountId)
     repo->ctx++: Call GetParticipantAsync(chatId, accountId)
@@ -74,7 +89,7 @@ else [User confirms]
         repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Save changes (Execute UPDATE statement)
         
-        alt [Database Save Fails (throws DbUpdateException)]
+        alt Database Save Failure
             db-->>ctx: Throw DbUpdateException
             ctx-->>repo: Throw DbUpdateException
             repo-->>sv: Throw DbUpdateException
@@ -82,7 +97,7 @@ else [User confirms]
             be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
             fe_ctrl-->>view: Return JSON error
             view-->>act: Display database error message
-        else [Database Save Succeeds]
+        else Database Save Success
             db-->>ctx--: Return result
             ctx-->>repo--: Return result
             repo-->>sv--: Return result
@@ -104,6 +119,7 @@ else [User confirms]
             view-->>act--: Display empty panel and success message
         end
     end
+end
 end
 
 @enduml
