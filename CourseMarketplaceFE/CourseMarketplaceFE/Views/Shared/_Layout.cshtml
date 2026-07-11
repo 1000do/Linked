@@ -130,73 +130,7 @@
             border-radius: 10px;
             border: 2px solid white;
         }
-        /* Avatar Frames System */
-        .avatar-container {
-            position: relative;
-            display: inline-block;
-            padding: 4px; /* Space for the frame */
-        }
-        
-        .avatar-frame {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            border-radius: inherit;
-            pointer-events: none;
-            z-index: 1;
-        }
 
-        /* Admin Frame: Golden Animated Glow */
-        .frame-admin {
-            border: 3px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                        linear-gradient(45deg, #f59e0b, #fbbf24, #d97706, #f59e0b) border-box;
-            background-size: 200% 200%;
-            animation: frame-rotate 3s linear infinite;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
-            border-radius: 2rem;
-        }
-
-        /* Staff Frame: Indigo Pulsing Glow */
-        .frame-staff {
-            border: 3px solid #6366f1;
-            animation: frame-pulse-indigo 2s ease-in-out infinite;
-            border-radius: 2rem;
-        }
-
-        /* Instructor Frame: Emerald Pulsing Glow */
-        .frame-instructor {
-            border: 3px solid #10b981;
-            animation: frame-pulse-emerald 2s ease-in-out infinite;
-            border-radius: 2rem;
-        }
-
-        /* Learner Frame: Static Teal Border */
-        .frame-learner {
-            border: 3px solid #2dd4bf;
-            border-radius: 2rem;
-            box-shadow: 0 2px 8px rgba(45, 212, 191, 0.2);
-        }
-
-        @@keyframes frame-rotate {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        @@keyframes frame-pulse-indigo {
-            0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
-        }
-
-        @@keyframes frame-pulse-emerald {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
     </style>
 
     <!-- GOOGLE LOGIN SCRIPT -->

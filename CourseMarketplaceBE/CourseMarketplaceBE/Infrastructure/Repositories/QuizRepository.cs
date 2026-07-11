@@ -86,6 +86,19 @@ public class QuizRepository : IQuizRepository
             .AnyAsync(a => a.QuizId == quizId && a.SubmittedAt == null);
     }
 
+    public async Task<bool> IsTitleUniqueAsync(string title, int instructorId, int? excludeQuizId = null)
+    {
+        var query = _context.Quizzes
+            .Where(q => q.InstructorId == instructorId && q.Title.ToLower() == title.ToLower() && !q.IsRemoved);
+            
+        if (excludeQuizId.HasValue)
+        {
+            query = query.Where(q => q.QuizId != excludeQuizId.Value);
+        }
+        
+        return !await query.AnyAsync();
+    }
+
     public async Task<bool> IsQuizInEnrolledCourseAsync(int quizId)
     {
         // Kiểm tra xem quiz này có đang nằm trong bất kỳ Course nào đã có học viên Enrollment không
@@ -168,5 +181,36 @@ public class QuizRepository : IQuizRepository
                 .ThenInclude(aq => aq.Question)
                     .ThenInclude(q => q!.QuizOptions)
             .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
+    }
+    public async Task<(List<QuizAttempt> Items, int TotalCount)> GetAttemptsByQuizAndUserAsync(int quizId, int userId, int page, int pageSize)
+    {
+        var query = _context.QuizAttempts
+            .Include(a => a.User)
+            .Where(a => a.QuizId == quizId && a.UserId == userId);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(a => a.StartedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+            
+        return (items, total);
+    }
+
+    public async Task<(List<QuizAttempt> Items, int TotalCount)> GetAttemptsByQuizAsync(int quizId, int page, int pageSize)
+    {
+        var query = _context.QuizAttempts
+            .Include(a => a.User)
+            .Where(a => a.QuizId == quizId);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(a => a.StartedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+            
+        return (items, total);
     }
 }

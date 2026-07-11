@@ -46,8 +46,8 @@ public class CourseRepository : ICourseRepository
         // 1. Filtering by search term
         if (!string.IsNullOrEmpty(search))
         {
-            var searchLower = search.ToLower();
-            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower));
+            queryable = queryable.Where(c => EF.Functions.ToTsVector("simple", c.Title)
+                .Matches(EF.Functions.WebSearchToTsQuery("simple", search)));
         }
 
         // 2. Filtering by status
@@ -140,9 +140,8 @@ public class CourseRepository : ICourseRepository
         // 1. Filtering by search term
         if (!string.IsNullOrEmpty(search))
         {
-            var searchLower = search.ToLower();
-            queryable = queryable.Where(c => c.Title.ToLower().Contains(searchLower) ||
-                                             (c.Description != null && c.Description.ToLower().Contains(searchLower)));
+            queryable = queryable.Where(c => EF.Functions.ToTsVector("simple", c.Title)
+                .Matches(EF.Functions.WebSearchToTsQuery("simple", search)));
         }
 
         // 2. Filtering by category
@@ -219,6 +218,7 @@ public class CourseRepository : ICourseRepository
     {
         return await _context.Courses
             .IgnoreQueryFilters()
+            .Include(c => c.FieldModerationFeedbacks)
             .Include(c => c.Category)
             .Include(c => c.Coupon)
             .Include(c => c.Instructor)
@@ -234,7 +234,9 @@ public class CourseRepository : ICourseRepository
 
     public async Task<Course?> GetByIdAsync(int courseId)
     {
-        return await _context.Courses.FindAsync(courseId);
+        return await _context.Courses
+            .Include(c => c.FieldModerationFeedbacks)
+            .FirstOrDefaultAsync(c => c.CourseId == courseId);
     }
 
     public async Task<bool> HasEnrollmentsAsync(int courseId)

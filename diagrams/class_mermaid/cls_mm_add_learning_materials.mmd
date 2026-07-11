@@ -1,0 +1,156 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class LessonControllerFE["LessonController"] {
+    <<frontend controller>>
+    + AddMaterial(id: int) Task~IActionResult~
+    + AddMaterial(model: AddMaterialViewModel) Task~IActionResult~
+}
+
+class AddMaterialViewModel {
+    <<view model>>
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + VideoUrl : string?
+    + Duration : int?
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class LessonControllerBE["LessonController"] {
+    <<backend controller>>
+    - _lessonService : ILessonService
+    
+    + AddMaterial(request: AddMaterialRequest) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class AddMaterialRequest {
+    <<dto>>
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + VideoUrl : string?
+    + Duration : int?
+    + File : IFormFile?
+}
+
+class LearningMaterialDto {
+    <<dto>>
+    + MaterialId : int
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + VideoUrl : string?
+    + Duration : int?
+    + IsRemoved : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class LearningMaterial {
+    <<entity>>
+    + MaterialId : int
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + VideoUrl : string?
+    + Duration : int?
+    + IsRemoved : bool
+    + Lesson : Lesson?
+    + LearnedMaterials : ICollection~LearnedMaterial~
+}
+
+class Lesson {
+    <<entity>>
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + LearningMaterials : ICollection~LearningMaterial~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ILessonService {
+    <<interface>>
+    + AddMaterialAsync(request: AddMaterialRequest, instructorId: int) Task~LearningMaterialDto~ *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Lesson?~ *
+    + AddMaterialAsync(material: LearningMaterial) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IFileUploadService {
+    <<interface>>
+    + UploadVideoAsync(file: IFormFile) Task~string?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class LessonService {
+    - _lessonRepo : ILessonRepository
+    - _uploadService : IFileUploadService
+    
+    + AddMaterialAsync(request: AddMaterialRequest, instructorId: int) Task~LearningMaterialDto~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class LessonRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Lesson?~
+    + AddMaterialAsync(material: LearningMaterial) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Lessons : DbSet~Lesson~
+    + LearningMaterials : DbSet~LearningMaterial~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Lesson *-- LearningMaterial
+
+%% === AGGREGATION (hollow diamond) ===
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+LessonControllerBE --> ILessonService
+LessonService --> ILessonRepository
+LessonService --> IFileUploadService
+LessonRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+LessonService ..|> ILessonService
+LessonRepository ..|> ILessonRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+LessonControllerFE ..> LessonControllerBE
+LessonControllerFE ..> AddMaterialViewModel
+LessonControllerBE ..> AddMaterialRequest
+LessonService ..> AddMaterialRequest
+LessonService ..> LearningMaterialDto
+LessonService ..> LearningMaterial
+LessonRepository ..> LearningMaterial
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

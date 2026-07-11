@@ -1,0 +1,83 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Purchased Course List
+
+actor User as act
+participant "MyCoursesPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "EnrollmentController" as be_ctrl <<backend controller>>
+participant ":EnrollmentService" as sv
+participant ":EnrolledCourseResponse" as res
+participant ":IEnrollmentRepository" as repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click "My Courses"
+view -> fe_ctrl++: GET /Course/MyCourses
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+
+    fe_ctrl -> be_ctrl++: GET /api/enrollment/my-courses
+    be_ctrl -> sv++: Call GetMyEnrolledCoursesAsync(userId)
+    
+    sv -> repo++: Call GetMyEnrolledCoursesAsync(userId)
+    repo -> ctx++: Execute query
+    ctx -> db++: Fetch enrolled courses
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return enrollments
+    repo -->> sv--: Return enrollments
+    
+    sv -> course_repo++: Call GetCourseStatsAsync(courseIds)
+    course_repo -->> sv--: Return stats
+    
+    sv -> sv++: Calculate progress for each course
+    sv--
+    
+    sv -> res++: Call EnrolledCourseResponse()
+    res -->> sv--: Return EnrolledCourseResponse objects
+    
+    sv -->> be_ctrl--: Return EnrolledCourseResponse objects
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view: Return View(EnrolledCourseViewModel)
+    view -->> act: Display enrolled courses list
+end

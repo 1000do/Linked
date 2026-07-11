@@ -1,0 +1,136 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Enroll Free Course
+
+actor User as act
+participant "CourseDetailPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "EnrollmentController" as be_ctrl <<backend controller>>
+participant ":EnrollmentService" as sv
+participant ":IAuthService" as auth_sv
+participant ":INotificationService" as notif_sv
+participant ":Enrollment" as ett
+participant ":IEnrollmentRepository" as repo
+participant ":ICourseRepository" as course_repo
+participant ":IUserRepository" as user_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click "Enroll for Free"
+view -> fe_ctrl++: POST /Course/EnrollFree/{courseId}
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: POST /api/enrollment/free-enroll/{courseId}
+    
+    be_ctrl -> auth_sv++: Call IsEmailVerifiedAsync(userId)
+    auth_sv -->> be_ctrl--: Return IsEmailVerified flag
+    
+    alt Email Not Verified
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display email verification required message
+    else Email Verified
+        be_ctrl -> sv++: Call EnrollFreeAsync(userId, courseId)
+        
+        sv -> course_repo++: Call GetByIdAsync(courseId)
+        course_repo -->> sv--: Return course entity
+        
+        alt Course Not Found, Not Published, Paid, or Owned By User
+            sv -->> be_ctrl: throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display enrollment error message
+        else Valid Course
+            sv -> course_repo++: Call IsEnrolledAsync(userId, courseId)
+            course_repo -->> sv--: Return IsEnrolled flag
+            
+            alt Already Enrolled
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display already enrolled message
+            else Not Enrolled
+                sv -> repo++: Call BeginTransactionAsync()
+                repo -->> sv--: Return transaction
+                
+                sv -> ett++: Call Enrollment()
+                ett -->> sv--: Return Enrollment entity
+                
+                sv -> repo++: Call AddEnrollmentAsync(enrollment)
+                repo -->> sv--: Return result
+                
+                sv -> repo++: Call SaveChangesAsync()
+                repo -> ctx++: Save changes to database
+                ctx -> db++: Insert Enrollment
+                
+                alt Database Save Failure
+                    db -->> ctx: throw DbUpdateException
+                    ctx -->> repo: throw DbUpdateException
+                    repo -->> sv: throw DbUpdateException
+                    sv -->> be_ctrl: throw DbUpdateException
+                    be_ctrl -->> fe_ctrl: Return statusCode 500
+                    fe_ctrl -->> view: Return JSON (success=false)
+                    view -->> act: Display server error message
+                else Database Save Success
+                    db -->> ctx--: Return returnCode
+                    ctx -->> repo--: Return numberOfRowsAffected
+                    repo -->> sv--: Return numberOfRowsAffected
+                    
+                    sv -> repo++: Call CommitAsync()
+                    repo -->> sv--: Return result
+                    
+                    opt course has Instructor
+                        sv -> user_repo++: Call GetUserByIdAsync(userId)
+                        user_repo -->> sv--: Return student entity
+                        sv -> notif_sv++: Call SendNotificationAsync(InstructorId, content)
+                        notif_sv -->> sv--: Return result
+                    end
+                    
+                    sv -->> be_ctrl--: Return result
+                    be_ctrl -->> fe_ctrl--: Return statusCode 200
+                    fe_ctrl -->> view--: Return JSON (success=true)
+                    view -->> act--: Display enrollment success message
+                end
+            end
+        end
+    end
+end

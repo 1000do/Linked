@@ -55,6 +55,8 @@ namespace CourseMarketplaceFE.Models
         public int PendingCoursesCount { get; set; }
         public int DraftCoursesCount { get; set; }
         public decimal TotalRevenue { get; set; }
+        public double EnrollmentGrowthPercentage { get; set; }
+        public int InstructorRankPercentage { get; set; }
         
         // Pagination & Search
         public int CurrentPage { get; set; }

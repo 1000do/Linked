@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,8 @@ namespace CourseMarketplaceFE.Controllers
         {
             _apiClient = apiClient;
         }
+
+        [Authorize(Roles = "user")]
 
         public async Task<IActionResult> MyCourses()
         {
@@ -46,6 +49,8 @@ namespace CourseMarketplaceFE.Controllers
         {
             public int CourseId { get; set; }
         }
+
+        [AllowAnonymous]
 
         public async Task<IActionResult> Index(string query, string category, string sort, string price, string rating, int page = 1)
         {
@@ -118,6 +123,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> SearchCoursesJson(string query)
         {
             var url = $"public/courses?query={Uri.EscapeDataString(query ?? "")}&page=1&pageSize=8";
@@ -159,6 +165,8 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false, data = new List<object>() });
         }
 
+        [AllowAnonymous]
+
         public async Task<IActionResult> Details(int id)
         {
             var response = await _apiClient.GetAsync($"public/courses/{id}");
@@ -189,6 +197,8 @@ namespace CourseMarketplaceFE.Controllers
             return NotFound();
         }
 
+        [Authorize(Roles = "user")]
+
         public async Task<IActionResult> Learn(int id)
         {
             var response = await _apiClient.GetAsync($"public/courses/{id}");
@@ -208,6 +218,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> EnrollFree(int id)
         {
             var response = await _apiClient.PostAsync($"enrollment/free-enroll/{id}");
@@ -224,6 +235,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> DownloadMaterial(string url, string fileName)
         {
             if (string.IsNullOrEmpty(url)) return BadRequest("URL is missing.");
@@ -255,6 +267,7 @@ namespace CourseMarketplaceFE.Controllers
             }
         }
         [HttpGet]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> GetProgress(int id)
         {
             var response = await _apiClient.GetAsync($"enrollment/progress/{id}");
@@ -268,6 +281,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> UpdateProgress([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("enrollment/progress", body);
@@ -279,6 +293,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetReviews(int id, int page = 1, int pageSize = 5, int? starFilter = null)
         {
             var url = $"review/course/{id}?page={page}&pageSize={pageSize}";
@@ -296,6 +311,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetLessonReviews(int id, int page = 1, int pageSize = 5)
         {
             var response = await _apiClient.GetAsync($"review/lesson/{id}?page={page}&pageSize={pageSize}");
@@ -310,6 +326,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Thống kê phân bổ sao (dynamic từ DB)</summary>
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetReviewStats(int id)
         {
             var response = await _apiClient.GetAsync($"review/stats/{id}");
@@ -324,6 +341,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Thống kê phân bổ sao của lesson (dynamic từ DB)</summary>
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetLessonReviewStats(int id)
         {
             var response = await _apiClient.GetAsync($"review/lesson-stats/{id}");
@@ -338,6 +356,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Kiểm tra quyền review của user cho khóa học</summary>
         [HttpGet]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> GetReviewEligibility(int id)
         {
             var response = await _apiClient.GetAsync($"review/eligibility/{id}");
@@ -352,6 +371,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Gửi review — source = detail | learn</summary>
         [HttpPost]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> SubmitReview([FromBody] JsonElement body, [FromQuery] string source = "learn")
         {
             var response = await _apiClient.PostJsonAsync($"review?source={source}", body);
@@ -372,6 +392,7 @@ namespace CourseMarketplaceFE.Controllers
             }
         }
         [HttpPost]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> ReportReview([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("review/report", body);
@@ -397,6 +418,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Avg rating cho tất cả lesson của 1 course (dùng cho sidebar Learn)</summary>
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetLessonRatings(int id)
         {
             var response = await _apiClient.GetAsync($"review/lesson-ratings/{id}");
@@ -411,6 +433,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Chỉnh sửa review (chỉ chủ review)</summary>
         [HttpPut]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> UpdateReview(int reviewId, string type, [FromBody] JsonElement body)
         {
             var response = await _apiClient.PutJsonAsync($"review/{reviewId}?type={type}", body);
@@ -430,6 +453,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Xóa mềm review (chỉ chủ review)</summary>
         [HttpDelete]
+        [Authorize(Roles = "user")]
         public async Task<IActionResult> DeleteReview(int reviewId, string type = "course")
         {
             var response = await _apiClient.DeleteAsync($"review/{reviewId}?type={type}");

@@ -1,0 +1,182 @@
+@model CourseMarketplaceFE.Models.QuizListViewModel
+@{
+    ViewData["Title"] = "Student Attempts History";
+    Layout = "~/Views/Shared/_InstructorLayout.cshtml";
+}
+
+<div class="px-8 py-6 max-w-7xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Student Attempts History</h1>
+            <p class="text-sm text-slate-500 mt-1">Review student performance across your quizzes.</p>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ViewBag.Error))
+    {
+        <div class="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-100 text-sm font-medium">
+            @ViewBag.Error
+        </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Quizzes List -->
+        <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[600px]">
+            <div class="p-4 border-b border-slate-100 bg-slate-50/50">
+                <h2 class="font-bold text-slate-800">Select a Quiz</h2>
+                <input type="text" id="quizSearchInput" placeholder="Filter quizzes..." class="mt-2 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary outline-none transition-all" oninput="filterQuizzes()">
+            </div>
+            <div class="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar" id="quizListContainer">
+                @if (Model.Quizzes != null && Model.Quizzes.Any())
+                {
+                    foreach (var quiz in Model.Quizzes)
+                    {
+                        <button type="button" class="quiz-item w-full text-left p-3 rounded-xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 focus:bg-emerald-50 focus:border-emerald-200 group" data-quiz-id="@quiz.QuizId" data-title="@quiz.Title" onclick="selectQuiz(@quiz.QuizId, '@Html.Raw(quiz.Title.Replace("'", "\\'"))')">
+                            <p class="font-bold text-slate-800 text-sm group-focus:text-emerald-800 line-clamp-1">@quiz.Title</p>
+                            <p class="text-xs text-slate-500 mt-1 line-clamp-1">@quiz.CourseTitle</p>
+                        </button>
+                    }
+                }
+                else
+                {
+                    <div class="p-4 text-center text-slate-500 text-sm">No quizzes found.</div>
+                }
+            </div>
+        </div>
+
+        <!-- Attempts History -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-[600px]">
+            <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-bold text-slate-800" id="selectedQuizTitle">Select a quiz to view attempts</h2>
+                <button type="button" id="btnRefresh" onclick="refreshAttempts()" class="hidden p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors" title="Refresh Attempts">
+                    <span class="material-symbols-outlined text-[20px]">refresh</span>
+                </button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-4 custom-scrollbar" id="studentAttemptsContainer">
+                <div class="h-full flex flex-col items-center justify-center text-slate-400">
+                    <span class="material-symbols-outlined text-4xl mb-2 opacity-50">history</span>
+                    <p class="text-sm">Attempts will appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentQuizId = null;
+
+        function filterQuizzes() {
+            const query = document.getElementById('quizSearchInput').value.toLowerCase();
+            const items = document.querySelectorAll('.quiz-item');
+            items.forEach(item => {
+                const title = item.getAttribute('data-title').toLowerCase();
+                if (title.includes(query)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function selectQuiz(quizId, title) {
+            currentQuizId = quizId;
+            document.getElementById('selectedQuizTitle').textContent = `Attempts for: ${title}`;
+            document.getElementById('btnRefresh').classList.remove('hidden');
+            
+            // Update active state in list
+            document.querySelectorAll('.quiz-item').forEach(item => {
+                if (item.getAttribute('data-quiz-id') == quizId) {
+                    item.classList.add('bg-emerald-50', 'border-emerald-200');
+                    item.classList.remove('border-transparent');
+                } else {
+                    item.classList.remove('bg-emerald-50', 'border-emerald-200');
+                    item.classList.add('border-transparent');
+                }
+            });
+
+            loadStudentAttempts(1);
+        }
+
+        function refreshAttempts() {
+            if (currentQuizId) {
+                loadStudentAttempts(1);
+            }
+        }
+
+        async function loadStudentAttempts(page = 1) {
+            if (!currentQuizId) return;
+
+            const container = document.getElementById('studentAttemptsContainer');
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center text-slate-400">
+                    <span class="material-symbols-outlined animate-spin text-3xl mb-2">refresh</span>
+                    <p class="text-sm">Loading attempts...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/Quiz/StudentAttempts/${currentQuizId}?page=${page}&pageSize=8`);
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.items) {
+                    if (result.data.items.length === 0) {
+                        container.innerHTML = `
+                            <div class="h-full flex flex-col items-center justify-center text-slate-400">
+                                <span class="material-symbols-outlined text-4xl mb-2 opacity-50">inbox</span>
+                                <p class="text-sm">No attempts found for this quiz.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    let html = '<div class="space-y-3">';
+                    result.data.items.forEach(a => {
+                        const dateStr = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : 'In Progress';
+                        const statusColor = a.isPassed ? 'emerald' : 'rose';
+                        const statusIcon = a.isPassed ? 'check_circle' : 'cancel';
+                        const statusText = a.isPassed ? 'Passed' : 'Failed';
+                        
+                        html += `
+                            <div class="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-xl hover:border-slate-300 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-full bg-${statusColor}-100 text-${statusColor}-600 flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined">${statusIcon}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">${a.userFullName}</p>
+                                        <p class="text-xs text-slate-500">${dateStr}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-6">
+                                    <div class="text-right">
+                                        <p class="font-black text-slate-900">${a.score}%</p>
+                                        ${a.submittedAt ? `<p class="text-xs font-bold text-${statusColor}-600 uppercase tracking-wider">${statusText}</p>` : '<p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Pending</p>'}
+                                    </div>
+                                    <button class="text-primary hover:text-primary/80 font-bold text-sm bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded transition-colors" onclick="window.open('/QuizAttempt/Review/${a.attemptId}', '_blank')">View Details</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+
+                    // Pagination controls
+                    if (result.data.totalPages > 1) {
+                        html += `<div class="flex justify-center items-center gap-2 mt-6 pt-4 border-t border-slate-100">`;
+                        for (let i = 1; i <= result.data.totalPages; i++) {
+                            html += `<button onclick="loadStudentAttempts(${i})" class="w-8 h-8 rounded-lg text-sm font-bold transition-colors flex items-center justify-center ${i === result.data.currentPage ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${i}</button>`;
+                        }
+                        html += `</div>`;
+                    }
+                    
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="p-6 text-center text-red-500">Failed to load attempts.</div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="p-6 text-center text-red-500">Error fetching attempts.</div>';
+            }
+        }
+    </script>
+}

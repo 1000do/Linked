@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Threading.Tasks;
 using CourseMarketplaceFE.Helpers;
@@ -35,6 +36,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── REMOVE FROM COURSE (AJAX) ───────────────────────────────────
         [HttpDelete("CourseQuiz/Remove")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Remove(int courseId, int quizId)
         {
             try
@@ -63,6 +65,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost("CourseQuiz/Add")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Add([FromBody] CourseQuizAddRequest req)
         {
             try
@@ -83,6 +86,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── TOGGLE VISIBILITY (AJAX) ───────────────────────────────────
         [HttpPatch("CourseQuiz/Hide")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Hide(int courseId, int quizId, bool hide)
         {
             try
@@ -104,6 +108,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── GET AVAILABLE QUIZZES (AJAX) ───────────────────────────────────
         [HttpGet("CourseQuiz/Available/{courseId}")]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> GetAvailableQuizzes(int courseId)
         {
             try
@@ -120,6 +125,14 @@ namespace CourseMarketplaceFE.Controllers
                     var list = new System.Collections.Generic.List<object>();
                     foreach (var item in items)
                     {
+                        if (item.TryGetProperty("courseId", out var cIdProp))
+                        {
+                            if (cIdProp.GetInt32() != courseId)
+                            {
+                                continue;
+                            }
+                        }
+
                         list.Add(new {
                             quizId = item.GetProperty("quizId").GetInt32(),
                             title = item.GetProperty("title").GetString(),

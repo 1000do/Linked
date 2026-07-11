@@ -95,6 +95,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── LIST COURSES ─────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Index(string? searchTerm, string? status, int page = 1)
         {
             var viewModel = new InstructorStudioViewModel
@@ -120,6 +121,8 @@ namespace CourseMarketplaceFE.Controllers
                     viewModel.PendingCoursesCount = statsData.TryGetProperty("pendingCoursesCount", out var pProp) ? pProp.GetInt32() : 0;
                     viewModel.DraftCoursesCount = statsData.TryGetProperty("draftCoursesCount", out var dProp) ? dProp.GetInt32() : 0;
                     viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
+                    viewModel.EnrollmentGrowthPercentage = statsData.TryGetProperty("enrollmentGrowthPercentage", out var egProp) ? egProp.GetDouble() : 0.0;
+                    viewModel.InstructorRankPercentage = statsData.TryGetProperty("instructorRankPercentage", out var irProp) ? irProp.GetInt32() : 100;
                 }
 
                 // 2. Fetch Courses from the new paged, database-driven endpoint!
@@ -209,6 +212,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── CREATE (GET) ─────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Create()
         {
             // Kiểm tra Stripe status & Transfer Rate
@@ -224,6 +228,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── CREATE (POST) ────────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Create(CreateCourseViewModel model)
         {
             if (!ModelState.IsValid)
@@ -241,7 +246,7 @@ namespace CourseMarketplaceFE.Controllers
                     var errorMsg = string.Join("<br/>", errors);
                     return Json(new { success = false, message = errorMsg });
                 }
-                    
+
                 await LoadStripeStatusAsync();
                 await LoadTransferRateAsync();
                 model.AvailableCategories = await GetCategoriesAsync();
@@ -312,6 +317,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── EDITOR ──────────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Editor(int id)
         {
             ViewBag.CourseId = id;
@@ -350,6 +356,12 @@ namespace CourseMarketplaceFE.Controllers
                         ViewBag.Price = data.TryGetProperty("price", out var p) ? p.GetDecimal() : 0;
                         ViewBag.ThumbnailUrl = data.TryGetProperty("courseThumbnailUrl", out var t) ? t.GetString() : "";
                         ViewBag.ModerationFeedback = data.TryGetProperty("moderationFeedback", out var mf) ? mf.GetString() : "";
+                        
+                        if (data.TryGetProperty("fieldFeedbacks", out var ff) && ff.ValueKind == JsonValueKind.Array)
+                        {
+                            var feedbacks = JsonSerializer.Deserialize<List<CourseFieldFeedbackViewModel>>(ff.GetRawText(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                            ViewBag.FieldFeedbacks = feedbacks;
+                        }
 
                         // Applied Coupon
                         ViewBag.CouponCode = data.TryGetProperty("appliedCouponCode", out var ccode) && ccode.ValueKind != JsonValueKind.Null ? ccode.GetString() : null;
@@ -405,6 +417,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── DELETE COURSE (AJAX) ─────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Delete(int id)
         {
             try
@@ -424,6 +437,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD LESSON (AJAX) ────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AddLesson([FromForm] int courseId, [FromForm] string title)
         {
             try
@@ -452,6 +466,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── REMOVE LESSON (AJAX) ────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> RemoveLesson([FromForm] int lessonId)
         {
             try
@@ -469,6 +484,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── ADD MATERIAL (AJAX) ──────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> AddMaterial([FromForm] AddMaterialViewModel model)
         {
             if (!ModelState.IsValid)
@@ -485,7 +501,7 @@ namespace CourseMarketplaceFE.Controllers
                     formData.Add(new StringContent(model.Description), "Description");
                 if (!string.IsNullOrEmpty(model.MaterialUrl))
                     formData.Add(new StringContent(model.MaterialUrl), "MaterialUrl");
-                
+
                 formData.Add(new StringContent(model.Type), "MaterialMetadata.FileType");
                 if (model.Duration.HasValue) formData.Add(new StringContent(model.Duration.Value.ToString()), "MaterialMetadata.Duration");
                 if (model.FileSize.HasValue) formData.Add(new StringContent(model.FileSize.Value.ToString()), "MaterialMetadata.FileSize");
@@ -511,6 +527,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── REMOVE MATERIAL (soft-delete, AJAX) ─────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> RemoveMaterial([FromForm] int materialId)
         {
             try
@@ -528,7 +545,33 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
+        [HttpGet]
+        [Authorize(Roles = "instructor,staff,admin")]
+        public async Task<IActionResult> GetCourseStatus(int id)
+        {
+            try
+            {
+                var resp = await _api.GetAsync($"courses/{id}");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("data", out var data))
+                    {
+                        var status = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : "Draft";
+                        return Json(new { success = true, status = status });
+                    }
+                }
+                return Json(new { success = false, message = "Could not fetch course status." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpPost]
+        [Authorize(Roles = "instructor,staff,admin")]
         public async Task<IActionResult> UpdateCourseStatus([FromForm] int courseId, [FromForm] string status)
         {
             try
@@ -596,7 +639,7 @@ namespace CourseMarketplaceFE.Controllers
         // }
 
         [HttpPost]
-        [Authorize(Roles = "instructor")]
+        [Authorize(Roles = "instructor,staff,admin")]
         public async Task<IActionResult> ModerateCourse([FromForm] int courseId)
         {
 
@@ -610,6 +653,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── UPDATE COURSE DETAILS (AJAX) ─────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateDetails([FromForm] UpdateCourseDetailsViewModel model)
         {
             if (!ModelState.IsValid)
@@ -656,7 +700,7 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         // Fallback to raw error response if not valid JSON
                     }
-                   
+
                     return Json(new { success = false, message = cleanMessage });
                 }
             }
@@ -667,6 +711,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── CHECK STRIPE STATUS (AJAX) ───────────────────────────────────
         [HttpGet]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> CheckStripeStatus()
         {
             try
@@ -737,6 +782,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── TRASH VIEW ──────────────────────────────────────────────────
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> Trash()
         {
             try
@@ -761,6 +807,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── PERMANENT DELETE MATERIAL (AJAX) ────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> PermanentDeleteMaterial(int materialId)
         {
             try
@@ -778,6 +825,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── RESTORE MATERIAL (AJAX) ─────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> RestoreMaterial(int materialId)
         {
             try
@@ -795,6 +843,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateLessonTitle(int lessonId, [FromBody] object requestBody)
         {
             try
@@ -814,6 +863,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateLessonDescription(int lessonId, [FromBody] object requestBody)
         {
             try
@@ -833,6 +883,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "instructor")]
         public async Task<IActionResult> UpdateMaterialDetails(int materialId, [FromBody] object requestBody)
         {
             try

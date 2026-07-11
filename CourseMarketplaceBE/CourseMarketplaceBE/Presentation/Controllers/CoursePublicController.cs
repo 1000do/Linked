@@ -10,7 +10,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/public/courses")]
-[AllowAnonymous]
 public class CoursePublicController : ControllerBase
 {
     private readonly ICourseQueryService _courseQueryService;
@@ -27,6 +26,7 @@ public class CoursePublicController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAllCourses(
         [FromQuery] string? query = null,
         [FromQuery] string? category = null,
@@ -49,6 +49,7 @@ public class CoursePublicController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCourseDetails(int id)
     {
         try
@@ -72,6 +73,7 @@ public class CoursePublicController : ControllerBase
         }
     }
     [HttpGet("categories")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetCategories()
     {
         try

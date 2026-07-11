@@ -11,8 +11,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
-//[Authorize(Roles = "instructor")]
 public class QuestionBankController : ControllerBase
 {
     private readonly IQuestionBankService _questionBankService;
@@ -71,6 +69,7 @@ public class QuestionBankController : ControllerBase
     }
 
     [HttpDelete("questions/{questionId}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> DeleteQuestion(int questionId)
     {
         try

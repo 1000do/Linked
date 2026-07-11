@@ -1,0 +1,171 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class LessonControllerFE["LessonController"] {
+    <<frontend controller>>
+    + Create(courseId: int) Task~IActionResult~
+    + Create(model: CreateLessonViewModel) Task~IActionResult~
+}
+
+class CreateLessonViewModel {
+    <<view model>>
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class LessonControllerBE["LessonController"] {
+    <<backend controller>>
+    - _lessonService : ILessonService
+    
+    + CreateLesson(request: CreateLessonRequest) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CreateLessonRequest {
+    <<dto>>
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+}
+
+class LessonDto {
+    <<dto>>
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Lesson {
+    <<entity>>
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + Course : Course?
+    + LearningMaterials : ICollection~LearningMaterial~
+    + Quizzes : ICollection~Quiz~
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ILessonService {
+    <<interface>>
+    + CreateLessonAsync(request: CreateLessonRequest, instructorId: int) Task~LessonDto~ *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + AddAsync(lesson: Lesson) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class LessonService {
+    - _lessonRepo : ILessonRepository
+    - _courseRepo : ICourseRepository
+    
+    + CreateLessonAsync(request: CreateLessonRequest, instructorId: int) Task~LessonDto~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class LessonRepository {
+    - _context : AppDbContext
+    
+    + AddAsync(lesson: Lesson) void
+    + SaveChangesAsync() Task~int~
+}
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Course?~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Lessons : DbSet~Lesson~
+    + Courses : DbSet~Course~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Course *-- Lesson
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+LessonControllerBE --> ILessonService
+LessonService --> ILessonRepository
+LessonService --> ICourseRepository
+LessonRepository --> AppDbContext
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+LessonService ..|> ILessonService
+LessonRepository ..|> ILessonRepository
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+LessonControllerFE ..> LessonControllerBE
+LessonControllerFE ..> CreateLessonViewModel
+LessonControllerBE ..> CreateLessonRequest
+LessonService ..> CreateLessonRequest
+LessonService ..> LessonDto
+LessonService ..> Lesson
+LessonRepository ..> Lesson
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

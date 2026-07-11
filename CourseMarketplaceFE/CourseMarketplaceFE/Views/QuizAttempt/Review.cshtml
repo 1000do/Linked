@@ -1,0 +1,171 @@
+@{
+    ViewData["Title"] = "Attempt Review";
+    Layout = "_Layout";
+}
+
+<style>
+    body { background-color: #f8fafc; }
+</style>
+
+@if (!string.IsNullOrEmpty(ViewBag.Error))
+{
+    <div class="p-8 max-w-4xl mx-auto mt-10 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 text-rose-500 mb-4">
+            <span class="material-symbols-outlined text-3xl">error</span>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-2">Error Loading Review</h2>
+        <p class="text-slate-600">@ViewBag.Error</p>
+        <button onclick="window.close()" class="mt-6 px-6 py-2.5 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-700 transition-colors">Close Window</button>
+    </div>
+}
+else
+{
+    <div id="review-app" class="max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-8" style="display: none;">
+        <!-- Header -->
+        <div class="bg-white rounded-3xl p-8 shadow-sm border border-slate-200">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 tracking-tight" id="quizTitle">Quiz Title</h1>
+                    <p class="text-slate-500 font-medium mt-2 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">calendar_today</span>
+                        Submitted on: <span id="submittedAt"></span>
+                    </p>
+                </div>
+                
+                <div class="flex items-center gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div class="text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Score</p>
+                        <p class="text-3xl font-black text-slate-800" id="scoreDisplay">0%</p>
+                    </div>
+                    <div class="w-px h-12 bg-slate-200"></div>
+                    <div class="text-center">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Result</p>
+                        <div id="resultBadge" class="px-4 py-1.5 rounded-full font-bold text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Questions List -->
+        <div class="space-y-6" id="questionsContainer"></div>
+    </div>
+
+    @section Scripts {
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const dataJson = @Html.Raw(ViewBag.AttemptDataJson ?? "null");
+                
+                if (!dataJson) {
+                    alert('No attempt data found.');
+                    return;
+                }
+
+                document.getElementById('review-app').style.display = 'block';
+
+                // Populate Header
+                document.getElementById('quizTitle').textContent = dataJson.quizTitle || 'Quiz Review';
+                const dateObj = new Date(dataJson.submittedAt);
+                document.getElementById('submittedAt').textContent = dataJson.submittedAt ? dateObj.toLocaleString() : 'In Progress';
+                document.getElementById('scoreDisplay').textContent = `${dataJson.score}%`;
+                
+                const badge = document.getElementById('resultBadge');
+                if (dataJson.isPassed) {
+                    badge.textContent = 'PASSED';
+                    badge.classList.add('bg-emerald-100', 'text-emerald-700');
+                } else {
+                    badge.textContent = 'FAILED';
+                    badge.classList.add('bg-rose-100', 'text-rose-700');
+                }
+
+                // Render Questions
+                const container = document.getElementById('questionsContainer');
+                let html = '';
+
+                if (dataJson.questions && dataJson.questions.length > 0) {
+                    dataJson.questions.forEach((q, index) => {
+                        const isQCorrect = q.isCorrect;
+                        const headerColor = isQCorrect ? 'text-emerald-600' : 'text-rose-600';
+                        const headerIcon = isQCorrect ? 'check_circle' : 'cancel';
+                        const headerBg = isQCorrect ? 'bg-emerald-50' : 'bg-rose-50';
+
+                        html += `
+                            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="p-4 ${headerBg} border-b border-slate-100 flex items-center justify-between">
+                                    <h3 class="font-bold text-slate-800">Question ${index + 1}</h3>
+                                    <div class="flex items-center gap-2 ${headerColor} font-bold text-sm">
+                                        <span class="material-symbols-outlined">${headerIcon}</span>
+                                        ${isQCorrect ? 'Correct' : 'Incorrect'}
+                                    </div>
+                                </div>
+                                
+                                <div class="p-6">
+                                    <p class="text-lg font-medium text-slate-800 mb-6 leading-relaxed">${q.questionText}</p>
+                                    
+                                    <div class="space-y-3">
+                        `;
+
+                        if (q.options) {
+                            q.options.forEach(opt => {
+                                const isSelected = q.selectedOptionId === opt.optionId;
+                                const isActualCorrect = opt.isCorrect;
+                                
+                                let optClass = 'border-slate-200 bg-white text-slate-700';
+                                let optIcon = 'radio_button_unchecked';
+                                let optIconColor = 'text-slate-400';
+
+                                if (isSelected && isActualCorrect) {
+                                    optClass = 'border-emerald-500 bg-emerald-50 text-emerald-800 font-medium';
+                                    optIcon = 'check_circle';
+                                    optIconColor = 'text-emerald-500';
+                                } else if (isSelected && !isActualCorrect) {
+                                    optClass = 'border-rose-500 bg-rose-50 text-rose-800 font-medium';
+                                    optIcon = 'cancel';
+                                    optIconColor = 'text-rose-500';
+                                } else if (!isSelected && isActualCorrect) {
+                                    optClass = 'border-emerald-300 bg-emerald-50/50 text-emerald-700 border-dashed';
+                                    optIcon = 'check_circle';
+                                    optIconColor = 'text-emerald-400';
+                                }
+
+                                html += `
+                                    <div class="flex items-center gap-4 p-4 rounded-xl border-2 transition-colors ${optClass}">
+                                        <span class="material-symbols-outlined ${optIconColor}">${optIcon}</span>
+                                        <span class="flex-1">${opt.optionText}</span>
+                                        ${isSelected ? '<span class="text-xs font-bold uppercase tracking-wider opacity-60 ml-4">Selected</span>' : ''}
+                                        ${(!isSelected && isActualCorrect) ? '<span class="text-xs font-bold uppercase tracking-wider text-emerald-600 opacity-80 ml-4">Correct Answer</span>' : ''}
+                                    </div>
+                                `;
+                            });
+                        }
+
+                        html += `
+                                    </div>
+                        `;
+
+                        // Explanation
+                        if (q.explanation) {
+                            html += `
+                                    <div class="mt-6 p-4 bg-blue-50/50 border border-blue-100 rounded-xl flex gap-4">
+                                        <span class="material-symbols-outlined text-blue-500 shrink-0">lightbulb</span>
+                                        <div>
+                                            <p class="text-sm font-bold text-blue-900 mb-1">Explanation</p>
+                                            <p class="text-sm text-blue-800 leading-relaxed">${q.explanation}</p>
+                                        </div>
+                                    </div>
+                            `;
+                        }
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html = '<div class="text-center p-10 text-slate-500 bg-white rounded-3xl border border-slate-200">No questions found in this attempt.</div>';
+                }
+
+                container.innerHTML = html;
+            });
+        </script>
+    }
+}

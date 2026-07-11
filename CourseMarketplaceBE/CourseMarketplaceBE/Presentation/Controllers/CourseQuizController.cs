@@ -11,7 +11,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 /// <summary>Instructor gán và quản lý quiz trong một course cụ thể.</summary>
 [ApiController]
 [Route("api/courses/{courseId:int}/quizzes")]
-[Authorize]
 public class CourseQuizController : ControllerBase
 {
     private readonly IQuizService _quizService;
@@ -32,6 +31,7 @@ public class CourseQuizController : ControllerBase
     // ── GET api/courses/{courseId}/quizzes ────────────────────────────────────
 
     [HttpGet]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetCourseQuizzes(int courseId)
     {
         try
@@ -47,6 +47,7 @@ public class CourseQuizController : ControllerBase
     // ── POST api/courses/{courseId}/quizzes ───────────────────────────────────
 
     [HttpPost]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> AddQuizToCourse(int courseId, [FromBody] AddQuizToCourseRequest request)
     {
         try
@@ -66,6 +67,7 @@ public class CourseQuizController : ControllerBase
     // ── DELETE api/courses/{courseId}/quizzes/{quizId} ────────────────────────
 
     [HttpDelete("{quizId:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> RemoveQuizFromCourse(int courseId, int quizId)
     {
         try
@@ -83,6 +85,7 @@ public class CourseQuizController : ControllerBase
     // ── PATCH api/courses/{courseId}/quizzes/{quizId}/hide ────────────────────
 
     [HttpPatch("{quizId:int}/hide")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SetCourseQuizHidden(int courseId, int quizId, [FromQuery] bool hide)
     {
         try

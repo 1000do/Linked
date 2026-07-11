@@ -1,0 +1,112 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class ReviewControllerFE["ReviewController"] {
+    <<frontend controller>>
+    + GetCourseReviews(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ReviewControllerBE["ReviewController"] {
+    <<backend controller>>
+    - _reviewService : IReviewService
+    
+    + GetCourseReviews(courseId: int, page: int, pageSize: int, starFilter: int?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class PagedResultReviewResponse["PagedResult~ReviewResponse~"] {
+    <<dto>>
+    + Items : List~ReviewResponse~
+    + TotalCount : int
+}
+
+class ReviewResponse {
+    <<dto>>
+    + ReviewId : int
+    + UserId : int
+    + UserName : string?
+    + UserAvatarUrl : string?
+    + Rating : int
+    + Content : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + IsInstructor : bool
+    + IsOwner : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReview {
+    <<entity>>
+    + ReviewId : int
+    + UserId : int
+    + CourseId : int
+    + Rating : int
+    + Content : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IReviewService {
+    <<interface>>
+    + GetCourseReviewsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~PagedResult~ReviewResponse~~ *
+}
+
+class IReviewRepository {
+    <<interface>>
+    + GetCourseReviewsWithDetailsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~Tuple~List~CourseReview~, int~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReviewService {
+    - _reviewRepo : IReviewRepository
+    
+    + GetCourseReviewsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~PagedResult~ReviewResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReviewRepository {
+    - _context : AppDbContext
+    
+    + GetCourseReviewsWithDetailsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~Tuple~List~CourseReview~, int~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseReviews : DbSet~CourseReview~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION & COMPOSITION ===
+PagedResultReviewResponse *-- ReviewResponse
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ReviewControllerBE --> IReviewService
+ReviewService --> IReviewRepository
+ReviewRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ReviewService ..|> IReviewService
+ReviewRepository ..|> IReviewRepository
+
+%% === DEPENDENCY ===
+ReviewControllerFE ..> ReviewControllerBE
+ReviewControllerBE ..> PagedResultReviewResponse
+ReviewService ..> PagedResultReviewResponse
+ReviewService ..> CourseReview
+ReviewRepository ..> CourseReview
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

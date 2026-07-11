@@ -1,0 +1,121 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuizControllerFE["QuizController"] {
+    <<frontend controller>>
+    + QuizList() Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuizControllerBE["QuizController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + GetMyQuizzes() Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuizListResponse {
+    <<dto>>
+    + QuizId : int
+    + Title : string
+    + CourseId : int
+    + LessonId : int?
+    + IsHidden : bool
+    + CreatedAt : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Quiz {
+    <<entity>>
+    + QuizId : int
+    + CourseId : int
+    + LessonId : int?
+    + Title : string
+    + Description : string?
+    + TimeLimitMinutes : int?
+    + PassingScore : int?
+    + MaxAttempts : int?
+    + IsHidden : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+class Lesson {
+    <<entity>>
+    + LessonId : int
+    + Title : string
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + Title : string
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<interface>>
+    + GetMyQuizzesAsync(instructorId: int) Task~List~QuizListResponse~~ *
+}
+
+class IQuizRepository {
+    <<interface>>
+    + GetInstructorQuizzesAsync(instructorId: int) Task~List~Quiz~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    - _quizRepo : IQuizRepository
+    
+    + GetMyQuizzesAsync(instructorId: int) Task~List~QuizListResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    - _context : AppDbContext
+    
+    + GetInstructorQuizzesAsync(instructorId: int) Task~List~Quiz~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Quizzes : DbSet~Quiz~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION ===
+Lesson *-- Quiz
+Course *-- Quiz
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+QuizControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY ===
+QuizControllerFE ..> QuizControllerBE
+QuizControllerBE ..> QuizListResponse
+QuizService ..> QuizListResponse
+QuizService ..> Quiz
+QuizRepository ..> Quiz
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

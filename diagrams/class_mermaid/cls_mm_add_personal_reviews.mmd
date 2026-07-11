@@ -1,0 +1,119 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class ReviewControllerFE["ReviewController"] {
+    <<frontend controller>>
+    + SubmitReview(request: ReviewRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ReviewControllerBE["ReviewController"] {
+    <<backend controller>>
+    - _reviewService : IReviewService
+    
+    + SubmitReview(request: ReviewRequest, source: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class ReviewRequest {
+    <<dto>>
+    + Type : string
+    + TargetId : int
+    + Rating : int
+    + Content : string?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReview {
+    <<entity>>
+    + ReviewId : int
+    + UserId : int
+    + CourseId : int
+    + Rating : int
+    + Content : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + Course : Course?
+    + User : User?
+}
+
+class LessonReview {
+    <<entity>>
+    + ReviewId : int
+    + UserId : int
+    + LessonId : int
+    + Rating : int
+    + Content : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + Lesson : Lesson?
+    + User : User?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IReviewService {
+    <<interface>>
+    + SubmitReviewAsync(userId: int, request: ReviewRequest, requireCompletion: bool) Task *
+}
+
+class IReviewRepository {
+    <<interface>>
+    + AddCourseReviewAsync(review: CourseReview) void *
+    + AddLessonReviewAsync(review: LessonReview) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReviewService {
+    - _reviewRepo : IReviewRepository
+    
+    + SubmitReviewAsync(userId: int, request: ReviewRequest, requireCompletion: bool) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReviewRepository {
+    - _context : AppDbContext
+    
+    + AddCourseReviewAsync(review: CourseReview) void
+    + AddLessonReviewAsync(review: LessonReview) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseReviews : DbSet~CourseReview~
+    + LessonReviews : DbSet~LessonReview~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ReviewControllerBE --> IReviewService
+ReviewService --> IReviewRepository
+ReviewRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ReviewService ..|> IReviewService
+ReviewRepository ..|> IReviewRepository
+
+%% === DEPENDENCY ===
+ReviewControllerFE ..> ReviewControllerBE
+ReviewControllerBE ..> ReviewRequest
+ReviewService ..> ReviewRequest
+ReviewService ..> CourseReview
+ReviewService ..> LessonReview
+ReviewRepository ..> CourseReview
+ReviewRepository ..> LessonReview
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
