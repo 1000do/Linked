@@ -39,7 +39,7 @@ public class CartServiceTests
         int courseId = 100;
         
         //Arrange 2
-        _courseRepo.GetByIdAsync(courseId).Returns((Course)null!);
+        _courseRepo.GetByIdAsync(courseId).Returns((Course)null);
         
         //Act
         Func<Task> act = async () => await _sut.AddToCartAsync(userId, courseId);
@@ -166,7 +166,7 @@ public class CartServiceTests
         int courseId = 100;
         
         //Arrange 2
-        _cartRepo.GetCartItemAsync(userId, courseId).Returns((CartItem)null!);
+        _cartRepo.GetCartItemAsync(userId, courseId).Returns((CartItem)null);
         
         //Act
         Func<Task> act = async () => await _sut.RemoveFromCartAsync(userId, courseId);
@@ -205,7 +205,7 @@ public class CartServiceTests
     {
         //Arrange 1
         int userId = 1;
-        string? couponCode = null;
+        string couponCode = null;
         var cartItems = new List<CartItem>
         {
             new CartItem { CourseId = 1, Price = null, Course = new Course { Title = "Course 1", Price = 10m } },
@@ -243,7 +243,7 @@ public class CartServiceTests
         
         //Arrange 2
         _cartRepo.GetCartItemsWithDetailsAsync(userId).Returns(new List<CartItem>());
-        _couponRepo.GetByCodeAsync("INVALID").Returns((Coupon)null!);
+        _couponRepo.GetByCodeAsync("INVALID").Returns((Coupon)null);
         
         //Act
         Func<Task> act = async () => await _sut.GetCartSummaryAsync(userId, couponCode);
@@ -456,7 +456,7 @@ public class CartServiceTests
     {
         //Arrange 1
         int userId = 1;
-        string? couponCode = null;
+        string couponCode = null;
         var cartItems = new List<CartItem>
         {
             new CartItem { CourseId = 1, Price = 20m, Course = new Course { CourseId = 1, CouponId = 1 } },

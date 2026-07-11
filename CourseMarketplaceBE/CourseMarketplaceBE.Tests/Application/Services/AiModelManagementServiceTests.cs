@@ -79,7 +79,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task GetAllModelsAsync_NullModelsList_ThrowsKeyNotFoundException()
         {
             //Arrange 1
-            List<AiModel> nullModels = null!;
+            List<AiModel>? nullModels = null;
 
             //Arrange 2
             _aiModelRepoMock.GetAllAdminAsync().Returns(nullModels);
@@ -151,7 +151,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             int page = 1;
             int pageSize = 10;
             var req = new PagedRequestDto { Page = page, PageSize = pageSize };
-            List<AiModel> nullModels = null!;
+            List<AiModel>? nullModels = null;
 
             //Arrange 2
             _aiModelRepoMock.GetPagedAdminAsync(page, pageSize).Returns((nullModels, 0));
