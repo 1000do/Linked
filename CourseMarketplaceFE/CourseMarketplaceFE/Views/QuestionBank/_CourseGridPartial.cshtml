@@ -1,0 +1,50 @@
+@model CourseMarketplaceFE.Models.PagedResult<CourseMarketplaceFE.Models.CourseListViewModel>
+
+@if (Model.Items != null && Model.Items.Any())
+{
+    @foreach (var c in Model.Items)
+    {
+        var safeTitle = c.Title.Replace("'", "\\'");
+        <button onclick="openCourse(@c.Id, '@safeTitle')" class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-start gap-3 hover:border-primary/50 hover:shadow-md hover:-translate-y-1 transition-all text-left group">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                <span class="material-symbols-outlined text-2xl">folder</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-slate-800 line-clamp-2">@c.Title</h3>
+                <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Open Course</p>
+            </div>
+        </button>
+    }
+
+    @if (Model.TotalPages > 1)
+    {
+        <div class="col-span-full flex items-center justify-center gap-2 mt-6">
+            @if (Model.Page > 1)
+            {
+                <button onclick="changeCoursePage(@(Model.Page - 1))" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                    Previous
+                </button>
+            }
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <button onclick="changeCoursePage(@i)" class="w-10 h-10 flex items-center justify-center rounded-lg text-sm font-bold transition-colors @(i == Model.Page ? "bg-primary text-white border border-primary shadow-sm shadow-primary/30" : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50")">
+                    @i
+                </button>
+            }
+
+            @if (Model.Page < Model.TotalPages)
+            {
+                <button onclick="changeCoursePage(@(Model.Page + 1))" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                    Next
+                </button>
+            }
+        </div>
+    }
+}
+else
+{
+    <div class="col-span-full p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+        No courses available.
+    </div>
+}

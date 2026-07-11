@@ -1,0 +1,111 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class LessonControllerFE["LessonController"] {
+    <<frontend controller>>
+    + DeleteMaterial(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class LessonControllerBE["LessonController"] {
+    <<backend controller>>
+    - _lessonService : ILessonService
+    
+    + DeleteMaterial(id: int) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class LearningMaterial {
+    <<entity>>
+    + MaterialId : int
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + VideoUrl : string?
+    + Duration : int?
+    + IsRemoved : bool
+    + Lesson : Lesson?
+}
+
+class Lesson {
+    <<entity>>
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + LearningMaterials : ICollection~LearningMaterial~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ILessonService {
+    <<interface>>
+    + DeleteMaterialAsync(materialId: int, instructorId: int) Task *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + GetMaterialByIdAsync(id: int) Task~LearningMaterial?~ *
+    + GetByIdAsync(id: int) Task~Lesson?~ *
+    + UpdateMaterial(material: LearningMaterial) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class LessonService {
+    - _lessonRepo : ILessonRepository
+    
+    + DeleteMaterialAsync(materialId: int, instructorId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class LessonRepository {
+    - _context : AppDbContext
+    
+    + GetMaterialByIdAsync(id: int) Task~LearningMaterial?~
+    + GetByIdAsync(id: int) Task~Lesson?~
+    + UpdateMaterial(material: LearningMaterial) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Lessons : DbSet~Lesson~
+    + LearningMaterials : DbSet~LearningMaterial~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Lesson *-- LearningMaterial
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+LessonControllerBE --> ILessonService
+LessonService --> ILessonRepository
+LessonRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+LessonService ..|> ILessonService
+LessonRepository ..|> ILessonRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+LessonControllerFE ..> LessonControllerBE
+LessonService ..> LearningMaterial
+LessonRepository ..> LearningMaterial
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

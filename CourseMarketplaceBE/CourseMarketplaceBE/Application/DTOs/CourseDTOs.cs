@@ -56,6 +56,7 @@ public class CourseResponse
     public bool IsOwner { get; set; }
     public int TotalReviews { get; set; }
     public DateTime? LastApprovedAt { get; set; }
+    public string? ModerationFeedback { get; set; }
 
     // Applied Coupon details
     public string? AppliedCouponCode { get; set; }
@@ -64,6 +65,16 @@ public class CourseResponse
     public bool IsRemoved { get; set; }
     public bool IsInAnyCart { get; set; }
     public int FlagCount { get; set; }
+    
+    public List<CourseFieldFeedbackDto>? FieldFeedbacks { get; set; }
+}
+
+public class CourseFieldFeedbackDto
+{
+    public int FeedbackId { get; set; }
+    public string FieldName { get; set; } = null!;
+    public string FeedbackText { get; set; } = null!;
+    public DateTime? DateAdded { get; set; }
 }
 
 public class CourseDetailResponse : CourseResponse

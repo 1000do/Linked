@@ -26,7 +26,9 @@ public class InstructorController : Controller
     // ═══════════════════════════════════════════════════════════════════
     // 1. FORM NỘP ĐƠN — GET: hiển thị form, POST: gửi form
     // ═══════════════════════════════════════════════════════════════════
+    // UC-48: Become an Instructor — Chỉ User thường (chưa là Instructor) mới được nộp đơn
     [HttpGet]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> Apply()
     {
         // Kiểm tra đăng nhập
@@ -207,8 +209,10 @@ public class InstructorController : Controller
         return items;
     }
 
+    // UC-48: Submit application form — Chỉ User
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "user")]
     public async Task<IActionResult> Apply(InstructorApplyViewModel model)
     {
         // Validate file count:
@@ -391,8 +395,10 @@ public class InstructorController : Controller
     // ═══════════════════════════════════════════════════════════════════
     // 3. SETUP PAYOUT — Gọi API tạo Stripe → redirect sang Stripe
     // ═══════════════════════════════════════════════════════════════════
+    // UC-49: Setup Payout — Chỉ Instructor đã được duyệt
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SetupPayout()
     {
         try
@@ -543,8 +549,10 @@ public class InstructorController : Controller
     // ═══════════════════════════════════════════════════════════════════
 
 
+    // UC-49: Access Stripe Express Dashboard — Chỉ Instructor
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> AccessStripeDashboard()
     {
         try
@@ -573,8 +581,10 @@ public class InstructorController : Controller
         return RedirectToAction("ApplicationStatus");
     }
 
+    // UC-49: Reset Stripe account — Chỉ Instructor
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> ResetStripe()
     {
         try
@@ -610,8 +620,10 @@ public class InstructorController : Controller
         return RedirectToAction("ApplicationStatus");
     }
 
+    // UC-68: Sync Payouts từ Stripe — Chỉ Instructor
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SyncPayouts()
     {
         try
@@ -637,7 +649,9 @@ public class InstructorController : Controller
     // ═══════════════════════════════════════════════════════════════════
     // 7. PUBLIC PROFILE — GET: /Instructor/Profile/{id}
     // ═══════════════════════════════════════════════════════════════════
+    // UC-75/76: Public profile page — Mọi người xem được
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Profile(int id)
     {
         try

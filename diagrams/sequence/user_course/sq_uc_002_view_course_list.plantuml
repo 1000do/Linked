@@ -1,0 +1,72 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Course List
+
+actor Guest as act
+participant "CourseListPage" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "CoursePublicController" as be_ctrl <<backend controller>>
+participant ":CourseQueryService" as sv
+participant ":PagedResult<CourseResponse>" as res
+participant ":ICourseRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Open course list page
+view -> fe_ctrl++: GET /Course/Index?page=1
+fe_ctrl -> be_ctrl++: GET /api/public/courses?page=1
+be_ctrl -> sv++: Call GetPublishedCoursesPagedAsync(page)
+
+sv -> repo++: Call GetAllPublishedCoursesPagedAsync(page)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch published courses
+db -->> ctx--: Return query results
+ctx -->> repo--: Return entities and totalCount
+repo -->> sv--: Return (courses, totalCount)
+
+alt courses is empty
+    sv -> res++: Call PagedResult(emptyList, 0)
+    res -->> sv--: Return PagedResult object
+    sv -->> be_ctrl: Return PagedResult object
+    be_ctrl -->> fe_ctrl: Return statusCode 200
+    fe_ctrl -->> view: Return View(PagedResult)
+    view -->> act: Display empty course list message
+else courses found
+    sv -> sv++: Fetch course stats, enrollment and wishlist status
+    sv--
+    sv -> sv++: Map courses to CourseResponse DTOs
+    sv--
+    sv -> res++: Call PagedResult(courseResponses, totalCount)
+    res -->> sv--: Return PagedResult object
+    
+    sv -->> be_ctrl--: Return PagedResult object
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return View(PagedResult)
+    view -->> act--: Display course list
+end

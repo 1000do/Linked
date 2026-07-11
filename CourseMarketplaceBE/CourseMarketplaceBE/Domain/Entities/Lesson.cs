@@ -21,6 +21,8 @@ public partial class Lesson
 
     public string? LessonStatus { get; set; }
 
+    public string? ModerationFeedback { get; set; }
+
     public virtual Course? Course { get; set; }
 
     public virtual ICollection<LearningMaterial> LearningMaterials { get; set; } = new List<LearningMaterial>();

@@ -37,6 +37,15 @@ namespace CourseMarketplaceFE.Models
         public List<LessonViewModel> Lessons { get; set; } = new List<LessonViewModel>();
         public int FlagCount { get; set; }
         public List<CourseQuizItemViewModel> CourseQuizzes { get; set; } = new List<CourseQuizItemViewModel>();
+        public List<CourseFieldFeedbackViewModel>? FieldFeedbacks { get; set; }
+    }
+
+    public class CourseFieldFeedbackViewModel
+    {
+        public int FeedbackId { get; set; }
+        public string FieldName { get; set; } = null!;
+        public string FeedbackText { get; set; } = null!;
+        public DateTime? DateAdded { get; set; }
     }
 
     public class CourseQuizItemViewModel

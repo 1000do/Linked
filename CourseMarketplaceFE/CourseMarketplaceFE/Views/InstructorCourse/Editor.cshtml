@@ -2,6 +2,13 @@
     ViewData["Title"] = "Curriculum Editor";
     Layout = "_InstructorLayout";
     var courseId = ViewBag.CourseId ?? 1;
+    var fieldFeedbacks = ViewBag.FieldFeedbacks as List<CourseMarketplaceFE.Models.CourseFieldFeedbackViewModel>;
+    string GetFieldFeedback(string fieldName)
+    {
+        if (fieldFeedbacks == null) return null;
+        var f = fieldFeedbacks.FirstOrDefault(x => string.Equals(x.FieldName, fieldName, StringComparison.OrdinalIgnoreCase));
+        return f?.FeedbackText;
+    }
 }
 
 <div class="p-8 h-full flex flex-col">
@@ -9,29 +16,33 @@
         <div class="flex items-center gap-4">
             <a href="/InstructorCourse" class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">arrow_back</span></a>
             <h1 class="text-2xl font-headline font-extrabold text-slate-900">Course Structure</h1>
-            @{
-                var courseStatus = ViewBag.CourseStatus as string ?? "Draft";
-                if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
-                    <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>
-                } else if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
-                    <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>
-                } else if (courseStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase)) {
-                    <span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>
-                } else {
-                    <span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+            <div id="course-status-badge-container">
+                @{
+                    var courseStatus = ViewBag.CourseStatus as string ?? "Draft";
+                    if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>
+                    } else if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>
+                    } else if (courseStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>
+                    } else {
+                        <span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+                    }
                 }
-            }
+            </div>
         </div>
         <div class="flex items-center gap-3">
             <a href="/Course/Details/@courseId" target="_blank" class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
             </a>
-            @if (!courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
-                <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
-                    <span class="material-symbols-outlined text-[18px]">send</span> 
-                    @(courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ? "Submit Changes" : "Submit for Review")
-                </button>
-            }
+            <div id="submit-course-btn-container">
+                @if (!courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                    <button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
+                        <span class="material-symbols-outlined text-[18px]">send</span> 
+                        @(courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ? "Submit Changes" : "Submit for Review")
+                    </button>
+                }
+            </div>
         </div>
     </div>
 
@@ -58,7 +69,8 @@
         <div class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-hidden">
             <div class="flex border-b border-slate-200 mb-2">
                 <button class="flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary" id="btn-tab-curriculum" onclick="switchMainTab('curriculum')">Curriculum</button>
-                <button class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors" id="btn-tab-landing" onclick="switchMainTab('landing')">Course Landing Page</button>
+                <button class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors" id="btn-tab-landing" onclick="switchMainTab('landing')">Course Landing</button>
+                <button class="flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors" id="btn-tab-quizzes" onclick="switchMainTab('quizzes')">Assessments</button>
             </div>
             
             <div id="course-structure-container" class="flex-1 flex flex-col gap-4 overflow-y-auto pb-8 pr-2 custom-scrollbar">
@@ -69,6 +81,11 @@
         <!-- RIGHT: Lesson Editor / Landing Page Editor -->
         <div class="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
             
+            <!-- Tab: Assessments Editor (Hidden by default) -->
+            <div id="quizzes-editor" class="hidden flex-1 flex-col h-full overflow-y-auto p-8 custom-scrollbar bg-slate-50/50">
+                <!-- Content generated by JS renderQuizzesTab() -->
+            </div>
+
             <!-- Tab: Landing Page Editor (Hidden by default) -->
             <div id="landing-page-editor" class="hidden flex-1 flex-col h-full overflow-y-auto p-8 custom-scrollbar">
                 <!-- Limit Banner -->
@@ -131,14 +148,32 @@
                     <div class="grid grid-cols-1 gap-8">
                         <!-- Basic Info -->
                         <div class="space-y-4">
+                            @if (!string.IsNullOrEmpty(ViewBag.ModerationFeedback as string))
+                            {
+                                <p class="text-sm font-bold text-red-600 mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">report</span> @(ViewBag.ModerationFeedback)</p>
+                            }
                             <label class="text-sm font-bold text-slate-900 block">Course Title <span class="text-red-500">*</span></label>
-                            <input type="text" id="course-title-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary" value="@ViewBag.CourseTitle" />
+                            @{
+                                var titleFb = GetFieldFeedback("title");
+                                if (!string.IsNullOrEmpty(titleFb))
+                                {
+                                    <p class="text-xs text-red-600 font-bold mb-1 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> @titleFb</p>
+                                }
+                            }
+                            <input type="text" id="course-title-input" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-primary focus:border-primary @(!string.IsNullOrEmpty(titleFb) ? "border-red-300 bg-red-50" : "")" value="@ViewBag.CourseTitle" />
                         </div>
 
                         <!-- Description -->
                         <div class="space-y-4">
                             <label class="text-sm font-bold text-slate-900 block">Course Description <span class="text-red-500">*</span></label>
-                            <div class="bg-white rounded-xl">
+                            @{
+                                var descFb = GetFieldFeedback("description");
+                                if (!string.IsNullOrEmpty(descFb))
+                                {
+                                    <p class="text-xs text-red-600 font-bold mb-1 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> @descFb</p>
+                                }
+                            }
+                            <div class="bg-white rounded-xl @(!string.IsNullOrEmpty(descFb) ? "border border-red-300 shadow-[0_0_0_2px_rgba(254,226,226,0.5)]" : "")">
                                 <div id="course-description-editor">@Html.Raw(ViewBag.Description)</div>
                             </div>
                         </div>
@@ -534,7 +569,14 @@
                         <!-- What you will learn -->
                         <div class="space-y-4">
                             <label class="text-sm font-bold text-slate-900 block">What you will learn (one per line or list)</label>
-                            <div class="bg-white rounded-xl">
+                            @{
+                                var learnFb = GetFieldFeedback("whatyouwilllearn");
+                                if (!string.IsNullOrEmpty(learnFb))
+                                {
+                                    <p class="text-xs text-red-600 font-bold mb-1 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> @learnFb</p>
+                                }
+                            }
+                            <div class="bg-white rounded-xl @(!string.IsNullOrEmpty(learnFb) ? "border border-red-300 shadow-[0_0_0_2px_rgba(254,226,226,0.5)]" : "")">
                                 <div id="course-learn-editor">@Html.Raw(ViewBag.WhatYouWillLearn)</div>
                             </div>
                         </div>
@@ -542,7 +584,14 @@
                         <!-- Requirements -->
                         <div class="space-y-4">
                             <label class="text-sm font-bold text-slate-900 block">Requirements</label>
-                            <div class="bg-white rounded-xl">
+                            @{
+                                var reqFb = GetFieldFeedback("requirement");
+                                if (!string.IsNullOrEmpty(reqFb))
+                                {
+                                    <p class="text-xs text-red-600 font-bold mb-1 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> @reqFb</p>
+                                }
+                            }
+                            <div class="bg-white rounded-xl @(!string.IsNullOrEmpty(reqFb) ? "border border-red-300 shadow-[0_0_0_2px_rgba(254,226,226,0.5)]" : "")">
                                 <div id="course-req-editor">@Html.Raw(ViewBag.Requirements)</div>
                             </div>
                         </div>
@@ -550,9 +599,16 @@
                         <!-- Thumbnail -->
                         <div class="space-y-4">
                             <label class="text-sm font-bold text-slate-900 block">Course Thumbnail <span class="text-red-500">*</span></label>
+                            @{
+                                var thumbFb = GetFieldFeedback("thumbnail");
+                                if (!string.IsNullOrEmpty(thumbFb))
+                                {
+                                    <p class="text-xs text-red-600 font-bold mb-1 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">error</span> @thumbFb</p>
+                                }
+                            }
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div class="space-y-3">
-                                    <div id="thumb-drop-area" class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:bg-slate-50 transition-all cursor-pointer group relative overflow-hidden">
+                                    <div id="thumb-drop-area" class="border-2 border-dashed @(!string.IsNullOrEmpty(thumbFb) ? "border-red-300 bg-red-50" : "border-slate-200") rounded-xl p-6 text-center hover:bg-slate-50 transition-all cursor-pointer group relative overflow-hidden">
                                         <div class="py-4">
                                             <span class="material-symbols-outlined text-[32px] text-slate-300 group-hover:text-primary transition-colors">image</span>
                                             <p class="text-xs font-bold text-slate-500 mt-2">Click or drag to upload</p>
@@ -610,6 +666,7 @@
                     <div class="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest mb-2">
                         <span class="material-symbols-outlined text-[14px]">edit</span> Editing Lesson <span id="editing-lesson-id">--</span>
                     </div>
+                    <div id="lesson-moderation-feedback" class="hidden text-sm font-bold text-red-600 mb-2 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">report</span> <span></span></div>
                     <div class="flex items-center gap-2 group">
                         <input type="text" id="editing-lesson-title" 
                             class="text-3xl font-headline font-extrabold text-slate-900 bg-transparent border-none p-0 focus:ring-0 focus:outline-none hover:bg-slate-100 rounded transition-colors w-full cursor-pointer" 
@@ -1049,51 +1106,55 @@
         window.switchMainTab = function(tab) {
             const btnCurriculum = document.getElementById('btn-tab-curriculum');
             const btnLanding = document.getElementById('btn-tab-landing');
+            const btnQuizzes = document.getElementById('btn-tab-quizzes');
             const structureContainer = document.getElementById('course-structure-container');
             const lessonEditorEmpty = document.getElementById('lesson-editor-empty');
             const lessonEditorActive = document.getElementById('lesson-editor-active');
             const landingEditor = document.getElementById('landing-page-editor');
+            const quizzesEditor = document.getElementById('quizzes-editor');
+
+            // Reset all tabs
+            btnCurriculum.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+            btnLanding.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+            if (btnQuizzes) btnQuizzes.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
+
+            landingEditor.classList.add('hidden');
+            landingEditor.style.display = 'none';
+            if (quizzesEditor) { quizzesEditor.classList.add('hidden'); quizzesEditor.style.display = 'none'; }
+            
+            lessonEditorEmpty.classList.add('hidden');
+            lessonEditorEmpty.style.display = 'none';
+            lessonEditorActive.classList.add('hidden');
+            lessonEditorActive.style.display = 'none';
+            structureContainer.classList.add('hidden');
 
             if (tab === 'curriculum') {
                 btnCurriculum.className = "flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary";
-                btnLanding.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
                 structureContainer.classList.remove('hidden');
                 
-                landingEditor.classList.add('hidden');
-                landingEditor.style.display = 'none';
-
-                // Determine which curriculum state to show
                 if (lessonsData.length === 0) {
                     lessonEditorEmpty.classList.remove('hidden');
                     lessonEditorEmpty.style.display = 'flex';
-                    lessonEditorActive.classList.add('hidden');
-                    lessonEditorActive.style.display = 'none';
                 } else {
                     const activeId = document.getElementById('editing-lesson-id').textContent;
                     if (activeId !== '--') {
                         lessonEditorActive.classList.remove('hidden');
                         lessonEditorActive.style.display = 'flex';
-                        lessonEditorEmpty.classList.add('hidden');
-                        lessonEditorEmpty.style.display = 'none';
                     } else {
                         lessonEditorEmpty.classList.remove('hidden');
                         lessonEditorEmpty.style.display = 'flex';
-                        lessonEditorActive.classList.add('hidden');
-                        lessonEditorActive.style.display = 'none';
                     }
                 }
-            } else {
+            } else if (tab === 'landing') {
                 btnLanding.className = "flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary";
-                btnCurriculum.className = "flex-1 py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition-colors";
-                structureContainer.classList.add('hidden');
-                
                 landingEditor.classList.remove('hidden');
                 landingEditor.style.display = 'flex';
-                
-                lessonEditorEmpty.classList.add('hidden');
-                lessonEditorEmpty.style.display = 'none';
-                lessonEditorActive.classList.add('hidden');
-                lessonEditorActive.style.display = 'none';
+            } else if (tab === 'quizzes') {
+                if (btnQuizzes) btnQuizzes.className = "flex-1 py-3 text-sm font-bold border-b-2 border-primary text-primary";
+                if (quizzesEditor) {
+                    quizzesEditor.classList.remove('hidden');
+                    quizzesEditor.style.display = 'flex';
+                }
             }
         };
 
@@ -1527,66 +1588,82 @@
                 </div>
             </div>`;
             
-            // Render Quizzes Section
-            sectionHtml += `
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden border-l-4 border-l-indigo-500 mb-4 mt-6">
-                <div class="p-4 bg-slate-50/50 flex items-center justify-between">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Assessments</p>
-                        <h3 class="font-bold text-slate-900 text-sm">Course Quizzes</h3>
-                    </div>
-                    ${!isPending ? `
-                    <button type="button" onclick="openAddQuizModal()" class="px-3 py-1.5 bg-indigo-50 text-indigo-600 text-xs font-bold rounded hover:bg-indigo-100 transition-colors flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">add</span> Add Quiz
-                    </button>
-                    ` : ''}
-                </div>
-                <div class="p-4 space-y-2">
-            `;
-            
-            if (quizzesData && quizzesData.length > 0) {
-                quizzesData.forEach((q, index) => {
-                    const quizTitle = q.quiz?.title || q.quiz?.Title || q.title || q.Title || 'Untitled Quiz';
-                    const isHidden = q.isHidden || q.IsHidden;
-                    const cId = q.courseId || q.CourseId;
-                    const qId = q.quizId || q.QuizId;
-                    
-                    sectionHtml += `
-                        <div class="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between transition-all hover:border-indigo-300">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded bg-indigo-50 flex items-center justify-center shrink-0">
-                                    <span class="material-symbols-outlined text-[18px] text-indigo-600">quiz</span>
-                                </div>
+            // Render Quizzes Tab Content
+            const quizContainer = document.getElementById('quizzes-editor');
+            if (quizContainer) {
+                let qHtml = `
+                    <div class="max-w-4xl mx-auto space-y-6 w-full mt-4">
+                        <div class="flex flex-col mb-4">
+                            <h2 class="text-3xl font-headline font-extrabold text-slate-900 mb-2">Course Quizzes</h2>
+                            <p class="text-slate-500">Manage assessments to test your students' knowledge.</p>
+                        </div>
+                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="p-6 bg-slate-50/50 flex items-center justify-between border-b border-slate-200">
                                 <div>
-                                    <h4 class="text-sm font-bold text-slate-900 truncate max-w-[150px]">${quizTitle}</h4>
-                                    ${isHidden ? '<span class="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Hidden</span>' : ''}
+                                    <h3 class="font-bold text-slate-900 text-lg">Assessments List</h3>
+                                </div>
+                                ${!isPendingGlobal ? `
+                                <button type="button" onclick="openAddQuizModal()" class="px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 shadow-md transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">add</span> Add Quiz
+                                </button>
+                                ` : ''}
+                            </div>
+                            <div class="p-6 space-y-4">
+                `;
+                
+                if (quizzesData && quizzesData.length > 0) {
+                    quizzesData.forEach((q, index) => {
+                        const quizTitle = q.quiz?.title || q.quiz?.Title || q.title || q.Title || 'Untitled Quiz';
+                        const isHidden = q.isHidden || q.IsHidden;
+                        const cId = q.courseId || q.CourseId;
+                        const qId = q.quizId || q.QuizId;
+                        
+                        qHtml += `
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between transition-all hover:border-indigo-300 hover:shadow-md">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined text-[20px] text-indigo-600">quiz</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-bold text-slate-900 truncate max-w-sm">${quizTitle}</h4>
+                                        ${isHidden ? '<span class="inline-flex mt-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Hidden</span>' : '<span class="inline-flex mt-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Visible</span>'}
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                      <button onclick="viewStudentAttempts(${qId})" class="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-2" title="View Student Attempts">
+                                          <span class="material-symbols-outlined text-[20px]">history</span>
+                                          <span class="text-sm font-bold">Attempts</span>
+                                      </button>
+                                      ${!isPendingGlobal ? `
+                                      <label class="relative inline-flex items-center cursor-pointer ml-2" title="Toggle Visibility">
+                                          <input type="checkbox" class="sr-only peer" ${!isHidden ? 'checked' : ''} onchange="toggleQuizVisibility(${cId}, ${qId}, this)">
+                                          <div class="w-10 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-500"></div>
+                                      </label>
+                                      <button onclick="removeQuizFromCourse(${cId}, ${qId})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors ml-1" title="Remove from Course">
+                                          <span class="material-symbols-outlined text-[20px]">delete</span>
+                                      </button>
+                                      ` : ''}
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <label class="relative inline-flex items-center cursor-pointer" title="Toggle Visibility">
-                                    <input type="checkbox" class="sr-only peer" ${!isHidden ? 'checked' : ''} onchange="toggleQuizVisibility(${cId}, ${qId}, this)">
-                                    <div class="w-8 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-500"></div>
-                                </label>
-                                <button onclick="removeQuizFromCourse(${cId}, ${qId})" class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors" title="Remove from Course">
-                                    <span class="material-symbols-outlined text-[18px]">close</span>
-                                </button>
-                            </div>
+                        `;
+                    });
+                } else {
+                    qHtml += `
+                        <div class="text-center py-12 text-slate-500 text-sm">
+                            <span class="material-symbols-outlined text-[48px] text-slate-200 mb-4 block">quiz</span>
+                            <p class="text-lg font-bold text-slate-600 mb-1">No quizzes added</p>
+                            <p>You haven't added any quizzes to this course yet.</p>
                         </div>
                     `;
-                });
-            } else {
-                sectionHtml += `
-                    <div class="text-center py-6 text-slate-500 text-sm">
-                        <span class="material-symbols-outlined text-[24px] text-slate-300 mb-2 block">quiz</span>
-                        No quizzes added to this course yet.
+                }
+                
+                qHtml += `
+                            </div>
+                        </div>
                     </div>
                 `;
+                quizContainer.innerHTML = qHtml;
             }
-            
-            sectionHtml += `
-                </div>
-            </div>
-            `;
             
             container.innerHTML = sectionHtml;
 
@@ -1746,13 +1823,15 @@
         window.toggleQuizVisibility = async function(cId, qId, checkbox) {
             const hide = !checkbox.checked;
             try {
-                const res = await fetch(`/CourseQuiz/Hide?courseId=${cId}&quizId=${qId}&hide=${hide}`, { method: 'PATCH' });
-                if(res.ok) {
-                    window.location.reload();
-                } else {
-                    const data = await res.json().catch(() => null);
+                const res = await fetch(`/Quiz/ToggleHidden`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quizId: qId, isHidden: hide })
+                });
+                const result = await res.json();
+                if(!result.success) {
                     checkbox.checked = !checkbox.checked;
-                    alert(data?.message || "Failed to toggle visibility. A student might be taking this quiz.");
+                    alert(result.message || "Failed to toggle visibility. A student might be taking this quiz.");
                 }
             } catch(e) { 
                 checkbox.checked = !checkbox.checked;
@@ -1798,6 +1877,17 @@
             // Extract duration from materialMetadata
             const lessonId = parseInt(el.dataset.lessonId);
             const lesson = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
+            
+            // Set Lesson Moderation Feedback
+            const lessonFeedbackEl = document.getElementById('lesson-moderation-feedback');
+            const lessonFeedback = lesson?.moderationFeedback || lesson?.ModerationFeedback;
+            if (lessonFeedback) {
+                lessonFeedbackEl.querySelector('span:last-child').textContent = lessonFeedback;
+                lessonFeedbackEl.classList.remove('hidden');
+            } else {
+                lessonFeedbackEl.classList.add('hidden');
+            }
+
             console.log("Selecting Lesson:", lessonId, lesson); // Debug log
             let durationDisplay = "0 mins";
             
@@ -3078,7 +3168,7 @@
                                     confirmButtonText: 'Got it',
                                     confirmButtonColor: '#006a62'
                                 }).then(() => {
-                                    location.reload();
+                                    updateCourseStatusBadge('pending');
                                 });
                             } else {
                                 isSubmitting = false;
@@ -3400,3 +3490,130 @@
         };
     </script>
 }
+
+<script>
+async function viewStudentAttempts(quizId) {
+    try {
+        const res = await fetch(`/Quiz/StudentAttempts/` + quizId);
+        const result = await res.json();
+        if (result.success && result.data) {
+            renderStudentAttemptsModal(result.data, quizId);
+        } else {
+            Swal.fire('Error', result.message || 'Failed to load attempts.', 'error');
+        }
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Error', 'An error occurred while loading attempts.', 'error');
+    }
+}
+
+function renderStudentAttemptsModal(attempts, quizId) {
+    let html = `
+        <div id="student-attempts-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeStudentAttemptsModal()"></div>
+            <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <h3 class="text-xl font-bold text-slate-900">Student Attempts</h3>
+                    <button onclick="closeStudentAttemptsModal()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+                    <div class="space-y-4">
+    `;
+    
+    if (attempts.length === 0) {
+        html += `
+            <div class="text-center py-12 text-slate-500 text-sm">
+                <span class="material-symbols-outlined text-[48px] text-slate-200 mb-4 block">history</span>
+                <p class="text-lg font-bold text-slate-600 mb-1">No attempts yet</p>
+                <p>No students have attempted this quiz yet.</p>
+            </div>
+        `;
+    } else {
+        attempts.forEach(a => {
+            const dateStr = a.submittedAt ? new Date(a.submittedAt).toLocaleString() : 'Incomplete';
+            const statusHtml = a.isPassed 
+                ? '<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">Passed</span>' 
+                : '<span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-200">Failed</span>';
+            
+            html += `
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-indigo-300 transition-colors">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 font-bold uppercase">
+                            ${a.studentName.charAt(0)}
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-900">${a.studentName}</p>
+                            <p class="text-xs text-slate-500">${dateStr}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <p class="font-black text-slate-900">${a.score.toFixed(1)}%</p>
+                            ${statusHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    html += `
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const div = document.createElement('div');
+    div.id = 'student-attempts-wrapper';
+    div.innerHTML = html;
+    document.body.appendChild(div);
+}
+
+function closeStudentAttemptsModal() {
+    const wrapper = document.getElementById('student-attempts-wrapper');
+    if (wrapper) wrapper.remove();
+}
+
+// --- REALTIME COURSE STATUS BADGE ---
+function updateCourseStatusBadge(status) {
+    const container = document.getElementById('course-status-badge-container');
+    const btnContainer = document.getElementById('submit-course-btn-container');
+    if (!container) return;
+
+    const statusLower = (status || 'draft').toLowerCase();
+    let badgeHtml = '';
+    let btnHtml = '';
+
+    if (statusLower === 'published') {
+        badgeHtml = '<span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>';
+        btnHtml = '<button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()"><span class="material-symbols-outlined text-[18px]">send</span> Submit Changes</button>';
+    } else if (statusLower === 'pending') {
+        badgeHtml = '<span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>';
+        btnHtml = ''; // Hide submit button when pending
+    } else if (statusLower === 'rejected') {
+        badgeHtml = '<span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>';
+        btnHtml = '<button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()"><span class="material-symbols-outlined text-[18px]">send</span> Submit for Review</button>';
+    } else {
+        badgeHtml = '<span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>';
+        btnHtml = '<button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()"><span class="material-symbols-outlined text-[18px]">send</span> Submit for Review</button>';
+    }
+
+    container.innerHTML = badgeHtml;
+    if (btnContainer) btnContainer.innerHTML = btnHtml;
+}
+
+document.addEventListener("ReceiveNotificationEvent", function() {
+    const cid = @courseId;
+    fetch(`/InstructorCourse/GetCourseStatus?id=${cid}`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                updateCourseStatusBadge(d.status);
+            }
+        })
+        .catch(e => console.error("Error fetching realtime course status:", e));
+});
+</script>

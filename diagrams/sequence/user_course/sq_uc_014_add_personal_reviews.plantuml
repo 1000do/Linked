@@ -1,0 +1,133 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Add Personal Reviews
+
+actor User as act
+participant "CourseLearnPage" as view
+participant "ReviewController" as fe_ctrl <<frontend controller>>
+participant "ReviewController" as be_ctrl <<backend controller>>
+participant ":ReviewService" as sv
+participant ":Review" as ett
+participant ":IReviewLockoutRepository" as lockout_repo
+participant ":IEnrollmentRepository" as enroll_repo
+participant ":IReviewRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Submit a review
+view -> fe_ctrl++: POST /Review/SubmitReview
+fe_ctrl -> be_ctrl++: POST /api/reviews
+
+be_ctrl -> sv++: Call SubmitReviewAsync(userId, request, requireCompletion)
+
+sv -> lockout_repo++: Call GetActiveLockoutAsync(userId, "review")
+lockout_repo -->> sv--: Return activeLockout
+
+alt Account is locked out
+    sv -->> be_ctrl: throw BadRequestException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display lockout restriction message
+else Account is active
+    sv -> sv++: Check if user is course owner
+    sv--
+    
+    alt User is Owner
+        sv -> sv++: Call GetOrCreateOwnerEnrollmentAsync(userId, courseId)
+        sv--
+    else User is Student
+        sv -> enroll_repo++: Call GetEnrollmentWithProgressAsync(userId, courseId)
+        enroll_repo -->> sv--: Return enrollment
+        
+        alt Enrollment Not Found
+            sv -->> be_ctrl: throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display not enrolled message
+        else Enrolled
+            alt requireCompletion == true
+                alt IsCompleted != true
+                    sv -->> be_ctrl: throw InvalidOperationException
+                    be_ctrl -->> fe_ctrl: Return statusCode 400
+                    fe_ctrl -->> view: Return JSON (success=false)
+                    view -->> act: Display completion required message
+                end
+            else requireCompletion == false
+                sv -> enroll_repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
+                enroll_repo -->> sv--: Return completed count
+                
+                alt learnedCount < 3
+                    sv -->> be_ctrl: throw InvalidOperationException
+                    be_ctrl -->> fe_ctrl: Return statusCode 400
+                    fe_ctrl -->> view: Return JSON (success=false)
+                    view -->> act: Display minimum lessons required message
+                end
+            end
+        end
+    end
+    
+    sv -> repo++: Call GetEnrolledUserRecentReviewAsync(enrollmentId)
+    repo -->> sv--: Return recentReview
+    
+    alt Submitted within 5 minutes
+        sv -->> be_ctrl: throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display rate limit message
+    else Can submit review
+        sv -> ett++: Call Review()
+        ett -->> sv--: Return Review entity
+        
+        sv -> repo++: Call AddReviewAsync(review)
+        repo -->> sv--: Return result
+        
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Insert Review
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return numberOfRowsAffected
+            
+            sv -->> be_ctrl--: Return success
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display review submitted successfully
+        end
+    end
+end

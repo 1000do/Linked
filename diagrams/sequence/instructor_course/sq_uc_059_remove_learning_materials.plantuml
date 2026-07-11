@@ -1,0 +1,93 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Remove Learning Materials
+
+actor Instructor as act
+participant "CourseEditorPage" as view
+participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "LessonController" as be_ctrl <<backend controller>>
+participant ":LessonService" as sv
+participant ":IMaterialRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click Delete Material
+view -> fe_ctrl++: DELETE /Lesson/RemoveMaterial/{materialId}
+fe_ctrl -> be_ctrl++: DELETE /api/lessons/materials/{materialId}
+
+be_ctrl -> sv++: Call RemoveMaterialAsync(materialId, instructorId)
+
+sv -> repo++: Call GetMaterialByIdAsync(materialId)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch material
+db -->> ctx--: Return query results
+ctx -->> repo--: Return material entity
+repo -->> sv--: Return material entity
+
+alt Material Not Found
+    sv -->> be_ctrl: throw Exception
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display material not found message
+else Material Found
+    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    sv--
+    
+    sv -> sv++: Call MoveMaterialToTrashAsync(material)
+    sv--
+    
+    sv -> repo++: Call Update(material)
+    repo -->> sv--: Return tracking state
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Save changes to database
+    ctx -> db++: Update Material (Soft Delete)
+    
+    alt Database Save Failure
+        db -->> ctx: throw DbUpdateException
+        ctx -->> repo: throw DbUpdateException
+        repo -->> sv: throw DbUpdateException
+        sv -->> be_ctrl: throw DbUpdateException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display server error message
+    else Database Save Success
+        db -->> ctx--: Return returnCode
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+        sv--
+        
+        sv -->> be_ctrl--: Return success
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON (success=true)
+        view -->> act--: Display material removed successfully
+    end
+end

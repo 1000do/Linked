@@ -292,7 +292,7 @@ public class CouponService : ICouponService
         if (string.Equals(course.CourseStatus, "published", StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = "draft";
-            course.ModerationFeedback = null;
+
         }
         _courseRepo.Update(course);
         await _repo.SaveChangesAsync();
