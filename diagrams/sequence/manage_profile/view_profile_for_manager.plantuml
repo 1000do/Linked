@@ -28,68 +28,74 @@ hide footbox
 
 mainframe View Profile (For Manager)
 
-actor Staff as act
 
-participant "Profile" as view
-participant "AccountController" as fe_ctrl
-participant "ProfileController" as be_ctrl
-participant ":UserProfileService" as sv
-participant ":UserProfileResponse" as res
-participant ":Manager" as ett
-participant ":UserRepository" as repo
+actor Staff as act
+participant "DashboardPage" as portal
+participant "ProfilePage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminProfileController" as fe_ctrl <<frontend controller>>
+participant "AdminProfileController" as be_ctrl <<backend controller>>
+participant ":IManagerProfileService" as sv
+participant ":ManagerProfileResponse" as res
+participant ":IManagerRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
-act++
-act->view++: Access profile page
-view->fe_ctrl++: Send GET request to /Account/Profile
+act ++
 
-fe_ctrl->fe_ctrl++: Check AccessToken cookie
+act -> portal++: Click "View Profile"
+portal -> fe_ctrl++: GET /AdminProfile
+portal--
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
-group opt [No AccessToken]
-    fe_ctrl-->>view: Redirect to /Account/Login
-    view-->>act: Display login page
-end
 
-fe_ctrl->be_ctrl++: Send GET request to /api/Profile (with AccessToken)
-
-be_ctrl->be_ctrl++: Validate login session & Parse userId
-be_ctrl--
-group opt [Invalid login session]
-    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view: Redirect to /Account/Login
-    view-->>act: Display login page
-end
-
-be_ctrl->sv++: Call GetUserProfileAsync(userId)
-
-sv->repo++: Call GetAccountByIdAsync(userId)
-repo->ctx++: Fetch account with manager details
-ctx->db++: Query accounts and managers tables
-db-->>ctx--: Return database record
-ctx-->>repo--: Return Account entity
-repo-->>sv--: Return Account entity
-
-sv->sv++: Check account != null && account.Manager != null
-sv--
-
-alt account == null || account.Manager == null
-    sv-->>be_ctrl: Return null
-    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-    fe_ctrl-->>view: Redirect to /Account/Login
-    view-->>act: Display login page
-else account != null && account.Manager != null
-    sv->res++: Call UserProfileResponse()
-    res-->>sv--: Return UserProfileResponse object
-    sv-->>be_ctrl--: Return UserProfileResponse DTO
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (with manager profile data)
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/admin/profile (with AccessToken)
     
-    fe_ctrl->fe_ctrl++: Read response and check IsVerified
-    fe_ctrl--
-    fe_ctrl->fe_ctrl++: Append IsVerified cookie
-    fe_ctrl--
-    fe_ctrl->view--: Return View with profile data
-    view-->>act--: Display manager profile information
+    be_ctrl -> be_ctrl++: Validate login session & Parse userId
+    be_ctrl--
+    
+    alt Invalid login session
+        be_ctrl -->> fe_ctrl: Return statusCode 401 (Unauthorized)
+        fe_ctrl -->> login_view++: Redirect to LoginPage
+        login_view -->> act--: Display login page
+    else Valid login session
+        be_ctrl -> sv++: GetProfileAsync(userId)
+        
+        sv -> repo++: GetManagerByIdAsync(userId)
+        repo -> ctx++: Fetch Manager with Account details
+        ctx -> db++: Query Managers and Accounts tables
+        db -->> ctx--: Return database record
+        ctx -->> repo--: Return Manager entity
+        repo -->> sv--: Return Manager entity
+        
+        sv -> sv++: Check manager != null
+        sv--
+        
+        alt manager == null
+            sv -->> be_ctrl: Return null
+            be_ctrl -->> fe_ctrl: Return statusCode 404 (NotFound)
+            fe_ctrl -->> login_view++: Redirect to LoginPage
+            login_view -->> act--: Display login page
+        else manager != null
+            sv -> res++: Call ManagerProfileResponse()
+            res -->> sv--: Return ManagerProfileResponse object
+            sv -->> be_ctrl--: Return ManagerProfileResponse DTO
+            be_ctrl -->> fe_ctrl--: Return statusCode 200 (parsed to AdminProfileViewModel)
+            
+            fe_ctrl -->> view++: Return View(profile)
+            deactivate fe_ctrl
+            view -->> act--: Display manager profile information
+        end
+    end
 end
 
 @enduml

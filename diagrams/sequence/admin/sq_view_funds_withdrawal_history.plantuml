@@ -1,0 +1,120 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Funds Withdrawal History
+
+actor Admin as act
+participant "AdminFinancePage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant ":AdminFinanceUnifiedVM" as vm
+participant "AdminFinanceController" as be_ctrl <<backend controller>>
+participant ":IAdminFinanceService" as sv
+participant ":IAdminFinanceRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":WithdrawalHistoryItem" as res
+participant ":PagedResult<WithdrawalHistoryItem>" as paged_item
+participant ":ApiResponse" as api_resp
+participant ":PagedResult<WithdrawalHistoryVM>" as paged_vm
+
+act ++
+act -> view++: Click "Manager Bank Withdrawals" tab
+view -> fe_ctrl++: GET /AdminFinance?tab=withdrawals
+
+fe_ctrl -> vm++: Call AdminFinanceUnifiedVM()
+vm -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act: Display login form
+    deactivate login_view
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act: Display error message
+    deactivate error_view
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/admin/finance/withdrawals?year=y&month=m&page=1&pageSize=10
+
+    be_ctrl -> sv++: GetWithdrawalHistoryAsync(year, month, page, pageSize)
+    sv -> repo++: GetWithdrawalsAsync(year, month, page, pageSize)
+    repo -> ctx++: Execute Query
+    ctx -> db++: Execute query
+
+    alt Database Query Failure
+        db -->> ctx: Throw Exception
+        ctx -->> repo: Throw Exception
+        repo -->> sv: Throw Exception
+        sv -->> be_ctrl: Throw Exception
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Return statusCode 500
+        view -->> act: Display error message
+    else Database Query Success
+        db -->> ctx--: Return List of PlatformWithdrawal entities and totalCount
+        ctx -->> repo--: Return List of PlatformWithdrawal entities and totalCount
+        repo -->> sv--: Return List of PlatformWithdrawal entities and totalCount
+
+        sv -> sv++: Sync Stripe payout statuses for Pending/InTransit withdrawals
+        sv--
+
+        opt hasChanges == true
+            sv -> repo++: SaveChangesAsync()
+            repo -> ctx++: Save changes to database
+            ctx -> db++: Save changes to database
+            db -->> ctx--: Return numberOfRowsAffected
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return numberOfRowsAffected
+        end
+
+        sv -> res++: Call WithdrawalHistoryItem()
+        res -->> sv--: Return WithdrawalHistoryItem object
+
+        sv -> paged_item++: Call PagedResult<WithdrawalHistoryItem>()
+        paged_item -->> sv--: Return PagedResult<WithdrawalHistoryItem> object
+
+        sv -->> be_ctrl--: Return PagedResult<WithdrawalHistoryItem> object
+
+        be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
+        api_resp -->> be_ctrl--: Return ApiResponse object
+
+        be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
+
+        fe_ctrl -> paged_vm++: Call PagedResult<WithdrawalHistoryVM>() (Deserialize JSON)
+        paged_vm -->> fe_ctrl--: Return PagedResult<WithdrawalHistoryVM> object
+
+        fe_ctrl -->> view--: Return statusCode 200
+        view -->> act--: Display withdrawal history table
+    end
+end
+@enduml

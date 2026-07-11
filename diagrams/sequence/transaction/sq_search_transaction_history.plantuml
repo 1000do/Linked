@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white
+            BackgroundColor white   
         }
         groupHeader{
             BackgroundColor white
@@ -25,46 +25,80 @@
 </style>
 
 hide footbox
-
 mainframe Search Transaction History
-actor User as act
 
-participant "Transaction/History.cshtml" as view
+actor User as act
+participant "PurchaseHistoryPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant ":TransactionPagedVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
-participant ":TransactionService" as sv
-participant ":TransactionRepository" as repo
+participant ":ITransactionService" as sv
+participant ":PagedResult" as paged_dto
+participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
-act++
-act->view++: Enter keyword / select status / select sortBy
-act->view: Click "Apply" button
-view->fe_ctrl++: Submit form to GET /Transaction/History
+act ++
+act -> view++: 1. Enter search keyword in "Search by course title..." input field
+act -> view: 2. Click "Apply" button or press "Enter"
 
-fe_ctrl->be_ctrl++: Send GET /api/transactions/my?keyword=...&status=...&sortBy=...
+view -> fe_ctrl++: 3. GET /Transaction/History?keyword=searchTerm
 
-be_ctrl->sv++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
-sv->repo++: Call GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
-
-repo->ctx++: Apply search, filter, and ordering
-ctx->db++: Execute SELECT query with filters
-db-->>ctx--: Return database results
-ctx-->>repo--: Return data
-repo-->>sv--: Return data
-
-sv->sv++: Map to PagedResult
-sv--
-sv-->>be_ctrl--: Return DTO list
-be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
-
-fe_ctrl->fe_ctrl++: Deserialize response
+fe_ctrl -> fe_ctrl++: 4. Validate actor's authentication and authorization
 fe_ctrl--
-fe_ctrl-->>view--: Return View(vm)
 
-alt [No transactions match filters]
-    view-->>act: Display empty state message
-else [Matching transactions found]
-    view-->>act--: Display filtered and sorted purchase history list
+alt Session Invalid
+    fe_ctrl -->> login_view: 4.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: 4.2. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: 4.3. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: 4.4. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> vm++: 5. Call TransactionPagedVM(page, pageSize)
+    vm -->> fe_ctrl--: 6. Return TransactionPagedVM object
+
+    fe_ctrl -> be_ctrl++: 7. GET /api/transactions/my?keyword=searchTerm
+    be_ctrl -> sv++: 8. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+    sv -> sv++: 9. Validate pagination parameters
+    sv--
+
+    sv -> repo++: 10. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+    repo -> ctx++: 11. Calculate totalCount and query items with keyword filter
+    ctx -> db++: 12. Execute query
+    db -->> ctx--: 13. Return data
+    ctx -->> repo--: 14. Return items and totalCount
+
+    repo -->> sv--: 15. Return items and totalCount
+
+    sv -> paged_dto++: 16. Call PagedResult(items, totalCount, page, pageSize)
+    paged_dto -->> sv--: 17. Return PagedResult object
+    
+    sv -->> be_ctrl: 18. Return PagedResult object
+    deactivate sv
+    be_ctrl -->> fe_ctrl: 19. Return statusCode 200
+    deactivate be_ctrl
+    
+    fe_ctrl -> fe_ctrl++: 20. Deserialize JSON to TransactionPagedVM
+    fe_ctrl--
+    
+    fe_ctrl -->> view: 21. Return View(vm)
+    deactivate fe_ctrl
+
+    view -> view++: 22. Check totalCount and keyword
+    view--
+    
+    alt Matching results found (totalCount > 0)
+        view -->> act--: 22.1. Display filtered list of transactions
+
+    else No matching results found (totalCount == 0)
+        view -->> act--: 22.2. Display empty state screen with "No transactions found" message
+    end
 end
+
 @enduml

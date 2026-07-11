@@ -1,4 +1,4 @@
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -6,11 +6,11 @@ direction LR
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
     - _api : ApiClient
-    - _jsonOpts : JsonSerializerOptions
     + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
 }
 
 class AdminFinanceUnifiedVM {
+    <<view model>>
     + Dashboard : FinanceDashboardVM
     + Withdraw : WithdrawPageVM
     + Transactions : TransactionPagedVM
@@ -19,10 +19,21 @@ class AdminFinanceUnifiedVM {
     + PendingRefunds : PagedResult~RefundRequestVM~
     + PayoutDays : string
     + CourseRevenues : List~InstructorCourseRevenueResponse~
-    + YearlySummaries : Dictionary~int,FinancialSummaryVM~
+    + YearlySummaries : Dictionary~int, FinancialSummaryVM~
+}
+
+class PagedResultWithdrawalHistoryVM["PagedResult~WithdrawalHistoryVM~"] {
+    + Items : List~WithdrawalHistoryVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
 }
 
 class WithdrawalHistoryVM {
+    <<view model>>
     + WithdrawalId : int
     + ManagerName : string?
     + Amount : decimal
@@ -44,7 +55,27 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
+class ApiResponseWithdrawal["ApiResponse~PagedResult~WithdrawalHistoryItem~~"] {
+    <<dto>>
+    + Success : bool
+    + Message : string
+    + Data : PagedResult~WithdrawalHistoryItem~
+    + Errors : List~string~
+}
+
+class PagedResultWithdrawalHistoryItem["PagedResult~WithdrawalHistoryItem~"] {
+    <<dto>>
+    + Items : List~WithdrawalHistoryItem~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
+}
+
 class WithdrawalHistoryItem {
+    <<dto>>
     + WithdrawalId : int
     + ManagerName : string?
     + Amount : decimal
@@ -56,10 +87,39 @@ class WithdrawalHistoryItem {
     + ArrivedAt : DateTime?
 }
 
-class StripeWithdrawalResponseDto {
-    + Id : string
-    + Status : string
-    + ArrivalDate : DateTime?
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~ *
+}
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~, int~~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~
+    - SyncStripePayoutStatuses(withdrawals: List~PlatformWithdrawal~) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~, int~~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + PlatformWithdrawals : DbSet~PlatformWithdrawal~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -90,74 +150,39 @@ class Manager {
     + SystemConfigs : ICollection~SystemConfig~
 }
 
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class IAdminFinanceService {
-    <<interface>>
-    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~ *
-}
-
-class IStripeConnectService {
-    <<interface>>
-    + GetPlatformPayoutStatusAsync(stripePayoutId: string) Task~StripeWithdrawalResponseDto~ *
-}
-
-%% ==================== BACKEND - REPOSITORY INTERFACES ====================
-
-class IAdminFinanceRepository {
-    <<interface>>
-    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~,int~~ *
-    + SaveChangesAsync() Task~int~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
-
-class AdminFinanceService {
-    - _repo : IAdminFinanceRepository
-    - _stripeConnect : IStripeConnectService
-    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~
-}
-
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
-
-class AdminFinanceRepository {
-    - _context : AppDbContext
-    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~,int~~
-    + SaveChangesAsync() Task~int~
-}
-
-%% ==================== BACKEND - DbContext ====================
-
-class AppDbContext {
-    + PlatformWithdrawals : DbSet~PlatformWithdrawal~
-    + Managers : DbSet~Manager~
-}
-
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION (hollow diamond) ===
-AdminFinanceUnifiedVM o-- WithdrawalHistoryVM
+%% === COMPOSITION (filled diamond) ===
+PlatformWithdrawal *-- Manager
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE
+%% === AGGREGATION (hollow diamond) ===
+AdminFinanceUnifiedVM o-- PagedResultWithdrawalHistoryVM
+PagedResultWithdrawalHistoryVM o-- WithdrawalHistoryVM
+PagedResultWithdrawalHistoryItem o-- WithdrawalHistoryItem
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AdminFinanceControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
-AdminFinanceService --> IStripeConnectService
 AdminFinanceRepository --> AppDbContext
-PlatformWithdrawal --> Manager
 
 %% === INTERFACE REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
-AdminFinanceControllerBE ..> WithdrawalHistoryItem
-IAdminFinanceService ..> WithdrawalHistoryItem
+AdminFinanceControllerFE ..> PagedResultWithdrawalHistoryVM
+
+AdminFinanceControllerBE ..> ApiResponseWithdrawal
+AdminFinanceControllerBE ..> PagedResultWithdrawalHistoryItem
+
 AdminFinanceService ..> WithdrawalHistoryItem
+AdminFinanceService ..> PagedResultWithdrawalHistoryItem
+AdminFinanceService ..> PlatformWithdrawal
+
 AdminFinanceRepository ..> PlatformWithdrawal
-IStripeConnectService ..> StripeWithdrawalResponseDto
-AdminFinanceService ..> StripeWithdrawalResponseDto
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

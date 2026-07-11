@@ -1,0 +1,170 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    + Index(year: int?, month: int?) Task~IActionResult~
+}
+
+class AdminFinanceUnifiedVM {
+    <<view model>>
+    + Dashboard : FinanceDashboardVM
+    + Withdraw : WithdrawPageVM
+    + PayoutDays : string
+}
+
+class FinanceDashboardVM {
+    <<view model>>
+    + Summary : FinancialSummaryVM
+}
+
+class FinancialSummaryVM {
+    <<view model>>
+    + GrossRevenue : decimal
+    + TotalPaidOut : decimal
+    + PendingEscrow : decimal
+    + PlatformNetProfit : decimal
+    + CurrentTransferRate : decimal
+    + TotalRefunded : decimal
+}
+
+class WithdrawPageVM {
+    <<view model>>
+    + Balance : PlatformBalanceVM
+}
+
+class PlatformBalanceVM {
+    <<view model>>
+    + Available : decimal
+    + Incoming : decimal
+    + Total : decimal
+    + Currency : string
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class AdminFinanceControllerBE["AdminFinanceController"] {
+    <<backend controller>>
+    - _financeService : IAdminFinanceService
+    + GetFinancialSummary(year: int?, month: int?) Task~IActionResult~
+    + GetPlatformBalance() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class FinancialSummaryResponse {
+    <<dto>>
+    + GrossRevenue : decimal
+    + TotalPaidOut : decimal
+    + PendingEscrow : decimal
+    + PlatformNetProfit : decimal
+    + CurrentTransferRate : decimal
+    + TotalRefunded : decimal
+}
+
+class PlatformBalanceResponse {
+    <<dto>>
+    + Available : decimal
+    + Incoming : decimal
+    + Total : decimal
+    + Currency : string
+}
+
+%% ==================== BACKEND - SERVICES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + GetFinancialSummaryAsync(year: int?, month: int?) Task~FinancialSummaryResponse~ *
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~ *
+}
+
+class AdminFinanceService {
+    - _financeRepo : IAdminFinanceRepository
+    - _stripeConnect : IStripeConnectService
+    + GetFinancialSummaryAsync(year: int?, month: int?) Task~FinancialSummaryResponse~
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
+}
+
+class IStripeConnectService {
+    <<interface>>
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~ *
+}
+
+class StripeConnectService {
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
+}
+
+%% ==================== BACKEND - REPOSITORIES ====================
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + GetTransactionsAsync() Task~List~Transaction~~ *
+    + GetPayoutsAsync() Task~List~Payout~~ *
+}
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + GetTransactionsAsync() Task~List~Transaction~~
+    + GetPayoutsAsync() Task~List~Payout~~
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + Transactions : DbSet~Transaction~
+    + Payouts : DbSet~Payout~
+}
+
+%% ==================== BACKEND - ENTITIES ====================
+
+class Transaction {
+    + TransactionId : int
+    + Amount : decimal
+    + Status : string
+    + CreatedAt : DateTime
+}
+
+class Payout {
+    + PayoutId : int
+    + TotalAmount : decimal
+    + InstructorReceived : decimal
+    + PlatformReceived : decimal
+    + PayoutStatus : string
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+AdminFinanceUnifiedVM --> FinanceDashboardVM
+AdminFinanceUnifiedVM --> WithdrawPageVM
+FinanceDashboardVM --> FinancialSummaryVM
+WithdrawPageVM --> PlatformBalanceVM
+
+AdminFinanceControllerBE --> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceService --> IStripeConnectService
+AdminFinanceRepository --> AppDbContext
+AppDbContext --> Transaction
+AppDbContext --> Payout
+
+%% === REALIZATION ===
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+StripeConnectService ..|> IStripeConnectService
+
+%% === DEPENDENCY ===
+AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
+AdminFinanceControllerFE ..> AdminFinanceControllerBE : API calls
+AdminFinanceControllerBE ..> FinancialSummaryResponse
+AdminFinanceControllerBE ..> PlatformBalanceResponse
+IAdminFinanceService ..> FinancialSummaryResponse
+IAdminFinanceService ..> PlatformBalanceResponse
+IAdminFinanceRepository ..> Transaction
+IAdminFinanceRepository ..> Payout
+AdminFinanceRepository ..> Transaction
+AdminFinanceRepository ..> Payout
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

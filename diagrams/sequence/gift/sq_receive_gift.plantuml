@@ -1,0 +1,159 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Receive a gift
+
+actor User as act
+participant "GiftClaimPage" as view
+
+participant "LoginPage" as login_view
+participant "GiftController" as fe_ctrl <<frontend controller>>
+participant "GiftController" as be_ctrl <<backend controller>>
+participant ":GiftService" as sv
+
+participant ":GiftRepository" as gift_repo
+
+participant ":CourseRepository" as course_repo
+participant ":EnrollmentRepository" as enroll_repo
+participant ":TransactionRepository" as trans_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+
+act -> view++: Click "Claim Your Gift" button
+view -> fe_ctrl++: POST /Gift/ClaimGiftAjax (AJAX)
+
+fe_ctrl -> fe_ctrl++: Check AccessToken
+fe_ctrl--
+alt Unauthenticated
+    fe_ctrl -->> view: Return JSON (success=false, "Please login first")
+    view -->> login_view: Redirect to Login/Registration page
+    activate login_view
+    login_view -->> act: Display Login/Registration page
+    deactivate login_view
+else Authenticated
+    fe_ctrl -> be_ctrl++: POST /api/gift/claim
+    be_ctrl -> sv++: ClaimGiftAsync(userId, token)
+    
+    sv -> gift_repo++: GetByTokenAsync(token)
+    gift_repo -> ctx++: Gifts.FirstOrDefaultAsync(...)
+    ctx -> db++: Execute query
+    db -->> ctx--: Return data
+    ctx -->> gift_repo--: Return Gift entity
+    gift_repo -->> sv--: Return Gift entity
+    
+    sv -> sv++: ValidateGiftForClaiming(gift)
+    sv--
+    alt Gift Already Claimed
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false, "already claimed")
+        view -->> act: Display already claimed message
+    else Refunded Gift
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false, "This gift has been refunded and cannot be claimed.")
+        view -->> act: Display refunded error message
+    else Gift Valid For Claim
+        sv -> course_repo++: GetByIdAsync(courseId)
+        course_repo -> ctx++: Courses.FirstOrDefaultAsync(...)
+        ctx -> db++: Execute query
+        db -->> ctx--: Return data
+        ctx -->> course_repo--: Return Course entity
+        course_repo -->> sv--: Return Course entity
+        
+        sv -> enroll_repo++: GetEnrollmentAsync(userId, courseId)
+        enroll_repo -> ctx++: Enrollments.FirstOrDefaultAsync(...)
+        ctx -> db++: Execute query
+        db -->> ctx--: Return data
+        ctx -->> enroll_repo--: Return Enrollment entity or null
+        enroll_repo -->> sv--: Return Enrollment entity or null
+        
+        sv -> sv++: EnsureRecipientNotAlreadyEnrolled
+        sv--
+        alt Recipient already enrolled
+            sv -->> be_ctrl: throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Return JSON (success=false, "You already own this course in your library")
+            view -->> act: Display already enrolled error message
+        else Not Enrolled
+            sv -> enroll_repo++: BeginTransactionAsync()
+            enroll_repo -> ctx++: Database.BeginTransactionAsync()
+            ctx -> db++: Begin transaction
+            db -->> ctx--: Transaction started
+            ctx -->> enroll_repo--: Return IDbContextTransaction
+            enroll_repo -->> sv--: Return transaction
+            
+            sv -> sv++: CreateEnrollmentWithinTransactionAsync
+            sv -> enroll_repo++: AddEnrollmentAsync(enrollment)
+            enroll_repo -->> sv--: Return result
+            sv -> enroll_repo++: SaveChangesAsync()
+            enroll_repo -> ctx++: SaveChangesAsync()
+            ctx -> db++: Execute query
+            db -->> ctx--: Return data
+            ctx -->> enroll_repo--: Return 1
+            enroll_repo -->> sv--: Return 1
+            sv--
+            
+            sv -> sv++: MarkGiftAsClaimedWithinTransactionAsync
+            sv -> gift_repo++: Update(gift)
+            gift_repo -->> sv--: Return result
+            sv -> gift_repo++: SaveChangesAsync()
+            gift_repo -> ctx++: SaveChangesAsync()
+            ctx -> db++: Execute query
+            db -->> ctx--: Return data
+            ctx -->> gift_repo--: Return 1
+            gift_repo -->> sv--: Return 1
+            sv--
+            
+            sv -> trans_repo++: RejectPendingRefundForGiftClaimedAsync(orderItemId)
+            trans_repo -> ctx++: Transactions.FirstOrDefaultAsync(...)
+            ctx -> db++: Execute query
+            db -->> ctx--: Return data
+            ctx -->> trans_repo--: Return result
+            trans_repo -->> sv--: Return boolean
+            
+            sv -> sv++: Commit transaction
+            sv -> ctx++: transaction.CommitAsync()
+            ctx -> db++: Commit
+            db -->> ctx--: Committed
+            ctx -->> sv--: Return result
+            sv--
+            
+            sv -> sv++: NotifyAdminFinanceOfRefundRejectionAsync
+            sv--
+            
+            sv -->> be_ctrl--: Return result
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display claim success message and redirect to study page
+        end
+    end
+end
+@enduml

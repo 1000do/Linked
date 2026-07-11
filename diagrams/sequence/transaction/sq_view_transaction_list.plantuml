@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white
+            BackgroundColor white   
         }
         groupHeader{
             BackgroundColor white
@@ -25,48 +25,76 @@
 </style>
 
 hide footbox
-
 mainframe View Transaction List
-actor User as act
 
-participant "Transaction/History.cshtml" as view
+actor User as act
+participant "PurchaseHistoryPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant ":TransactionPagedVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
-participant ":TransactionService" as sv
-participant ":TransactionRepository" as repo
+participant ":ITransactionService" as sv
+participant ":PagedResult" as paged_dto
+participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
-act++
-act->view++: Access Purchase History page
-view->fe_ctrl++: Send GET /Transaction/History
+act ++
+act -> view++: 1. Access purchase history page
+view -> fe_ctrl++: 2. GET /Transaction/History
 
-fe_ctrl->be_ctrl++: Send GET /api/transactions/my (with Bearer Token)
+fe_ctrl -> fe_ctrl++: 3. Validate actor's authentication and authorization
+fe_ctrl--
 
-be_ctrl->be_ctrl++: Authorize Student role
-be_ctrl--
+alt Session Invalid
+    fe_ctrl -->> login_view: 3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: 3.2. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: 3.3. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: 3.4. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> vm++: 4. Call TransactionPagedVM(page, pageSize)
+    vm -->> fe_ctrl--: 5. Return TransactionPagedVM object
 
-alt [Unauthorized]
-    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>view: Redirect to Account/Login
-    view-->>act: Display Login page
-else [Authorized]
-    be_ctrl->sv++: Call GetUserTransactionsAsync(userId, page, pageSize, ...)
-    sv->repo++: Call GetUserTransactionsAsync(userId, page, pageSize, ...)
-    repo->ctx++: Query user's active transactions
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return data
-    ctx-->>repo--: Return data
-    repo-->>sv--: Return data
+fe_ctrl -> be_ctrl++: 6. GET /api/transactions/my
+be_ctrl -> sv++: 7. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+sv -> sv++: 8. Validate pagination parameters
+sv--
+
+sv -> repo++: 9. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+
+repo -> ctx++: 10. Calculate totalCount and query items
+ctx -> db++: 11. Execute query
+db -->> ctx--: 12. Return data
+ctx -->> repo--: 13. Return items and totalCount
+
+repo -->> sv--: 14. Return items and totalCount
+
+    sv -> paged_dto++: 15. Call PagedResult(items, totalCount, page, pageSize)
+    paged_dto -->> sv--: 16. Return PagedResult object
     
-    sv->sv++: Map to PagedResult
-    sv--
-    sv-->>be_ctrl--: Return DTO list
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
+    sv -->> be_ctrl: 17. Return PagedResult object
+    deactivate sv
+    be_ctrl -->> fe_ctrl: 18. Return statusCode 200
+    deactivate be_ctrl
     
-    fe_ctrl->fe_ctrl++: Deserialize response
+    fe_ctrl -> fe_ctrl++: 19. Deserialize JSON to TransactionPagedVM
     fe_ctrl--
-    fe_ctrl-->>view--: Return View
-    view-->>act--: Display purchase history list
+    
+    fe_ctrl -->> view: 20. Return View(vm)
+    deactivate fe_ctrl
+
+    view -> view++: 21. Check totalCount
+    view--
+    alt Transaction history is empty (totalCount == 0)
+        view -->> act: 21.1. Display empty history card with "No transactions found" message
+    else Has transactions
+        view -->> act--: 21.2. Display list of transactions and total purchases metric
+    end
 end
+
 @enduml

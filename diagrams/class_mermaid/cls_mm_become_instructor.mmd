@@ -1,5 +1,5 @@
-classDiagram
-direction TB
+classDiagram-v2
+direction LR
 
 %% ==================== FRONTEND ====================
 
@@ -7,20 +7,27 @@ class InstructorControllerFE["InstructorController"] {
     <<frontend controller>>
     + Apply() Task~IActionResult~
     + Apply(model: InstructorApplyViewModel) Task~IActionResult~
+    + ApplicationStatus() Task~IActionResult~
+    - LoadEmailVerifiedAsync() Task
+    - LoadStripeCountriesAsync() Task~List~
+    - LoadCategoriesAsync() Task~List~
 }
 
 class InstructorApplyViewModel {
-    - ProfessionalTitle : string
-    - ExpertiseCategories : string
-    - LinkedinUrl : string?
-    - YoutubeUrl : string?
-    - FacebookUrl : string?
-    - StripeCountry : string
-    - DocumentFiles : List~IFormFile~?
-    - DocumentFile : IFormFile?
-    - IsResubmit : bool
-    - ExistingDocumentUrl : string?
-    - RetainedDocumentUrls : List~string~?
+    <<view model>>
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentFile : IFormFile?
+    + DocumentFiles : List~IFormFile~?
+    + ExistingDocumentUrl : string?
+    + ExistingDocumentUrls : List~string~?
+    + RetainedDocumentUrls : List~string~?
+    + IsResubmit : bool
+    + RejectionReason : string?
+    + StripeCountry : string
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -28,152 +35,114 @@ class InstructorApplyViewModel {
 class InstructorControllerBE["InstructorController"] {
     <<backend controller>>
     - _instructorService : IInstructorService
+    
     + Apply(request: InstructorApplicationRequest) Task~IActionResult~
+    + GetApplyInfo() Task~IActionResult~
+    + GetDashboard() Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
 class InstructorApplicationRequest {
-    - ProfessionalTitle : string
-    - ExpertiseCategories : string
-    - LinkedinUrl : string?
-    - YoutubeUrl : string?
-    - FacebookUrl : string?
-    - StripeCountry : string
-    - DocumentFiles : List~IFormFile~?
-    - DocumentFile : IFormFile?
-    - RetainedDocumentUrls : List~string~?
+    <<dto>>
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentFile : IFormFile?
+    + DocumentFiles : List~IFormFile~?
+    + RetainedDocumentUrls : List~string~?
+    + StripeCountry : string
 }
 
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Account {
-    - AccountId : int
-    - Email : string
-    - Username : string?
-    - PasswordHash : string?
-    - PhoneNumber : string?
-    - AccountStatus : string?
-    - AccountFlagCount : int?
-    - AccountLastLoginAt : DateTime?
-    - AuthProvider : string?
-    - AvatarUrl : string?
-    - RefreshToken : string?
-    - RefreshTokenExpiryTime : DateTime?
-    - IsVerified : bool
-    - AccountCreatedAt : DateTime?
-    - AccountUpdatedAt : DateTime?
-    - User : User?
+class InstructorDashboardDto {
+    <<dto>>
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + DocumentUrl : string?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + StripeCountry : string?
 }
 
-class User {
-    - UserId : int
-    - FullName : string
-    - Bio : string?
-    - DateOfBirth : DateOnly?
-    - Instructor : Instructor?
-    - UserNavigation : Account
-}
-
-class Instructor {
-    - InstructorId : int
-    - ProfessionalTitle : string?
-    - ExpertiseCategories : string?
-    - LinkedinUrl : string?
-    - YoutubeUrl : string?
-    - FacebookUrl : string?
-    - DocumentUrl : string?
-    - ApprovalStatus : string?
-    - RejectionReason : string?
-    - StripeAccountId : string?
-    - StripeOnboardingStatus : string?
-    - PayoutsEnabled : bool?
-    - ChargesEnabled : bool?
-    - StripeCountry : string?
-    - InstructorNavigation : User
-}
-
-%% ==================== BACKEND - SERVICE INTERFACES ====================
+%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
 
 class IInstructorService {
     <<interface>>
-    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~ *
+    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~
+    + GetRejectedApplicationInfoAsync(userId: int) Task~InstructorDashboardDto?~
+    + GetInstructorDashboardAsync(userId: int) Task~InstructorDashboardDto?~
 }
 
 class IFileUploadService {
     <<interface>>
-    + UploadImageAsync(file: IFormFile) Task~string?~ *
+    + UploadImageAsync(file: IFormFile) Task~string~
 }
 
 class IInstructorRepository {
     <<interface>>
-    + GetByIdAsync(id: int) Task~Instructor?~ *
-    + AddAsync(instructor: Instructor) Task~void~ *
-    + SaveChangesAsync() Task~int~ *
+    + GetByIdAsync(userId: int) Task~Instructor~
+    + AddAsync(instructor: Instructor) Task
+    + SaveChangesAsync() Task~int~
 }
 
-class IUserRepository {
-    <<interface>>
-    + GetAccountByIdAsync(id: int) Task~Account?~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class InstructorService {
     - _repo : IInstructorRepository
     - _uploadService : IFileUploadService
-    - _userRepo : IUserRepository
+    
     + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~
 }
 
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
-
 class InstructorRepository {
     - _context : AppDbContext
-    + GetByIdAsync(id: int) Task~Instructor?~
-    + AddAsync(instructor: Instructor) Task~void~
+    + GetByIdAsync(userId: int) Task~Instructor~
+    + AddAsync(instructor: Instructor) Task
     + SaveChangesAsync() Task~int~
 }
 
-class UserRepository {
-    - _context : AppDbContext
-    + GetAccountByIdAsync(id: int) Task~Account?~
+class AppDbContext {
+    + Instructors : DbSet~Instructor~
 }
 
-%% ==================== BACKEND - DbContext ====================
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
 
-class AppDbContext {
-    + Accounts : DbSet~Account~
-    + Users : DbSet~User~
-    + Instructors : DbSet~Instructor~
+class Instructor {
+    + InstructorId : int
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string
+    + ApprovalStatus : string
+    + StripeCountry : string
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-Account *-- User
-User *-- Instructor
-
-%% === UNIDIRECTIONAL ASSOCIATION ===
+InstructorControllerFE ..> InstructorApplyViewModel
 InstructorControllerFE ..> InstructorControllerBE
+
 InstructorControllerBE --> IInstructorService
+InstructorControllerBE ..> InstructorApplicationRequest
+InstructorControllerBE ..> InstructorDashboardDto
+
+InstructorService ..|> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorService --> IFileUploadService
-InstructorService --> IUserRepository
-InstructorRepository --> AppDbContext
-UserRepository --> AppDbContext
-
-%% === INTERFACE REALIZATION ===
-InstructorService ..|> IInstructorService
-InstructorRepository ..|> IInstructorRepository
-UserRepository ..|> IUserRepository
-
-%% === DEPENDENCY ===
-InstructorControllerFE ..> InstructorApplyViewModel
-InstructorControllerBE ..> InstructorApplicationRequest
 InstructorService ..> InstructorApplicationRequest
+InstructorService ..> InstructorDashboardDto
+InstructorService ..> Instructor
+
+InstructorRepository ..|> IInstructorRepository
+InstructorRepository --> AppDbContext
 InstructorRepository ..> Instructor
-UserRepository ..> Account
+
+AppDbContext --> Instructor
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

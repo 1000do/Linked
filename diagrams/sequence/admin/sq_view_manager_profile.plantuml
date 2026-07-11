@@ -1,0 +1,99 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Profile (For Manager)
+
+actor "Manager\n(Admin/Staff)" as act
+participant "ProfilePage" as view
+participant "LoginPage" as login_view
+participant "AdminProfileController" as fe_ctrl <<frontend controller>>
+participant "AdminProfileController" as be_ctrl <<backend controller>>
+participant ":ManagerProfileService" as profile_sv
+participant ":ManagerRepository" as manager_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view: Access the profile page
+view -> fe_ctrl++: GET /AdminProfile/Index
+
+fe_ctrl -> fe_ctrl: Validate active login session
+alt Session Expired / Unauthorized Access
+    fe_ctrl -->> login_view: Redirect to /Account/Login
+    activate login_view
+    login_view -->> act: Display Login page
+    deactivate login_view
+else Valid Session
+    fe_ctrl -> be_ctrl++: GET /api/admin/profile
+    
+    be_ctrl -> be_ctrl: Validate ClaimTypes.NameIdentifier
+    
+    alt Session Invalid
+        be_ctrl -->> fe_ctrl: Return statusCode 401
+        fe_ctrl -->> login_view: Redirect to /Account/Login
+        activate login_view
+        login_view -->> act: Display Login page
+        deactivate login_view
+    else Valid Claim
+        be_ctrl -> profile_sv++: GetProfileAsync(userId)
+        profile_sv -> manager_repo++: GetManagerByIdAsync(userId)
+        
+        manager_repo -> ctx++: Query Manager\n(Include ManagerNavigation & Lockouts)
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Data
+        
+        alt Manager Profile Not Found
+            ctx -->> manager_repo: null
+            manager_repo -->> profile_sv: null
+            profile_sv -->> be_ctrl: null
+            be_ctrl -->> fe_ctrl: Return statusCode 404
+            fe_ctrl -->> login_view: Redirect to /Account/Login\nwith error message
+            activate login_view
+            login_view -->> act: Display error message regarding profile retrieval failure
+            deactivate login_view
+        else Manager Profile Found
+            ctx -->> manager_repo--: Manager Entity
+            manager_repo -->> profile_sv--: Manager Entity
+            
+            profile_sv -> profile_sv: Retrieve account's active lockout history\n(From ManagerNavigation.Lockouts)
+            
+            profile_sv -> profile_sv: Map to ManagerProfileResponse
+            profile_sv -->> be_ctrl--: Return ManagerProfileResponse
+            
+            be_ctrl -->> fe_ctrl--: Return statusCode 200 (ManagerProfileResponse)
+            
+            fe_ctrl -> fe_ctrl: Deserialize to AdminProfileViewModel
+            fe_ctrl -->> view--: Return View(AdminProfileViewModel)
+            
+            view -->> act--: Display manager profile details,\naccount information, and lockout status
+        end
+    end
+end
+
+@enduml

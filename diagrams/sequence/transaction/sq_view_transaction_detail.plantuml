@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white
+            BackgroundColor white   
         }
         groupHeader{
             BackgroundColor white
@@ -25,43 +25,87 @@
 </style>
 
 hide footbox
-
 mainframe View Transaction Detail
-actor User as act
 
-participant "Transaction/HistoryDetail.cshtml" as view
+actor User as act
+participant "PurchaseHistoryPage" as list_view
+participant "HistoryDetailPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant ":TransactionDetailVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
-participant ":TransactionService" as sv
-participant ":TransactionRepository" as repo
+participant ":ITransactionService" as sv
+participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
+participant ":TransactionDetailDto" as dto
 database Database as db
 
-act++
-act->view++: Click chevron/details button on transaction card
-view->fe_ctrl++: Send GET /Transaction/HistoryDetail/{id}
+act ++
+list_view ++
 
-fe_ctrl->be_ctrl++: Send GET /api/transactions/{id} (with Bearer Token)
+act -> list_view: 1. Click "View Detail" button next to a transaction record
+list_view -> fe_ctrl++: 2. GET /Transaction/HistoryDetail/{id}
 
-alt [Transaction not found (404)]
-    be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
-    fe_ctrl-->>view: Redirect to Transaction/History with Error message
-    view-->>act: Redirect to Purchase History page and display error
-else [Transaction is found]
-    be_ctrl->sv++: Call GetTransactionDetailAsync(transactionId)
-    sv->repo++: Call GetTransactionDetailAsync(transactionId)
+fe_ctrl -> fe_ctrl++: 3. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: 3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: 3.2. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: 3.3. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: 3.4. Display error message
+else Valid actor's authentication and authorization
     
-    repo->ctx++: Query detailed transaction data
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return data
-    ctx-->>repo--: Return DTO
-    repo-->>sv--: Return DTO
-    sv-->>be_ctrl--: Return DTO
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with JSON data
+    fe_ctrl -> be_ctrl++: 4. GET /api/transactions/{id}
     
-    fe_ctrl->fe_ctrl++: Deserialize response
-    fe_ctrl--
-    fe_ctrl-->>view--: Return View
-    view-->>act--: Display invoice details page
+    be_ctrl -> sv++: 5. GetTransactionDetailAsync(id)
+    
+    sv -> repo++: 6. GetTransactionDetailAsync(id)
+    
+    repo -> ctx++: 7. Query transaction details
+    ctx -> db++: 8. Execute SELECT with JOINs (Courses, Users, OrderItems)
+    db -->> ctx--: 9. Return record
+    
+    ctx -> dto++: 10. Call TransactionDetailDto(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
+    dto -->> ctx--: 11. Return TransactionDetailDto object
+    
+    ctx -->> repo--: 12. Return TransactionDetailDto
+    repo -->> sv--: 13. Return TransactionDetailDto
+    
+    sv -->> be_ctrl--: 14. Return TransactionDetailDto
+    
+    be_ctrl -> be_ctrl++: 15. Check if detail is null
+    be_ctrl--
+    
+    alt Transaction Not Found
+        be_ctrl -->> fe_ctrl: 15.1. Return 404 NotFound
+        fe_ctrl -->> list_view: 15.2. Redirect to History list (TempData["Error"])
+        list_view -->> act--: 15.3. Display "Transaction not found" message
+    else Transaction Found (Normal Flow)
+        be_ctrl -->> fe_ctrl--: 15.4. Return 200 OK (ApiResponse<TransactionDetailDto>)
+        
+        fe_ctrl -> vm++: 15.5. Call TransactionDetailVM(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
+        vm -->> fe_ctrl--: 15.6. Return TransactionDetailVM object
+        
+        fe_ctrl -->> view++: 15.7. Return View(TransactionDetailVM)
+        deactivate fe_ctrl
+        deactivate list_view
+        
+        view -> view++: 16. Render transaction receipt
+        view--
+        
+        alt Refunded Transaction
+            view -->> act: 16.1. Display refund notification banner (Reason, Admin Note)
+        else Normal Transaction
+            view -->> act--: 16.2. Display detailed financial breakdown, purchaser info, and course details
+        end
+    end
 end
+
+deactivate act
+
 @enduml

@@ -1,5 +1,6 @@
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -19,7 +20,9 @@ namespace CourseMarketplaceFE.Controllers
             _api = api;
         }
 
+        // UC-75: View Profile (For Manager) — Staff và Admin
         [HttpGet]
+        [Authorize(Roles = "staff,admin")]
         public async Task<IActionResult> Index()
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login", "Account");
@@ -36,7 +39,9 @@ namespace CourseMarketplaceFE.Controllers
             return RedirectToAction("Login", "Account");
         }
 
+        // UC-76: Edit Profile (For Manager GET) — Staff và Admin
         [HttpGet]
+        [Authorize(Roles = "staff,admin")]
         public async Task<IActionResult> Edit()
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login", "Account");
@@ -63,7 +68,9 @@ namespace CourseMarketplaceFE.Controllers
             return RedirectToAction("Index");
         }
 
+        // UC-76: Edit Profile (For Manager POST) — Staff và Admin
         [HttpPost]
+        [Authorize(Roles = "staff,admin")]
         public async Task<IActionResult> Edit(UpdateAdminProfileViewModel model)
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) 
@@ -131,7 +138,9 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false, message = errMsg });
         }
 
+        // UC-75/76: Change Password (For Manager) — Staff và Admin
         [HttpPost]
+        [Authorize(Roles = "staff,admin")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordFERequest model)
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) 
