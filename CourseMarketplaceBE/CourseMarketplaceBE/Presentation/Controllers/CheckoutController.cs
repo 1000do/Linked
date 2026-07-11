@@ -24,12 +24,20 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class CheckoutController : ControllerBase
 {
     private readonly ICheckoutService _checkoutService;
+    private readonly IGiftCheckoutService _giftCheckoutService;
     private readonly IAuthService _authService;
+    private readonly IPaymentGatewayService _paymentGateway;
 
-    public CheckoutController(ICheckoutService checkoutService, IAuthService authService)
+    public CheckoutController(
+        ICheckoutService checkoutService, 
+        IGiftCheckoutService giftCheckoutService, 
+        IAuthService authService,
+        IPaymentGatewayService paymentGateway)
     {
         _checkoutService = checkoutService;
+        _giftCheckoutService = giftCheckoutService;
         _authService = authService;
+        _paymentGateway = paymentGateway;
     }
 
     // ─── Helper lấy userId từ JWT Claim ──────────────────────────────────
@@ -175,7 +183,7 @@ public class CheckoutController : ControllerBase
             if (string.IsNullOrWhiteSpace(request.SuccessUrl) || string.IsNullOrWhiteSpace(request.CancelUrl))
                 return BadRequest(ApiResponse<string>.ErrorResponse("SuccessUrl or CancelUrl is missing."));
 
-            var result = await _checkoutService.InitiateGiftCheckoutAsync(userId.Value, request);
+            var result = await _giftCheckoutService.InitiateGiftCheckoutAsync(userId.Value, request);
             return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Gift checkout session created."));
         }
         catch (InvalidOperationException ex)
@@ -206,7 +214,7 @@ public class CheckoutController : ControllerBase
 
         try
         {
-            var result = await _checkoutService.InitiateGiftPaymentIntentAsync(userId.Value, request);
+            var result = await _giftCheckoutService.InitiateGiftPaymentIntentAsync(userId.Value, request);
             return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Gift payment intent created successfully."));
         }
         catch (InvalidOperationException ex)
@@ -237,8 +245,20 @@ public class CheckoutController : ControllerBase
 
         try
         {
-            Console.WriteLine($"[BE-CONTROLLER] Calling _checkoutService.ProcessPaymentSuccessAsync...");
-            await _checkoutService.ProcessPaymentSuccessAsync(sessionId);
+            Console.WriteLine($"[BE-CONTROLLER] Fetching metadata for session...");
+            var metadata = await _paymentGateway.GetSessionMetadataAsync(sessionId);
+            bool isGift = metadata != null && metadata.TryGetValue("checkoutType", out var type) && type == "gift";
+
+            if (isGift)
+            {
+                Console.WriteLine($"[BE-CONTROLLER] Calling _giftCheckoutService.ProcessPaymentSuccessAsync...");
+                await _giftCheckoutService.ProcessPaymentSuccessAsync(sessionId);
+            }
+            else
+            {
+                Console.WriteLine($"[BE-CONTROLLER] Calling _checkoutService.ProcessPaymentSuccessAsync...");
+                await _checkoutService.ProcessPaymentSuccessAsync(sessionId);
+            }
             Console.WriteLine($"[BE-CONTROLLER] ✅ ProcessPaymentSuccessAsync completed WITHOUT exception.");
             return Ok(ApiResponse<string>.SuccessResponse("Payment successful and course access granted."));
         }
@@ -271,6 +291,36 @@ public class CheckoutController : ControllerBase
             await _checkoutService.ProcessPaymentIntentSuccessAsync(paymentIntentId);
             Console.WriteLine($"[BE-CONTROLLER] ✅ ProcessPaymentIntentSuccessAsync completed WITHOUT exception.");
             return Ok(ApiResponse<string>.SuccessResponse("Payment successful and course access granted."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"[BE-CONTROLLER] ❌ InvalidOperationException: {ex.Message}");
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[BE-CONTROLLER] ❌ EXCEPTION: {ex.Message}\n{ex.StackTrace}");
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Payment processing error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/checkout/gift-success-intent?payment_intent_id=pi_xxx
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("gift-success-intent")]
+    public async Task<IActionResult> GiftSuccessIntent([FromQuery(Name = "payment_intent_id")] string paymentIntentId)
+    {
+        Console.WriteLine($"[BE-CONTROLLER] ═══ CheckoutController.GiftSuccessIntent ENTRY ═══ payment_intent_id={paymentIntentId}");
+
+        if (string.IsNullOrWhiteSpace(paymentIntentId))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Missing payment_intent_id."));
+
+        try
+        {
+            Console.WriteLine($"[BE-CONTROLLER] Calling _giftCheckoutService.ProcessPaymentIntentSuccessAsync...");
+            await _giftCheckoutService.ProcessPaymentIntentSuccessAsync(paymentIntentId);
+            Console.WriteLine($"[BE-CONTROLLER] ✅ ProcessPaymentIntentSuccessAsync completed WITHOUT exception.");
+            return Ok(ApiResponse<string>.SuccessResponse("Gift payment successful and email sent."));
         }
         catch (InvalidOperationException ex)
         {
