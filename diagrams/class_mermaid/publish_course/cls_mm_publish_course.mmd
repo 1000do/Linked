@@ -57,6 +57,7 @@ class Course {
     + Coupon : Coupon?
     + Enrollments : ICollection~Enrollment~
     + Instructor : Instructor?
+    + CourseQuizzes : ICollection~CourseQuiz~
     + Lessons : ICollection~Lesson~
     + OrderItems : ICollection~OrderItem~
     + WishlistItems : ICollection~WishlistItem~
@@ -73,7 +74,7 @@ class Course {
 
 class ICourseAiModerationService {
     <<interface>>
-    + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task *
+    + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task~bool~ *
     + HandleCourseModerationWithAIAsync(request: CourseModerationRequest) Task~CourseModerationResult~ *
 }
 
@@ -114,12 +115,12 @@ class CourseAiModerationService {
     - _redisService : IRedisService
     - _taskQueue : IBackgroundTaskQueue
     
-    + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task
+    + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task~bool~
     + HandleCourseModerationWithAIAsync(request: CourseModerationRequest) Task~CourseModerationResult~
     - GetCourseForModerationAsync(courseId: int) Task~CourseModerationDetailResponse?~
     - UpdateCourseStatusAndClearCacheAsync(courseId: int, status: string, instructorId: int) Task
     - PrepareForCourseAIModeration(courseId: int) Task~PrepareForCourseAIModerationResult~
-    - CreateModerationRequests(courseId: int, prep: PrepareForCourseAIModerationResult) Tuple
+    - CreateModerationRequests(courseId: int, prep: PrepareForCourseAIModerationResult) (SemanticDuplicationRequest, CourseHarmfulRequest)
     - ResolveCourseAIModerationResult(result: CourseModerationResult) Task
     - LogCourseAiModeration(command: LogCourseAiModerationCommand) Task
     - NotifyManagersAsync(title: string, content: string, linkAction: string?) Task
