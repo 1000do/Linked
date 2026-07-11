@@ -30,6 +30,8 @@ mainframe Delete Notifications (User/Instructor)
 
 actor User as act
 participant "NotificationPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":INotificationService" as sv
@@ -44,55 +46,69 @@ view->view++:2. Show Confirm Delete dialog
 view--
 act->view:3. Click "Delete" to confirm
 
-view->fe_ctrl++:4. Send DELETE /Notification/Delete/{id}
-fe_ctrl->be_ctrl++:5. Send DELETE /api/Notification/{id} (with Bearer Token)
+view->fe_ctrl++:4. DELETE /Notification/Delete/{id}
 
-be_ctrl->sv++:6. Call DeleteNotificationAsync(id, userId)
-sv->repo++:7. Call GetByIdAsync(id)
-repo->ctx++:8. Call GetByIdAsync(id)
-ctx->db++:9. Execute SELECT query
-db-->>ctx--:10. Return notification entity
-ctx-->>repo--:11. Return notification entity
-repo-->>sv--:12. Return notification entity
+fe_ctrl -> fe_ctrl++:5. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:5.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:5.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page:5.2. Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--:5.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++:5.3. DELETE /api/Notification/{id}
+    
+    be_ctrl->sv++:5.3.1. Call DeleteNotificationAsync(id, userId)
+sv->repo++:5.3.2. Call GetByIdAsync(id)
+repo->ctx++:5.3.3. Call GetByIdAsync(id)
+ctx->db++:5.3.4. Execute SELECT query
+db-->>ctx--:5.3.5. Return notification entity
+ctx-->>repo--:5.3.6. Return notification entity
+repo-->>sv--:5.3.7. Return notification entity
 
 alt [notification == null || notification.ReceiverId != userId]
-    sv-->>be_ctrl:12.1. throw KeyNotFoundException
-    be_ctrl-->>fe_ctrl:12.1.1. Return statusCode 404 (NotFound)
-    fe_ctrl-->>view:12.1.2. Return JSON error response
-    view-->>act:12.1.3. Display deletion failure message
+    sv-->>be_ctrl:5.3.7.1. throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl:5.3.7.1.1. Return statusCode 404 (NotFound)
+    fe_ctrl-->>view:5.3.7.1.2. Return JSON error response
+    view-->>act:5.3.7.1.3. Display deletion failure message
 else [notification exists and belongs to user]
-    sv->repo++:12.2. Call Delete(noti)
-    repo->ctx++:12.2.1. Set IsRemoved = true and Update
-    ctx-->>repo--:12.2.2. Return
-    repo-->>sv--:12.2.3. Return
+    sv->repo++:5.3.7.2. Call Delete(noti)
+    repo->ctx++:5.3.7.2.1. Set IsRemoved = true and Update
+    ctx-->>repo--:5.3.7.2.2. Return
+    repo-->>sv--:5.3.7.2.3. Return
     
-    sv->repo++:12.2.4. Call SaveChangesAsync()
-    repo->ctx++:12.2.5. Call SaveChangesAsync()
-    ctx->db++:12.2.6. Execute UPDATE statement
+    sv->repo++:5.3.7.2.4. Call SaveChangesAsync()
+    repo->ctx++:5.3.7.2.5. Call SaveChangesAsync()
+    ctx->db++:5.3.7.2.6. Execute UPDATE statement
     
-alt [Database Save Fails (throws DbUpdateException)]
-        db-->>ctx:12.2.6.1. Throw DbUpdateException
-        ctx-->>repo:12.2.6.1.1. Throw DbUpdateException
-        repo-->>sv:12.2.6.1.2. Throw NotificationException
-        sv-->>be_ctrl:12.2.6.1.3. Throw BadRequestException
-        be_ctrl-->>fe_ctrl:12.2.6.1.4. Return statusCode 400 (BadRequest)
-        fe_ctrl-->>view:12.2.6.1.5. Return JSON error response
-        view-->>act:12.2.6.1.6. Display deletion failure message
-else [Database Save Succeeds]
-        db-->>ctx--:12.2.6.2. Return result
-        ctx-->>repo--:12.2.6.2.1. Return result
-        repo-->>sv--:12.2.6.2.2. Return result
+alt Database Save Failure
+        db-->>ctx:5.3.7.2.6.1. Throw DbUpdateException
+        ctx-->>repo:5.3.7.2.6.1.1. Throw DbUpdateException
+        repo-->>sv:5.3.7.2.6.1.2. Throw NotificationException
+        sv-->>be_ctrl:5.3.7.2.6.1.3. Throw BadRequestException
+        be_ctrl-->>fe_ctrl:5.3.7.2.6.1.4. Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view:5.3.7.2.6.1.5. Return JSON error response
+        view-->>act:5.3.7.2.6.1.6. Display deletion failure message
+else Database Save Success
+        db-->>ctx--:5.3.7.2.6.2. Return result
+        ctx-->>repo--:5.3.7.2.6.2.1. Return result
+        repo-->>sv--:5.3.7.2.6.2.2. Return result
         
-        sv->hub++:12.2.6.2.3. Call Clients.All.SendAsync("ReceiveNotification")
-        hub-->>sv:12.2.6.2.4. Broadcast notification via SignalR
+        sv->hub++:5.3.7.2.6.2.3. Call Clients.All.SendAsync("ReceiveNotification")
+        hub-->>sv:5.3.7.2.6.2.4. Broadcast notification via SignalR
         hub--
         
-        sv-->>be_ctrl--:12.2.6.2.5. Return true
-        be_ctrl-->>fe_ctrl--:12.2.6.2.6. Return statusCode 200 (Ok)
-        fe_ctrl-->>view--:12.2.6.2.7. Return JSON success response
-        view->view++:12.2.6.2.8. Remove notification from local list
+        sv-->>be_ctrl--:5.3.7.2.6.2.5. Return true
+        be_ctrl-->>fe_ctrl--:5.3.7.2.6.2.6. Return statusCode 200 (Ok)
+        fe_ctrl-->>view--:5.3.7.2.6.2.7. Return JSON success response
+        view->view++:5.3.7.2.6.2.8. Remove notification from local list
         view--
-        view-->>act--:12.2.6.2.9. Display success alert
+        view-->>act--:5.3.7.2.6.2.9. Display success alert
+end
 end
 end
 

@@ -30,6 +30,8 @@ mainframe Send Messages
 
 actor User as act
 participant "ChatIndexPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
 participant ":ICloudinaryUploadService" as upload_sv
@@ -51,29 +53,44 @@ act->view:3. Click "Send" button (or press Enter)
 
 opt With Attachments
 loop for each selected file f
-        view->fe_ctrl++:3.1. Send POST /Chat/UploadAttachment with file
-        fe_ctrl->be_att_ctrl++:3.1.1. Send POST /api/ChatAttachment/upload (with Bearer Token)
+        view->fe_ctrl++:3.1. POST /Chat/UploadAttachment
         
-        be_att_ctrl->be_att_ctrl++:3.1.2. Check ChatSettings:EnableAttachments
-        be_att_ctrl--
+        fe_ctrl -> fe_ctrl++:3.1.1. Validate actor's authentication and authorization
+        fe_ctrl--
+        
+alt Session Invalid
+            fe_ctrl -->> login_view:3.1.1.1. Redirect to LoginPage
+            activate login_view
+            login_view -->> act--:3.1.1.1.1. Display login form
+else Unauthorized Access
+            fe_ctrl -->> error_page:3.1.1.2. Redirect to ErrorPage
+            activate error_page
+            error_page -->> act--:3.1.1.2.1. Display error message
+else Valid actor's authentication and authorization
+            fe_ctrl->be_att_ctrl++:3.1.1.3. POST /api/ChatAttachment/upload
+            
+            be_att_ctrl->be_att_ctrl++:3.1.1.3.1. Check ChatSettings:EnableAttachments
+            be_att_ctrl--
         
 alt EnableAttachments = false
-            be_att_ctrl-->>fe_ctrl:3.1.2.1. Return statusCode 400 (BadRequest)
-            fe_ctrl-->>view:3.1.2.1.1. Return BadRequest
-            view-->>act:3.1.2.1.2. Display feature disabled warning
+            be_att_ctrl-->>fe_ctrl:3.1.1.3.1.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:3.1.1.3.1.1.1. Return BadRequest
+            view-->>act:3.1.1.3.1.1.2. Display feature disabled warning
 else EnableAttachments = true
 alt file size > 10MB
-                be_att_ctrl-->>fe_ctrl:3.1.2.2.1. Return statusCode 400 (BadRequest)
-                fe_ctrl-->>view:3.1.2.2.1.1. Return BadRequest
-                view-->>act:3.1.2.2.1.2. Display file size validation error
+                be_att_ctrl-->>fe_ctrl:3.1.1.3.1.2.1. Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view:3.1.1.3.1.2.1.1. Return BadRequest
+                view-->>act:3.1.1.3.1.2.1.2. Display file size validation error
 else file size <= 10MB
-                be_att_ctrl->upload_sv++:3.1.2.2.2. Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
-                upload_sv->upload_sv++:3.1.2.2.2.1. Upload to Cloudinary
+                be_att_ctrl->upload_sv++:3.1.1.3.1.2.2. Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+                upload_sv->upload_sv++:3.1.1.3.1.2.2.1. Upload to Cloudinary
                 upload_sv--
-                upload_sv-->>be_att_ctrl--:3.1.2.2.2.2. Return SecureUrl
+                upload_sv-->>be_att_ctrl--:3.1.1.3.1.2.2.2. Return SecureUrl
                 
-                be_att_ctrl-->>fe_ctrl--:3.1.2.2.2.3. Return statusCode 200 (Ok) with metadata
-                fe_ctrl-->>view--:3.1.2.2.2.4. Return JSON with attachment metadata
+                be_att_ctrl-->>fe_ctrl--:3.1.1.3.1.2.2.3. Return statusCode 200 (Ok) with metadata
+                fe_ctrl-->>view--:3.1.1.3.1.2.2.4. Return JSON with attachment metadata
+                view-->>act:3.1.1.3.1.2.2.5. Display uploaded file in UI
+end
 end
 end
 end
@@ -134,7 +151,7 @@ end
     repo->ctx++:14.2.9. Call SaveChangesAsync()
     ctx->db++:14.2.10. Save changes (Execute INSERT & UPDATE statements)
     
-alt Database Save Fails (throws DbUpdateException)
+alt Database Save Failure
         db-->>ctx:14.2.10.1. Throw DbUpdateException
         ctx-->>repo:14.2.10.1.1. Throw DbUpdateException
         repo-->>sv:14.2.10.1.2. Throw DbUpdateException
@@ -143,7 +160,7 @@ alt Database Save Fails (throws DbUpdateException)
         hub--
         hub-->>view:14.2.10.1.5. Send error event via SignalR
         view-->>act:14.2.10.1.6. Display database error message
-else Database Save Succeeds
+else Database Save Success
         db-->>ctx--:14.2.10.2. Return result
         ctx-->>repo--:14.2.10.2.1. Return result
         repo-->>sv--:14.2.10.2.2. Return result
