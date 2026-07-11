@@ -61,7 +61,7 @@ public class GiftServiceTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public async Task ValidateGiftTokenAsync_EmptyToken_ThrowsArgumentException(string token)
+    public async Task ValidateGiftTokenAsync_EmptyToken_ThrowsArgumentException(string? token)
     {
         //Arrange 1
 
@@ -259,7 +259,7 @@ public class GiftServiceTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public async Task ClaimGiftAsync_EmptyToken_ThrowsArgumentException(string token)
+    public async Task ClaimGiftAsync_EmptyToken_ThrowsArgumentException(string? token)
     {
         //Arrange 1
         var userId = 1;
@@ -519,7 +519,7 @@ public class GiftServiceTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public async Task CreateGiftRecordAsync_EmptyEmail_ThrowsArgumentException(string email)
+    public async Task CreateGiftRecordAsync_EmptyEmail_ThrowsArgumentException(string? email)
     {
         //Arrange 1
 
@@ -537,7 +537,7 @@ public class GiftServiceTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public async Task CreateGiftRecordAsync_EmptyToken_ThrowsArgumentException(string token)
+    public async Task CreateGiftRecordAsync_EmptyToken_ThrowsArgumentException(string? token)
     {
         //Arrange 1
 
@@ -608,7 +608,7 @@ public class GiftServiceTests
     [InlineData("")]
     [InlineData(" ")]
     [InlineData(null)]
-    public async Task IsRecipientEnrolledAsync_EmptyEmail_ReturnsFalse(string email)
+    public async Task IsRecipientEnrolledAsync_EmptyEmail_ReturnsFalse(string? email)
     {
         //Arrange 1
 

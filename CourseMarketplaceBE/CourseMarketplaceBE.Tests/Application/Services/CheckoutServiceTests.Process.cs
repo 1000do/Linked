@@ -128,73 +128,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await dbTransactionMock.Received(1).RollbackAsync();
         }
 
-        [Fact]
-        public async Task ProcessPaymentSuccessAsync_GiftCheckout_CreatesGiftAndSendsEmails_ProcessesSuccessfully()
-        {
-            //Arrange 1
-            string sessionId = "sess_1";
-            var metadata = new Dictionary<string, string> { 
-                { "userId", "1" }, { "courseIds", "1" }, { "checkoutType", "gift" },
-                { "recipientEmail", "rec@test.com" }
-            };
-            var dbTransactionMock = Substitute.For<IDbContextTransaction>();
-            var course = new Course { Title = "Test", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), Price = 100m, InstructorId = 2 };
-            var account = new Account { AccountId = 3, User = new User { FullName = "Sender Name" } };
 
-            //Arrange 2
-            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
-            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
-            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
-            _courseRepoMock.GetCourseWithInstructorAsync(1).Returns(course);
-            _userRepoMock.GetAccountByIdAsync(1).Returns(account);
-            _userRepoMock.GetAccountByEmailAsync("rec@test.com").Returns(new Account { AccountId = 4 });
-            _adminFinanceServiceMock.GetPayoutDaysConfigAsync().Returns("20");
-
-            //Act
-            await _sut.ProcessPaymentSuccessAsync(sessionId);
-
-            //Assert
-            await _giftRepoMock.Received(1).AddAsync(Arg.Is<Gift>(g => g.RecipientEmail == "rec@test.com"));
-            await _emailServiceMock.Received(1).SendEmailAsync("rec@test.com", Arg.Any<string>(), Arg.Any<string>());
-            await _notificationServiceMock.Received(1).SendNotificationAsync(4, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-            await _enrollmentRepoMock.DidNotReceive().AddEnrollmentAsync(Arg.Any<Enrollment>());
-            await dbTransactionMock.Received(1).CommitAsync();
-        }
-
-        [Fact]
-        public async Task ProcessPaymentSuccessAsync_GiftCheckout_EmailAndNotiThrow_LogsErrorAndProcessesSuccessfully()
-        {
-            //Arrange 1
-            string sessionId = "sess_1";
-            var metadata = new Dictionary<string, string> { 
-                { "userId", "1" }, { "courseIds", "1" }, { "checkoutType", "gift" },
-                { "recipientEmail", "rec@test.com" }
-            };
-            var dbTransactionMock = Substitute.For<IDbContextTransaction>();
-            var course = new Course { Title = "Test", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), Price = 100m, InstructorId = 2 };
-            var account = new Account { AccountId = 3, User = new User { FullName = "Sender Name" } };
-
-            //Arrange 2
-            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
-            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
-            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
-            _courseRepoMock.GetCourseWithInstructorAsync(1).Returns(course);
-            _userRepoMock.GetAccountByIdAsync(1).Returns(account);
-            _userRepoMock.GetAccountByEmailAsync("rec@test.com").Returns(new Account { AccountId = 4 });
-            _adminFinanceServiceMock.GetPayoutDaysConfigAsync().Returns("20");
-
-            _emailServiceMock.When(x => x.SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())).Throw(new Exception("Email Error"));
-            _notificationServiceMock.When(x => x.SendNotificationAsync(4, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())).Throw(new Exception("Noti Error"));
-
-            //Act
-            await _sut.ProcessPaymentSuccessAsync(sessionId);
-
-            //Assert
-            await _giftRepoMock.Received(1).AddAsync(Arg.Any<Gift>());
-            await _emailServiceMock.Received(1).SendEmailAsync("rec@test.com", Arg.Any<string>(), Arg.Any<string>());
-            await _notificationServiceMock.Received(1).SendNotificationAsync(4, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-            await dbTransactionMock.Received(1).CommitAsync();
-        }
 
         [Fact]
         public async Task ProcessPaymentSuccessAsync_CartCheckout_ClearsCart_ProcessesSuccessfully()

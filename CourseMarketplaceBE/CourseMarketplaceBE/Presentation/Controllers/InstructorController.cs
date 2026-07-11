@@ -200,7 +200,7 @@ public class InstructorController : ControllerBase
     // ─── 6. INSTRUCTOR DASHBOARD ─────────────────────────────────────
     // UC-66: View Balance (Instructor Dashboard) — Chỉ Instructor
     [HttpGet("dashboard")]
-    [CustomAuthorize(requireAuth: true, "instructor")]
+    [CustomAuthorize(requireAuth: true,"user","instructor")]
     public async Task<IActionResult> GetDashboard()
     {
         var userId = GetUserId();
