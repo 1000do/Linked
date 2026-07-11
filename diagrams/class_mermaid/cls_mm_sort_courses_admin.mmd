@@ -1,0 +1,148 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminCourseController {
+    <<frontend controller>>
+    + Index(page: int, search: string, status: string, sort: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminModerationController {
+    <<backend controller>>
+    - _courseModerationService : ICourseModerationService
+    
+    + GetCourseModerationList(filter: ModerationFilterDto) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class ModerationFilterDto {
+    <<dto>>
+    + Page : int
+    + PageSize : int
+    + Keyword : string?
+    + Status : string?
+    + SortBy : string?
+}
+
+class PagedResultCourseModerationDto["PagedResult~CourseModerationDto~"] {
+    <<dto>>
+    + Items : List~CourseModerationDto~
+    + TotalCount : int
+}
+
+class CourseModerationDto {
+    <<dto>>
+    + CourseId : int
+    + Title : string
+    + InstructorName : string
+    + InstructorEmail : string
+    + CategoryName : string
+    + Price : decimal
+    + CreatedAt : DateTime?
+    + Status : string
+    + LessonsCount : int
+    + FlagCount : int
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ApprovalStatus : string?
+    + InstructorNavigation : User
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICourseModerationService {
+    <<interface>>
+    + GetPendingCoursesAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetPendingCoursesModerationAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseModerationService {
+    - _courseRepository : ICourseRepository
+    
+    + GetPendingCoursesAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetPendingCoursesModerationAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Courses : DbSet~Course~
+    + Instructors : DbSet~Instructor~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION & COMPOSITION ===
+PagedResultCourseModerationDto *-- CourseModerationDto
+Course -- Instructor
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+AdminModerationController --> ICourseModerationService
+CourseModerationService --> ICourseRepository
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CourseModerationService ..|> ICourseModerationService
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY ===
+AdminCourseController ..> AdminModerationController
+AdminCourseController ..> ModerationFilterDto
+AdminModerationController ..> ModerationFilterDto
+AdminModerationController ..> PagedResultCourseModerationDto
+CourseModerationService ..> ModerationFilterDto
+CourseModerationService ..> PagedResultCourseModerationDto
+CourseRepository ..> ModerationFilterDto
+CourseRepository ..> PagedResultCourseModerationDto
+CourseRepository ..> Course
+CourseRepository ..> Instructor
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

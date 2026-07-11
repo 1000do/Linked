@@ -1,0 +1,99 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class ReviewControllerFE["ReviewController"] {
+    <<frontend controller>>
+    + DeleteReview(reviewId: int, type: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class ReviewControllerBE["ReviewController"] {
+    <<backend controller>>
+    - _reviewService : IReviewService
+    
+    + DeleteReview(reviewId: int, type: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class DeleteReviewRequest {
+    <<dto>>
+    + ReviewId : int
+    + Type : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseReview {
+    <<entity>>
+    + ReviewId : int
+    + UserId : int
+    + CourseId : int
+    + Rating : int
+    + Content : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IReviewService {
+    <<interface>>
+    + DeleteReviewAsync(userId: int, request: DeleteReviewRequest) Task *
+}
+
+class IReviewRepository {
+    <<interface>>
+    + GetCourseReviewByIdAsync(reviewId: int) Task~CourseReview?~ *
+    + DeleteCourseReviewAsync(review: CourseReview) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class ReviewService {
+    - _reviewRepo : IReviewRepository
+    
+    + DeleteReviewAsync(userId: int, request: DeleteReviewRequest) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class ReviewRepository {
+    - _context : AppDbContext
+    
+    + GetCourseReviewByIdAsync(reviewId: int) Task~CourseReview?~
+    + DeleteCourseReviewAsync(review: CourseReview) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseReviews : DbSet~CourseReview~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+ReviewControllerBE --> IReviewService
+ReviewService --> IReviewRepository
+ReviewRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+ReviewService ..|> IReviewService
+ReviewRepository ..|> IReviewRepository
+
+%% === DEPENDENCY ===
+ReviewControllerFE ..> ReviewControllerBE
+ReviewControllerBE ..> DeleteReviewRequest
+ReviewService ..> DeleteReviewRequest
+ReviewService ..> CourseReview
+ReviewRepository ..> CourseReview
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

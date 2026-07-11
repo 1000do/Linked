@@ -1,0 +1,95 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuizControllerFE["QuizController"] {
+    <<frontend controller>>
+    + DeleteQuiz(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuizControllerBE["QuizController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + SoftDelete(id: int) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Quiz {
+    <<entity>>
+    + QuizId : int
+    + CourseId : int
+    + LessonId : int?
+    + Title : string
+    + Description : string?
+    + TimeLimitMinutes : int?
+    + PassingScore : int?
+    + MaxAttempts : int?
+    + IsHidden : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<interface>>
+    + SoftDeleteQuizAsync(quizId: int, instructorId: int) Task *
+}
+
+class IQuizRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Quiz?~ *
+    + Update(quiz: Quiz) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    - _quizRepo : IQuizRepository
+    
+    + SoftDeleteQuizAsync(quizId: int, instructorId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Quiz?~
+    + Update(quiz: Quiz) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Quizzes : DbSet~Quiz~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+QuizControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY ===
+QuizControllerFE ..> QuizControllerBE
+QuizService ..> Quiz
+QuizRepository ..> Quiz
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

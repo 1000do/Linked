@@ -1,0 +1,120 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Add Learning Materials
+
+actor Instructor as act
+participant "CourseEditorPage" as view
+participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "LessonController" as be_ctrl <<backend controller>>
+participant ":LessonService" as sv
+participant ":IInstructorRepository" as inst_repo
+participant ":IFileStorageService" as storage_sv
+participant ":LearningMaterial" as ett
+participant ":IMaterialRepository" as repo
+participant ":ILessonRepository" as lesson_repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click Add Material
+view -> fe_ctrl++: POST /Lesson/AddMaterial/{lessonId}
+fe_ctrl -> be_ctrl++: POST /api/lessons/{lessonId}/materials
+
+be_ctrl -> sv++: Call AddMaterialToLessonAsync(lessonId, request, instructorId)
+
+sv -> sv++: Call SanitizeHtml(description)
+sv--
+
+sv -> lesson_repo++: Call GetByIdAsync(lessonId)
+lesson_repo -->> sv--: Return lesson entity
+
+alt Lesson Not Found
+    sv -->> be_ctrl: throw Exception
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display lesson not found message
+else Lesson Found
+    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    sv--
+    
+    sv -> inst_repo++: Call GetByIdAsync(instructorId)
+    inst_repo -->> sv--: Return instructor
+    
+    sv -> repo++: Call GetMaterialsByLessonIdAsync(lessonId)
+    repo -->> sv--: Return current materials
+    
+    alt Stripe not linked and limit exceeded
+        sv -->> be_ctrl: throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display limit exceeded message
+    else Duplicate Title or Multiple Videos
+        sv -->> be_ctrl: throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display validation error message
+    else Valid
+        opt Has MaterialFile
+            sv -> storage_sv++: Call UploadVideoAsync(MaterialFile)
+            storage_sv -->> sv--: Return uploadedUrl
+        end
+        
+        sv -> ett++: Call LearningMaterial()
+        ett -->> sv--: Return LearningMaterial entity
+        
+        sv -> repo++: Call Add(material)
+        repo -->> sv--: Return tracking state
+        
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Insert Material
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return numberOfRowsAffected
+            
+            sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+            sv--
+            
+            sv -->> be_ctrl--: Return MaterialResponse object
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display material added successfully
+        end
+    end
+end

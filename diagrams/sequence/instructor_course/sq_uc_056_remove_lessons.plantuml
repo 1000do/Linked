@@ -1,0 +1,94 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Remove Lessons
+
+actor Instructor as act
+participant "CourseEditorPage" as view
+participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "LessonController" as be_ctrl <<backend controller>>
+participant ":LessonService" as sv
+participant ":ILessonRepository" as repo
+participant ":IMaterialRepository" as material_repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click Delete Lesson
+view -> fe_ctrl++: DELETE /Lesson/DeleteLesson/{id}
+fe_ctrl -> be_ctrl++: DELETE /api/lessons/{id}
+
+be_ctrl -> sv++: Call DeleteLessonAsync(id, instructorId)
+
+sv -> repo++: Call GetByIdAsync(id)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch lesson
+db -->> ctx--: Return query results
+ctx -->> repo--: Return lesson entity
+repo -->> sv--: Return lesson entity
+
+alt Lesson Not Found
+    sv -->> be_ctrl: throw Exception
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display lesson not found message
+else Lesson Found
+    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    sv--
+    
+    sv -> material_repo++: Call GetMaterialsByLessonIdAsync(id)
+    material_repo -->> sv--: Return materials
+    
+    sv -> sv++: Soft delete all materials and move to trash
+    sv--
+    
+    sv -> sv++: Set lesson.IsRemoved = true
+    sv--
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Save changes to database
+    ctx -> db++: Update Lesson (Soft Delete)
+    db -->> ctx--: Return returnCode
+    ctx -->> repo--: Return numberOfRowsAffected
+    repo -->> sv--: Return numberOfRowsAffected
+    
+    opt Course is Published
+        sv -> sv++: Set course.CourseStatus = "draft"
+        sv--
+        sv -> course_repo++: Call SaveChangesAsync()
+        course_repo -->> sv--: Return result
+    end
+    
+    sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+    sv--
+    
+    sv -->> be_ctrl--: Return success
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return JSON (success=true)
+    view -->> act--: Display lesson removed successfully
+end

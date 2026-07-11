@@ -121,6 +121,8 @@ namespace CourseMarketplaceFE.Controllers
                     viewModel.PendingCoursesCount = statsData.TryGetProperty("pendingCoursesCount", out var pProp) ? pProp.GetInt32() : 0;
                     viewModel.DraftCoursesCount = statsData.TryGetProperty("draftCoursesCount", out var dProp) ? dProp.GetInt32() : 0;
                     viewModel.TotalRevenue = statsData.GetProperty("totalRevenue").GetDecimal();
+                    viewModel.EnrollmentGrowthPercentage = statsData.TryGetProperty("enrollmentGrowthPercentage", out var egProp) ? egProp.GetDouble() : 0.0;
+                    viewModel.InstructorRankPercentage = statsData.TryGetProperty("instructorRankPercentage", out var irProp) ? irProp.GetInt32() : 100;
                 }
 
                 // 2. Fetch Courses from the new paged, database-driven endpoint!
@@ -543,6 +545,31 @@ namespace CourseMarketplaceFE.Controllers
         }
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
         // ─── UPDATE COURSE STATUS (AJAX) ──────────────────────────────────
+        [HttpGet]
+        [Authorize(Roles = "instructor,staff,admin")]
+        public async Task<IActionResult> GetCourseStatus(int id)
+        {
+            try
+            {
+                var resp = await _api.GetAsync($"courses/{id}");
+                if (resp.IsSuccessStatusCode)
+                {
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("data", out var data))
+                    {
+                        var status = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : "Draft";
+                        return Json(new { success = true, status = status });
+                    }
+                }
+                return Json(new { success = false, message = "Could not fetch course status." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpPost]
         [Authorize(Roles = "instructor,staff,admin")]
         public async Task<IActionResult> UpdateCourseStatus([FromForm] int courseId, [FromForm] string status)

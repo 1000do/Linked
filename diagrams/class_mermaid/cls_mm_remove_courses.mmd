@@ -1,0 +1,101 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorCourseController {
+    <<frontend controller>>
+    + Delete(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CourseController {
+    <<backend controller>>
+    - _courseCommandService : ICourseCommandService
+    
+    + DeleteCourse(id: int) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICourseCommandService {
+    <<interface>>
+    + DeleteCourseAsync(courseId: int, instructorId: int) Task *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+    + Update(course: Course) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseCommandService {
+    - _courseRepository : ICourseRepository
+    
+    + DeleteCourseAsync(courseId: int, instructorId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Course?~
+    + Update(course: Course) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Courses : DbSet~Course~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CourseController --> ICourseCommandService
+CourseCommandService --> ICourseRepository
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CourseCommandService ..|> ICourseCommandService
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+InstructorCourseController ..> CourseController
+CourseCommandService ..> Course
+CourseRepository ..> Course
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

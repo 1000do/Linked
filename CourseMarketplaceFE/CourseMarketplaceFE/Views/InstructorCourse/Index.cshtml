@@ -32,15 +32,24 @@
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Total Enrollment</h3>
             <p class="text-3xl font-headline font-extrabold text-slate-900">@totalStudents.ToString("N0")</p>
-            <p class="text-xs font-semibold text-primary mt-2 flex items-center gap-1">
-                <span class="material-symbols-outlined text-[14px]">trending_up</span> +14% this month
+            @{
+                var growthStr = Model.EnrollmentGrowthPercentage > 0 
+                    ? $"+{Model.EnrollmentGrowthPercentage:0.##}%" 
+                    : Model.EnrollmentGrowthPercentage < 0 
+                        ? $"{Model.EnrollmentGrowthPercentage:0.##}%" 
+                        : "0%";
+                var growthColor = Model.EnrollmentGrowthPercentage >= 0 ? "text-primary" : "text-red-500";
+                var growthIcon = Model.EnrollmentGrowthPercentage >= 0 ? "trending_up" : "trending_down";
+            }
+            <p class="text-xs font-semibold @growthColor mt-2 flex items-center gap-1">
+                <span class="material-symbols-outlined text-[14px]">@growthIcon</span> @growthStr this month
             </p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
             <h3 class="text-sm font-semibold text-slate-500 mb-1">Average Rating</h3>
             <p class="text-3xl font-headline font-extrabold text-slate-900">@avgRating.ToString("F2")</p>
             <p class="text-xs font-semibold text-amber-600 mt-2 flex items-center gap-1">
-                <span class="material-symbols-outlined text-[14px] fill-amber-600" style='font-variation-settings: "FILL" 1;'>star</span> Top 5% Instructor
+                <span class="material-symbols-outlined text-[14px] fill-amber-600" style='font-variation-settings: "FILL" 1;'>star</span> Top @(Model.InstructorRankPercentage)% Instructor
             </p>
         </div>
         <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">

@@ -1,0 +1,73 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor Dashboard & Course List
+
+actor Instructor as act
+participant "InstructorDashboardPage" as view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_inst_ctrl <<backend controller>>
+participant "CourseController" as be_crs_ctrl <<backend controller>>
+participant ":InstructorService" as inst_sv
+participant ":CourseQueryService" as crs_sv
+participant ":IInstructorRepository" as inst_repo
+participant ":ICourseRepository" as crs_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: View Dashboard/Course tab
+view -> fe_ctrl++: GET /InstructorCourse/Index
+
+== Fetch Dashboard Stats ==
+fe_ctrl -> be_inst_ctrl++: GET /api/instructor/dashboard
+be_inst_ctrl -> inst_sv++: Call GetInstructorDashboardAsync(instructorId)
+inst_sv -> inst_repo++: Call GetDashboardDtoAsync(instructorId)
+inst_repo -->> inst_sv--: Return basic stats
+inst_sv -> inst_repo++: Call GetEnrollmentGrowthAsync(instructorId)
+inst_repo -->> inst_sv--: Return growth %
+inst_sv -> inst_repo++: Call GetInstructorRankingPercentageAsync(instructorId)
+inst_repo -->> inst_sv--: Return rank %
+inst_sv -->> be_inst_ctrl--: Return InstructorDashboardDto
+be_inst_ctrl -->> fe_ctrl--: Return InstructorDashboardDto
+
+== Fetch Course List ==
+fe_ctrl -> be_crs_ctrl++: GET /api/courses/my-courses
+be_crs_ctrl -> crs_sv++: Call GetInstructorCoursesPagedAsync(instructorId, page, pageSize, search, status)
+crs_sv -> crs_repo++: Call GetInstructorCoursesPagedAsync(...)
+crs_repo -> ctx++: Execute query
+ctx -> db++: Fetch instructor courses
+db -->> ctx--: Return query results
+ctx -->> crs_repo--: Return entities and totalCount
+crs_repo -->> crs_sv--: Return (courses, totalCount)
+crs_sv -->> be_crs_ctrl--: Return PagedResult<CourseResponse>
+be_crs_ctrl -->> fe_ctrl--: Return statusCode 200
+
+fe_ctrl -> fe_ctrl: Map to InstructorStudioViewModel
+fe_ctrl -->> view: Return View(InstructorStudioViewModel)
+view -->> act: Display Dashboard & Course list
+@enduml

@@ -155,6 +155,45 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
             return stats;
         }
 
+        public async Task<double> GetEnrollmentGrowthAsync(int instructorId)
+        {
+            var now = DateTime.UtcNow;
+            var currentMonthStart = new DateOnly(now.Year, now.Month, 1);
+            var previousMonthStart = currentMonthStart.AddMonths(-1);
+
+            var currentMonthEnrollments = await _context.Enrollments
+                .Include(e => e.Course)
+                .CountAsync(e => e.Course.InstructorId == instructorId && e.EnrollDate >= currentMonthStart);
+
+            var previousMonthEnrollments = await _context.Enrollments
+                .Include(e => e.Course)
+                .CountAsync(e => e.Course.InstructorId == instructorId && e.EnrollDate >= previousMonthStart && e.EnrollDate < currentMonthStart);
+
+            if (previousMonthEnrollments == 0)
+            {
+                return currentMonthEnrollments > 0 ? 100.0 : 0.0;
+            }
+
+            return Math.Round((double)(currentMonthEnrollments - previousMonthEnrollments) / previousMonthEnrollments * 100, 2);
+        }
+
+        public async Task<int> GetInstructorRankingPercentageAsync(int instructorId)
+        {
+            var allApprovedStats = await _context.InstructorStats
+                .OrderByDescending(s => s.InstructorRating)
+                .Select(s => s.InstructorId)
+                .ToListAsync();
+
+            if (!allApprovedStats.Any()) return 100;
+
+            var rankIndex = allApprovedStats.IndexOf(instructorId);
+            if (rankIndex == -1) return 100;
+
+            var rank = rankIndex + 1;
+            var percentage = (int)Math.Ceiling((double)rank / allApprovedStats.Count * 100);
+            return percentage;
+        }
+
         public async Task<int> CountActiveCoursesAsync(int instructorId)
             => await _context.Courses.CountAsync(c => c.InstructorId == instructorId && c.CourseStatus == CourseStatus.Published.ToValue());
 

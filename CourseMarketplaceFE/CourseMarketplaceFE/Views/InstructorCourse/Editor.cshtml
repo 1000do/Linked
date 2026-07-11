@@ -16,29 +16,33 @@
         <div class="flex items-center gap-4">
             <a href="/InstructorCourse" class="text-slate-400 hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">arrow_back</span></a>
             <h1 class="text-2xl font-headline font-extrabold text-slate-900">Course Structure</h1>
-            @{
-                var courseStatus = ViewBag.CourseStatus as string ?? "Draft";
-                if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
-                    <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>
-                } else if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
-                    <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>
-                } else if (courseStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase)) {
-                    <span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>
-                } else {
-                    <span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+            <div id="course-status-badge-container">
+                @{
+                    var courseStatus = ViewBag.CourseStatus as string ?? "Draft";
+                    if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>
+                    } else if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>
+                    } else if (courseStatus.Equals("Rejected", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>
+                    } else {
+                        <span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>
+                    }
                 }
-            }
+            </div>
         </div>
         <div class="flex items-center gap-3">
             <a href="/Course/Details/@courseId" target="_blank" class="px-4 py-2 bg-white text-slate-700 font-bold border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
             </a>
-            @if (!courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
-                <button class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
-                    <span class="material-symbols-outlined text-[18px]">send</span> 
-                    @(courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ? "Submit Changes" : "Submit for Review")
-                </button>
-            }
+            <div id="submit-course-btn-container">
+                @if (!courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                    <button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
+                        <span class="material-symbols-outlined text-[18px]">send</span> 
+                        @(courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ? "Submit Changes" : "Submit for Review")
+                    </button>
+                }
+            </div>
         </div>
     </div>
 
@@ -3164,7 +3168,7 @@
                                     confirmButtonText: 'Got it',
                                     confirmButtonColor: '#006a62'
                                 }).then(() => {
-                                    location.reload();
+                                    updateCourseStatusBadge('pending');
                                 });
                             } else {
                                 isSubmitting = false;
@@ -3572,4 +3576,44 @@ function closeStudentAttemptsModal() {
     const wrapper = document.getElementById('student-attempts-wrapper');
     if (wrapper) wrapper.remove();
 }
+
+// --- REALTIME COURSE STATUS BADGE ---
+function updateCourseStatusBadge(status) {
+    const container = document.getElementById('course-status-badge-container');
+    const btnContainer = document.getElementById('submit-course-btn-container');
+    if (!container) return;
+
+    const statusLower = (status || 'draft').toLowerCase();
+    let badgeHtml = '';
+    let btnHtml = '';
+
+    if (statusLower === 'published') {
+        badgeHtml = '<span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>';
+        btnHtml = '<button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()"><span class="material-symbols-outlined text-[18px]">send</span> Submit Changes</button>';
+    } else if (statusLower === 'pending') {
+        badgeHtml = '<span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>';
+        btnHtml = ''; // Hide submit button when pending
+    } else if (statusLower === 'rejected') {
+        badgeHtml = '<span class="px-2 py-1 bg-red-50 text-red-600 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider">Rejected</span>';
+        btnHtml = '<button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()"><span class="material-symbols-outlined text-[18px]">send</span> Submit for Review</button>';
+    } else {
+        badgeHtml = '<span class="px-2 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold uppercase tracking-wider">Draft</span>';
+        btnHtml = '<button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()"><span class="material-symbols-outlined text-[18px]">send</span> Submit for Review</button>';
+    }
+
+    container.innerHTML = badgeHtml;
+    if (btnContainer) btnContainer.innerHTML = btnHtml;
+}
+
+document.addEventListener("ReceiveNotificationEvent", function() {
+    const cid = @courseId;
+    fetch(`/InstructorCourse/GetCourseStatus?id=${cid}`)
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                updateCourseStatusBadge(d.status);
+            }
+        })
+        .catch(e => console.error("Error fetching realtime course status:", e));
+});
 </script>
