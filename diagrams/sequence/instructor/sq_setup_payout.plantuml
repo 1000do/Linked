@@ -29,108 +29,160 @@ mainframe Setup Payout
 
 actor "Instructor" as act
 participant "ApplicationStatusPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "InstructorController" as fe_ctrl <<frontend controller>>
 participant "InstructorController" as be_ctrl <<backend controller>>
 participant ":InstructorService" as sv
 participant ":StripeConnectService" as stripe
+participant ":StripeSetupResponse" as dto
 participant ":InstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant "Stripe API" as stripe_api <<external>>
 
 act ++
-view ++
 
-act -> view: Click "Setup Payout" button
+act -> view++: Click "Setup Payout" button
 view -> fe_ctrl++: POST /Instructor/SetupPayout
 
-fe_ctrl -> be_ctrl++: POST /api/instructor/setup-payout
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-be_ctrl -> sv++: SetupStripePayoutAsync(userId)
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: POST /api/instructor/setup-payout
+    
+    be_ctrl -> be_ctrl++: Validate login session & Parse userId
+    be_ctrl--
+    
+    alt Invalid login session
+        be_ctrl -->> fe_ctrl: Return statusCode 401
+        fe_ctrl -->> view: Redirect to ApplicationStatus (with error)
+        view -->> act: Display error message
+    else Valid Request
+        be_ctrl -> sv++: SetupStripePayoutAsync(userId)
+        
+        sv -> repo++: GetByIdWithNavigationAsync(userId)
+        repo -> ctx++: Query instructor
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Return database record
+        ctx -->> repo--: Return Instructor entity
+        repo -->> sv--: Return Instructor entity
+        
+        sv -> sv++: Validate Instructor State (ApprovalStatus == "Approved")
+        sv--
+        
+        alt Invalid State (Not Approved)
+            sv -->> be_ctrl: throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Redirect to ApplicationStatus (with error)
+            view -->> act: Display error message
+        else Valid State
+            sv -> stripe++: SetupExpressAccountAsync(email, country, title, categories, stripeAccountId)
+            stripe -> stripe_api++: POST /v1/account_links (Create Express Onboarding)
+            stripe_api -->> stripe--: Return Onboarding URL & Account ID
+            stripe -->> sv--: Return StripeSetupResult
+            
+            sv -> sv++: Update StripeAccountId & StripeOnboardingStatus = "Pending"
+            sv--
+            
+            sv -> repo++: SaveChangesAsync()
+            repo -> ctx++: Save changes to database
+            ctx -> db++: Execute UPDATE
+            db -->> ctx--: Return numberOfRowsAffected
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return result
+            
+            alt Database Save Failure (result = false)
+                sv -->> be_ctrl: throw Exception
+                be_ctrl -->> fe_ctrl: Return statusCode 500
+                fe_ctrl -->> view: Redirect to ApplicationStatus (with error)
+                view -->> act: Display error message
+            else Database Save Success (result = true)
+                sv -> dto++: Call StripeSetupResponse()
+                dto -->> sv--: Return StripeSetupResponse object
+                sv -->> be_ctrl--: Return StripeSetupResponse DTO
+                be_ctrl -->> fe_ctrl--: Return statusCode 200 (with URL & stripeAccountId)
+                
+                fe_ctrl -->> act: Redirect to Stripe Onboarding URL
+            end
+        end
+    end
+end
+deactivate fe_ctrl
+deactivate view
 
-sv -> repo++: GetByIdWithNavigationAsync(userId)
-repo -> ctx++: Query instructor
-ctx -> db++: Execute SELECT
-db -->> ctx--: Return record
-ctx -->> repo--: Return Instructor entity
-repo -->> sv--: Return Instructor entity
+act -> stripe_api++: Complete verification & banking setup (Enter OTP, personal info, bank details)
+stripe_api -->> act--: Redirect back to Platform (GET /Instructor/StripeReturn)
 
-sv -> sv++: Check if ApprovalStatus == "Approved"
-sv--
-
-sv -> stripe++: SetupExpressAccountAsync(email, country, etc.)
-stripe -> stripe_api++: POST /v1/account_links (Create Express Onboarding)
-stripe_api -->> stripe--: Return Onboarding URL & Account ID
-stripe -->> sv--: Return StripeSetupResult (OnboardingUrl, StripeAccountId)
-
-sv -> sv++: Update StripeAccountId & StripeOnboardingStatus = "Pending"
-sv--
-
-sv -> repo++: SaveChangesAsync()
-repo -> ctx++: Save changes
-ctx -> db++: Execute UPDATE
-db -->> ctx--: Success
-ctx -->> repo--: Success
-repo -->> sv--: Success
-
-sv -->> be_ctrl--: Return StripeSetupResponse (OnboardingUrl)
-be_ctrl -->> fe_ctrl--: Return 200 OK with URL
-
-fe_ctrl -->> act: Redirect to Stripe Onboarding URL (Onboarding page)
-
-act -> stripe_api: Complete verification & banking setup (Enter OTP, personal info, bank details)
-stripe_api -->> act: Redirect back to Platform (GET /Instructor/StripeReturn)
-
-act -> fe_ctrl: GET /Instructor/StripeReturn(instructorId)
+act -> fe_ctrl++: GET /Instructor/StripeReturn?instructorId={id}
 fe_ctrl -> be_ctrl++: GET /api/instructor/stripe-return?instructorId={id}
 
-be_ctrl -> sv++: VerifyStripeOnboardingAsync(instructorId)
+be_ctrl -> be_ctrl++: Validate login session
+be_ctrl--
 
-sv -> repo++: GetByIdAsync(instructorId)
-repo -> ctx++: Query instructor
-ctx -> db++: Execute SELECT
-db -->> ctx--: Return record
-ctx -->> repo--: Return Instructor entity
-repo -->> sv--: Return Instructor entity
-
-sv -> stripe++: GetAccountStatusAsync(StripeAccountId)
-stripe -> stripe_api++: GET /v1/accounts/{id}
-stripe_api -->> stripe--: Return Account Details (DetailsSubmitted, PayoutsEnabled, ChargesEnabled)
-stripe -->> sv--: Return AccountStatus
-
-alt DetailsSubmitted == true (Normal Flow: Success)
-    sv -> sv++: Update Instructor (PayoutsEnabled=true, ChargesEnabled=true, StripeOnboardingStatus="Active")
-    sv--
-    sv -> repo++: SaveChangesAsync()
-    repo -> ctx++: Save changes
-    ctx -> db++: Execute UPDATE
-    db -->> ctx--: Success
-    ctx -->> repo--: Success
-    repo -->> sv--: Success
+alt Invalid login session
+    be_ctrl -->> fe_ctrl: Return statusCode 401
+    fe_ctrl -->> view++: Redirect to ApplicationStatus (with error)
+    view -->> act: Display error message
+else Valid Request
+    be_ctrl -> sv++: VerifyStripeOnboardingAsync(instructorId)
     
-    sv -->> be_ctrl: Return "Active"
-    be_ctrl -->> fe_ctrl: Return 200 OK (stripeStatus = "Active")
+    sv -> repo++: GetByIdAsync(instructorId)
+    repo -> ctx++: Query instructor
+    ctx -> db++: Execute SELECT
+    db -->> ctx--: Return database record
+    ctx -->> repo--: Return Instructor entity
+    repo -->> sv--: Return Instructor entity
     
-    fe_ctrl -> fe_ctrl++: Set Cookie "UserRole" = "instructor"
-    fe_ctrl--
-    fe_ctrl -->> view: Redirect to ApplicationStatus (SuccessMessage)
-    view -->> act: Display "Stripe setup is completed" & "Access Stripe Dashboard" button
+    sv -> stripe++: GetAccountStatusAsync(StripeAccountId)
+    stripe -> stripe_api++: GET /v1/accounts/{id}
+    stripe_api -->> stripe--: Return Account Details (DetailsSubmitted, PayoutsEnabled, ChargesEnabled)
+    stripe -->> sv--: Return AccountStatus
     
-else User Cancels Onboarding Mid-process (DetailsSubmitted == false)
-    sv -> sv++: Update Instructor (PayoutsEnabled=false, ChargesEnabled=false, StripeOnboardingStatus="Pending")
-    sv--
-    sv -> repo++: SaveChangesAsync()
-    repo -> ctx++: Save changes
-    ctx -> db++: Execute UPDATE
-    db -->> ctx--: Success
-    ctx -->> repo--: Success
-    repo -->> sv--: Success
-    
-    sv -->> be_ctrl--: Return "Pending"
-    be_ctrl -->> fe_ctrl--: Return 200 OK (stripeStatus = "Pending")
-    
-    fe_ctrl -->> view--: Redirect to ApplicationStatus (ErrorMessage: "Stripe setup is not completed")
-    view -->> act--: Display "Stripe setup is not completed" & "Setup Payout" button
+    alt DetailsSubmitted == true (Normal Flow: Success)
+        sv -> sv++: Update Instructor (PayoutsEnabled=true, ChargesEnabled=true, StripeOnboardingStatus="Active")
+        sv--
+        
+        sv -> repo++: SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Execute UPDATE
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return result
+        
+        sv -->> be_ctrl: Return "Active"
+        be_ctrl -->> fe_ctrl: Return statusCode 200 (stripeStatus = "Active")
+        
+        fe_ctrl -> fe_ctrl++: Set Cookie "UserRole" = "instructor"
+        fe_ctrl--
+        
+        fe_ctrl -->> view: Redirect to ApplicationStatus (with SuccessMessage)
+        view -->> act: Display "Stripe setup is completed" & "Access Stripe Dashboard" button
+        
+    else User Cancels Onboarding Mid-process (DetailsSubmitted == false)
+        sv -> sv++: Update Instructor (PayoutsEnabled=false, ChargesEnabled=false, StripeOnboardingStatus="Pending")
+        sv--
+        
+        sv -> repo++: SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Execute UPDATE
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return result
+        
+        sv -->> be_ctrl--: Return "Pending"
+        be_ctrl -->> fe_ctrl--: Return statusCode 200 (stripeStatus = "Pending")
+        
+        fe_ctrl -->> view--: Redirect to ApplicationStatus (with ErrorMessage: "Stripe setup is not completed")
+        view -->> act--: Display "Stripe setup is not completed" & "Setup Payout" button
+    end
 end
 
 @enduml

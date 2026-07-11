@@ -3,6 +3,7 @@ using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -32,8 +33,9 @@ public class InstructorController : ControllerBase
     /// Learner gửi form đăng ký Giảng viên (có upload file CV/ID).
     /// Nếu bị Rejected trước đó sẽ UPDATE lại record cũ (không INSERT mới).
     /// </summary>
+    // UC-48: Become an Instructor — Chỉ User thường (chưa là Instructor) mới nộp đơn
     [HttpPost("apply")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user")]
     public async Task<IActionResult> Apply([FromForm] InstructorApplicationRequest request)
     {
         var userId = GetUserId();
@@ -59,8 +61,9 @@ public class InstructorController : ControllerBase
     /// GET /api/instructor/apply-info
     /// Trả về thông tin đơn cũ khi user bị Rejected, dùng để FE điền sẵn vào form.
     /// </summary>
+    // UC-48: Lấy thông tin đơn cũ khi bị Rejected — Chỉ User
     [HttpGet("apply-info")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user")]
     public async Task<IActionResult> GetApplyInfo()
     {
         var userId = GetUserId();
@@ -77,8 +80,9 @@ public class InstructorController : ControllerBase
     /// PUT /api/instructor/{id}/approve?status=Approved
     /// Admin duyệt hoặc từ chối đơn. Yêu cầu Role = manager.
     /// </summary>
+    // Admin duyệt đơn — Chỉ Admin
     [HttpPut("{id}/approve")]
-    [Authorize(Roles = "admin,manager")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> Approve(int id, [FromQuery] string status)
     {
         try
@@ -101,8 +105,9 @@ public class InstructorController : ControllerBase
     /// POST /api/instructor/setup-payout
     /// Instructor đã Approved → tạo Stripe Express account + trả URL Onboarding.
     /// </summary>
+    // UC-49: Setup Payout — User/Instructor đăng ký Stripe (user có thể setup ngay sau khi được duyệt)
     [HttpPost("setup-payout")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> SetupPayout()
     {
         var userId = GetUserId();
@@ -138,8 +143,9 @@ public class InstructorController : ControllerBase
     /// Stripe redirect User về đây sau khi hoàn tất (hoặc bỏ dở) onboarding.
     /// Verify PayoutsEnabled & ChargesEnabled → redirect về FE Dashboard.
     /// </summary>
+    // UC-49: Stripe Return sau Onboarding — User/Instructor
     [HttpGet("stripe-return")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> StripeReturn([FromQuery] int instructorId)
     {
         try
@@ -192,8 +198,9 @@ public class InstructorController : ControllerBase
     }
 
     // ─── 6. INSTRUCTOR DASHBOARD ─────────────────────────────────────
+    // UC-66: View Balance (Instructor Dashboard) — Chỉ Instructor
     [HttpGet("dashboard")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> GetDashboard()
     {
         var userId = GetUserId();
@@ -232,8 +239,9 @@ public class InstructorController : ControllerBase
     /// Giảng viên chọn quốc gia cho tài khoản Stripe Connect.
     /// Phải gọi TRƯỚC khi setup-payout.
     /// </summary>
+    // UC-49: Instructor chọn quốc gia Stripe — User/Instructor
     [HttpPut("stripe-country")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> SetStripeCountry([FromBody] SetCountryRequest request)
     {
         var userId = GetUserId();
@@ -251,8 +259,9 @@ public class InstructorController : ControllerBase
     }
 
     // ─── 9. LẤY LỊCH SỬ THANH TOÁN ───────────────────────────────────
+    // UC-68: View Payout History, UC-71: Filter, UC-72: Sort — Chỉ Instructor
     [HttpGet("payouts")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> GetPayouts(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, [FromQuery] int? year = null, [FromQuery] int? month = null)
     {
         var userId = GetUserId();
@@ -275,8 +284,9 @@ public class InstructorController : ControllerBase
     /// Chủ động gọi Stripe để lấy danh sách Payouts và cập nhật vào DB local.
     /// Dùng khi bị lỡ Webhook hoặc muốn làm mới dữ liệu ngay lập tức.
     /// </summary>
+    // UC-68: Sync Payouts từ Stripe — Chỉ Instructor
     [HttpPost("sync-payouts")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> SyncPayouts()
     {
         var userId = GetUserId();
@@ -300,8 +310,9 @@ public class InstructorController : ControllerBase
     /// Trả về trạng thái Stripe của giảng viên hiện tại.
     /// FE dùng để quyết định cho phép đặt giá hay chỉ tạo khóa Free.
     /// </summary>
+    // UC-49: Kiểm tra trạng thái Stripe — User/Instructor
     [HttpGet("stripe-status")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GetStripeStatus()
     {
         var userId = GetUserId();
@@ -350,8 +361,9 @@ public class InstructorController : ControllerBase
     /// GET /api/instructor/payout-days
     /// Trả về cấu hình ngày quyết toán tự động của hệ thống (ví dụ: "15").
     /// </summary>
+    // UC-49: Lấy ngày quyết toán tự động — Instructor
     [HttpGet("payout-days")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> GetPayoutDays([FromServices] IAdminFinanceService financeService)
     {
         try
@@ -370,8 +382,9 @@ public class InstructorController : ControllerBase
     /// POST /api/instructor/reset-stripe
     /// Cho phép giảng viên tự hủy liên kết Stripe Connect hiện tại để đăng ký lại.
     /// </summary>
+    // UC-49: Giảng viên tự hủy liên kết Stripe — Instructor
     [HttpPost("reset-stripe")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> ResetStripe()
     {
         var userId = GetUserId();
@@ -397,8 +410,9 @@ public class InstructorController : ControllerBase
     /// POST /api/instructor/stripe-login-link
     /// Tạo đường dẫn đăng nhập bảo mật (Stripe Login Link) cho giảng viên tự quản lý Express Dashboard.
     /// </summary>
+    // UC-49: Lấy Stripe Express Dashboard link — Instructor
     [HttpPost("stripe-login-link")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> GetStripeLoginLink()
     {
         var userId = GetUserId();

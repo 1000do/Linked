@@ -1,15 +1,14 @@
-classDiagram-v2
+classDiagram
 direction LR
 
 %% ==================== FRONTEND ====================
 
 class TransactionControllerFE["TransactionController"] {
     <<frontend controller>>
-    + HistoryDetail(id: int) Task~IActionResult~
+    + Detail(id: int) Task~IActionResult~
 }
 
 class TransactionDetailVM {
-    <<view model>>
     + TransactionId : int
     + StripeSessionId : string?
     + StripePaymentIntentId : string?
@@ -43,14 +42,12 @@ class TransactionDetailVM {
 class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
     - _transactionService : ITransactionService
-    
     + GetTransactionDetail(id: int) Task~IActionResult~
 }
 
-%% ==================== BACKEND - DTOs ====================
+%% ==================== BACKEND - DTO ====================
 
 class TransactionDetailDto {
-    <<dto>>
     + TransactionId : int
     + StripeSessionId : string?
     + StripePaymentIntentId : string?
@@ -79,19 +76,26 @@ class TransactionDetailDto {
     + RefundRequestedAt : DateTime?
 }
 
-class ApiResponse~TransactionDetailDto~ {
-    <<dto>>
-    + Success : bool
-    + Message : string
-    + Data : TransactionDetailDto
-}
-
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
+%% ==================== BACKEND - ENTITIES ====================
 
 class Transaction {
     + TransactionId : int
-    + TransactionsStatus : string
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
     + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 class TransactionExt {
@@ -99,47 +103,177 @@ class TransactionExt {
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
 }
 
 class OrderItem {
-    + OrderItemId : int
-    + OriginalPrice : decimal?
-    + DiscountAmount : decimal
+    + Id : int
+    + OrderId : int?
+    + CourseId : int?
+    + PurchasePrice : decimal
     + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
+    + Transactions : ICollection~Transaction~
+}
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + Lockouts : ICollection~Lockout~
+    + Manager : Manager?
+    + NotificationReceivers : ICollection~Notification~
+    + NotificationSenders : ICollection~Notification~
+    + User : User?
+    + UserReportReporters : ICollection~UserReport~
+    + UserReportResolvers : ICollection~UserReport~
+    + UserReportTargets : ICollection~UserReport~
+    + TransactionFroms : ICollection~Transaction~
+    + TransactionTos : ICollection~Transaction~
+    + ChatParticipants : ICollection~ChatParticipant~
+    + Messages : ICollection~Message~
+}
+
+class User {
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + CartItems : ICollection~CartItem~
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + OrderInfos : ICollection~OrderInfo~
+    + UserNavigation : Account
+    + WishlistItems : ICollection~WishlistItem~
+    + QuizAttempts : ICollection~QuizAttempt~
+}
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + CourseQuizzes : ICollection~CourseQuiz~
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Instructor {
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
+    + Quizzes : ICollection~Quiz~
+    + InstructorNavigation : User
+}
+
+class Coupon {
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+    + Courses : ICollection~Course~
+    + Manager : Manager?
 }
 
 class InstructorPayout {
     + PayoutId : int
-    + InstructorId : int
+    + TransactionId : int?
+    + InstructorId : int?
     + PayoutAmount : decimal
+    + PayoutDate : DateTime
     + IsPaid : bool
+    + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+    + Transaction : Transaction?
+    + Instructor : Instructor?
 }
 
-%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+%% ==================== BACKEND - SERVICE ====================
 
 class ITransactionService {
     <<interface>>
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~~ *
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
 }
-
-class ITransactionRepository {
-    <<interface>>
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~~ *
-}
-
-%% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class TransactionService {
     - _repo : ITransactionRepository
-    
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~~
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+%% ==================== BACKEND - REPOSITORY ====================
+
+class ITransactionRepository {
+    <<interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
 }
 
 class TransactionRepository {
     - _context : AppDbContext
-    
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~~
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
 }
+
+%% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
     + Transactions : DbSet~Transaction~
@@ -147,10 +281,19 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION / COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 Transaction *-- TransactionExt
-Transaction *-- OrderItem
-Transaction *-- InstructorPayout
+Account *-- User
+User *-- Instructor
+
+%% === BIDIRECTIONAL ASSOCIATION ===
+Transaction -- OrderItem
+Transaction -- Account
+Transaction -- InstructorPayout
+OrderItem -- Course
+Course -- Instructor
+Course -- Coupon
+InstructorPayout -- Instructor
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 TransactionControllerBE --> ITransactionService
@@ -164,12 +307,10 @@ TransactionRepository ..|> ITransactionRepository
 %% === DEPENDENCY (dashed arrows) ===
 TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerFE ..> TransactionDetailVM
-TransactionControllerBE ..> ApiResponse~TransactionDetailDto~
-ApiResponse~TransactionDetailDto~ ..> TransactionDetailDto
+TransactionControllerBE ..> TransactionDetailDto
 TransactionService ..> TransactionDetailDto
 TransactionRepository ..> TransactionDetailDto
 TransactionRepository ..> Transaction
 
 %% ==================== STYLES ====================
-
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
@@ -20,8 +21,9 @@ public class GiftController : Controller
         _config = config;
     }
 
-    // ─── 1. MÀN HÌNH THIẾT LẬP QUÀ TẶNG (UC-18, UC-19) ──────────────────────
+    // UC-17/18: Gift Courses & Pay for Gift — User và Instructor mới được tặng khóa học
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Setup(int courseId)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -66,8 +68,10 @@ public class GiftController : Controller
         return View(new GiftSetupViewModel { CourseId = courseId });
     }
 
+    // UC-17/18: Post Gift Setup form — User và Instructor
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Setup(GiftSetupViewModel model)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -119,7 +123,9 @@ public class GiftController : Controller
         });
     }
 
+    // UC-17: Check Recipient AJAX — User và Instructor
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> CheckRecipient(string email, int courseId)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -140,7 +146,9 @@ public class GiftController : Controller
         return Json(new { enrolled = false });
     }
 
+    // UC-18: Pay for Gift (Review page trước khi thanh toán) — User và Instructor
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Checkout(
         int courseId,
         string recipientEmail,
@@ -238,8 +246,9 @@ public class GiftController : Controller
         return View(model);
     }
 
-    // ─── 1.5. DYNAMIC GIFT PAYMENT INTENT CREATION VIA AJAX ───────────────
+    // UC-18: Tạo Gift Payment Intent (AJAX) — User và Instructor
     [HttpPost]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> CreateGiftPaymentIntentAjax(
         int courseId,
         string recipientEmail,
@@ -334,7 +343,9 @@ public class GiftController : Controller
         return View(giftInfo);
     }
 
+    // UC-19: Claim Gift (AJAX) — User và Instructor phải đăng nhập mới nhận được quà
     [HttpPost]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> ClaimGiftAjax(string token)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
@@ -361,8 +372,9 @@ public class GiftController : Controller
         return Json(new { success = false, message = errorMsg });
     }
 
-    // ─── 3. CALLBACK SAU THANH TOÁN ─────────────────────────────────────────
+    // UC-18: Stripe Checkout Success callback — User và Instructor
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> CheckoutSuccess(
         [FromQuery(Name = "session_id")] string? sessionId,
         [FromQuery(Name = "payment_intent_id")] string? paymentIntentId)

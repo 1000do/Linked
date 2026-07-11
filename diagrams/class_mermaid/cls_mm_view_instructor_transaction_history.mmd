@@ -1,16 +1,20 @@
-classDiagram-v2
+classDiagram
 direction LR
 
-%% ==================== FRONTEND ====================
+%% ==================== FRONTEND - CONTROLLER ====================
 
 class TransactionControllerFE["TransactionController"] {
     <<frontend controller>>
-    + Instructor(page: int, pageSize: int, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
+    + Instructor(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
 }
+
+%% ==================== FRONTEND - VIEW MODELS ====================
 
 class InstructorFinancePageVM {
     <<view model>>
     + Transactions : TransactionPagedVM
+    + Payouts : InstructorPayoutPagedViewModel
+    + CourseRevenues : List~InstructorCourseRevenueResponse~
 }
 
 class TransactionPagedVM {
@@ -25,53 +29,56 @@ class TransactionPagedVM {
 class TransactionListItemVM {
     <<view model>>
     + TransactionId : int
-    + StripeSessionId : string?
-    + Date : DateTime?
+    + PaymentMethod : string?
     + Amount : decimal
-    + Status : string?
-    + BuyerName : string
-    + CourseTitle : string
-    + InstructorName : string
     + Currency : string?
-    + PayoutCurrency : string?
-    + RefundReason : string?
-    + RefundAdminNote : string?
-    + RefundRequestedAt : DateTime?
-    + IsGift : bool
-    + RecipientEmail : string?
-    + IsGiftClaimed : bool
+    + Status : string?
+    + CreatedAt : DateTime?
+    + UserEmail : string?
+    + UserName : string?
+    + IsCourseOwner : bool
+    + TransactionExt : TransactionExtVM?
 }
 
-%% ==================== BACKEND - CONTROLLERS ====================
+class TransactionExtVM {
+    <<view model>>
+    + RefundReason : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
 
 class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
     - _transactionService : ITransactionService
-    + GetInstructorTransactions(page: int, pageSize: int, year: int?, month: int?) Task~IActionResult~
+    - _financeService : IAdminFinanceService
+    + GetInstructorTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
 }
 
-%% ==================== BACKEND - SERVICES ====================
+%% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ITransactionService {
     <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~ *
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResultTransactionListDto~ *
 }
-
-class TransactionService {
-    - _repo : ITransactionRepository
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~
-}
-
-%% ==================== BACKEND - REPOSITORIES ====================
 
 class ITransactionRepository {
     <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~ *
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~Tuple~List~TransactionListDto~, int~~ *
 }
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class TransactionService {
+    - _repo : ITransactionRepository
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResultTransactionListDto~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class TransactionRepository {
     - _context : AppDbContext
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~Tuple~List~TransactionListDto~, int~~
 }
 
 %% ==================== BACKEND - DB CONTEXT ====================
@@ -80,7 +87,38 @@ class AppDbContext {
     + Transactions : DbSet~Transaction~
 }
 
-%% ==================== BACKEND - ENTITIES ====================
+%% ==================== BACKEND - DTOs ====================
+
+class PagedResultTransactionListDto["PagedResult~TransactionListDto~"] {
+    <<dto>>
+    + Items : List~TransactionListDto~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class TransactionListDto {
+    <<dto>>
+    + TransactionId : int
+    + PaymentMethod : string?
+    + Amount : decimal
+    + Currency : string?
+    + Status : string?
+    + CreatedAt : DateTime?
+    + UserEmail : string?
+    + UserName : string?
+    + IsCourseOwner : bool
+    + TransactionExt : TransactionExtDto?
+}
+
+class TransactionExtDto {
+    <<dto>>
+    + RefundReason : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Transaction {
     + TransactionId : int
@@ -95,27 +133,49 @@ class Transaction {
     + TransactionsStatus : string?
     + TransactionType : string?
     + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
+}
+
+class TransactionExt {
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION & COMPOSITION ===
-InstructorFinancePageVM o-- TransactionPagedVM
+%% === COMPOSITION (filled diamond) ===
+InstructorFinancePageVM *-- TransactionPagedVM
 TransactionPagedVM *-- TransactionListItemVM
+TransactionListItemVM *-- TransactionExtVM
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+PagedResultTransactionListDto *-- TransactionListDto
+TransactionListDto *-- TransactionExtDto
+
+Transaction *-- TransactionExt
+
+%% === ASSOCIATION (solid arrow) ===
 TransactionControllerBE --> ITransactionService
 TransactionService --> ITransactionRepository
 TransactionRepository --> AppDbContext
-AppDbContext --> Transaction
 
-%% === REALIZATION ===
+%% === REALIZATION (hollow arrow) ===
 TransactionService ..|> ITransactionService
 TransactionRepository ..|> ITransactionRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrow) ===
+TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerFE ..> InstructorFinancePageVM
-TransactionControllerFE ..> TransactionControllerBE : API
+TransactionControllerBE ..> PagedResultTransactionListDto
+TransactionService ..> PagedResultTransactionListDto
+TransactionRepository ..> Transaction
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -1,7 +1,7 @@
 classDiagram
 direction LR
 
-%% ==================== FRONTEND ====================
+%% ==================== FRONTEND - CONTROLLER ====================
 
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
@@ -13,66 +13,7 @@ class AdminFinanceControllerFE["AdminFinanceController"] {
 class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
     - _financeService : IAdminFinanceService
-    - _instructorService : IInstructorService
     + Withdraw(request: WithdrawRequest) Task~IActionResult~
-}
-
-%% ==================== BACKEND - DTOs ====================
-
-class WithdrawRequest {
-    <<dto>>
-    + Amount : decimal?
-    + Description : string?
-}
-
-class WithdrawResponse {
-    <<dto>>
-    + WithdrawalId : int
-    + StripePayoutId : string
-    + Amount : decimal
-    + Status : string
-    + CreatedAt : DateTime
-}
-
-class PlatformBalanceResponse {
-    <<dto>>
-    + Available : decimal
-    + Incoming : decimal
-    + Total : decimal
-    + Currency : string
-    + PayoutScheduleInterval : string
-    + PayoutScheduleAnchor : string?
-}
-
-class StripePlatformBalanceDto {
-    <<dto>>
-    + Available : decimal
-    + Incoming : decimal
-    + Currency : string
-    + PayoutScheduleInterval : string
-    + PayoutScheduleAnchor : string?
-}
-
-class StripeWithdrawalResponseDto {
-    <<dto>>
-    + Id : string
-    + Amount : decimal
-    + Status : string
-    + ArrivalDate : DateTime?
-}
-
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class PlatformWithdrawal {
-    + WithdrawalId : int
-    + ManagerId : int?
-    + Amount : decimal
-    + Currency : string
-    + StripePayoutId : string?
-    + Status : string
-    + Description : string?
-    + CreatedAt : DateTime
-    + ArrivedAt : DateTime?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -89,58 +30,80 @@ class IStripeConnectService {
     + CreatePlatformWithdrawalAsync(amount: decimal, description: string, managerId: int) Task~StripeWithdrawalResponseDto~ *
 }
 
-%% ==================== BACKEND - REPOSITORY INTERFACES ====================
-
 class IAdminFinanceRepository {
     <<interface>>
     + AddWithdrawalAsync(withdrawal: PlatformWithdrawal) Task~int~ *
+    + SaveChangesAsync() Task~int~ *
 }
 
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+%% ==================== BACKEND - SERVICE/REPO IMPLEMENTATIONS ====================
 
 class AdminFinanceService {
     - _repo : IAdminFinanceRepository
+    - _paymentGateway : IPaymentGatewayService
+    - _instructorRepo : IInstructorRepository
+    - _notiService : INotificationService
+    - _hubContext : IHubContext~FinanceHub~
+    - _logger : ILogger~AdminFinanceService~
+    - _configRepo : ISystemConfigRepository
+    - _courseRepo : ICourseRepository
     - _stripeConnect : IStripeConnectService
+    - _giftRepo : IGiftRepository
     + CreateWithdrawalAsync(request: WithdrawRequest, managerId: int) Task~WithdrawResponse~
     + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
 }
 
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+class StripeConnectService {
+    - _configuration : IConfiguration
+    + GetPlatformBalanceAsync() Task~StripePlatformBalanceDto~
+    + CreatePlatformWithdrawalAsync(amount: decimal, description: string, managerId: int) Task~StripeWithdrawalResponseDto~
+}
 
 class AdminFinanceRepository {
     - _context : AppDbContext
     + AddWithdrawalAsync(withdrawal: PlatformWithdrawal) Task~int~
+    + SaveChangesAsync() Task~int~
 }
 
-%% ==================== BACKEND - DbContext ====================
+%% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
     + PlatformWithdrawals : DbSet~PlatformWithdrawal~
 }
 
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class PlatformWithdrawal {
+    <<entity>>
+    + WithdrawalId : int
+    + ManagerId : int?
+    + Amount : decimal
+    + Currency : string
+    + StripePayoutId : string?
+    + Status : string
+    + Description : string?
+    + CreatedAt : DateTime
+    + ArrivedAt : DateTime?
+    + Manager : Manager?
+}
+
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE
+%% === ASSOCIATION (solid arrow) ===
 AdminFinanceControllerBE --> IAdminFinanceService
-AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceService --> IStripeConnectService
+AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceRepository --> AppDbContext
 
-%% === INTERFACE REALIZATION ===
+%% === REALIZATION (hollow arrow) ===
 AdminFinanceService ..|> IAdminFinanceService
+StripeConnectService ..|> IStripeConnectService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
-%% === DEPENDENCY ===
-AdminFinanceControllerBE ..> WithdrawRequest
-AdminFinanceControllerBE ..> WithdrawResponse
-AdminFinanceService ..> WithdrawRequest
-AdminFinanceService ..> WithdrawResponse
-AdminFinanceService ..> PlatformBalanceResponse
-AdminFinanceService ..> PlatformWithdrawal
-IStripeConnectService ..> StripePlatformBalanceDto
-IStripeConnectService ..> StripeWithdrawalResponseDto
+%% === DEPENDENCY (dashed arrow) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceRepository ..> PlatformWithdrawal
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

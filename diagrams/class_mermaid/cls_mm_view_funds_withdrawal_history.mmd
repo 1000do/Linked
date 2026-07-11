@@ -5,19 +5,31 @@ direction LR
 
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
-    + Index(year: int?, month: int?) Task~IActionResult~
+    - _api : ApiClient
+    + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
 }
 
 class AdminFinanceUnifiedVM {
     <<view model>>
+    + Dashboard : FinanceDashboardVM
+    + Withdraw : WithdrawPageVM
+    + Transactions : TransactionPagedVM
+    + Payouts : PagedResult~PayoutDetailVM~
     + Withdrawals : PagedResult~WithdrawalHistoryVM~
+    + PendingRefunds : PagedResult~RefundRequestVM~
+    + PayoutDays : string
+    + CourseRevenues : List~InstructorCourseRevenueResponse~
+    + YearlySummaries : Dictionary~int, FinancialSummaryVM~
 }
 
-class PagedResult_WithdrawalHistoryVM["PagedResult~WithdrawalHistoryVM~"] {
-    <<view model>>
+class PagedResultWithdrawalHistoryVM["PagedResult~WithdrawalHistoryVM~"] {
     + Items : List~WithdrawalHistoryVM~
     + TotalCount : int
-    + PageCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
 }
 
 class WithdrawalHistoryVM {
@@ -33,7 +45,7 @@ class WithdrawalHistoryVM {
     + ArrivedAt : DateTime?
 }
 
-%% ==================== BACKEND - CONTROLLERS ====================
+%% ==================== BACKEND - CONTROLLER ====================
 
 class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
@@ -43,11 +55,23 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class PagedResult_WithdrawalHistoryItem["PagedResult~WithdrawalHistoryItem~"] {
+class ApiResponseWithdrawal["ApiResponse~PagedResult~WithdrawalHistoryItem~~"] {
+    <<dto>>
+    + Success : bool
+    + Message : string
+    + Data : PagedResult~WithdrawalHistoryItem~
+    + Errors : List~string~
+}
+
+class PagedResultWithdrawalHistoryItem["PagedResult~WithdrawalHistoryItem~"] {
     <<dto>>
     + Items : List~WithdrawalHistoryItem~
     + TotalCount : int
-    + PageCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
 }
 
 class WithdrawalHistoryItem {
@@ -63,70 +87,102 @@ class WithdrawalHistoryItem {
     + ArrivedAt : DateTime?
 }
 
-%% ==================== BACKEND - SERVICES ====================
+%% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminFinanceService {
     <<interface>>
     + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~ *
 }
 
-class AdminFinanceService {
-    - _financeRepo : IAdminFinanceRepository
-    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~
-}
-
-%% ==================== BACKEND - REPOSITORIES ====================
-
 class IAdminFinanceRepository {
     <<interface>>
-    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~Tuple~List~PlatformWithdrawal~, int~~ *
+    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~, int~~ *
+    + SaveChangesAsync() Task~int~ *
 }
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~
+    - SyncStripePayoutStatuses(withdrawals: List~PlatformWithdrawal~) Task~bool~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class AdminFinanceRepository {
     - _context : AppDbContext
-    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~Tuple~List~PlatformWithdrawal~, int~~
+    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~, int~~
+    + SaveChangesAsync() Task~int~
 }
 
-%% ==================== BACKEND - DB CONTEXT ====================
+%% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
     + PlatformWithdrawals : DbSet~PlatformWithdrawal~
 }
 
-%% ==================== BACKEND - ENTITIES ====================
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class PlatformWithdrawal {
     + WithdrawalId : int
     + ManagerId : int?
     + Amount : decimal
+    + Currency : string
     + StripePayoutId : string?
     + Status : string
+    + Description : string?
     + CreatedAt : DateTime
+    + ArrivedAt : DateTime?
+    + Manager : Manager?
+}
+
+class Manager {
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+    + Coupons : ICollection~Coupon~
+    + ManagerNavigation : Account
+    + SystemConfigs : ICollection~SystemConfig~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-AdminFinanceUnifiedVM --> PagedResult_WithdrawalHistoryVM
-PagedResult_WithdrawalHistoryVM --> WithdrawalHistoryVM
-PagedResult_WithdrawalHistoryItem --> WithdrawalHistoryItem
+%% === COMPOSITION (filled diamond) ===
+PlatformWithdrawal *-- Manager
 
+%% === AGGREGATION (hollow diamond) ===
+AdminFinanceUnifiedVM o-- PagedResultWithdrawalHistoryVM
+PagedResultWithdrawalHistoryVM o-- WithdrawalHistoryVM
+PagedResultWithdrawalHistoryItem o-- WithdrawalHistoryItem
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AdminFinanceControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceRepository --> AppDbContext
-AppDbContext --> PlatformWithdrawal
 
-%% === REALIZATION ===
+%% === INTERFACE REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
-AdminFinanceControllerFE ..> AdminFinanceControllerBE : API calls
-AdminFinanceControllerBE ..> PagedResult_WithdrawalHistoryItem
-IAdminFinanceService ..> PagedResult_WithdrawalHistoryItem
-IAdminFinanceRepository ..> PlatformWithdrawal
+AdminFinanceControllerFE ..> PagedResultWithdrawalHistoryVM
+
+AdminFinanceControllerBE ..> ApiResponseWithdrawal
+AdminFinanceControllerBE ..> PagedResultWithdrawalHistoryItem
+
+AdminFinanceService ..> WithdrawalHistoryItem
+AdminFinanceService ..> PagedResultWithdrawalHistoryItem
+AdminFinanceService ..> PlatformWithdrawal
+
 AdminFinanceRepository ..> PlatformWithdrawal
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

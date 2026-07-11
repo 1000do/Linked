@@ -1,0 +1,93 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Filter transactions (For System)
+
+actor "Admin" as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":ITransactionService" as tx_sv
+participant ":ITransactionRepository" as tx_repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":AdminFinanceUnifiedVM" as vm
+participant ":PagedResult<TransactionListDto>" as paged_dto
+participant ":ApiResponse" as api_resp
+
+act -> view++: Select status option from dropdown and click "Filter"
+
+view -> fe_ctrl++: GET /AdminFinance?status={status}...
+
+fe_ctrl -> vm++: Call AdminFinanceUnifiedVM()
+vm -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/transactions?status={status}...
+    
+    be_ctrl -> tx_sv++: GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month)
+    
+    tx_sv -> tx_repo++: GetTransactionsAsync(page, pageSize, keyword, sortBy, status, year, month)
+    
+    tx_repo -> ctx++: Transactions.Where(t => t.Status == status)
+    ctx -> db++: Execute SELECT with WHERE condition
+    db -->> ctx--: Return filtered database records
+    ctx -->> tx_repo--: Return List<TransactionListDto> and totalCount
+    
+    tx_repo -->> tx_sv--: Return List<TransactionListDto> and totalCount
+    
+    tx_sv -> paged_dto++: Call PagedResult<TransactionListDto>()
+    paged_dto -->> tx_sv--: Return PagedResult object
+
+    tx_sv -->> be_ctrl--: Return PagedResult object
+    
+    be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
+    api_resp -->> be_ctrl--: Return ApiResponse object
+
+    be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
+    
+    alt Empty List (No transactions found)
+        fe_ctrl -->> view: Return View with empty Transactions list
+        view -->> act: Display "No transactions matched your criteria" message
+    else Transactions Found
+        fe_ctrl -->> view--: Return View with populated Transactions list
+        view -->> act--: Display the filtered transactions in the table
+    end
+end
+
+@enduml

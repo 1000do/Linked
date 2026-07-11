@@ -32,18 +32,21 @@ participant "GiftCheckoutPage" as view
 participant "MyCoursesPage" as my_courses_view
 participant "GiftController" as fe_gift_ctrl <<frontend controller>>
 participant "CheckoutController" as be_ctrl <<backend controller>>
-participant ":CheckoutService" as sv
-participant ":StripePaymentGateway" as stripe
-participant ":OrderRepository" as order_repo
+participant ":ICheckoutService" as sv
+participant ":CheckoutResponse" as res_dto
+participant ":OrderInfo" as order_ett
+participant ":OrderItem" as item_ett
+participant ":Transaction" as tx_ett
+participant ":IPaymentGatewayService" as stripe
+participant ":IOrderRepository" as order_repo
 
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-view ++
 
 ' == Access Gift Checkout ==
-act -> view: Access Gift Checkout page
+act -> view++: Access Gift Checkout page
 ' view -> fe_gift_ctrl++: GET /Gift/Checkout
 ' fe_gift_ctrl -->> view--: Return View
 ' view -> view++: Mount Stripe Elements (Empty Card Form)
@@ -71,15 +74,21 @@ sv--
 alt Gift Details Missing or Invalid
     sv -->> be_ctrl: throw ArgumentException
     be_ctrl -->> fe_gift_ctrl: Return statusCode 400
-    fe_gift_ctrl -->> view: Return JSON (success=false)
+    fe_gift_ctrl -->> view: Return JSON (success=false, message)
     view -->> act: Display error message
 else Valid Gift Details
     sv -> stripe++: CreatePaymentIntentAsync(purchasePrice, "usd", metadata)
     stripe -->> sv--: Return ClientSecret and PaymentIntentId
     
-    sv -->> be_ctrl--: Return CheckoutResponse
-    be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
-    fe_gift_ctrl -->> view--: Return JSON (ClientSecret)
+    sv -> res_dto++: Call CheckoutResponse(ClientSecret, PaymentIntentId)
+    res_dto -->> sv--: Return CheckoutResponse object
+    
+    sv -->> be_ctrl: Return CheckoutResponse object
+    deactivate sv
+    be_ctrl -->> fe_gift_ctrl: Return statusCode 200
+    deactivate be_ctrl
+    fe_gift_ctrl -->> view: Return JSON (ClientSecret)
+    deactivate fe_gift_ctrl
 end
 
 ' == Process Stripe Payment ==
@@ -89,8 +98,7 @@ stripe -->> view--: Return payment result
 alt Payment declined
     view -->> act: Display payment error message
 else Payment Successful
-    view -->> fe_gift_ctrl--: Redirect to /Gift/CheckoutSuccess?payment_intent_id=...
-    activate fe_gift_ctrl
+    view -> fe_gift_ctrl++: GET /Gift/CheckoutSuccess?payment_intent_id=...
     fe_gift_ctrl -> be_ctrl++: GET /api/checkout/success-intent
     be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
     
@@ -109,28 +117,64 @@ else Payment Successful
     ctx -->> order_repo--: Return IDbContextTransaction
     order_repo -->> sv--: Return transaction
     
-    sv -> sv++: Save Order, OrderItems, Transactions
-    sv -> order_repo++: AddAsync(order)
+    sv -> order_ett++: Call OrderInfo(...)
+    order_ett -->> sv--: Return OrderInfo object
+    
+    sv -> order_repo++: AddOrderAsync(order)
     order_repo -->> sv--: Return result
-    sv--
-    
-    sv -> sv++: ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
-    sv--
-    
-    sv -> sv++: ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
-    sv--
     
     sv -> order_repo++: SaveChangesAsync()
     order_repo -> ctx++: SaveChangesAsync()
-    ctx -> db++: Execute query
-    db -->> ctx--: Return data
-    ctx -->> order_repo--: Return 1
-    order_repo -->> sv--: Return 1
+    ctx -> db++: Save changes to database
+    db -->> ctx--: Return numberOfRowsAffected
+    ctx -->> order_repo--: Return numberOfRowsAffected
+    order_repo -->> sv--: Return numberOfRowsAffected
+    
+    loop for each course in courseIds
+        sv -> item_ett++: Call OrderItem(...)
+        item_ett -->> sv--: Return OrderItem object
+        
+        sv -> order_repo++: AddOrderItemAsync(orderItem)
+        order_repo -->> sv--: Return result
+        
+        sv -> order_repo++: SaveChangesAsync()
+        order_repo -> ctx++: SaveChangesAsync()
+        ctx -> db++: Save changes to database
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> order_repo--: Return numberOfRowsAffected
+        order_repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> tx_ett++: Call Transaction(...)
+        tx_ett -->> sv--: Return Transaction object
+        
+        sv -> order_repo++: AddTransactionAsync(transaction)
+        order_repo -->> sv--: Return result
+        
+        sv -> order_repo++: SaveChangesAsync()
+        order_repo -> ctx++: SaveChangesAsync()
+        ctx -> db++: Save changes to database
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> order_repo--: Return numberOfRowsAffected
+        order_repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> sv++: ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
+        sv--
+        
+        sv -> sv++: ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv--
+    end
+    
+    sv -> order_repo++: SaveChangesAsync()
+    order_repo -> ctx++: SaveChangesAsync()
+    ctx -> db++: Save changes to database
+    db -->> ctx--: Return numberOfRowsAffected
+    ctx -->> order_repo--: Return numberOfRowsAffected
+    order_repo -->> sv--: Return numberOfRowsAffected
     
     sv -> sv++: Commit transaction
     sv -> ctx++: transaction.CommitAsync()
     ctx -> db++: Commit
-    db -->> ctx--: Committed
+    db -->> ctx--: Return result
     ctx -->> sv--: Return result
     sv--
     

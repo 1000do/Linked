@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers;
@@ -30,7 +31,9 @@ public class TransactionController : Controller
     // GET /Transaction/History?page=1&pageSize=10
     // Lịch sử mua hàng cho Người dùng (Học viên)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-39: View Transaction List, UC-40: Search — User và Instructor xem lịch sử giao dịch của mình
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> History(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null)
     {
         var vm = new TransactionPagedVM { Page = page, PageSize = pageSize };
@@ -64,7 +67,9 @@ public class TransactionController : Controller
     // GET /Transaction/Instructor?page=1&pageSize=20
     // Lịch sử giao dịch cho Giảng viên
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-67: View Instructor TX, UC-69: Sort, UC-70: Filter, UC-74: View Revenue — Chỉ Instructor
     [HttpGet]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> Instructor(int page = 1, int pageSize = 20, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx",
         int payoutPage = 1, int payoutPageSize = 20, string? payoutKeyword = null, string? payoutSortBy = "date_desc", string? payoutStatus = null,
         int? year = null, int? month = null, string? courseSortBy = "sales_desc")
@@ -210,7 +215,9 @@ public class TransactionController : Controller
     // GET /Transaction/Detail/{id}
     // UC-114: Chi tiết giao dịch
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-42: View Transaction Detail — User và Instructor
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Detail(int id)
     {
         var resp = await _api.GetAsync($"transactions/{id}");
@@ -246,7 +253,9 @@ public class TransactionController : Controller
     // GET /Transaction/InstructorDetail/{id}
     // Chi tiết giao dịch dành cho Giảng viên
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-73: View Instructor's Transaction Detail — Chỉ Instructor
     [HttpGet]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> InstructorDetail(int id)
     {
         var resp = await _api.GetAsync($"transactions/{id}");
@@ -282,7 +291,9 @@ public class TransactionController : Controller
     // GET /Transaction/HistoryDetail/{id}
     // Chi tiết giao dịch dành cho Người dùng (Học viên)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-42: View Transaction Detail (User View) — User và Instructor
     [HttpGet]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> HistoryDetail(int id)
     {
         var resp = await _api.GetAsync($"transactions/{id}");
@@ -314,7 +325,9 @@ public class TransactionController : Controller
         return View(parsed.Data);
     }
 
+    // UC-41: Request Refund — User và Instructor
     [HttpPost]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> RequestRefund(int transactionId, string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))

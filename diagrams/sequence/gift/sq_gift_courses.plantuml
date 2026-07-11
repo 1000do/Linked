@@ -58,14 +58,18 @@ end
 
 view -> fe_ctrl++: POST /Gift/Setup (FormData)
 
-fe_ctrl -> fe_ctrl++: Check AccessToken
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
-alt Unauthenticated
-    fe_ctrl -->> login_view: Redirect to Login page
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
     activate login_view
-    login_view -->> act: Display Login page
-    deactivate login_view
-else Authenticated
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++: GET /api/gift/check-recipient?email={recipientEmail}&courseId={courseId}
     be_ctrl -> gift_sv++: IsRecipientEnrolledAsync(recipientEmail, courseId)
 
@@ -85,12 +89,13 @@ else Authenticated
         repo -->> gift_sv--: Return boolean
     end
 
-    gift_sv -> gift_sv++: Check IsEnrolled
-    gift_sv--
+    gift_sv -->> be_ctrl--: Return boolean
+    be_ctrl -->> fe_ctrl: Return statusCode 200
+    
+    fe_ctrl -> fe_ctrl++: Check recipient enrollment status
+    fe_ctrl--
+    
     alt Recipient Already Enrolled (A.6 / EX-6)
-        gift_sv -->> be_ctrl--: Return boolean (true)
-        be_ctrl -->> fe_ctrl--: Return statusCode 200
-        
         fe_ctrl -> be_ctrl++: GET /api/gift/course/{courseId}
         be_ctrl -> pub_sv++: GetCourseWithDetailsAsync(courseId, userId, role)
         pub_sv -> repo++: GetCourseWithDetailsAsync(courseId)
@@ -102,13 +107,11 @@ else Authenticated
         pub_sv -> res++: Call CourseResponse(...)
         res -->> pub_sv--: Return CourseResponse object
         pub_sv -->> be_ctrl--: Return CourseResponse object
-        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        be_ctrl -->> fe_ctrl: Return statusCode 200
         
         fe_ctrl -->> view: Return View
-        view -->> act: Highlight recipient email field with error message\nand disable "Proceed to Payment" button
+        view -->> act: Display error message
     else Recipient Not Enrolled
-        gift_sv -->> be_ctrl--: Return boolean (false)
-        be_ctrl -->> fe_ctrl: Return statusCode 200
         fe_ctrl -->> checkout_view--: Redirect to Gift Checkout page with gift details parameters
         activate checkout_view
         checkout_view -->> act--: Display Gift Checkout page

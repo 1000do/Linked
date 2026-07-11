@@ -1,4 +1,4 @@
-classDiagram-v2
+classDiagram
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -13,7 +13,6 @@ class TransactionControllerFE["TransactionController"] {
 class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
     - _financeService : IAdminFinanceService
-    
     + RequestRefund(transactionId: int, request: StudentRefundRequest) Task~IActionResult~
 }
 
@@ -43,71 +42,77 @@ class RefundEligibilityDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
-    + TransactionsStatus : string
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
     + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 class TransactionExt {
+    <<entity>>
     + TransactionId : int
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminFinanceService {
     <<interface>>
-    + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~~ *
+    + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~ *
 }
 
 class IAdminFinanceRepository {
     <<interface>>
-    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction~~ *
-    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~~ *
-    + SaveChangesAsync() Task~int~~ *
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~ *
+    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~ *
+    + SaveChangesAsync() Task~int~ *
 }
 
 class INotificationService {
     <<interface>>
-    + SendNotificationAsync(userId: int, title: string, message: string, link: string) Task *
+    + SendNotificationAsync(userId: int, title: string, message: string, link: string?) Task *
 }
 
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class AdminFinanceService {
     - _repo : IAdminFinanceRepository
     - _notiService : INotificationService
-    
-    + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~~
+    + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~
 }
-
-class NotificationService {
-    + SendNotificationAsync(userId: int, title: string, message: string, link: string) Task
-}
-
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class AdminFinanceRepository {
     - _context : AppDbContext
-    
-    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction~~
-    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~~
-    + SaveChangesAsync() Task~int~~
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~
+    + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~
+    + SaveChangesAsync() Task~int~
 }
-
-%% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
     + Transactions : DbSet~Transaction~
-    + TransactionExts : DbSet~TransactionExt~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION / COMPOSITION ===
-Transaction *-- TransactionExt
+%% === AGGREGATION (hollow diamond) ===
+Transaction o-- TransactionExt
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 TransactionControllerBE --> IAdminFinanceService
@@ -118,17 +123,17 @@ AdminFinanceRepository --> AppDbContext
 %% === INTERFACE REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
-NotificationService ..|> INotificationService
 
 %% === DEPENDENCY (dashed arrows) ===
 TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerBE ..> StudentRefundRequest
 TransactionControllerBE ..> RefundResultDto
+IAdminFinanceService ..> RefundResultDto
 AdminFinanceService ..> RefundResultDto
-AdminFinanceService ..> RefundEligibilityDto
+IAdminFinanceRepository ..> RefundEligibilityDto
+IAdminFinanceRepository ..> Transaction
 AdminFinanceRepository ..> RefundEligibilityDto
 AdminFinanceRepository ..> Transaction
 
 %% ==================== STYLES ====================
-
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

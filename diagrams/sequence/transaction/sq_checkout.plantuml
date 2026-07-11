@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white   
+            BackgroundColor white
         }
         groupHeader{
             BackgroundColor white
@@ -27,119 +27,145 @@
 hide footbox
 mainframe Checkout
 
-actor "User" as act
-participant "CartPage" as cart
+actor User as act
+participant "CartPage" as cart_view
 participant "CheckoutPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "MyCoursesPage" as my_courses_view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CheckoutController" as be_ctrl <<backend controller>>
-participant ":CheckoutService" as sv
-participant ":OrderRepository" as order_repo
-participant ":CartRepository" as cart_repo
+participant ":ICheckoutService" as sv
+participant ":ICheckoutRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant "Stripe API" as stripe_api <<external>>
 
 act ++
-cart ++
 
-act -> cart: Click "Checkout" button
-cart -> fe_ctrl++: GET /Cart/Checkout
+act -> cart_view++: Click "Checkout" button
+cart_view -> fe_ctrl++: GET /Cart/Checkout
 
-fe_ctrl -> fe_ctrl++: Get cart summary
+fe_ctrl -> fe_ctrl++: Validate User's authentication and authorization
 fe_ctrl--
-fe_ctrl -->> cart--: Return Checkout View HTML
-cart -->> act--: Redirect / Display CheckoutPage
 
-act -> view++: Page loads (Stripe Elements)
-view -> fe_ctrl++: POST /Cart/CreatePaymentIntentAjax (with couponCode)
-fe_ctrl -> be_ctrl++: POST /api/checkout/create-intent
-
-be_ctrl -> sv++: InitiatePaymentIntentAsync(userId, couponCode)
-
-opt Coupon Code Present
-    sv -> sv++: Validate coupon eligibility
-    sv--
-end
-
-sv -> sv++: Calculate total amount and apply discounts
-sv--
-
-sv -> stripe_api++: POST /v1/payment_intents (Create PaymentIntent)
-stripe_api -->> sv--: Return PaymentIntent (ClientSecret)
-
-sv -> order_repo++: AddAsync(Order)
-order_repo -> ctx++: Add entity
-ctx -->> order_repo--: Success
-order_repo -->> sv--: Success
-
-sv -> order_repo++: SaveChangesAsync()
-order_repo -> ctx++: Save changes
-ctx -> db++: Execute INSERT
-db -->> ctx--: Success
-ctx -->> order_repo--: Success
-order_repo -->> sv--: Success
-
-sv -->> be_ctrl--: Return CheckoutResponse (ClientSecret)
-be_ctrl -->> fe_ctrl--: Return 200 OK (ClientSecret)
-fe_ctrl -->> view--: Return JSON (ClientSecret)
-
-view -> view++: Initialize Stripe Elements with ClientSecret
-view--
-
-act -> view: Enter card details & click "Pay"
-view -> stripe_api++: Confirm Card Payment (Stripe.js)
-
-alt Incorrect Card Information / Declined
-    stripe_api -->> view: Return error (Declined/Invalid)
-    view -->> act: Display error message on payment form
-else Payment Cancellation
-    act -> view: Cancel payment (close or back)
-    view -->> act: Restore cart / Cancel
-else Payment Processed Successfully
-    stripe_api -->> view--: Return Success (payment_intent_id)
-    view -> fe_ctrl++: Redirect GET /Cart/CheckoutSuccess?payment_intent_id={id}
-    
-    fe_ctrl -> be_ctrl++: GET /api/checkout/success-intent?payment_intent_id={id}
-    
-    be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
-    
-    sv -> stripe_api++: GET /v1/payment_intents/{id}
-    stripe_api -->> sv--: Return PaymentIntent Details (status = "succeeded")
-    
-    sv -> sv++: Validate transaction amount & status
-    sv--
-    
-    sv -> sv++: Update Order status to "Paid"
-    sv--
-    
-    sv -> sv++: Create Enrollments for User
-    sv--
-    
-    sv -> sv++: Create InstructorPayout (Pending, holds for 14 days)
-    sv--
-    
-    sv -> cart_repo++: ClearCartAsync(userId)
-    cart_repo -> ctx++: Remove cart items
-    ctx -->> cart_repo--: Success
-    cart_repo -->> sv--: Success
-    
-    sv -> order_repo++: SaveChangesAsync()
-    order_repo -> ctx++: Save changes
-    ctx -> db++: Execute UPDATE/INSERT/DELETE
-    db -->> ctx--: Success
-    ctx -->> order_repo--: Success
-    order_repo -->> sv--: Success
-    
-    sv -->> be_ctrl--: Return success message
-    be_ctrl -->> fe_ctrl--: Return 200 OK
-    
-    fe_ctrl -> fe_ctrl++: Delete Coupon Cookie
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid User's authentication and authorization
+    fe_ctrl -> fe_ctrl++: Read coupon map from cookie
     fe_ctrl--
-    fe_ctrl -->> view--: Redirect to /Course/MyCourses
-    view -->> act: Display "Payment successful! Start learning."
-end
 
-deactivate view
-deactivate act
+    fe_ctrl -> be_ctrl++: GET /api/cart/summary?couponCode={codes}
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+
+    fe_ctrl -> fe_ctrl++: Check cart is not empty
+    fe_ctrl--
+
+    opt Cart is empty
+        fe_ctrl -->> cart_view--: Return statusCode 302
+        activate cart_view
+        cart_view -->> act: Display empty cart error message
+    end
+
+    fe_ctrl -> be_ctrl++: GET /api/Profile
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+
+    fe_ctrl -->> view--: Return statusCode 200
+    deactivate cart_view
+    activate view
+    view -->> act: Display CheckoutPage
+
+    act -> view: Page initializes
+    view -> fe_ctrl++: POST /Cart/CreatePaymentIntentAjax
+
+    fe_ctrl -> be_ctrl++: POST /api/checkout/create-intent
+
+    be_ctrl -> sv++: InitiatePaymentIntentAsync(userId, couponCode)
+
+    sv -> repo++: GetCartItemsWithCourseAndInstructorAsync(userId)
+    repo -->> sv--: Return cartItems
+
+    sv -> sv++: Validate cart items and course eligibility
+    sv--
+
+    opt Coupon Code Present
+        sv -> sv++: Validate coupon eligibility for cart items
+        sv--
+    end
+
+    sv -> sv++: Calculate total amount and apply discounts
+    sv--
+
+    sv -> stripe_api++: POST /v1/payment_intents (Create PaymentIntent with metadata)
+    stripe_api -->> sv--: Return PaymentIntent (clientSecret, paymentIntentId)
+
+    sv -->> be_ctrl--: Return CheckoutResponse (clientSecret, paymentIntentId)
+
+    alt Invalid checkout request
+        be_ctrl -->> fe_ctrl--: Return statusCode 400
+        fe_ctrl -->> view--: Return statusCode 400
+        view -->> act: Display error message
+    else Payment intent created successfully
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return statusCode 200
+
+        view -> view++: Initialize Stripe Elements with clientSecret
+        view--
+
+        act -> view: Enter card details and click "Pay now"
+        view -> stripe_api++: stripe.confirmPayment() [Stripe.js]
+
+        alt Incorrect Card Information / Payment Declined
+            stripe_api -->> view: Return error (Declined / Invalid)
+            view -->> act: Display payment error message
+        else Payment Processed Successfully
+            stripe_api -->> view--: Redirect to /Cart/CheckoutSuccess?payment_intent={id}
+
+            view -> fe_ctrl++: GET /Cart/CheckoutSuccess?payment_intent={id}
+
+            fe_ctrl -> be_ctrl++: GET /api/checkout/success-intent?payment_intent_id={id}
+
+            be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
+
+            sv -> sv++: Check transaction already processed
+            sv--
+
+            sv -> stripe_api++: GET /v1/payment_intents/{id}
+            stripe_api -->> sv--: Return PaymentIntent Details (metadata, status = "succeeded")
+
+            sv -> repo++: BeginTransactionAsync()
+            repo -->> sv--: Return IDbContextTransaction
+
+            sv -> sv++: Process all courses and finalize order
+            ref over sv, repo, ctx, db: Process Successful Payment Core
+            sv--
+
+            alt Database Transaction Failure / InvalidOperationException
+                sv -->> be_ctrl--: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl--: Return statusCode 400
+                fe_ctrl -->> view--: Return statusCode 302
+                activate cart_view
+                cart_view -->> act--: Display payment processing error message
+            else Transaction Committed Successfully
+                sv -->> be_ctrl--: Return result
+                be_ctrl -->> fe_ctrl--: Return statusCode 200
+
+                fe_ctrl -> fe_ctrl++: Delete coupon cookie
+                fe_ctrl--
+
+                fe_ctrl -->> my_courses_view--: Return statusCode 302
+                deactivate view
+                activate my_courses_view
+                my_courses_view -->> act--: Display success message
+            end
+        end
+    end
+end
 
 @enduml

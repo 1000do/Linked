@@ -1,16 +1,71 @@
-classDiagram-v2
+classDiagram
 direction LR
 
-%% ==================== FRONTEND ====================
+%% ==================== FRONTEND - CONTROLLER ====================
 
 class TransactionControllerFE["TransactionController"] {
     <<frontend controller>>
-    + Instructor(year: int?, month: int?) Task~IActionResult~
+    + Instructor(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
 }
+
+%% ==================== FRONTEND - VIEW MODELS ====================
 
 class InstructorFinancePageVM {
     <<view model>>
+    + Transactions : TransactionPagedVM
+    + Payouts : InstructorPayoutPagedViewModel
     + CourseRevenues : List~InstructorCourseRevenueResponse~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    - _financeService : IAdminFinanceService
+    + GetInstructorCourseRevenues(year: int, month: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueResponse~~ *
+}
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    - _paymentGateway : IPaymentGatewayService
+    - _instructorRepo : IInstructorRepository
+    - _notiService : INotificationService
+    - _hubContext : IHubContext~FinanceHub~
+    - _logger : ILogger~AdminFinanceService~
+    - _configRepo : ISystemConfigRepository
+    - _courseRepo : ICourseRepository
+    - _stripeConnect : IStripeConnectService
+    - _giftRepo : IGiftRepository
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + Courses : DbSet~Course~
+    + Transactions : DbSet~Transaction~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -28,38 +83,6 @@ class InstructorCourseRevenueResponse {
     + LifetimeRevenue : decimal
 }
 
-%% ==================== BACKEND - CONTROLLERS ====================
-
-class TransactionControllerBE["TransactionController"] {
-    <<backend controller>>
-    - _financeService : IAdminFinanceService
-    + GetInstructorCourseRevenues(year: int, month: int) Task~IActionResult~
-}
-
-%% ==================== BACKEND - SERVICES ====================
-
-class IAdminFinanceService {
-    <<interface>>
-    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List<InstructorCourseRevenueResponse>~ *
-}
-
-class AdminFinanceService {
-    - _repo : IAdminFinanceRepository
-    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List<InstructorCourseRevenueResponse>~
-}
-
-%% ==================== BACKEND - REPOSITORIES ====================
-
-class IAdminFinanceRepository {
-    <<interface>>
-    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List<InstructorCourseRevenueProjection>~ *
-}
-
-class AdminFinanceRepository {
-    - _context : AppDbContext
-    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List<InstructorCourseRevenueProjection>~
-}
-
 class InstructorCourseRevenueProjection {
     <<dto>>
     + CourseId : int
@@ -73,60 +96,84 @@ class InstructorCourseRevenueProjection {
     + LifetimeRevenue : decimal
 }
 
-%% ==================== BACKEND - DB CONTEXT ====================
-
-class AppDbContext {
-    + Courses : DbSet~Course~
-    + Transactions : DbSet~Transaction~
-}
-
-%% ==================== BACKEND - ENTITIES ====================
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Course {
     + CourseId : int
-    + Title : string
     + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
     + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + CourseQuizzes : ICollection~CourseQuiz~
 }
 
 class Transaction {
     + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
     + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
     + TransactionsStatus : string?
+    + TransactionType : string?
     + TransactionCreatedAt : DateTime?
-}
-
-class OrderItem {
-    + OrderItemId : int
-    + CourseId : int?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION & COMPOSITION ===
+%% === COMPOSITION (filled diamond) ===
 InstructorFinancePageVM *-- InstructorCourseRevenueResponse
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === ASSOCIATION (solid arrow) ===
 TransactionControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceRepository --> AppDbContext
-AppDbContext --> Course
-AppDbContext --> Transaction
-Transaction --> OrderItem : 1..1
 
-%% === REALIZATION ===
+%% === REALIZATION (hollow arrow) ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrow) ===
+TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerFE ..> InstructorFinancePageVM
-TransactionControllerFE ..> TransactionControllerBE : API
 TransactionControllerBE ..> InstructorCourseRevenueResponse
-IAdminFinanceService ..> InstructorCourseRevenueResponse
 AdminFinanceService ..> InstructorCourseRevenueResponse
-IAdminFinanceRepository ..> InstructorCourseRevenueProjection
+AdminFinanceService ..> InstructorCourseRevenueProjection
 AdminFinanceRepository ..> InstructorCourseRevenueProjection
-AdminFinanceService ..> InstructorCourseRevenueProjection : mapping
+AdminFinanceRepository ..> Course
+AdminFinanceRepository ..> Transaction
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

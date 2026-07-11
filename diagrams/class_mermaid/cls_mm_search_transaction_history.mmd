@@ -1,4 +1,4 @@
-classDiagram-v2
+classDiagram
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -27,6 +27,14 @@ class TransactionListItemVM {
     + BuyerName : string
     + CourseTitle : string
     + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -34,19 +42,17 @@ class TransactionListItemVM {
 class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
     - _transactionService : ITransactionService
-    
     + GetMyTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class PagedResult~TransactionListDto~ {
+class PagedResultTransactionListDto["PagedResult~TransactionListDto~"] {
     <<dto>>
-    + Items : IEnumerable~TransactionListDto~
+    + Items : List~TransactionListDto~
     + TotalCount : int
     + Page : int
     + PageSize : int
-    + TotalPages : int
 }
 
 class TransactionListDto {
@@ -59,17 +65,37 @@ class TransactionListDto {
     + BuyerName : string
     + CourseTitle : string
     + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
-    + OrderId : int
-    + PaymentMethod : string
-    + TransactionsStatus : string
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
     + StripeSessionId : string?
-    + Order : Order
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -81,14 +107,13 @@ class ITransactionService {
 
 class ITransactionRepository {
     <<interface>>
-    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~ValueTuple~IEnumerable~TransactionListDto~, int~~ *
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~Tuple~List~TransactionListDto~, int~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class TransactionService {
     - _repo : ITransactionRepository
-    
     + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~PagedResult~TransactionListDto~~
 }
 
@@ -96,28 +121,20 @@ class TransactionService {
 
 class TransactionRepository {
     - _context : AppDbContext
-    
-    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~ValueTuple~IEnumerable~TransactionListDto~, int~~
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~Tuple~List~TransactionListDto~, int~~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
     + Transactions : DbSet~Transaction~
-    + Orders : DbSet~Order~
-    + OrderItems : DbSet~OrderItem~
-    + Courses : DbSet~Course~
-    + Users : DbSet~User~
-    
-    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
-    # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION (hollow diamond) ===
 TransactionPagedVM o-- TransactionListItemVM
-PagedResult~TransactionListDto~ o-- TransactionListDto
+PagedResultTransactionListDto o-- TransactionListDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 TransactionControllerBE --> ITransactionService
@@ -129,13 +146,12 @@ TransactionService ..|> ITransactionService
 TransactionRepository ..|> ITransactionRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerFE ..> TransactionPagedVM
-TransactionControllerBE ..> PagedResult~TransactionListDto~
-TransactionService ..> PagedResult~TransactionListDto~
+TransactionControllerFE ..> TransactionControllerBE
+TransactionControllerBE ..> PagedResultTransactionListDto
+TransactionService ..> PagedResultTransactionListDto
 TransactionRepository ..> TransactionListDto
 TransactionRepository ..> Transaction
 
 %% ==================== STYLES ====================
-
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
