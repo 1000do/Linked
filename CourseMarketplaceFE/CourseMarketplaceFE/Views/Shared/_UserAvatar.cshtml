@@ -14,8 +14,6 @@
 
     string size = getProp("Size", Model) ?? "md"; 
     string name = getProp("Name", Model) ?? "User";
-    bool showFrame = getProp("ShowFrame", Model) ?? true;
-    string frameUrl = getProp("FrameUrl", Model) ?? "";
 
     // Logic Avatar mặc định
     var defaultAvatar = $"/img/default-{role}.png";
@@ -33,52 +31,21 @@
         _ => "w-12 h-12"
     };
 
-    var imgSizeClasses = size switch {
-        "xs" => "w-6 h-6",
-        "sm" => "w-8 h-8",
-        "md" => "w-10 h-10",
-        "lg" => "w-16 h-16",
-        "xl" => "w-24 h-24",
-        "2xl" => "w-32 h-32",
-        _ => "w-10 h-10"
-    };
-
-    // Logic Avatar mặc định & Khung
-    var frameClass = showFrame ? role switch {
-        "admin" => "frame-admin",
-        "staff" => "frame-staff",
-        "instructor" => "frame-instructor",
-        _ => "frame-learner"
-    } : "";
-
     var borderRadius = (size == "xl" || size == "2xl") ? "rounded-[2rem]" : "rounded-full";
 }
 
-<div class="avatar-container @sizeClasses @(string.IsNullOrEmpty(frameUrl) ? frameClass : "") flex items-center justify-center shrink-0">
+<div class="flex items-center justify-center shrink-0">
     <!-- Lớp ảnh đại diện -->
-    <div class="@imgSizeClasses @borderRadius overflow-hidden border-2 border-white shadow-sm z-0">
+    <div class="@sizeClasses @borderRadius overflow-hidden border-2 border-white shadow-sm z-0 relative">
         @if (!string.IsNullOrEmpty(avatarUrl) && avatarUrl != "null")
         {
-            <img class="w-full h-full object-cover" src="@avatarUrl" alt="@name"
+            <img class="w-full h-full object-cover relative z-10" src="@avatarUrl" alt="@name"
                  onerror="this.onerror=function(){this.src='@fallbackAvatar'}; this.src='@defaultAvatar';" />
         }
         else
         {
-            <img class="w-full h-full object-cover" src="@defaultAvatar" alt="@name"
+            <img class="w-full h-full object-cover relative z-10" src="@defaultAvatar" alt="@name"
                  onerror="this.src='@fallbackAvatar'" />
         }
     </div>
-
-    <!-- Lớp Khung (Nếu có FrameUrl thì dùng ảnh, không thì dùng CSS) -->
-    @if (showFrame)
-    {
-        @if (!string.IsNullOrEmpty(frameUrl))
-        {
-            <img src="@frameUrl" class="absolute inset-0 w-full h-full object-contain z-10 pointer-events-none scale-110" />
-        }
-        else
-        {
-            <div class="avatar-frame @frameClass"></div>
-        }
-    }
 </div>

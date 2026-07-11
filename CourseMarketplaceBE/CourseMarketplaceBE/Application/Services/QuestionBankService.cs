@@ -27,15 +27,8 @@ public class QuestionBankService : IQuestionBankService
 
     public async Task<QuizQuestionResponse> AddQuestionAsync(int courseId, QuizAddQuestionRequest request, int instructorId)
     {
-        if (request.Options == null || request.Options.Count < 2)
-            throw new ArgumentException("A question must have at least 2 options.");
-            
-        if (!request.Options.Any(o => o.IsCorrect))
-            throw new ArgumentException("A question must have at least 1 correct option.");
-
-        var course = await _courseRepository.GetByIdAsync(courseId);
-        if (course == null || course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to add questions to this course.");
+        ValidateQuizOptions(request.Options);
+        await EnsureInstructorOwnsCourseAsync(courseId, instructorId, "You do not have permission to add questions to this course.");
 
         var question = new QuizQuestion
         {
@@ -59,19 +52,13 @@ public class QuestionBankService : IQuestionBankService
 
     public async Task<QuizQuestionResponse> UpdateQuestionAsync(int questionId, QuizUpdateQuestionRequest request, int instructorId)
     {
-        if (request.Options == null || request.Options.Count < 2)
-            throw new ArgumentException("A question must have at least 2 options.");
-            
-        if (!request.Options.Any(o => o.IsCorrect))
-            throw new ArgumentException("A question must have at least 1 correct option.");
+        ValidateQuizOptions(request.Options);
 
         var question = await _questionBankRepository.GetQuestionByIdAsync(questionId);
         if (question == null)
             throw new KeyNotFoundException("Question not found.");
 
-        var course = await _courseRepository.GetByIdAsync(question.CourseId);
-        if (course == null || course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to edit this question.");
+        await EnsureInstructorOwnsCourseAsync(question.CourseId, instructorId, "You do not have permission to edit this question.");
 
         question.LessonId = request.LessonId;
         question.QuestionText = request.QuestionText;
@@ -99,18 +86,14 @@ public class QuestionBankService : IQuestionBankService
         var question = await _questionBankRepository.GetQuestionByIdAsync(questionId);
         if (question == null) return;
 
-        var course = await _courseRepository.GetByIdAsync(question.CourseId);
-        if (course == null || course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to delete this question.");
+        await EnsureInstructorOwnsCourseAsync(question.CourseId, instructorId, "You do not have permission to delete this question.");
 
         await _questionBankRepository.DeleteQuestionAsync(questionId);
     }
 
     public async Task<List<QuizQuestionResponse>> GetQuestionsByCourseAsync(int courseId, int instructorId)
     {
-        var course = await _courseRepository.GetByIdAsync(courseId);
-        if (course == null || course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to access the question bank for this course.");
+        await EnsureInstructorOwnsCourseAsync(courseId, instructorId, "You do not have permission to access the question bank for this course.");
 
         var questions = await _questionBankRepository.GetQuestionsByCourseAsync(courseId);
         return questions.Select(MapToResponse).ToList();
@@ -123,18 +106,14 @@ public class QuestionBankService : IQuestionBankService
         if (questions.Any())
         {
             var courseId = questions.First().CourseId;
-            var course = await _courseRepository.GetByIdAsync(courseId);
-            if (course == null || course.InstructorId != instructorId)
-                throw new UnauthorizedAccessException("You do not have permission to view these questions.");
+            await EnsureInstructorOwnsCourseAsync(courseId, instructorId, "You do not have permission to view these questions.");
         }
         return questions.Select(MapToResponse).ToList();
     }
 
     public async Task<List<QuestionBankLessonSummaryResponse>> GetLessonsSummaryByCourseAsync(int courseId, int instructorId)
     {
-        var course = await _courseRepository.GetByIdAsync(courseId);
-        if (course == null || course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to view this course's lessons.");
+        await EnsureInstructorOwnsCourseAsync(courseId, instructorId, "You do not have permission to view this course's lessons.");
 
         var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
         var result = new List<QuestionBankLessonSummaryResponse>();
@@ -151,6 +130,31 @@ public class QuestionBankService : IQuestionBankService
         }
 
         return result;
+    }
+
+    private void ValidateQuizOptions(List<QuizOptionRequest> options)
+    {
+        if (options == null || options.Count < 2)
+            throw new ArgumentException("A question must have at least 2 options.");
+            
+        if (!options.Any(o => o.IsCorrect))
+            throw new ArgumentException("A question must have at least 1 correct option.");
+    }
+
+    private void ValidateQuizOptions(List<QuizUpdateOptionRequest> options)
+    {
+        if (options == null || options.Count < 2)
+            throw new ArgumentException("A question must have at least 2 options.");
+            
+        if (!options.Any(o => o.IsCorrect))
+            throw new ArgumentException("A question must have at least 1 correct option.");
+    }
+
+    private async Task EnsureInstructorOwnsCourseAsync(int courseId, int instructorId, string errorMessage)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null || course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException(errorMessage);
     }
 
     private static QuizQuestionResponse MapToResponse(QuizQuestion q)

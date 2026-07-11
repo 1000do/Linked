@@ -45,26 +45,58 @@ public class LessonService : ILessonService
         _htmlTextManipulationService = htmlTextManipulationService;
     }
 
+    private async Task ValidateInstructorAndCourseStateAsync(Course? course, int instructorId, string actionMessage)
+    {
+        if (course == null || course.InstructorId != instructorId)
+            throw new UnauthorizedAccessException($"You do not have permission to {actionMessage}.");
+
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot {actionMessage}.");
+        }
+
+        if (string.Equals(course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Cannot {actionMessage} while the course is pending review.");
+
+        if (CourseStatus.Archived.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
+            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+    }
+
+    private async Task InvalidateCourseCacheAsync(int? courseId)
+    {
+        if (courseId.HasValue)
+        {
+            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId.Value));
+        }
+    }
+
+    private async Task MoveMaterialToTrashAsync(LearningMaterial material)
+    {
+        if (!string.IsNullOrEmpty(material.MaterialUrl))
+        {
+            var cloudPublicId = _uploadService.GetPublicIdFromUrl(material.MaterialUrl);
+            var trashUrl = await _uploadService.MoveToTrashAsync(material.MaterialUrl);
+
+            material.CloudPublicId = cloudPublicId;
+            // Giữ lại URL (đã được đổi sang link trong thư mục trash/) để vẫn có thể xem được detail
+            if (!string.IsNullOrEmpty(trashUrl))
+            {
+                material.MaterialUrl = trashUrl;
+            }
+        }
+
+        material.LearningStatus = LearningStatus.Removed.ToValue();
+        material.UpdatedAt = DateTime.UtcNow;
+    }
+
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
     {
         var course = await _courseRepository.GetByIdAsync(request.CourseId);
         if (course == null)
             throw new Exception("Course not found.");
 
-        if (course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to add a lesson to this course.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot create lessons.");
-        }
-
-        if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot add lessons while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        await ValidateInstructorAndCourseStateAsync(course, instructorId, "create lessons");
 
         // ★ Limit: Max 5 lessons for unlinked Stripe
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
@@ -115,16 +147,14 @@ public class LessonService : ILessonService
 
         if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            lesson.LessonStatus = LessonStatus.Draft.ToValue();
             course.CourseStatus = CourseStatus.Draft.ToValue();
-            course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
 
-        int rows1 = await _lessonRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _lessonRepository.SaveChangesAsync();
 
-        // Invalidate Course Cache
-        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(request.CourseId));
+        await InvalidateCourseCacheAsync(request.CourseId);
 
         return new LessonResponse
         {
@@ -146,20 +176,7 @@ public class LessonService : ILessonService
         if (lesson == null)
             throw new Exception("Lesson not found.");
 
-        if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to update this lesson.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update lessons.");
-        }
-
-        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot update lesson title while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "update this lesson");
 
         // Duplicate Title Check
         var allLessons = await _lessonRepository.GetByCourseIdAsync(lesson.CourseId ?? 0);
@@ -174,17 +191,14 @@ public class LessonService : ILessonService
         
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            lesson.LessonStatus = LessonStatus.Draft.ToValue();
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
         }
 
         await _lessonRepository.SaveChangesAsync();
 
-        if (lesson.CourseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
-        }
+        await InvalidateCourseCacheAsync(lesson.CourseId);
 
         return new LessonResponse
         {
@@ -208,20 +222,7 @@ public class LessonService : ILessonService
         if (lesson == null)
             throw new Exception("Lesson not found.");
 
-        if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to add material to this lesson.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot add materials.");
-        }
-
-        if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot add materials while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "add material to this lesson");
 
         // ★ Limit: Max 1 resource for unlinked Stripe
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
@@ -335,23 +336,17 @@ public class LessonService : ILessonService
             await _materialRepository.AddAsync(material);
         }
 
-        int rows2 = await _materialRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _materialRepository.SaveChangesAsync();
         
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            material.LearningStatus = LearningStatus.Draft.ToValue();
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
-            int rows3 = await _courseRepository.SaveChangesAsync();
-            /* zero rows exception removed */
+            await _courseRepository.SaveChangesAsync();
         }
 
-        // Invalidate Course Cache
-        if (lesson.CourseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
-        }
+        await InvalidateCourseCacheAsync(lesson.CourseId);
 
         return new MaterialResponse
         {
@@ -363,7 +358,8 @@ public class LessonService : ILessonService
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt,
-            CourseStatus = lesson.Course?.CourseStatus
+            CourseStatus = lesson.Course?.CourseStatus,
+            LearningStatus = material.LearningStatus
         };
     }
 
@@ -376,20 +372,8 @@ public class LessonService : ILessonService
             throw new Exception("Material not found.");
 
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
-        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to update this material.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot update materials.");
-        }
-
-        if (CourseStatus.Pending.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot update materials while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        if (lesson == null) throw new Exception("Lesson not found.");
+        await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "update materials");
 
         material.Title = request.Title;
         material.Description = request.Description;
@@ -399,17 +383,14 @@ public class LessonService : ILessonService
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
+            material.LearningStatus = LearningStatus.Draft.ToValue();
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
         }
 
         await _materialRepository.SaveChangesAsync();
 
-        if (lesson.CourseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
-        }
+        await InvalidateCourseCacheAsync(lesson.CourseId);
 
         return new MaterialResponse
         {
@@ -421,7 +402,8 @@ public class LessonService : ILessonService
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt,
-            CourseStatus = lesson.Course?.CourseStatus
+            CourseStatus = lesson.Course?.CourseStatus,
+            LearningStatus = material.LearningStatus
         };
     }
 
@@ -432,55 +414,22 @@ public class LessonService : ILessonService
             throw new Exception("Material not found.");
 
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
-        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to remove this material.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot remove materials.");
-        }
-
-        if (CourseStatus.Pending.ToValue().Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot update material while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(lesson.Course?.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course?.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        if (lesson == null) throw new Exception("Lesson not found.");
+        await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "remove materials");
 
         // Move file to trash on Cloudinary instead of deleting
-        if (!string.IsNullOrEmpty(material.MaterialUrl))
-        {
-            var cloudPublicId = _uploadService.GetPublicIdFromUrl(material.MaterialUrl);
-            var trashUrl = await _uploadService.MoveToTrashAsync(material.MaterialUrl);
-
-            material.CloudPublicId = cloudPublicId;
-            // Giữ lại URL (đã được đổi sang link trong thư mục trash/) để vẫn có thể xem được detail
-            if (!string.IsNullOrEmpty(trashUrl))
-            {
-                material.MaterialUrl = trashUrl;
-            }
-        }
-
-        material.LearningStatus = LearningStatus.Removed.ToValue();
-        material.UpdatedAt = DateTime.UtcNow;
+        await MoveMaterialToTrashAsync(material);
         _materialRepository.Update(material);
-        int rows4 = await _materialRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _materialRepository.SaveChangesAsync();
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
-            int rows5 = await _courseRepository.SaveChangesAsync();
-            /* zero rows exception removed */
+            await _courseRepository.SaveChangesAsync();
         }
 
-        // Invalidate Course Cache
-        if (lesson.CourseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
-        }
+        await InvalidateCourseCacheAsync(lesson.CourseId);
     }
 
     public async Task DeleteLessonAsync(int lessonId, int instructorId)
@@ -489,61 +438,29 @@ public class LessonService : ILessonService
         if (lesson == null)
             throw new Exception("Lesson not found.");
 
-        if (lesson.Course == null || lesson.Course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to delete this lesson.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot delete lessons.");
-        }
-
-        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot delete lessons while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "delete lessons");
 
         // Soft delete all materials of this lesson
         var materials = await _materialRepository.GetMaterialsByLessonIdAsync(lessonId);
         foreach (var m in materials)
         {
-            if (!string.IsNullOrEmpty(m.MaterialUrl))
-            {
-                var cloudPublicId = _uploadService.GetPublicIdFromUrl(m.MaterialUrl);
-                var trashUrl = await _uploadService.MoveToTrashAsync(m.MaterialUrl);
-
-                m.CloudPublicId = cloudPublicId;
-                if (!string.IsNullOrEmpty(trashUrl))
-                {
-                    m.MaterialUrl = trashUrl;
-                }
-            }
-            m.LearningStatus = LearningStatus.Removed.ToValue();
-            m.UpdatedAt = DateTime.UtcNow;
+            await MoveMaterialToTrashAsync(m);
             _materialRepository.Update(m);
         }
 
         lesson.IsRemoved = true;
         lesson.UpdatedAt = DateTime.UtcNow;
         _lessonRepository.Update(lesson);
-        int rows6 = await _lessonRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _lessonRepository.SaveChangesAsync();
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.Course.CourseStatus = CourseStatus.Draft.ToValue();
-            lesson.Course.ModerationFeedback = null;
             _courseRepository.Update(lesson.Course);
-            int rows7 = await _courseRepository.SaveChangesAsync();
-            /* zero rows exception removed */
+            await _courseRepository.SaveChangesAsync();
         }
 
-        // Invalidate Course Cache
-        if (lesson.CourseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
-        }
+        await InvalidateCourseCacheAsync(lesson.CourseId);
     }
 
     public async Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId)
@@ -574,19 +491,7 @@ public class LessonService : ILessonService
             throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
         }
 
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot permanently delete materials.");
-        }
-
-        // Get course status to prevent deletion if pending
-        var courseStatus = material.Lesson?.Course?.CourseStatus;
-        if (courseStatus != null && courseStatus.Equals(CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot permanently delete materials while the course is pending review.");
-
-        if (courseStatus != null && CourseStatus.Archived.ToValue().Equals(courseStatus, StringComparison.OrdinalIgnoreCase) && (material.Lesson?.Course?.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        await ValidateInstructorAndCourseStateAsync(material.Lesson?.Course, instructorId, "permanently delete materials");
 
         // 1. Delete from Cloudinary if public ID exists
         if (!string.IsNullOrEmpty(material.CloudPublicId))
@@ -599,14 +504,9 @@ public class LessonService : ILessonService
         // 2. Delete from DB
         int? courseId = material.Lesson?.CourseId;
         _materialRepository.Delete(material);
-        int rows8 = await _materialRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _materialRepository.SaveChangesAsync();
 
-        // Invalidate Course Cache
-        if (courseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId.Value));
-        }
+        await InvalidateCourseCacheAsync(courseId);
     }
 
     public async Task RestoreMaterialAsync(int materialId, int instructorId)
@@ -615,20 +515,8 @@ public class LessonService : ILessonService
         if (material == null) throw new Exception("Material not found.");
 
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
-        if (lesson == null || lesson.Course == null || lesson.Course.InstructorId != instructorId)
-            throw new UnauthorizedAccessException("You do not have permission to restore this material.");
-
-        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
-        if (activeLockout != null)
-        {
-            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot restore materials.");
-        }
-
-        if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Cannot restore materials while the course is pending review.");
-
-        if (CourseStatus.Archived.ToValue().Equals(lesson.Course.CourseStatus, StringComparison.OrdinalIgnoreCase) && (lesson.Course.CourseFlagCount ?? 0) >= 3)
-            throw new InvalidOperationException("This course is permanently archived due to policy violations and cannot be modified.");
+        if (lesson == null) throw new Exception("Lesson not found.");
+        await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "restore this material");
 
         var course = lesson.Course;
 
@@ -636,9 +524,9 @@ public class LessonService : ILessonService
         if (string.Equals(course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             course.CourseStatus = CourseStatus.Draft.ToValue();
-            course.ModerationFeedback = null;
             _courseRepository.Update(course);
         }
+        bool wasPublished = string.Equals(course.CourseStatus, CourseStatus.Draft.ToValue(), StringComparison.OrdinalIgnoreCase);
 
         // Check if restoring a video and an active video already exists
         var fileType = material.MaterialMetadata?.FileType ?? "video";
@@ -652,15 +540,7 @@ public class LessonService : ILessonService
             if (activeVideo != null)
             {
                 // Thay vì throw lỗi, ta move video hiện tại vào trash để "tráo đổi"
-                if (!string.IsNullOrEmpty(activeVideo.MaterialUrl))
-                {
-                    var trashUrl = await _uploadService.MoveToTrashAsync(activeVideo.MaterialUrl);
-                    var cloudId = _uploadService.GetPublicIdFromUrl(activeVideo.MaterialUrl);
-                    activeVideo.MaterialUrl = trashUrl ?? activeVideo.MaterialUrl;
-                    activeVideo.CloudPublicId = cloudId;
-                }
-                activeVideo.LearningStatus = LearningStatus.Removed.ToValue();
-                activeVideo.UpdatedAt = DateTime.UtcNow;
+                await MoveMaterialToTrashAsync(activeVideo);
                 _materialRepository.Update(activeVideo);
             }
         }
@@ -688,16 +568,11 @@ public class LessonService : ILessonService
             }
         }
 
-        material.LearningStatus = LearningStatus.Active.ToValue();
+        material.LearningStatus = wasPublished ? LearningStatus.Draft.ToValue() : LearningStatus.Active.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
         _materialRepository.Update(material);
-        int rows9 = await _materialRepository.SaveChangesAsync();
-        /* zero rows exception removed */
+        await _materialRepository.SaveChangesAsync();
 
-        // Invalidate Course Cache
-        if (lesson.CourseId.HasValue)
-        {
-            await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(lesson.CourseId.Value));
-        }
+        await InvalidateCourseCacheAsync(lesson.CourseId);
     }
 }

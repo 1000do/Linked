@@ -92,19 +92,33 @@
                 {
                     isFirstVideo = fileType.StartsWith("video") || fileType == "mp4";
                 }
+                var firstLesson = Model.Lessons.FirstOrDefault(l => l.LearningMaterials != null && l.LearningMaterials.Any(m => m.MaterialId == firstMaterial?.MaterialId));
+                bool isFirstPending = firstLesson != null && (string.Equals(firstLesson.LessonStatus, "pending", StringComparison.OrdinalIgnoreCase) || string.Equals(firstMaterial?.LearningStatus, "pending", StringComparison.OrdinalIgnoreCase));
             }
             <!-- Media Area -->
             <div class="w-full bg-[#191c1b] flex items-center justify-center relative group min-h-[500px] h-[80vh] shrink-0" oncontextmenu="return false;">
+                
+                <!-- Pending Viewer -->
+                <div id="pending-viewer" class="w-full h-full bg-slate-50 flex flex-col items-center justify-center @(isFirstPending ? "" : "hidden")">
+                    <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 text-center max-w-md">
+                        <div class="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-[32px]">pending_actions</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 mb-2">Pending Review</h3>
+                        <p class="text-sm text-slate-500">This content is currently pending moderation review and is temporarily unavailable.</p>
+                    </div>
+                </div>
+
                 <!-- Video Player -->
-                <video id="main-video" class="w-full h-full @(isFirstVideo ? "" : "hidden")" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
+                <video id="main-video" class="w-full h-full @(isFirstVideo && !isFirstPending ? "" : "hidden")" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
                     <source id="video-source" src="@(firstMaterial?.MaterialUrl ?? "")" type="video/mp4">
                 </video>
                 
                 <!-- Quiz Viewer -->
-                <iframe id="quiz-iframe" class="w-full h-full hidden" frameborder="0"></iframe>
+                <iframe id="quiz-iframe" class="w-full h-full hidden" frameborder="0" allowfullscreen="true"></iframe>
 
                 <!-- Document Viewer (Embed) -->
-                <div id="document-viewer" class="w-full h-full bg-[#f0fcfb] flex flex-col @(isFirstVideo ? "hidden" : "")">
+                <div id="document-viewer" class="w-full h-full bg-[#f0fcfb] flex flex-col @(!isFirstVideo && !isFirstPending ? "" : "hidden")">
                     <div class="flex items-center justify-between px-6 py-3 bg-[#006a62]/10 border-b border-[#006a62]/20 shrink-0 select-none">
                         <div class="flex items-center gap-2 text-[#006a62] font-bold">
                             <span class="material-symbols-outlined text-[20px]">description</span>
@@ -256,9 +270,10 @@
                                 if (string.IsNullOrEmpty(mFileType)) {
                                     mFileType = (material.MaterialUrl?.EndsWith(".mp4") == true || material.MaterialUrl?.EndsWith(".webm") == true) ? "video" : "document";
                                 }
+                                bool isPending = string.Equals(lesson.LessonStatus, "pending", StringComparison.OrdinalIgnoreCase) || string.Equals(material.LearningStatus, "pending", StringComparison.OrdinalIgnoreCase);
 
                                 <div class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
-                                      onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType', @material.MaterialId, @lesson.LessonId)">
+                                      onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType', @material.MaterialId, @lesson.LessonId, @isPending.ToString().ToLower())">
                                     <div class="px-4 py-4 flex gap-3">
                                         <div class="flex flex-col items-center pt-1 shrink-0">
                                             @if (mFileType.StartsWith("video") || mFileType == "mp4") {
@@ -924,7 +939,7 @@
             }
         }
 
-        function playMaterial(url, title, description, element, type, materialId, lessonId) {
+        function playMaterial(url, title, description, element, type, materialId, lessonId, isPending = false) {
             if (!url) {
                 Swal.fire({
                     title: 'Empty Material',
@@ -948,6 +963,21 @@
             descEl.innerHTML = description || 'No description available.';
 
             const isVideo = type.startsWith('video') || type === 'mp4';
+
+            if (isPending) {
+                videoPlayer.classList.add('hidden');
+                videoPlayer.pause();
+                docViewer.classList.add('hidden');
+                quizIframe.classList.add('hidden');
+                document.getElementById('pending-viewer').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('pending-viewer').classList.add('hidden');
+            }
+
+            // Anti-skip setup
+            isCurrentVideoCompleted = completedMaterialIdsArray.includes(materialId);
+            maxPlayedTime = 0;
 
             if (isVideo) {
                 quizIframe.classList.add('hidden');
@@ -1050,6 +1080,7 @@
             // Hide other viewers
             videoPlayer.classList.add('hidden');
             videoPlayer.pause();
+            document.getElementById('pending-viewer').classList.add('hidden');
             docViewer.classList.add('hidden');
             
             // Show Quiz iframe
@@ -1149,3 +1180,5 @@
     </script>
 </body>
 </html>
+
+

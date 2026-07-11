@@ -289,6 +289,8 @@ namespace CourseMarketplaceBE.Application.Services
             dto.ActiveCoursesCount = statusCounts.GetValueOrDefault(CourseStatus.Published.ToValue(), 0);
             dto.PendingCoursesCount = statusCounts.GetValueOrDefault(CourseStatus.Pending.ToValue(), 0);
             dto.DraftCoursesCount = statusCounts.GetValueOrDefault(CourseStatus.Draft.ToValue(), 0);
+            dto.EnrollmentGrowthPercentage = await _repo.GetEnrollmentGrowthAsync(userId);
+            dto.InstructorRankPercentage = await _repo.GetInstructorRankingPercentageAsync(userId);
 
             return dto;
         }

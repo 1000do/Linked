@@ -1,0 +1,285 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorCourseController {
+    <<frontend controller>>
+    + Create() Task~IActionResult~
+    + Create(model: CreateCourseViewModel) Task~IActionResult~
+    - GetCategoriesAsync() Task~List~CategoryViewModel~~
+    - LoadStripeStatusAsync() void
+    - LoadTransferRateAsync() void
+}
+
+class CreateCourseViewModel {
+    <<view model>>
+    + Title : string
+    + CategoryId : int
+    + Description : string
+    + Price : decimal
+    + CourseThumbnailUrl : string
+    + WhatYouWillLearn : string
+    + Requirements : string
+    + CouponId : int?
+    + AvailableCategories : List~CategoryViewModel~
+}
+
+class CategoryViewModel {
+    <<view model>>
+    + CategoryId : int
+    + CategoriesName : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CourseController {
+    <<backend controller>>
+    - _courseQueryService : ICourseQueryService
+    - _courseCommandService : ICourseCommandService
+    - _aiModerationService : ICourseAiModerationService
+    
+    + CreateCourse(request: CourseCreateRequest) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CourseCreateRequest {
+    <<dto>>
+    + CategoryId : int
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ThumbnailFile : IFormFile?
+}
+
+class CourseResponse {
+    <<dto>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CourseStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + InstructorName : string?
+    + TotalStudents : int
+    + RatingAverage : decimal
+    + CategoryName : string?
+    + InstructorAvatarUrl : string?
+    + InstructorBio : string?
+    + InstructorProfessionalTitle : string?
+    + InstructorReviewCount : int
+    + InstructorStudentsCount : int
+    + InstructorCoursesCount : int
+    + IsEnrolled : bool
+    + IsOwner : bool
+    + TotalReviews : int
+    + LastApprovedAt : DateTime?
+    + AppliedCouponCode : string?
+    + AppliedCouponType : string?
+    + AppliedCouponValue : decimal?
+    + IsRemoved : bool
+    + IsInAnyCart : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Category {
+    <<entity>>
+    + CategoryId : int
+    + CategoriesName : string
+    + Description : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CategoryStatus : string?
+    + Courses : ICollection~Course~
+}
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
+    + InstructorNavigation : User
+}
+
+class Coupon {
+    <<entity>>
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + MinOrderValue : decimal
+    + StartDate : DateTime?
+    + EndDate : DateTime?
+    + UsageLimit : int?
+    + UsedCount : int?
+    + IsActive : bool?
+    + Courses : ICollection~Course~
+    + Manager : Manager?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICourseCommandService {
+    <<interface>>
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~ *
+}
+
+class ICourseQueryService {
+    <<interface>>
+    + GetCategoriesAsync() Task~IEnumerable~CategoryResponse~~ *
+}
+
+class IInstructorRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Instructor?~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + AddAsync(course: Course) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IFileUploadService {
+    <<interface>>
+    + UploadImageAsync(file: IFormFile) Task~string?~ *
+    + UploadVideoAsync(file: IFormFile) Task~string?~ *
+}
+
+class IContentHashService {
+    <<interface>>
+    + ComputeCourseHashAsync(text: string) Task~string~ *
+    + SaveCourseHashesAsync(command: SaveCourseHashesCommand) void *
+}
+
+class IRedisService {
+    <<interface>>
+    + RemoveCacheAsync(key: string) void *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseCommandService {
+    - _courseRepository : ICourseRepository
+    - _instructorRepository : IInstructorRepository
+    - _uploadService : IFileUploadService
+    - _redisService : IRedisService
+    - _contentHashService : IContentHashService
+    
+    + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~
+    - UpdateCourseHashesAsync(course: Course) Task~void~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + AddAsync(course: Course) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Categories : DbSet~Category~
+    + Coupons : DbSet~Coupon~
+    + Courses : DbSet~Course~
+    + Instructors : DbSet~Instructor~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Instructor *-- Course
+
+%% === AGGREGATION (hollow diamond) ===
+CreateCourseViewModel o-- CategoryViewModel
+Category o-- Course
+Course -- Coupon
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CourseController --> ICourseCommandService
+CourseController --> ICourseQueryService
+CourseCommandService --> ICourseRepository
+CourseCommandService --> IInstructorRepository
+CourseCommandService --> IFileUploadService
+CourseCommandService --> IContentHashService
+CourseCommandService --> IRedisService
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CourseCommandService ..|> ICourseCommandService
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+InstructorCourseController ..> CourseController
+InstructorCourseController ..> CreateCourseViewModel
+CourseController ..> CourseCreateRequest
+CourseCommandService ..> CourseCreateRequest
+CourseCommandService ..> CourseResponse
+CourseCommandService ..> Course
+CourseRepository ..> Course
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

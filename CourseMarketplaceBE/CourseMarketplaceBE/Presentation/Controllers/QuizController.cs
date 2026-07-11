@@ -11,7 +11,6 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 /// <summary>Instructor quản lý bộ quiz độc lập của mình.</summary>
 [ApiController]
 [Route("api/quizzes")]
-[Authorize]
 public class QuizController : ControllerBase
 {
     private readonly IQuizService _quizService;
@@ -32,6 +31,7 @@ public class QuizController : ControllerBase
     // ── GET api/quizzes ────────────────────────────────────────────────────────
 
     [HttpGet]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetMyQuizzes()
     {
         try
@@ -47,6 +47,7 @@ public class QuizController : ControllerBase
     // ── GET api/quizzes/{id} ───────────────────────────────────────────────────
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetQuizDetail(int id)
     {
         try
@@ -60,7 +61,31 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
+    [HttpGet("{quizId}/attempts")]
+    [Authorize(Roles = "instructor")]
+    public async Task<IActionResult> GetStudentAttempts(int quizId, [FromQuery] CourseMarketplaceBE.Application.DTOs.Common.PagedRequestDto request)
+    {
+        try
+        {
+            var instructorIdStr = (User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) ?? User.FindFirst("UserId"))?.Value;
+            if (!int.TryParse(instructorIdStr, out int instructorId))
+                return Unauthorized(new { message = "Invalid token payload." });
+
+            var result = await _quizService.GetStudentQuizAttemptsAsync(quizId, instructorId, request);
+            return Ok(new { success = true, data = result });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, new { success = false, message = ex.Message });
+        }
+        catch (System.Exception ex)
+        {
+            return BadRequest(new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("{id:int}/question-pool")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetQuizQuestionPool(int id)
     {
         try
@@ -74,9 +99,11 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
+
     // ── POST api/quizzes ───────────────────────────────────────────────────────
 
     [HttpPost]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> CreateQuiz([FromBody] QuizCreateRequest request)
     {
         try
@@ -93,6 +120,7 @@ public class QuizController : ControllerBase
     // ── PATCH api/quizzes/{id} ─────────────────────────────────────────────────
 
     [HttpPatch("{id:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> UpdateQuizSettings(int id, [FromBody] QuizUpdateRequest request)
     {
         try
@@ -109,6 +137,7 @@ public class QuizController : ControllerBase
     // ── PATCH api/quizzes/{id}/hide ────────────────────────────────────────────
 
     [HttpPatch("{id:int}/hide")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SetHidden(int id, [FromQuery] bool hide)
     {
         try
@@ -125,6 +154,7 @@ public class QuizController : ControllerBase
     // ── DELETE api/quizzes/{id} ────────────────────────────────────────────────
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> SoftDelete(int id)
     {
         try

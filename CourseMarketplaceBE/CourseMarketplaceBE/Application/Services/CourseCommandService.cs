@@ -34,6 +34,8 @@ public class CourseCommandService : ICourseCommandService
     private readonly ILockoutRepository _lockoutRepo;
     private readonly ICourseExtRepository _courseExtRepo;
     private readonly IHtmlTextManipulationService _htmlTextManipulationService;
+    private readonly INotificationService _notificationService;
+    private readonly IUserRepository _userRepository;
 
     public CourseCommandService(
         ICourseRepository courseRepository,
@@ -50,7 +52,9 @@ public class CourseCommandService : ICourseCommandService
         IMapper mapper,
         ILockoutRepository lockoutRepo,
         ICourseExtRepository courseExtRepo,
-        IHtmlTextManipulationService htmlTextManipulationService)
+        IHtmlTextManipulationService htmlTextManipulationService,
+        INotificationService notificationService,
+        IUserRepository userRepository)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -66,6 +70,15 @@ public class CourseCommandService : ICourseCommandService
         _lockoutRepo = lockoutRepo;
         _courseExtRepo = courseExtRepo;
         _htmlTextManipulationService = htmlTextManipulationService;
+        _notificationService = notificationService;
+        _userRepository = userRepository;
+    }
+
+    private bool IsStripeActive(Instructor? instructor)
+    {
+        return instructor != null 
+            && !string.IsNullOrEmpty(instructor.StripeAccountId) 
+            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task<(int, bool)> CheckInstructorRights(int instructorId)
@@ -83,8 +96,7 @@ public class CourseCommandService : ICourseCommandService
         }
 
         // ★ Limit: Max 2 courses for unlinked Stripe
-        var isStripeActive = !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
+        var isStripeActive = IsStripeActive(instructor);
 
         if (!isStripeActive)
         {
@@ -107,18 +119,7 @@ public class CourseCommandService : ICourseCommandService
 
         var coursePrice = isStripeActive ? request.Price : 0m;
 
-        string? thumbnailUrl = request.CourseThumbnailUrl;
-
-        if (request.ThumbnailFile != null)
-        {
-            var uploadedUrl = await _uploadService.UploadImageAsync(request.ThumbnailFile);
-            if (uploadedUrl != null)
-            {
-                thumbnailUrl = uploadedUrl;
-            }
-        }
-
-
+        string? thumbnailUrl = await ProcessThumbnailUploadAsync(request.ThumbnailFile, request.CourseThumbnailUrl);
 
         var course = new Course
         {
@@ -130,7 +131,7 @@ public class CourseCommandService : ICourseCommandService
             CourseThumbnailUrl = thumbnailUrl,
             WhatYouWillLearn = _htmlTextManipulationService.SanitizeHtml(request.WhatYouWillLearn),
             Requirements = _htmlTextManipulationService.SanitizeHtml(request.Requirements),
-            CourseStatus = CourseStatus.Draft.ToValue(),
+            CourseStatus = CourseStatus.Pending.ToValue(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -215,16 +216,7 @@ public class CourseCommandService : ICourseCommandService
         if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cannot modify course while it is pending review.");
 
-        string? thumbnailUrl = request.CourseThumbnailUrl ?? course.CourseThumbnailUrl;
-
-        if (request.ThumbnailFile != null)
-        {
-            var uploadedUrl = await _uploadService.UploadImageAsync(request.ThumbnailFile);
-            if (uploadedUrl != null)
-            {
-                thumbnailUrl = uploadedUrl;
-            }
-        }
+        string? thumbnailUrl = await ProcessThumbnailUploadAsync(request.ThumbnailFile, request.CourseThumbnailUrl ?? course.CourseThumbnailUrl);
 
         request.Description = _htmlTextManipulationService.SanitizeHtml(request.Description);
         request.WhatYouWillLearn = _htmlTextManipulationService.SanitizeHtml(request.WhatYouWillLearn);
@@ -237,9 +229,7 @@ public class CourseCommandService : ICourseCommandService
         if (!string.Equals(course.Description, request.Description)) isChanged = true;
 
         var instructor = await _instructorRepository.GetByIdAsync(instructorId);
-        var isStripeActive = instructor != null
-            && !string.IsNullOrEmpty(instructor.StripeAccountId)
-            && string.Equals(instructor.StripeOnboardingStatus, StripeOnboardingStatus.Active.ToValue(), StringComparison.OrdinalIgnoreCase);
+        var isStripeActive = IsStripeActive(instructor);
         
         var newPrice = isStripeActive ? request.Price : 0m;
         if (course.Price != newPrice) isChanged = true;
@@ -263,7 +253,6 @@ public class CourseCommandService : ICourseCommandService
             if (CourseStatus.Published.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
             {
                 course.CourseStatus = CourseStatus.Draft.ToValue();
-                course.ModerationFeedback = null;
             }
         }
 
@@ -280,33 +269,22 @@ public class CourseCommandService : ICourseCommandService
         return _mapper.Map<CourseResponse>(course);
     }
 
-    private async Task<Course> AddCourseFingerprintAsync(Course course)
+    private async Task<string?> ProcessThumbnailUploadAsync(IFormFile? file, string? fallbackUrl)
     {
-        string? thumbHash = null;
-        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
+        if (file != null)
         {
-            try
+            var uploadedUrl = await _uploadService.UploadImageAsync(file);
+            if (uploadedUrl != null)
             {
-                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
-                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+                return uploadedUrl;
             }
         }
+        return fallbackUrl;
+    }
 
-        var courseExt = new CourseExt
-        {
-            CourseId = course.CourseId,
-            TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
-            DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
-            WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
-            RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
-            ThumbnailHash = thumbHash
-        };
-
-        course.CourseExt = courseExt;
+    private async Task<Course> AddCourseFingerprintAsync(Course course)
+    {
+        course.CourseExt = await CreateCourseExtAsync(course);
         return course;
     }
 
@@ -314,42 +292,50 @@ public class CourseCommandService : ICourseCommandService
     {
         var existingExt = await _courseExtRepo.GetByIdAsync(course.CourseId);
 
-        string? thumbHash = null;
-        if (!string.IsNullOrEmpty(course.CourseThumbnailUrl))
-        {
-            try
-            {
-                var bytes = await _httpClient.GetByteArrayAsync(course.CourseThumbnailUrl);
-                thumbHash = await _contentHashService.ComputeFileHashAsync(bytes);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
-            }
-        }
-
         if (existingExt != null)
         {
             existingExt.TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title);
             existingExt.DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? "");
             existingExt.WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? "");
             existingExt.RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? "");
-            existingExt.ThumbnailHash = thumbHash;
+            existingExt.ThumbnailHash = await ComputeThumbnailHashAsync(course.CourseThumbnailUrl);
             _courseExtRepo.Update(existingExt);
         }
         else
         {
-            var newExt = new CourseExt
-            {
-                CourseId = course.CourseId,
-                TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
-                DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
-                WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
-                RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
-                ThumbnailHash = thumbHash
-            };
+            var newExt = await CreateCourseExtAsync(course);
             await _courseExtRepo.AddAsync(newExt);
         }
+    }
+
+    private async Task<string?> ComputeThumbnailHashAsync(string? thumbnailUrl)
+    {
+        if (string.IsNullOrEmpty(thumbnailUrl))
+            return null;
+
+        try
+        {
+            var bytes = await _httpClient.GetByteArrayAsync(thumbnailUrl);
+            return await _contentHashService.ComputeFileHashAsync(bytes);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning($"Failed to download thumbnail for hashing: {ex.Message}");
+            return null;
+        }
+    }
+
+    private async Task<CourseExt> CreateCourseExtAsync(Course course)
+    {
+        return new CourseExt
+        {
+            CourseId = course.CourseId,
+            TitleHash = await _contentHashService.ComputeCourseHashAsync(course.Title),
+            DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
+            WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
+            RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
+            ThumbnailHash = await ComputeThumbnailHashAsync(course.CourseThumbnailUrl)
+        };
     }
 
 
@@ -365,8 +351,18 @@ public class CourseCommandService : ICourseCommandService
             ValidateLandingPageRequirements(course);
             await ValidateCourseDurationLimitsAsync(course, instructorId);
             
-            course.ModerationFeedback = null;
             await ReactivateCourseContentAsync(courseId);
+
+            var adminId = await _userRepository.GetAdminIdAsync();
+            if (adminId.HasValue)
+            {
+                await _notificationService.SendNotificationAsync(
+                    adminId.Value, 
+                    "Course Submitted", 
+                    $"Course '{course.Title}' was submitted for review.", 
+                    "/AdminModeration/Courses"
+                );
+            }
         }
 
         _courseRepository.Update(course);
@@ -480,7 +476,6 @@ public class CourseCommandService : ICourseCommandService
             {
                 if (material.LearningStatus != LearningStatus.Removed.ToValue())
                 {
-                    material.ModerationFeedback = null;
                     if (material.LearningStatus != LearningStatus.Active.ToValue())
                     {
                         material.LearningStatus = LearningStatus.Active.ToValue();
@@ -603,3 +598,4 @@ public class CourseCommandService : ICourseCommandService
         return System.Text.RegularExpressions.Regex.Replace(input, "<.*?>", string.Empty).Trim();
     }
 }
+

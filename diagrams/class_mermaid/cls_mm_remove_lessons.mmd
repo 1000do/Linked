@@ -1,0 +1,134 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class LessonControllerFE["LessonController"] {
+    <<frontend controller>>
+    + Delete(id: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class LessonControllerBE["LessonController"] {
+    <<backend controller>>
+    - _lessonService : ILessonService
+    
+    + DeleteLesson(id: int) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Lesson {
+    <<entity>>
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+    + Description : string?
+    + SortOrder : int
+    + IsPublished : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + Course : Course?
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ILessonService {
+    <<interface>>
+    + DeleteLessonAsync(lessonId: int, instructorId: int) Task *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Lesson?~ *
+    + Update(lesson: Lesson) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class LessonService {
+    - _lessonRepo : ILessonRepository
+    - _courseRepo : ICourseRepository
+    
+    + DeleteLessonAsync(lessonId: int, instructorId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class LessonRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Lesson?~
+    + Update(lesson: Lesson) void
+    + SaveChangesAsync() Task~int~
+}
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Course?~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Lessons : DbSet~Lesson~
+    + Courses : DbSet~Course~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Course *-- Lesson
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+LessonControllerBE --> ILessonService
+LessonService --> ILessonRepository
+LessonService --> ICourseRepository
+LessonRepository --> AppDbContext
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+LessonService ..|> ILessonService
+LessonRepository ..|> ILessonRepository
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+LessonControllerFE ..> LessonControllerBE
+LessonService ..> Lesson
+LessonRepository ..> Lesson
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

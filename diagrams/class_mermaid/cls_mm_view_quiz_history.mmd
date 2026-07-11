@@ -1,0 +1,114 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuizAttemptControllerFE["QuizAttemptController"] {
+    <<frontend controller>>
+    + ViewQuizHistory(quizId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuizAttemptControllerBE["QuizAttemptController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + GetMyQuizHistory(quizId: int, request: PagedRequestDto) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class PagedRequestDto {
+    <<dto>>
+    + Page : int
+    + PageSize : int
+}
+
+class PagedResultQuizAttemptSummaryResponse["PagedResult~QuizAttemptSummaryResponse~"] {
+    <<dto>>
+    + Items : List~QuizAttemptSummaryResponse~
+    + TotalCount : int
+}
+
+class QuizAttemptSummaryResponse {
+    <<dto>>
+    + AttemptId : int
+    + AttemptDate : DateTime?
+    + TotalScore : decimal
+    + IsPassed : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class QuizAttempt {
+    <<entity>>
+    + AttemptId : int
+    + QuizId : int
+    + UserId : int
+    + AttemptDate : DateTime?
+    + TotalScore : decimal
+    + IsPassed : bool
+    + TimeTakenMinutes : int?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<interface>>
+    + GetMyQuizAttemptsAsync(quizId: int, userId: int, request: PagedRequestDto) Task~PagedResult~QuizAttemptSummaryResponse~~ *
+}
+
+class IQuizRepository {
+    <<interface>>
+    + GetUserAttemptsAsync(quizId: int, userId: int, page: int, pageSize: int) Task~PagedResult~QuizAttempt~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    - _quizRepo : IQuizRepository
+    
+    + GetMyQuizAttemptsAsync(quizId: int, userId: int, request: PagedRequestDto) Task~PagedResult~QuizAttemptSummaryResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    - _context : AppDbContext
+    
+    + GetUserAttemptsAsync(quizId: int, userId: int, page: int, pageSize: int) Task~PagedResult~QuizAttempt~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + QuizAttempts : DbSet~QuizAttempt~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION & COMPOSITION ===
+PagedResultQuizAttemptSummaryResponse *-- QuizAttemptSummaryResponse
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+QuizAttemptControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY ===
+QuizAttemptControllerFE ..> QuizAttemptControllerBE
+QuizAttemptControllerBE ..> PagedRequestDto
+QuizAttemptControllerBE ..> PagedResultQuizAttemptSummaryResponse
+QuizService ..> PagedRequestDto
+QuizService ..> PagedResultQuizAttemptSummaryResponse
+QuizService ..> QuizAttempt
+QuizRepository ..> QuizAttempt
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

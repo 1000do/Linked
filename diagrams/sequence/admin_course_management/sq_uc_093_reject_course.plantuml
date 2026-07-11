@@ -1,0 +1,84 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Reject Course Submission
+
+actor Admin as act
+participant "CourseModerationPage" as view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":CourseModerationService" as sv
+participant ":INotificationService" as notif_sv
+participant ":IRedisCacheService" as redis
+participant ":ICourseRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click Reject with Detailed Feedback
+view -> fe_ctrl++: POST /AdminModeration/RejectDetailed
+fe_ctrl -> be_ctrl++: POST /api/admin-moderation/courses/reject-detailed
+
+be_ctrl -> sv++: Call RejectCourseDetailedAsync(request)
+
+sv -> repo++: Call GetByIdAsync(request.CourseId)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch course
+db -->> ctx--: Return query results
+ctx -->> repo--: Return course entity
+repo -->> sv--: Return course entity
+
+alt Course Not Found
+    sv -->> be_ctrl: Return false
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display course not found message
+else Course Found
+    sv -> sv++: Update course.CourseStatus = "draft" and assign feedbacks
+    sv--
+    
+    sv -> repo++: Call Update(course)
+    repo -->> sv--: Return tracking state
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Save changes to database
+    ctx -> db++: Update course status and feedbacks
+    db -->> ctx--: Return returnCode
+    ctx -->> repo--: Return numberOfRowsAffected
+    repo -->> sv--: Return numberOfRowsAffected
+    
+    sv -> notif_sv++: Call SendNotificationAsync(instructorId, "Course Update Required")
+    notif_sv -->> sv--: Return
+    
+    sv -> redis++: Call RemoveCacheAsync(cacheKey)
+    redis -->> sv--: Return
+    
+    sv -->> be_ctrl--: Return true
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return JSON (success=true)
+    view -->> act--: Display course rejected message
+end

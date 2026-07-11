@@ -1,0 +1,100 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class LessonControllerFE["LessonController"] {
+    <<frontend controller>>
+    + TrashMaterials() Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class LessonControllerBE["LessonController"] {
+    <<backend controller>>
+    - _lessonService : ILessonService
+    
+    + GetTrashMaterials() Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class MaterialTrashResponse {
+    <<dto>>
+    + MaterialId : int
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + DeletedAt : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class LearningMaterial {
+    <<entity>>
+    + MaterialId : int
+    + LessonId : int
+    + Title : string
+    + MaterialType : string
+    + VideoUrl : string?
+    + Duration : int?
+    + IsRemoved : bool
+    + Lesson : Lesson?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ILessonService {
+    <<interface>>
+    + GetTrashMaterialsAsync(instructorId: int) Task~List~MaterialTrashResponse~~ *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + GetTrashMaterialsAsync(instructorId: int) Task~List~LearningMaterial~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class LessonService {
+    - _lessonRepo : ILessonRepository
+    
+    + GetTrashMaterialsAsync(instructorId: int) Task~List~MaterialTrashResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class LessonRepository {
+    - _context : AppDbContext
+    
+    + GetTrashMaterialsAsync(instructorId: int) Task~List~LearningMaterial~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + LearningMaterials : DbSet~LearningMaterial~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+LessonControllerBE --> ILessonService
+LessonService --> ILessonRepository
+LessonRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+LessonService ..|> ILessonService
+LessonRepository ..|> ILessonRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+LessonControllerFE ..> LessonControllerBE
+LessonControllerBE ..> MaterialTrashResponse
+LessonService ..> MaterialTrashResponse
+LessonService ..> LearningMaterial
+LessonRepository ..> LearningMaterial
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.DTOs.Common;
 
 namespace CourseMarketplaceBE.Application.IServices;
 
@@ -25,4 +26,6 @@ public interface IQuizService
     Task<QuizForStudentResponse> GetQuizForStudentAsync(int quizId, int userId);
     Task<QuizAttemptResultResponse> SubmitAttemptAsync(QuizAttemptSubmitRequest request, int userId);
     Task<QuizAttemptDetailResponse> GetAttemptDetailAsync(int attemptId, int userId);
+    Task<PagedResult<QuizAttemptSummaryResponse>> GetMyQuizAttemptsAsync(int quizId, int userId, PagedRequestDto request);
+    Task<PagedResult<QuizAttemptSummaryResponse>> GetStudentQuizAttemptsAsync(int quizId, int instructorId, PagedRequestDto request);
 }

@@ -285,3 +285,16 @@ public class QuizOptionDetailResponse
     public bool IsCorrect { get; set; }
     public int OrderIndex { get; set; }
 }
+
+public class QuizAttemptSummaryResponse
+{
+    public int AttemptId { get; set; }
+    public int QuizId { get; set; }
+    public string QuizTitle { get; set; } = null!;
+    public int UserId { get; set; }
+    public string UserFullName { get; set; } = null!;
+    public int Score { get; set; }
+    public bool IsPassed { get; set; }
+    public DateTime? StartedAt { get; set; }
+    public DateTime? SubmittedAt { get; set; }
+}

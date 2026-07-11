@@ -21,7 +21,15 @@
 
     <!-- VIEW 1: Courses -->
     <div id="view-courses" class="space-y-4">
-        <h2 class="text-lg font-bold text-slate-800">Select a Course</h2>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 class="text-lg font-bold text-slate-800">Select a Course</h2>
+            <div class="relative max-w-sm w-full">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" id="courseSearchInput" placeholder="Search courses..." 
+                       class="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm font-medium transition-all"
+                       oninput="onCourseSearchInput(event)">
+            </div>
+        </div>
         <div id="courseGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div class="p-8 text-center text-slate-500 col-span-full">
                 <span class="material-symbols-outlined animate-spin text-3xl">refresh</span>
@@ -106,7 +114,9 @@
             courseTitle: null,
             lessonId: null,
             lessonTitle: null,
-            questions: []
+            questions: [],
+            coursePage: 1,
+            courseSearch: ''
         };
         let optionCounter = -1;
 
@@ -169,31 +179,37 @@
 
         // --- Data Fetching & Rendering ---
 
+        let searchTimeout = null;
+
+        function onCourseSearchInput(e) {
+            clearTimeout(searchTimeout);
+            state.courseSearch = e.target.value;
+            state.coursePage = 1;
+            searchTimeout = setTimeout(() => {
+                loadCourses();
+            }, 500);
+        }
+
+        async function changeCoursePage(page) {
+            state.coursePage = page;
+            await loadCourses();
+        }
+
         async function loadCourses() {
+            const grid = document.getElementById('courseGrid');
+            grid.innerHTML = '<div class="col-span-full p-8 text-center text-slate-500"><span class="material-symbols-outlined animate-spin text-3xl">refresh</span></div>';
+            
             try {
-                const resp = await fetch("/QuestionBank/GetCourses");
-                const grid = document.getElementById('courseGrid');
+                const url = `/QuestionBank/GetCourses?page=${state.coursePage}&search=${encodeURIComponent(state.courseSearch)}`;
+                const resp = await fetch(url);
                 if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.data && data.data.items && data.data.items.length > 0) {
-                        grid.innerHTML = data.data.items.map(c => `
-                            <button onclick="openCourse(${c.courseId}, '${c.title.replace(/'/g, "\\'")}')" class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-start gap-3 hover:border-primary/50 hover:shadow-md hover:-translate-y-1 transition-all text-left group">
-                                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                                    <span class="material-symbols-outlined text-2xl">folder</span>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-slate-800 line-clamp-2">${c.title}</h3>
-                                    <p class="text-xs text-slate-400 mt-1 uppercase tracking-wider font-semibold">Open Course</p>
-                                </div>
-                            </button>
-                        `).join('');
-                    } else {
-                        grid.innerHTML = `<div class="col-span-full p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">No courses available.</div>`;
-                    }
+                    grid.innerHTML = await resp.text();
+                } else {
+                    grid.innerHTML = `<div class="col-span-full text-red-500 text-center p-4">Error loading courses.</div>`;
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('courseGrid').innerHTML = `<div class="col-span-full text-red-500 text-center p-4">Error loading courses.</div>`;
+                grid.innerHTML = `<div class="col-span-full text-red-500 text-center p-4">Error loading courses.</div>`;
             }
         }
 

@@ -1,0 +1,62 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Review List
+
+actor Guest as act
+participant "CourseDetailPage" as view
+participant "ReviewController" as fe_ctrl <<frontend controller>>
+participant "ReviewController" as be_ctrl <<backend controller>>
+participant ":ReviewService" as sv
+participant ":PagedResult<ReviewResponse>" as res
+participant ":IReviewRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Scroll to Reviews section
+view -> fe_ctrl++: GET /Review/CourseReviews?courseId={id}
+fe_ctrl -> be_ctrl++: GET /api/reviews/course/{courseId}
+be_ctrl -> sv++: Call GetCourseReviewsAsync(courseId, page, pageSize, starFilter)
+
+sv -> repo++: Call GetCourseReviewsPagedAsync(courseId, page, pageSize, starFilter)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch reviews
+db -->> ctx--: Return query results
+ctx -->> repo--: Return review entities and totalCount
+repo -->> sv--: Return (reviews, totalCount)
+
+sv -> sv++: Map reviews to ReviewResponse DTOs
+sv--
+
+sv -> res++: Call PagedResult(reviewResponses, totalCount)
+res -->> sv--: Return PagedResult object
+
+sv -->> be_ctrl--: Return PagedResult object
+be_ctrl -->> fe_ctrl--: Return statusCode 200
+fe_ctrl -->> view--: Return View(PagedResult)
+view -->> act--: Display review list
