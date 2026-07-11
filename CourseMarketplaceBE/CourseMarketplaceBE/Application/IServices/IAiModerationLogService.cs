@@ -14,5 +14,5 @@ public interface IAiModerationLogService
 
     Task<PagedResult<ReviewModerationLogAdminDto>> GetLessonReviewModerationLogsAsync(PagedRequestDto req);
     Task<ReviewModerationLogAdminDto?> GetLessonReviewModerationLogDetailAsync(int logId);
-    Task SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command);
+    Task<int> SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command);
 }

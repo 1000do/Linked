@@ -84,7 +84,7 @@ public class AiModerationLogService : IAiModerationLogService
         return _mapper.Map<ReviewModerationLogAdminDto>(entity);
     }
 
-    public async Task SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command)
+    public async Task<int> SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command)
     {
         var log = new CourseAiUsageLog
         {
@@ -99,7 +99,7 @@ public class AiModerationLogService : IAiModerationLogService
         };
 
         await _courseLogRepo.AddAsync(log);
-        await SaveUsageLogChangesAsync();
+        return await SaveUsageLogChangesAsync();
     }
 
     private async Task<int> SaveUsageLogChangesAsync()
