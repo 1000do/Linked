@@ -28,7 +28,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost("free-enroll/{courseId}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> FreeEnroll(int courseId)
     {
         var userId = GetUserId();
@@ -54,7 +54,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpGet("progress/{courseId}")]
-    [Authorize(Roles = "user")]
+   [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GetProgress(int courseId)
     {
         var userId = GetUserId();
@@ -67,7 +67,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost("progress")]
-    [Authorize(Roles = "user")]
+[Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> UpdateProgress([FromBody] UpdateProgressRequest request)
     {
         var userId = GetUserId();
@@ -89,7 +89,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpGet("my-courses")]
-    [Authorize(Roles = "user")]
+   [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GetMyCourses()
     {
         var userId = GetUserId();

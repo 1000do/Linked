@@ -153,7 +153,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
-    [Authorize(Roles = "instructor,staff,admin")]
+    [Authorize(Roles = "instructor")]
     public async Task<IActionResult> UpdateCourseStatus(int id, [FromBody] UpdateStatusRequest request)
     {
         try
