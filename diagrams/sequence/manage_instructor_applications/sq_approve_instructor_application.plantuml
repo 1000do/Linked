@@ -31,12 +31,14 @@ mainframe Approve Instructor Application
 actor Staff as act
 participant "AdminApprovalIndexPage" as view
 participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "AdminApprovalController" as be_ctrl <<backend controller>>
-participant ":InstructorApprovalService" as sv
-participant ":InstructorRepository" as repo
+participant ":IInstructorApprovalService" as sv
+participant ":INotificationService" as noti_sv
+participant ":IInstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant ":INotificationService" as noti_sv
 
 act ++
 act -> view++: Click "Approve" on an instructor application row
@@ -46,7 +48,19 @@ view --
 act -> view: Confirm approval
 view -> fe_ctrl++: POST /AdminApproval/Process?id={id}&status=Approved&reason=
 
-fe_ctrl -> be_ctrl++: POST /api/AdminApproval/process (with Bearer Token)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: POST /api/AdminApproval/process
 
 be_ctrl -> sv++: Call ApproveOrRejectAsync(dto)
 sv -> repo++: Call GetByIdAsync(dto.InstructorId)
@@ -66,9 +80,8 @@ else instructor exists
     sv -> sv++: Call UpdateInstructorStatus(instructor, dto)
     sv --
     
-    sv -> repo: Call Update(instructor)
+    sv -> repo++: Call Update(instructor)
     
-    sv -> repo++: Call SaveChangesAsync()
     repo -> ctx++: Call SaveChangesAsync()
     ctx -> db++: Save changes to database (Execute UPDATE)
     db -->> ctx--: Return numberOfRowsAffected
@@ -87,6 +100,7 @@ else instructor exists
     view -> view++: Update row status / Remove row in DOM
     view --
     view -->> act--: Display success message
+end
 end
 
 @enduml

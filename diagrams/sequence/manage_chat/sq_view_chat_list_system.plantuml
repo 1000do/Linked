@@ -30,6 +30,8 @@ mainframe View Chat List (System)
 
 actor Staff as act
 participant "ChatIndexPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant ":IChatService" as sv
@@ -50,10 +52,23 @@ view->view++: DOMContentLoaded (Init Page)
 view->view++: initSignalR()
 view--
 
-view->fe_ctrl++: Send GET /Chat/GetList
-fe_ctrl->be_ctrl++: Send GET /api/Chat/list (with Bearer Token)
+view->fe_ctrl++: GET /Chat/GetList
 
-be_ctrl->sv++: Call GetMyChatsAsync(accountId)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++: GET /api/Chat/list
+    
+    be_ctrl->sv++: Call GetMyChatsAsync(accountId)
 
 sv->repo++: Call GetParticipantsByAccountIdAsync(accountId)
 repo->ctx++: Call GetParticipantsByAccountIdAsync(accountId)
@@ -92,6 +107,5 @@ view->view++: renderChatList(filteredChats)
 view--
 
 view-->>act--: Display chat list in sidebar with online statuses and unread counts
-deactivate view
-
+end
 @enduml
