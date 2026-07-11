@@ -68,19 +68,19 @@ alt Course Not Found
     cmd_sv -->> sv: throw KeyNotFoundException
     sv -->> be_ctrl: throw KeyNotFoundException
     be_ctrl -->> fe_ctrl: Return statusCode 404
-    fe_ctrl -->> view: Return JSON (success=false, message)
+    fe_ctrl -->> view: Return NotFound()
     view -->> act: Display course not found error message
 else Invalid Instructor Rights
     cmd_sv -->> sv: throw UnauthorizedAccessException
     sv -->> be_ctrl: throw UnauthorizedAccessException
     be_ctrl -->> fe_ctrl: Return statusCode 403
-    fe_ctrl -->> view: Return JSON (success=false, message)
+    fe_ctrl -->> view: Return Forbid()
     view -->> act: Display error message regarding invalid instructor rights
 else Invalid course content
     cmd_sv -->> sv: throw BadRequestException
     sv -->> be_ctrl: throw BadRequestException
     be_ctrl -->> fe_ctrl: Return statusCode 400
-    fe_ctrl -->> view: Return JSON (success=false, message)
+    fe_ctrl -->> view: Return BadRequest()
     view -->> act: Display validation error message
 else Valid course update request
     cmd_sv -> cmd_sv++: ReactivateCourseContentAsync(courseId)
@@ -95,11 +95,11 @@ else Valid course update request
         cmd_sv -->> sv: throw DbUpdateException
         sv -->> be_ctrl: throw DbUpdateException
         be_ctrl -->> fe_ctrl: Return statusCode 500
-        fe_ctrl -->> view: Return JSON (success=false, message)
+        fe_ctrl -->> view: Return StatusCode(500)
         view -->> act: Display database transaction failure message
     else Database Save Success
         db -->> repo--: Return numberOfRowsAffected
-        repo -->> cmd_sv--: Return result
+        repo -->> cmd_sv--: Return numberOfRowsAffected
         cmd_sv -> redis++: RemoveCacheAsync(key)
         redis -->> cmd_sv--: Return result
         cmd_sv -->> sv--: Return result
@@ -110,14 +110,14 @@ else Valid course update request
         
         sv -> queue++: QueueBackgroundWorkItemAsync(workItem)
 
-        par 
+        par Background Task
             ref over sv, db: Handle Course Moderation With AI
-        else 
+        else Main Thread Return
             queue -->> sv--: Return result
             sv -->> be_ctrl--: Return result
         
             be_ctrl -->> fe_ctrl--: Return statusCode 200
-            fe_ctrl -->> view--: Return JSON (success=true)
+            fe_ctrl -->> view--: Return Ok()
             view -->> act--: Display success message
         end
     end

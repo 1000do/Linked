@@ -353,6 +353,7 @@ class TextExtractionService(BaseService):
                     "confidence": confidence,
                 }
                 
+                
                 return all_text, confidence, log_entry
         
         except Exception as e:

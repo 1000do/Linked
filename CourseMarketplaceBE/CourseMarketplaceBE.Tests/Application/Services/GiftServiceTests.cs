@@ -12,7 +12,7 @@ using NSubstitute;
 using Xunit;
 using System.Reflection;
 
-namespace CourseMarketplaceBE.Tests.Services;
+namespace CourseMarketplaceBE.Tests.Application.Services;
 
 public class GiftServiceTests
 {

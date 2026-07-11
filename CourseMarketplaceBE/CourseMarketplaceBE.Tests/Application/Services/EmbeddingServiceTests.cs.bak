@@ -1,0 +1,589 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
+using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Application.Services;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Domain.IRepositories;
+using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using Xunit;
+
+namespace CourseMarketplaceBE.Tests.Services;
+
+public class EmbeddingServiceTests
+{
+    private readonly ITextEmbeddingRepository _textEmbeddingRepositoryMock;
+    private readonly IMediaEmbeddingRepository _mediaEmbeddingRepositoryMock;
+    private readonly IMaterialRepository _materialRepositoryMock;
+    private readonly IRedisService _redisServiceMock;
+    private readonly ILogger<EmbeddingService> _loggerMock;
+    private readonly EmbeddingService _sut;
+
+    public EmbeddingServiceTests()
+    {
+        _textEmbeddingRepositoryMock = Substitute.For<ITextEmbeddingRepository>();
+        _mediaEmbeddingRepositoryMock = Substitute.For<IMediaEmbeddingRepository>();
+        _materialRepositoryMock = Substitute.For<IMaterialRepository>();
+        _redisServiceMock = Substitute.For<IRedisService>();
+        _loggerMock = Substitute.For<ILogger<EmbeddingService>>();
+
+        _sut = new EmbeddingService(
+            _textEmbeddingRepositoryMock,
+            _mediaEmbeddingRepositoryMock,
+            _materialRepositoryMock,
+            _redisServiceMock,
+            _loggerMock);
+    }
+
+    [Fact]
+    public async Task GetAllMaterialEmbeddingsAsync_ValidRepositories_ReturnsCombinedEmbeddings()
+    {
+        //Arrange 1
+        var textEntities = new List<TextEmbedding>
+        {
+            new TextEmbedding { TextEmbeddingId = 1, MaterialId = 10, Embedding = new List<float> { 0.1f, 0.2f } }
+        };
+        var mediaEntities = new List<MediaEmbedding>
+        {
+            new MediaEmbedding { MediaEmbeddingId = 2, MaterialId = 20, Embedding = new List<float> { 0.3f, 0.4f } }
+        };
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.GetAllAsync().Returns(textEntities);
+        _mediaEmbeddingRepositoryMock.GetAllAsync().Returns(mediaEntities);
+
+        //Act
+        var result = await _sut.GetAllMaterialEmbeddingsAsync();
+
+        //Assert
+        result.Should().NotBeNull();
+        result.Should().HaveCount(2);
+        
+        var textResult = result.Single(r => r.EmbeddingType == "text");
+        textResult.EmbeddingId.Should().Be(1);
+        textResult.MaterialId.Should().Be(10);
+        
+        var mediaResult = result.Single(r => r.EmbeddingType == "media");
+        mediaResult.EmbeddingId.Should().Be(2);
+        mediaResult.MaterialId.Should().Be(20);
+
+        await _textEmbeddingRepositoryMock.Received(1).GetAllAsync();
+        await _mediaEmbeddingRepositoryMock.Received(1).GetAllAsync();
+    }
+
+    [Fact]
+    public async Task SaveMaterialEmbeddingsAsync_TypeIsMedia_CallsSaveMediaEmbedding()
+    {
+        //Arrange 1
+        int materialId = 1;
+        var embedding = new List<float> { 0.1f };
+        string type = "media";
+
+        //Arrange 2
+        _mediaEmbeddingRepositoryMock.GetByMaterialIdAsync(materialId).Returns(new List<MediaEmbedding>());
+        _mediaEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.SaveMaterialEmbeddingsAsync(materialId, embedding, type);
+
+        //Assert
+        result.Should().Be(1);
+        await _mediaEmbeddingRepositoryMock.Received(1).GetByMaterialIdAsync(materialId);
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+    }
+
+    [Fact]
+    public async Task SaveMaterialEmbeddingsAsync_TypeIsText_CallsSaveTextEmbedding()
+    {
+        //Arrange 1
+        int materialId = 1;
+        var embedding = new List<float> { 0.1f };
+        string type = "text";
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.GetByMaterialIdAsync(materialId).Returns(new List<TextEmbedding>());
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.SaveMaterialEmbeddingsAsync(materialId, embedding, type);
+
+        //Assert
+        result.Should().Be(1);
+        await _textEmbeddingRepositoryMock.Received(1).GetByMaterialIdAsync(materialId);
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+    }
+
+    [Fact]
+    public async Task SaveMaterialEmbeddingsAsync_NoRowsAffected_LogsError()
+    {
+        //Arrange 1
+        int materialId = 1;
+        var embedding = new List<float> { 0.1f };
+        string embeddingType = "text";
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.GetByMaterialIdAsync(materialId).Returns(new List<TextEmbedding>());
+        _textEmbeddingRepositoryMock.AddAsync(Arg.Any<TextEmbedding>()).Returns(Task.CompletedTask);
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(0); // return 0 rows affected
+
+        //Act
+        var result = await _sut.SaveMaterialEmbeddingsAsync(materialId, embedding, embeddingType);
+
+        //Assert
+        result.Should().Be(0);
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+    }
+
+    [Fact]
+    public async Task PersistPendingMaterialEmbeddingsAsync_NoPendingMaterials_DoesNotThrow()
+    {
+        //Arrange 1
+        int courseId = 1;
+        var excluded = new HashSet<int>();
+
+        //Arrange 2
+        _materialRepositoryMock.GetByCourseIdAsync(courseId).Returns(new List<LearningMaterial>());
+
+        //Act
+        var result = await _sut.PersistPendingMaterialEmbeddingsAsync(courseId, excluded);
+
+        //Assert
+        result.Should().Be(0);
+        await _materialRepositoryMock.Received(1).GetByCourseIdAsync(courseId);
+    }
+
+    [Fact]
+    public async Task PersistPendingMaterialEmbeddingsAsync_NullMaterials_DoesNotThrow()
+    {
+        //Arrange 1
+        int courseId = 1;
+        var excluded = new HashSet<int>();
+
+        //Arrange 2
+        _materialRepositoryMock.GetByCourseIdAsync(courseId).Returns((List<LearningMaterial>)null);
+
+        //Act
+        var result = await _sut.PersistPendingMaterialEmbeddingsAsync(courseId, excluded);
+
+        //Assert
+        result.Should().Be(0);
+        await _materialRepositoryMock.Received(1).GetByCourseIdAsync(courseId);
+    }
+
+    [Fact]
+    public async Task PersistPendingMaterialEmbeddingsAsync_WithMaterials_ProcessesOnlyNonExcluded()
+    {
+        //Arrange 1
+        int courseId = 1;
+        var excluded = new HashSet<int> { 20 };
+        var materials = new List<LearningMaterial>
+        {
+            new LearningMaterial { MaterialId = 10 },
+            new LearningMaterial { MaterialId = 20 } // Excluded
+        };
+        var cachedResponse = new MaterialEmbeddingResponse
+        {
+            Embedding = new List<float> { 0.1f },
+            EmbeddingType = "text"
+        };
+
+        //Arrange 2
+        _materialRepositoryMock.GetByCourseIdAsync(courseId).Returns(materials);
+        _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(Arg.Any<string>()).Returns(cachedResponse);
+        _textEmbeddingRepositoryMock.GetByMaterialIdAsync(10).Returns(new List<TextEmbedding>());
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.PersistPendingMaterialEmbeddingsAsync(courseId, excluded);
+
+        //Assert
+        result.Should().Be(2); // Processes both materials (even if one is skipped, it counts as processed in the loop)
+        await _materialRepositoryMock.Received(1).GetByCourseIdAsync(courseId);
+        await _redisServiceMock.Received(1).GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.PendingMaterialEmbedding.GetKey(10));
+        await _redisServiceMock.DidNotReceive().GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.PendingMaterialEmbedding.GetKey(20));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.PendingMaterialEmbedding.GetKey(10));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.PendingMaterialEmbedding.GetKey(20));
+    }
+
+    [Fact]
+    public async Task PrepareMaterialEmbeddingsAsync_AlreadyInitialized_ReturnsFalse()
+    {
+        //Arrange 1
+
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(true);
+
+        //Act
+        var result = await _sut.PrepareMaterialEmbeddingsAsync();
+
+        //Assert
+        result.Should().BeFalse();
+        await _redisServiceMock.Received(1).GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+        await _textEmbeddingRepositoryMock.DidNotReceive().GetAllAsync();
+    }
+
+    [Fact]
+    public async Task PrepareMaterialEmbeddingsAsync_NotInitializedAndCacheEmpty_SetsCacheAndInitializedFlag()
+    {
+        //Arrange 1
+        var textEntities = new List<TextEmbedding>
+        {
+            new TextEmbedding { TextEmbeddingId = 1, MaterialId = 10, Embedding = new List<float> { 0.1f } }
+        };
+
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(false);
+        _textEmbeddingRepositoryMock.GetAllAsync().Returns(textEntities);
+        _mediaEmbeddingRepositoryMock.GetAllAsync().Returns(new List<MediaEmbedding>());
+        _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.MaterialEmbedding.GetKey(10)).Returns((MaterialEmbeddingResponse)null);
+
+        //Act
+        var result = await _sut.PrepareMaterialEmbeddingsAsync();
+
+        //Assert
+        result.Should().BeTrue();
+        await _redisServiceMock.Received(1).SetCacheAsync(CacheKeys.MaterialEmbedding.GetKey(10), Arg.Any<MaterialEmbeddingResponse>(), Arg.Any<TimeSpan>());
+        await _redisServiceMock.Received(1).SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, Arg.Any<TimeSpan>());
+    }
+
+    [Fact]
+    public async Task PrepareMaterialEmbeddingsAsync_NotInitializedAndCacheExists_SetsOnlyInitializedFlag()
+    {
+        //Arrange 1
+        var textEntities = new List<TextEmbedding>
+        {
+            new TextEmbedding { TextEmbeddingId = 1, MaterialId = 10, Embedding = new List<float> { 0.1f } }
+        };
+        var existingCache = new MaterialEmbeddingResponse();
+
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(false);
+        _textEmbeddingRepositoryMock.GetAllAsync().Returns(textEntities);
+        _mediaEmbeddingRepositoryMock.GetAllAsync().Returns(new List<MediaEmbedding>());
+        _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.MaterialEmbedding.GetKey(10)).Returns(existingCache);
+
+        //Act
+        var result = await _sut.PrepareMaterialEmbeddingsAsync();
+
+        //Assert
+        result.Should().BeTrue();
+        await _redisServiceMock.DidNotReceive().SetCacheAsync(CacheKeys.MaterialEmbedding.GetKey(10), Arg.Any<MaterialEmbeddingResponse>(), Arg.Any<TimeSpan>());
+        await _redisServiceMock.Received(1).SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, Arg.Any<TimeSpan>());
+    }
+
+    [Fact]
+    public async Task PrepareMaterialEmbeddingsAsync_EmptyEmbeddings_SetsOnlyInitializedFlag()
+    {
+        //Arrange 1
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(false);
+        _textEmbeddingRepositoryMock.GetAllAsync().Returns(new List<TextEmbedding>());
+        _mediaEmbeddingRepositoryMock.GetAllAsync().Returns(new List<MediaEmbedding>());
+
+        //Act
+        var result = await _sut.PrepareMaterialEmbeddingsAsync();
+
+        //Assert
+        result.Should().BeTrue();
+        await _redisServiceMock.DidNotReceive().SetCacheAsync(Arg.Any<string>(), Arg.Any<MaterialEmbeddingResponse>(), Arg.Any<TimeSpan>());
+        await _redisServiceMock.Received(1).SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, Arg.Any<TimeSpan>());
+    }
+
+    // --- Reflection tests for private methods ---
+
+    [Fact]
+    public async Task ProcessPendingMaterialEmbeddingAsync_ShouldNotSave_ReturnsEarly()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("ProcessPendingMaterialEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        //Arrange 2
+
+        //Act
+        await (Task)method.Invoke(_sut, new object[] { 1, false });
+
+        //Assert
+        await _redisServiceMock.DidNotReceive().GetCacheAsync<MaterialEmbeddingResponse>(Arg.Any<string>());
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.PendingMaterialEmbedding.GetKey(1));
+    }
+
+    [Fact]
+    public async Task ProcessPendingMaterialEmbeddingAsync_CacheEmpty_ReturnsEarly()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("ProcessPendingMaterialEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.PendingMaterialEmbedding.GetKey(1)).Returns((MaterialEmbeddingResponse)null);
+
+        //Act
+        await (Task)method.Invoke(_sut, new object[] { 1, true });
+
+        //Assert
+        await _textEmbeddingRepositoryMock.DidNotReceive().GetByMaterialIdAsync(Arg.Any<int>());
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.PendingMaterialEmbedding.GetKey(1));
+    }
+
+    [Fact]
+    public async Task ProcessPendingMaterialEmbeddingAsync_CacheEmbeddingNullOrEmpty_ReturnsEarly()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("ProcessPendingMaterialEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cacheData = new MaterialEmbeddingResponse
+        {
+            Embedding = new List<float>() // Empty embedding
+        };
+
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.PendingMaterialEmbedding.GetKey(1)).Returns(cacheData);
+
+        //Act
+        await (Task)method.Invoke(_sut, new object[] { 1, true });
+
+        //Assert
+        await _textEmbeddingRepositoryMock.DidNotReceive().GetByMaterialIdAsync(Arg.Any<int>());
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.PendingMaterialEmbedding.GetKey(1));
+    }
+
+    [Fact]
+    public async Task ProcessPendingMaterialEmbeddingAsync_ValidCache_SavesAndRemovesCache()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("ProcessPendingMaterialEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cacheData = new MaterialEmbeddingResponse
+        {
+            Embedding = new List<float> { 0.1f },
+            EmbeddingType = "text"
+        };
+
+        //Arrange 2
+        _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(CacheKeys.PendingMaterialEmbedding.GetKey(1)).Returns(cacheData);
+        _textEmbeddingRepositoryMock.GetByMaterialIdAsync(1).Returns(new List<TextEmbedding>());
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        await (Task)method.Invoke(_sut, new object[] { 1, true });
+
+        //Assert
+        await _textEmbeddingRepositoryMock.Received(1).GetByMaterialIdAsync(1);
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.PendingMaterialEmbedding.GetKey(1));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(1));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+    }
+
+    [Fact]
+    public void GetEmbeddingType_TypeAlreadySet_ReturnsSetType()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("GetEmbeddingType", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cachedResponse = new MaterialEmbeddingResponse { EmbeddingType = "media" };
+
+        //Arrange 2
+
+        //Act
+        var result = (string)method.Invoke(_sut, new object[] { cachedResponse });
+
+        //Assert
+        result.Should().Be("media");
+    }
+
+    [Fact]
+    public void GetEmbeddingType_TypeNotSetAndDimIsMedia_ReturnsMedia()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("GetEmbeddingType", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cachedResponse = new MaterialEmbeddingResponse 
+        { 
+            EmbeddingType = "invalid",
+            Embedding = new List<float>(new float[AiModelConst.MediaEmbeddingDim]) 
+        };
+
+        //Arrange 2
+
+        //Act
+        var result = (string)method.Invoke(_sut, new object[] { cachedResponse });
+
+        //Assert
+        result.Should().Be("media");
+    }
+
+    [Fact]
+    public void GetEmbeddingType_TypeNotSetAndDimIsText_ReturnsText()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("GetEmbeddingType", BindingFlags.NonPublic | BindingFlags.Instance);
+        var cachedResponse = new MaterialEmbeddingResponse 
+        { 
+            EmbeddingType = null,
+            Embedding = new List<float> { 0.1f } // less than MediaEmbeddingDim
+        };
+
+        //Arrange 2
+
+        //Act
+        var result = (string)method.Invoke(_sut, new object[] { cachedResponse });
+
+        //Assert
+        result.Should().Be("text");
+    }
+
+    [Fact]
+    public async Task SaveMediaEmbeddingAsync_ExistingFound_UpdatesEmbedding()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveMediaEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        var existingEntity = new MediaEmbedding { MediaEmbeddingId = 1, Embedding = new List<float>() };
+        var newEmbedding = new List<float> { 0.9f };
+
+        //Arrange 2
+        _mediaEmbeddingRepositoryMock.GetByMaterialIdAsync(1).Returns(new List<MediaEmbedding> { existingEntity });
+        _mediaEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await (Task<int>)method.Invoke(_sut, new object[] { 1, newEmbedding });
+
+        //Assert
+        result.Should().Be(1);
+        _mediaEmbeddingRepositoryMock.Received(1).Update(existingEntity);
+        existingEntity.Embedding.Should().BeEquivalentTo(newEmbedding);
+        await _mediaEmbeddingRepositoryMock.DidNotReceive().AddAsync(Arg.Any<MediaEmbedding>());
+    }
+
+    [Fact]
+    public async Task SaveMediaEmbeddingAsync_ExistingNotFound_AddsNewEntity()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveMediaEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        var newEmbedding = new List<float> { 0.9f };
+
+        //Arrange 2
+        _mediaEmbeddingRepositoryMock.GetByMaterialIdAsync(1).Returns(new List<MediaEmbedding>());
+        _mediaEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await (Task<int>)method.Invoke(_sut, new object[] { 1, newEmbedding });
+
+        //Assert
+        result.Should().Be(1);
+        await _mediaEmbeddingRepositoryMock.Received(1).AddAsync(Arg.Is<MediaEmbedding>(e => e.MaterialId == 1 && e.Embedding == newEmbedding));
+        _mediaEmbeddingRepositoryMock.DidNotReceive().Update(Arg.Any<MediaEmbedding>());
+    }
+
+    [Fact]
+    public async Task SaveMediaEmbeddingChangesAsync_Success_ReturnsRowsAffected()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveMediaEmbeddingChangesAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        //Arrange 2
+        _mediaEmbeddingRepositoryMock.SaveChangesAsync().Returns(5);
+
+        //Act
+        var result = await (Task<int>)method.Invoke(_sut, null);
+
+        //Assert
+        result.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task SaveMediaEmbeddingChangesAsync_RepositoryThrowsMediaEmbeddingException_ThrowsBadRequestException()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveMediaEmbeddingChangesAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        //Arrange 2
+        _mediaEmbeddingRepositoryMock.SaveChangesAsync().Throws(new MediaEmbeddingException("err"));
+
+        //Act
+        Func<Task> act = async () => await (Task<int>)method.Invoke(_sut, null);
+
+        //Assert
+        await act.Should().ThrowAsync<BadRequestException>().WithMessage("err");
+    }
+
+    [Fact]
+    public async Task SaveTextEmbeddingAsync_ExistingFound_UpdatesEmbedding()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveTextEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        var existingEntity = new TextEmbedding { TextEmbeddingId = 1, Embedding = new List<float>() };
+        var newEmbedding = new List<float> { 0.9f };
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.GetByMaterialIdAsync(1).Returns(new List<TextEmbedding> { existingEntity });
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await (Task<int>)method.Invoke(_sut, new object[] { 1, newEmbedding });
+
+        //Assert
+        result.Should().Be(1);
+        _textEmbeddingRepositoryMock.Received(1).Update(existingEntity);
+        existingEntity.Embedding.Should().BeEquivalentTo(newEmbedding);
+        await _textEmbeddingRepositoryMock.DidNotReceive().AddAsync(Arg.Any<TextEmbedding>());
+    }
+
+    [Fact]
+    public async Task SaveTextEmbeddingAsync_ExistingNotFound_AddsNewEntity()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveTextEmbeddingAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+        var newEmbedding = new List<float> { 0.9f };
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.GetByMaterialIdAsync(1).Returns(new List<TextEmbedding>());
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await (Task<int>)method.Invoke(_sut, new object[] { 1, newEmbedding });
+
+        //Assert
+        result.Should().Be(1);
+        await _textEmbeddingRepositoryMock.Received(1).AddAsync(Arg.Is<TextEmbedding>(e => e.MaterialId == 1 && e.Embedding == newEmbedding));
+        _textEmbeddingRepositoryMock.DidNotReceive().Update(Arg.Any<TextEmbedding>());
+    }
+
+    [Fact]
+    public async Task SaveTextEmbeddingChangesAsync_Success_ReturnsRowsAffected()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveTextEmbeddingChangesAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Returns(5);
+
+        //Act
+        var result = await (Task<int>)method.Invoke(_sut, null);
+
+        //Assert
+        result.Should().Be(5);
+    }
+
+    [Fact]
+    public async Task SaveTextEmbeddingChangesAsync_RepositoryThrowsTextEmbeddingException_ThrowsBadRequestException()
+    {
+        //Arrange 1
+        var method = typeof(EmbeddingService).GetMethod("SaveTextEmbeddingChangesAsync", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        //Arrange 2
+        _textEmbeddingRepositoryMock.SaveChangesAsync().Throws(new TextEmbeddingException("err"));
+
+        //Act
+        Func<Task> act = async () => await (Task<int>)method.Invoke(_sut, null);
+
+        //Assert
+        await act.Should().ThrowAsync<BadRequestException>().WithMessage("err");
+    }
+}

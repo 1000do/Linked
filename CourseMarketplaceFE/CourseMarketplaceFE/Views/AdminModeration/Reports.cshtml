@@ -460,27 +460,18 @@
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Report Moderated',
-                            text: 'The course report has been successfully resolved.',
-                            confirmButtonColor: '#10b981',
-                            customClass: { popup: 'rounded-3xl' }
-                        });
-                        loadCourseReports();
-                        refreshStats();
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Moderate',
-                            text: result.message || 'The server rejected this action.',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Report Moderated',
+                        text: 'The course report has been successfully resolved.',
+                        confirmButtonColor: '#10b981',
+                        customClass: { popup: 'rounded-3xl' }
+                    });
+                    loadCourseReports();
+                    refreshStats();
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                    const errResult = await response.json().catch(() => ({}));
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: errResult?.message || errResult?.Message || 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
                 }
             } catch (err) {
                 console.error(err);
@@ -606,27 +597,18 @@
                 });
 
                 if (response.ok) {
-                    const result = await response.json();
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Report Moderated',
-                            text: 'The review report has been successfully resolved.',
-                            confirmButtonColor: '#10b981',
-                            customClass: { popup: 'rounded-3xl' }
-                        });
-                        loadReviewReports();
-                        refreshStats();
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Failed to Moderate',
-                            text: result.message || 'The server rejected this action.',
-                            confirmButtonColor: '#ef4444'
-                        });
-                    }
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Report Moderated',
+                        text: 'The review report has been successfully resolved.',
+                        confirmButtonColor: '#10b981',
+                        customClass: { popup: 'rounded-3xl' }
+                    });
+                    loadReviewReports();
+                    refreshStats();
                 } else {
-                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
+                    const errResult = await response.json().catch(() => ({}));
+                    Swal.fire({ icon: 'error', title: 'Moderation Error', text: errResult?.message || errResult?.Message || 'HTTP communication failed.', confirmButtonColor: '#ef4444' });
                 }
             } catch (err) {
                 console.error(err);
