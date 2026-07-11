@@ -31,8 +31,10 @@ actor Admin as act
 
 participant "AdminCouponView" as view
 participant "CouponController" as be_ctrl <<backend controller>>
-participant ":CouponService" as sv
-participant ":CouponRepository" as repo
+participant ":CreateCouponRequestDTO" as be_req
+participant ":ICouponService" as sv
+participant ":Coupon" as coupon
+participant ":ICouponRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -40,11 +42,18 @@ act++
 act->view++: Click "Add Coupon" & enter details
 view->be_ctrl++: POST /api/coupon
 
+be_ctrl->be_req++: Call CreateCouponRequestDTO()
+be_req-->>be_ctrl--: Return CreateCouponRequestDTO object
+
 be_ctrl->sv++: Call Create(req, managerId)
 sv->sv++: Call NormalizeType() & ValidateCreate()
 sv--
 
-alt Valid Request Data
+alt Invalid Request Data
+    sv-->>be_ctrl: Throw ArgumentException
+    be_ctrl-->>view: Return statusCode 400
+    view-->>act: Display error toast message
+else Valid Request Data
     sv->repo++: Call GetByCodeAsync(req.CouponCode)
     repo->ctx++: Query Coupon
     ctx->db++: Execute query
@@ -52,9 +61,13 @@ alt Valid Request Data
     ctx-->>repo--: Return Coupon entity
     repo-->>sv--: Return Coupon entity
     
-    alt Coupon Code is Unique
-        sv->sv++: Instantiate new Coupon entity
-        sv--
+    alt Coupon Code Already Exists
+        sv-->>be_ctrl: Throw InvalidOperationException
+        be_ctrl-->>view: Return statusCode 400
+        view-->>act: Display error toast message
+    else Coupon Code is Unique
+        sv->coupon++: Call Coupon()
+        coupon-->>sv--: Return Coupon entity
         
         sv->repo++: Call AddAsync(coupon)
         repo->ctx++: Add Coupon entity to ChangeTracker
@@ -68,17 +81,9 @@ alt Valid Request Data
         ctx-->>repo--: Return numberOfRowsAffected
         repo-->>sv--: Return success
         
-        sv-->>be_ctrl: Return result
-        be_ctrl-->>view: Return statusCode 200
-        view-->>act: Render updated Coupon List / Display success message
-    else Coupon Code Already Exists
-        sv-->>be_ctrl: Throw InvalidOperationException
-        be_ctrl-->>view: Return statusCode 400
-        view-->>act: Display error toast message
+        sv-->>be_ctrl--: Return success
+        be_ctrl-->>view--: Return statusCode 200
+        view-->>act--: Render updated Coupon List / Display success message
     end
-else Invalid Request Data
-    sv-->>be_ctrl--: Throw ArgumentException
-    be_ctrl-->>view--: Return statusCode 400
-    view-->>act--: Display error toast message
 end
 @enduml

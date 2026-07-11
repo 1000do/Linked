@@ -3,6 +3,7 @@ using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -36,7 +37,8 @@ public class CouponController : ControllerBase
 
     /// <summary>UC-63: Danh sách tất cả mã giảm giá (Admin).</summary>
     [HttpGet]
-    [Authorize(Roles = "admin")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetAll(
         [FromQuery] bool? isActive,
         [FromQuery] string? type,
@@ -56,7 +58,8 @@ public class CouponController : ControllerBase
 
     /// <summary>UC-63: Chi tiết 1 mã giảm giá (Admin).</summary>
     [HttpGet("{id:int}")]
-    [Authorize(Roles = "admin")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetById(int id)
     {
         try
@@ -75,7 +78,8 @@ public class CouponController : ControllerBase
 
     /// <summary>UC-62: Tạo mã giảm giá mới (Admin).</summary>
     [HttpPost]
-    [Authorize(Roles = "admin")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> Create([FromBody] CreateCouponRequest req)
     {
         try
@@ -102,7 +106,8 @@ public class CouponController : ControllerBase
     /// ★ CHỈ cho phép sửa: end_date, usage_limit, is_active.
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize(Roles = "admin")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateCouponRequest req)
     {
         try
@@ -134,7 +139,8 @@ public class CouponController : ControllerBase
     /// ★ Luôn soft-delete: set is_active = false, end_date = hôm qua.
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "admin")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> SoftDelete(int id)
     {
         try

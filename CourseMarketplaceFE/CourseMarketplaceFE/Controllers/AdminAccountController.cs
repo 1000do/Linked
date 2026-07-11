@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers;
 
+[Authorize(Roles = "admin")]
 public class AdminAccountController : Controller
 {
     private readonly ApiClient _apiClient;
@@ -205,6 +207,42 @@ public class AdminAccountController : Controller
 
         var errContent = await response.Content.ReadAsStringAsync();
         string errMsg = "Failed to flag account.";
+        try
+        {
+            using var doc = JsonDocument.Parse(errContent);
+            if (doc.RootElement.TryGetProperty("message", out var msgEl))
+            {
+                errMsg = msgEl.GetString() ?? errMsg;
+            }
+        }
+        catch { }
+
+        return Json(new { success = false, message = errMsg });
+    }
+
+    // POST /AdminAccount/Unflag/{id}
+    [HttpPost]
+    public async Task<IActionResult> Unflag(int id, [FromBody] UnflagAccountFERequest model)
+    {
+        if (model == null)
+        {
+            return Json(new { success = false, message = "Reason is required." });
+        }
+
+        var response = await _apiClient.PostJsonAsync($"/api/admin/accounts/{id}/unflag", model);
+        if (response.IsSuccessStatusCode)
+        {
+            var raw = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(raw);
+            var root = doc.RootElement;
+            var currentFlags = root.GetProperty("currentFlags").GetInt32();
+            var newStatus = root.GetProperty("newStatus").GetString();
+
+            return Json(new { success = true, currentFlags = currentFlags, newStatus = newStatus, message = "Account unflagged successfully." });
+        }
+
+        var errContent = await response.Content.ReadAsStringAsync();
+        string errMsg = "Failed to unflag account.";
         try
         {
             using var doc = JsonDocument.Parse(errContent);

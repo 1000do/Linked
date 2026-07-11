@@ -32,11 +32,13 @@ actor User as act
 participant "EditProfileView" as view
 participant "ProfileView" as r_view
 participant "LoginView" as login_view
+participant ":UpdateProfileViewModel" as fe_req
 participant "AccountController" as fe_ctrl <<frontend controller>>
+participant ":UpdateProfileRequestDTO" as be_req
 participant "ProfileController" as be_ctrl <<backend controller>>
-participant ":UserProfileService" as sv
-participant ":FileUploadService" as upload_sv
-participant ":UserRepository" as repo
+participant ":IUserProfileService" as sv
+participant ":IFileUploadService" as upload_sv
+participant ":IUserRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -47,172 +49,90 @@ act->view: Click "Save Changes"
 view->view++: Validate input
 view--
 
-alt Valid input
-    view->fe_ctrl++: POST /Account/EditProfile
-    
-    fe_ctrl->fe_ctrl++: Check AccessToken cookie
-    fe_ctrl--
-    
-    alt Valid AccessToken
-        fe_ctrl->be_ctrl++: PUT /api/Profile/update
-        
-        be_ctrl->be_ctrl++: Validate ModelState
-        be_ctrl--
-        
-        alt Valid ModelState
-            be_ctrl->be_ctrl++: Validate login session & Parse userId
-            be_ctrl--
-            
-            alt Valid login session
-                be_ctrl->sv++: Call UpdateProfileAsync(userId, request)
-                
-                sv->repo++: Call GetUserByIdAsync(userId)
-                repo->ctx++: Query User joined with navigation details
-                ctx->db++: Execute query
-                db-->>ctx--: Return result
-                ctx-->>repo--: Return User entity
-                repo-->>sv--: Return User entity
-                
-                sv->sv++: Check User and Account
-                sv--
-                
-                alt User and Account found
-                    sv->sv++: Check if email modified on Google Account
-                    sv--
-                    
-                    alt Email not modified on Google Account
-                        sv->sv++: Check email format
-                        sv--
-                        
-                        alt Valid email format
-                            opt AvatarFile != null
-                                sv->upload_sv++: Call UploadImageAsync(AvatarFile)
-                                upload_sv-->>sv--: Return avatarUrl
-                            end
-                            
-                            sv->sv++: Check upload success
-                            sv--
-                            
-                            alt Upload successful (or no avatar)
-                                sv->repo++: Call UpdateUserProfileAsync(userId, fullName, bio, dob, avatarUrl, phoneNumber, ...)
-                                
-                                repo->ctx++: Begin database transaction
-                                ctx-->>repo--: Return result
-                                
-                                repo->ctx++: Query User joined with navigation details
-                                ctx->db++: Execute query
-                                db-->>ctx--: Return result
-                                ctx-->>repo--: Return User entity
-                                
-                                repo->repo++: Set modified fields on User, Account, and Instructor entities
-                                repo--
-                                
-                                opt Email is modified
-                                    repo->ctx++: Check if email is already taken
-                                    ctx->db++: Execute query
-                                    db-->>ctx--: Return result
-                                    ctx-->>repo--: Return result
-                                end
-                                
-                                repo->repo++: Check email taken
-                                repo--
-                                
-                                alt Email not taken (or not modified)
-                                    repo->ctx++: Call SaveChangesAsync()
-                                    ctx->db++: Execute query
-                                    db-->>ctx--: Return result
-                                    ctx-->>repo--: Return numberOfRowsAffected
-                                    
-                                    repo->repo++: Check numberOfRowsAffected
-                                    repo--
-                                    
-                                    alt numberOfRowsAffected > 0
-                                        repo->ctx++: Commit transaction
-                                        ctx-->>repo--: Return result
-                                        repo-->>sv--: Return success
-                                        
-                                        sv-->>be_ctrl--: Return success
-                                        be_ctrl-->>fe_ctrl--: Return statusCode 200
-                                        
-                                        fe_ctrl->be_ctrl++: GET /api/Profile
-                                        be_ctrl->sv++: Call GetUserProfileAsync(userId)
-                                        sv->repo++: Call GetUserByIdAsync(userId)
-                                        repo->ctx++: Query User joined with navigation details
-                                        ctx->db++: Execute query
-                                        db-->>ctx--: Return result
-                                        ctx-->>repo--: Return User entity
-                                        repo-->>sv--: Return User entity
-                                        sv-->>be_ctrl--: Return UserProfileResponse object
-                                        be_ctrl-->>fe_ctrl--: Return statusCode 200
-                                        
-                                        fe_ctrl->fe_ctrl++: Sync display cookies
-                                        fe_ctrl--
-                                        
-                                        fe_ctrl-->>view--: Return statusCode 200
-                                        view-->>act--: Redirect to Profile page
-                                        act->r_view++: Access Profile page
-                                        r_view-->>act--: Display "Updated successfully!" and show updated profile info
-                                    else numberOfRowsAffected == 0 or Exception
-                                        repo->ctx++: Rollback transaction
-                                        ctx-->>repo--: Return result
-                                        repo-->>sv--: Return error
-                                        
-                                        sv-->>be_ctrl--: Return error
-                                        be_ctrl-->>fe_ctrl--: Return statusCode 400
-                                        fe_ctrl-->>view--: Return statusCode 200
-                                        view-->>act--: Display update error message
-                                    end
-                                else Email taken
-                                    repo->ctx++: Rollback transaction
-                                    ctx-->>repo--: Return result
-                                    repo-->>sv--: throw InvalidOperationException
-                                    
-                                    sv-->>be_ctrl--: throw Exception
-                                    be_ctrl-->>fe_ctrl--: Return statusCode 400
-                                    fe_ctrl-->>view--: Return statusCode 200
-                                    view-->>act--: Display "Email taken" message
-                                end
-                            else Upload failed (avatarUrl is null)
-                                sv-->>be_ctrl--: Return error
-                                be_ctrl-->>fe_ctrl--: Return statusCode 400
-                                fe_ctrl-->>view--: Return statusCode 200
-                                view-->>act--: Display upload error
-                            end
-                        else Invalid email format
-                            sv-->>be_ctrl--: throw InvalidOperationException
-                            be_ctrl-->>fe_ctrl--: Return statusCode 400
-                            fe_ctrl-->>view--: Return statusCode 200
-                            view-->>act--: Display format error
-                        end
-                    else Email modified on Google Account
-                        sv-->>be_ctrl--: throw InvalidOperationException
-                        be_ctrl-->>fe_ctrl--: Return statusCode 400
-                        fe_ctrl-->>view--: Return statusCode 200
-                        view-->>act--: Display block message
-                    end
-                else User or Account not found
-                    sv-->>be_ctrl--: Return error
-                    be_ctrl-->>fe_ctrl--: Return statusCode 400
-                    fe_ctrl-->>view--: Return statusCode 200
-                    view-->>act--: Display update error message
-                end
-            else Invalid login session
-                be_ctrl-->>fe_ctrl--: Return statusCode 401
-                fe_ctrl-->>view--: Return statusCode 200
-                view-->>act--: Display error message
-            end
-        else Invalid ModelState
-            be_ctrl-->>fe_ctrl--: Return statusCode 400
-            fe_ctrl-->>view--: Return statusCode 200
-            view-->>act--: Display error message
-        end
-    else No AccessToken
-        fe_ctrl-->>view--: Return statusCode 302
-        view-->>act--: Redirect to Login page
-        act->login_view++: Access Login page
-        login_view-->>act--: Display Login page
-    end
-else Invalid input
-    view-->>act--: Display client validation errors
+view->fe_req++: Call UpdateProfileViewModel()
+fe_req-->>view--: Return UpdateProfileViewModel object
+
+view->fe_ctrl++: POST /Account/EditProfile
+
+fe_ctrl->fe_ctrl++: Check AccessToken cookie
+fe_ctrl--
+
+fe_ctrl->be_req++: Call UpdateProfileRequestDTO()
+be_req-->>fe_ctrl--: Return UpdateProfileRequestDTO object
+
+fe_ctrl->be_ctrl++: PUT /api/Profile/update
+
+be_ctrl->be_ctrl++: Validate ModelState & login session
+be_ctrl--
+
+be_ctrl->sv++: Call UpdateProfileAsync(userId, request)
+
+sv->repo++: Call GetUserByIdAsync(userId)
+repo->ctx++: Query User joined with navigation details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return User entity
+repo-->>sv--: Return User entity
+
+sv->sv++: Check User, Account, Google Email modification and Email format
+sv--
+
+opt AvatarFile != null
+    sv->upload_sv++: Call UploadImageAsync(AvatarFile)
+    upload_sv-->>sv--: Return avatarUrl
 end
+
+sv->repo++: Call UpdateUserProfileAsync(...)
+
+repo->ctx++: Begin database transaction
+ctx-->>repo--: Return result
+
+repo->ctx++: Query User joined with navigation details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return User entity
+
+repo->repo++: Set modified fields
+repo--
+
+opt Email is modified
+    repo->ctx++: Check if email is already taken
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>repo--: Return result
+end
+
+repo->ctx++: Call SaveChangesAsync()
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return numberOfRowsAffected
+
+repo->repo++: Check numberOfRowsAffected
+repo--
+
+repo->ctx++: Commit transaction
+ctx-->>repo--: Return result
+repo-->>sv--: Return success
+
+sv-->>be_ctrl--: Return success
+be_ctrl-->>fe_ctrl--: Return statusCode 200
+
+fe_ctrl->be_ctrl++: GET /api/Profile
+be_ctrl->sv++: Call GetUserProfileAsync(userId)
+sv->repo++: Call GetUserByIdAsync(userId)
+repo->ctx++: Query User joined with navigation details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return User entity
+repo-->>sv--: Return User entity
+sv-->>be_ctrl--: Return UserProfileResponse object
+be_ctrl-->>fe_ctrl--: Return statusCode 200
+
+fe_ctrl->fe_ctrl++: Sync display cookies
+fe_ctrl--
+
+fe_ctrl-->>view--: Return statusCode 200
+view-->>act--: Redirect to Profile page
+act->r_view++: Access Profile page
+r_view-->>act--: Display "Updated successfully!" and show updated profile info
 @enduml

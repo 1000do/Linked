@@ -2,9 +2,11 @@ using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers
 {
+    [Authorize(Roles = "user,instructor")]
     public class WishlistController : Controller
     {
         private readonly ApiClient _apiClient;

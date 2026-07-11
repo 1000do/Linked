@@ -32,8 +32,12 @@ actor Admin as act
 participant "AdminAccountView" as view
 participant "AdminAccountController" as fe_ctrl <<frontend controller>>
 participant "AdminAccountController" as be_ctrl <<backend controller>>
-participant ":AdminAccountService" as sv
-participant ":UserRepository" as u_repo
+participant ":CreateStaffFERequestDTO" as fe_req
+participant ":CreateStaffRequestDTO" as be_req
+participant ":IAdminAccountService" as sv
+participant ":Account" as acc_ett
+participant ":Manager" as manager_ett
+participant ":IUserRepository" as u_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -41,11 +45,20 @@ act++
 act->view++: Fill staff details and click "Create"
 view->fe_ctrl++: POST /AdminAccount/CreateStaff
 
+fe_ctrl->fe_req++: Call CreateStaffFERequestDTO()
+fe_req-->>fe_ctrl--: Return CreateStaffFERequestDTO object
+
 fe_ctrl->fe_ctrl++: Validate required fields
 fe_ctrl--
 
-alt Validation passed
+alt Validation failed
+    fe_ctrl-->>view: Return JSON with success = false
+    view-->>act: Display error toast message
+else Validation passed
     fe_ctrl->be_ctrl++: POST /api/admin/accounts/staff
+    
+    be_ctrl->be_req++: Call CreateStaffRequestDTO()
+    be_req-->>be_ctrl--: Return CreateStaffRequestDTO object
     
     be_ctrl->sv++: Call IsUsernameExistsAsync(username)
     sv->u_repo++: Call IsUsernameExistsAsync(username)
@@ -56,11 +69,18 @@ alt Validation passed
     u_repo-->>sv--: Return boolean
     sv-->>be_ctrl--: Return boolean
     
-    alt Username is available
-        be_ctrl->sv++: Call CreateStaffAsync(request)
+    alt Username already exists
+        be_ctrl-->>fe_ctrl: Return statusCode 400
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    else Username is available
+        be_ctrl->sv++: Call CreateStaffAsync(be_req)
         
-        sv->sv++: Hash password & map to Account and Manager entities
-        sv--
+        sv->acc_ett++: Call Account()
+        acc_ett-->>sv--: Return Account entity
+        
+        sv->manager_ett++: Call Manager()
+        manager_ett-->>sv--: Return Manager entity
         
         sv->u_repo++: Call RegisterManagerAsync(newAccount, newManager)
         u_repo->ctx++: Add entities to DbSets
@@ -68,29 +88,29 @@ alt Validation passed
         
         u_repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Save changes to database
-        db-->>ctx--: Return result
-        ctx-->>u_repo--: Return numberOfRowsAffected
         
-        u_repo-->>sv--: Return result
-        
-        alt Save successful
-            sv-->>be_ctrl: Return success
-            be_ctrl-->>fe_ctrl: Return statusCode 200
-            fe_ctrl-->>view: Return JSON with success = true
-            view-->>act: Display success toast and reload table
-        else Database save failed
-            sv-->>be_ctrl--: throw InvalidOperationException
+        alt Database save failed
+            db-->>ctx: throw DbUpdateException
+            ctx-->>u_repo: throw DbUpdateException
+            u_repo-->>sv: throw DatabaseException
+            sv-->>be_ctrl: throw InvalidOperationException
             be_ctrl-->>fe_ctrl: Return statusCode 400
             fe_ctrl-->>view: Return JSON with success = false
             view-->>act: Display error toast message
+        else Save successful
+            db-->>ctx--: Return numberOfRowsAffected
+            ctx-->>u_repo--: Return numberOfRowsAffected
+            
+            u_repo-->>sv--: Return true
+            
+            sv-->>be_ctrl--: Return success
+            be_ctrl-->>fe_ctrl--: Return statusCode 200
+            
+            deactivate view
+            fe_ctrl-->>view--: Return JSON with success = true
+            activate view
+            view-->>act--: Display success toast and reload table
         end
-    else Username already exists
-        be_ctrl-->>fe_ctrl--: Return statusCode 400
-        fe_ctrl-->>view: Return JSON with success = false
-        view-->>act: Display error toast message
     end
-else Validation failed
-    fe_ctrl-->>view--: Return JSON with success = false
-    view-->>act--: Display error toast message
 end
 @enduml

@@ -35,9 +35,13 @@ participant "HomeIndexView" as home_view
 participant "Google Identity" as Google
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
-participant ":AuthService" as sv
-participant ":UserRepository" as u_repo
-participant ":LockoutRepository" as lock_repo
+participant ":GoogleLoginRequestDTO" as req
+participant ":LoginResponseDTO" as res
+participant ":IAuthService" as sv
+participant ":Account" as acc_ett
+participant ":User" as user_ett
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lock_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -50,7 +54,10 @@ view->fe_ctrl++: POST /Account/GoogleLogin
 
 fe_ctrl->be_ctrl++: POST /api/auth/google-login
 
-be_ctrl->sv++: Call GoogleLoginAsync(idToken)
+be_ctrl->req++: Call GoogleLoginRequestDTO()
+req-->>be_ctrl--: Return GoogleLoginRequestDTO object
+
+be_ctrl->sv++: Call GoogleLoginAsync(req.IdToken)
 
 sv->Google++: Validate IdToken signature
 Google-->>sv--: Return payload
@@ -66,13 +73,19 @@ sv->sv++: Check account
 sv--
 
 opt account == null
+    sv->acc_ett++: Call Account()
+    acc_ett-->>sv--: Return Account entity
+    
+    sv->user_ett++: Call User()
+    user_ett-->>sv--: Return User entity
+    
     sv->u_repo++: Call RegisterUserAsync(acc, user)
     u_repo->ctx++: Add Account and User entities
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes to database
-    db-->>ctx--: Return result
+    db-->>ctx--: Return numberOfRowsAffected
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return isCreated
     
@@ -94,14 +107,19 @@ lock_repo-->>sv--: Return activeLockout
 sv->sv++: Check activeLockout
 sv--
 
-alt Account is active
+alt Account is locked out
+    sv-->>be_ctrl: throw UnauthorizedAccessException
+    be_ctrl-->>fe_ctrl: Return statusCode 403
+    fe_ctrl-->>view: Return statusCode 403
+    view-->>act: Display error message
+else Account is active
     sv->u_repo++: Call UpdateLastLoginAsync(accountId)
     u_repo->ctx++: Update LastLoginDate
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes to database
-    db-->>ctx--: Return result
+    db-->>ctx--: Return numberOfRowsAffected
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return result
     
@@ -121,37 +139,33 @@ alt Account is active
     
     u_repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes to database
-    db-->>ctx--: Return result
+    db-->>ctx--: Return numberOfRowsAffected
     ctx-->>u_repo--: Return numberOfRowsAffected
     u_repo-->>sv--: Return result
     
-    sv-->>be_ctrl: Return LoginResponse object
+    sv->res++: Call LoginResponseDTO()
+    res-->>sv--: Return LoginResponseDTO object
     
-    be_ctrl-->>fe_ctrl: Return statusCode 200
+    sv-->>be_ctrl--: Return LoginResponseDTO object
+    
+    be_ctrl-->>fe_ctrl--: Return statusCode 200
     
     fe_ctrl->fe_ctrl++: Append HttpOnly cookies and user info cookies
     fe_ctrl--
     
-    fe_ctrl-->>view: Return statusCode 200
+    fe_ctrl-->>view--: Return statusCode 200
     
     view->view++: Check user role from cookies
     view--
     
     alt role == admin or staff
-        view -->> admin_view: Redirect to Admin Notification page
+        view -->> admin_view--: Redirect to Admin Notification page
         activate admin_view
-        admin_view -->> act: Display Admin Notification page
-        deactivate admin_view
+        admin_view -->> act--: Display Admin Notification page
     else role == user or instructor
-        view -->> home_view: Redirect to Home Index page
+        view -->> home_view--: Redirect to Home Index page
         activate home_view
-        home_view -->> act: Display Homepage
-        deactivate home_view
+        home_view -->> act--: Display Homepage
     end
-else Account is locked out
-    sv-->>be_ctrl--: throw UnauthorizedAccessException
-    be_ctrl-->>fe_ctrl--: Return statusCode 500
-    fe_ctrl-->>view--: Return statusCode 400
-    view-->>act--: Display error message
 end
 @enduml

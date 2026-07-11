@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 //using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -21,6 +22,8 @@ public class AuthController : ControllerBase
 
     // ─── REGISTER ─────────────────────────────────────────────────────
     [HttpPost("register")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var result = await _authService.RegisterAsync(request);
@@ -33,6 +36,8 @@ public class AuthController : ControllerBase
 
     // ─── LOGIN ────────────────────────────────────────────────────────
     [HttpPost("login")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrEmpty(request.UsernameOrEmail))
@@ -122,7 +127,8 @@ public class AuthController : ControllerBase
     }
 
     // ─── LOGOUT ───────────────────────────────────────────────────────
-    [Authorize]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true)]
     [HttpPost("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -139,6 +145,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("google-login")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
     {
         var result = await _authService.GoogleLoginAsync(request.IdToken);
@@ -158,6 +166,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("send-otp")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> SendOtp([FromQuery] string email)
     {
         var result = await _authService.SendOtpAsync(email);
@@ -168,6 +178,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("verify-email")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyOtpRequest request)
     {
         var result = await _authService.VerifyEmailAsync(request.Email, request.Otp);
@@ -179,6 +191,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> ForgotPassword([FromQuery] string email)
     {
         var result = await _authService.ForgotPasswordAsync(email);
@@ -190,6 +204,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("reset-password")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var result = await _authService.ResetPasswordAsync(
@@ -205,6 +221,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("verify-otp")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public IActionResult VerifyOtpForReset([FromBody] VerifyOtpRequest request)
     {
         var isValid = _authService.VerifyOtpForReset(request.Email, request.Otp);

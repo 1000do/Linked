@@ -33,10 +33,11 @@ participant "VerifyOtpView" as view
 participant "LoginView" as login_view
 participant "ProfileView" as r_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
+participant ":VerifyOtpRequestDTO" as be_req
 participant "AuthController" as be_ctrl <<backend controller>>
-participant ":AuthService" as sv
-participant ":OtpService" as otp_sv
-participant ":UserRepository" as repo
+participant ":IAuthService" as sv
+participant ":IOtpService" as otp_sv
+participant ":IUserRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -47,98 +48,46 @@ view->fe_ctrl++: POST /Account/VerifyOtp
 fe_ctrl->fe_ctrl++: Retrieve email and flow status from TempData
 fe_ctrl--
 
-alt Valid email in TempData
-    fe_ctrl->be_ctrl++: POST /api/Auth/verify-email
-    
-    be_ctrl->be_ctrl++: Validate ModelState
-    be_ctrl--
-    
-    alt Valid ModelState
-        be_ctrl->sv++: Call VerifyEmailAsync(email, otp)
-        
-        sv->otp_sv++: Call ConsumeOtp(email, otp, "verify")
-        otp_sv-->>sv--: Return isValid
-        
-        sv->sv++: Check isValid
-        sv--
-        
-        alt isValid == true
-            sv->repo++: Call UpdateEmailVerifiedAsync(email)
-            
-            repo->ctx++: Query Accounts table for email
-            ctx->db++: Execute query
-            db-->>ctx--: Return result
-            ctx-->>repo--: Return Account entity
-            
-            repo->repo++: Check Account found
-            repo--
-            
-            alt Account found
-                repo->ctx++: Set IsVerified = true and call SaveChangesAsync()
-                ctx->db++: Execute query
-                db-->>ctx--: Return result
-                ctx-->>repo--: Return numberOfRowsAffected
-                
-                repo->repo++: Check numberOfRowsAffected
-                repo--
-                
-                alt numberOfRowsAffected > 0
-                    repo-->>sv--: Return success
-                    sv-->>be_ctrl--: Return success
-                    be_ctrl-->>fe_ctrl--: Return statusCode 200
-                    
-                    fe_ctrl->fe_ctrl++: Remove TempData verify flags\nand append IsVerified cookie
-                    fe_ctrl--
-                    
-                    fe_ctrl-->>view--: Return statusCode 302
-                    view-->>act--: Redirect to Profile page
-                    act->r_view++: Access Profile page
-                    r_view-->>act--: Display verification success message
-                else numberOfRowsAffected == 0
-                    repo-->>sv--: Return error
-                    sv-->>be_ctrl--: Return error
-                    be_ctrl-->>fe_ctrl--: Return statusCode 400
-                    
-                    fe_ctrl->fe_ctrl++: Keep TempData verify flags
-                    fe_ctrl--
-                    
-                    fe_ctrl-->>view--: Return statusCode 200
-                    view-->>act--: Display "Incorrect or expired OTP" error
-                end
-            else Account not found
-                repo-->>sv--: Return error
-                sv-->>be_ctrl--: Return error
-                be_ctrl-->>fe_ctrl--: Return statusCode 400
-                
-                fe_ctrl->fe_ctrl++: Keep TempData verify flags
-                fe_ctrl--
-                
-                fe_ctrl-->>view--: Return statusCode 200
-                view-->>act--: Display "Incorrect or expired OTP" error
-            end
-        else isValid == false
-            sv-->>be_ctrl--: Return error
-            be_ctrl-->>fe_ctrl--: Return statusCode 400
-            
-            fe_ctrl->fe_ctrl++: Keep TempData verify flags
-            fe_ctrl--
-            
-            fe_ctrl-->>view--: Return statusCode 200
-            view-->>act--: Display "Incorrect or expired OTP" error
-        end
-    else Invalid ModelState
-        be_ctrl-->>fe_ctrl--: Return statusCode 400
-        
-        fe_ctrl->fe_ctrl++: Keep TempData verify flags
-        fe_ctrl--
-        
-        fe_ctrl-->>view--: Return statusCode 200
-        view-->>act--: Display "Incorrect or expired OTP" error
-    end
-else Email is empty / Null
-    fe_ctrl-->>view--: Return statusCode 302
-    view-->>act--: Redirect to Login page
-    act->login_view++: Access Login page
-    login_view-->>act--: Display Login page
-end
+fe_ctrl->be_req++: Call VerifyOtpRequestDTO()
+be_req-->>fe_ctrl--: Return VerifyOtpRequestDTO object
+
+fe_ctrl->be_ctrl++: POST /api/Auth/verify-email
+
+be_ctrl->be_ctrl++: Validate ModelState
+be_ctrl--
+
+be_ctrl->sv++: Call VerifyEmailAsync(email, otp)
+
+sv->otp_sv++: Call ConsumeOtp(email, otp, "verify")
+otp_sv-->>sv--: Return isValid
+
+sv->sv++: Check isValid and Account existence
+sv--
+
+sv->repo++: Call UpdateEmailVerifiedAsync(email)
+
+repo->ctx++: Query Accounts table for email
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return Account entity
+
+repo->ctx++: Set IsVerified = true and call SaveChangesAsync()
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>repo--: Return numberOfRowsAffected
+
+repo->repo++: Check numberOfRowsAffected
+repo--
+
+repo-->>sv--: Return success
+sv-->>be_ctrl--: Return success
+be_ctrl-->>fe_ctrl--: Return statusCode 200
+
+fe_ctrl->fe_ctrl++: Remove TempData verify flags\nand append IsVerified cookie
+fe_ctrl--
+
+fe_ctrl-->>view--: Return statusCode 302
+view-->>act--: Redirect to Profile page
+act->r_view++: Access Profile page
+r_view-->>act--: Display verification success message
 @enduml
