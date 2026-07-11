@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
-using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Exceptions;
-using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -62,7 +62,7 @@ public class EmbeddingService : IEmbeddingService
         return result;
     }
 
-    public async Task SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding, string embeddingType)
+    public async Task<int> SaveMaterialEmbeddingsAsync(int materialId, List<float> embedding, string embeddingType)
     {
         _logger.LogInformation("Saving new material embeddings for material {matId} with embedding type as {type}", materialId, embeddingType);
         int rows = 0;
@@ -86,6 +86,7 @@ public class EmbeddingService : IEmbeddingService
 
         await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(materialId));
         await _redisService.RemoveCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey());
+        return rows;
     }
 
     private async Task<int> SaveMediaEmbeddingAsync(int materialId, List<float> embedding)
@@ -117,13 +118,13 @@ public class EmbeddingService : IEmbeddingService
 
     private async Task<int> SaveMediaEmbeddingChangesAsync()
     {
-        try 
+        try
         {
             int rowsAffected = await _mediaEmbeddingRepository.SaveChangesAsync();
             /* zero rows exception removed */
             return rowsAffected;
         }
-        catch (MediaEmbeddingException ex) 
+        catch (MediaEmbeddingException ex)
         {
             throw new BadRequestException(ex.Message);
         }
@@ -158,34 +159,37 @@ public class EmbeddingService : IEmbeddingService
 
     private async Task<int> SaveTextEmbeddingChangesAsync()
     {
-        try 
+        try
         {
             int rowsAffected = await _textEmbeddingRepository.SaveChangesAsync();
             /* zero rows exception removed */
             return rowsAffected;
         }
-        catch (TextEmbeddingException ex) 
+        catch (TextEmbeddingException ex)
         {
             throw new BadRequestException(ex.Message);
         }
     }
 
-    public async Task PersistPendingMaterialEmbeddingsAsync(int courseId, HashSet<int> excludedMaterialIds)
+    public async Task<int> PersistPendingMaterialEmbeddingsAsync(int courseId, HashSet<int> excludedMaterialIds)
     {
         var allMaterials = await _materialRepository.GetByCourseIdAsync(courseId);
         if (allMaterials == null || !allMaterials.Any())
-            return;
+            return 0;
 
+        int processed = 0;
         foreach (var material in allMaterials)
         {
             await ProcessPendingMaterialEmbeddingAsync(material.MaterialId, shouldSave: !excludedMaterialIds.Contains(material.MaterialId));
+            processed++;
         }
+        return processed;
     }
 
-    public async Task PrepareMaterialEmbeddingsAsync()
+    public async Task<bool> PrepareMaterialEmbeddingsAsync()
     {
         var isInitialized = await _redisService.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey());
-        if (isInitialized) return;
+        if (isInitialized) return false;
 
         var allEmbeddings = await GetAllMaterialEmbeddingsAsync();
         foreach (var e in allEmbeddings)
@@ -199,30 +203,15 @@ public class EmbeddingService : IEmbeddingService
         }
 
         await _redisService.SetCacheAsync(CacheKeys.MaterialEmbeddingInitialized.GetKey(), true, CacheTtl.Medium.GetTtl());
+        return true;
     }
 
-    public async Task PersistMaterialEmbeddingsAsync(int courseId)
-    {
-        var allMaterials = await _materialRepository.GetByCourseIdAsync(courseId);
-        if (allMaterials == null || !allMaterials.Any())
-        {
-            _logger.LogWarning("No learning materials found for courseId {id}. Skipping embedding persistence.", courseId);
-            return;
-        }
 
-        var materialIds = allMaterials.Select(m => m.MaterialId).ToList();
-        _logger.LogInformation("Persisting embeddings for {n} materials.", materialIds.Count);
-
-        foreach (var matId in materialIds)
-        {
-            await TryPersistSingleMaterialEmbeddingAsync(matId);
-        }
-    }
 
     private async Task ProcessPendingMaterialEmbeddingAsync(int materialId, bool shouldSave)
     {
         string cacheKey = CacheKeys.PendingMaterialEmbedding.GetKey(materialId);
-        
+
         try
         {
             if (!shouldSave) return;
@@ -244,37 +233,7 @@ public class EmbeddingService : IEmbeddingService
         }
     }
 
-    private async Task TryPersistSingleMaterialEmbeddingAsync(int matId)
-    {
-        string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
-        _logger.LogInformation("Retrieving MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
-        var cachedResponse = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
 
-        if (cachedResponse == null)
-        {
-            _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
-            return;
-        }
-        
-        if (cachedResponse.Embedding == null)
-        {
-            _logger.LogWarning("Embedding is not provided for material {matId}", matId);
-            return;
-        }
-        
-        if (!cachedResponse.Embedding.Any())
-        {
-            _logger.LogWarning("Embedding contains no coordinate values for material {matId}", matId);
-            return;
-        }
-
-        _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}\n{embedding}", cacheKey, JsonSerializer.Serialize(cachedResponse));
-        
-        await SaveMaterialEmbeddingsAsync(
-            matId,
-            cachedResponse.Embedding, 
-            GetEmbeddingType(cachedResponse));
-    }
 
     private string GetEmbeddingType(MaterialEmbeddingResponse cachedResponse)
     {
@@ -285,4 +244,55 @@ public class EmbeddingService : IEmbeddingService
         }
         return embeddingType;
     }
+
+
+    // public async Task PersistMaterialEmbeddingsAsync(int courseId)
+    // {
+    //     var allMaterials = await _materialRepository.GetByCourseIdAsync(courseId);
+    //     if (allMaterials == null || !allMaterials.Any())
+    //     {
+    //         _logger.LogWarning("No learning materials found for courseId {id}. Skipping embedding persistence.", courseId);
+    //         return;
+    //     }
+
+    //     var materialIds = allMaterials.Select(m => m.MaterialId).ToList();
+    //     _logger.LogInformation("Persisting embeddings for {n} materials.", materialIds.Count);
+
+    //     foreach (var matId in materialIds)
+    //     {
+    //         await TryPersistSingleMaterialEmbeddingAsync(matId);
+    //     }
+    // }
+
+    // private async Task TryPersistSingleMaterialEmbeddingAsync(int matId)
+    // {
+    //     string cacheKey = CacheKeys.MaterialEmbedding.GetKey(matId);
+    //     _logger.LogInformation("Retrieving MaterialEmbeddingResponse from cache key {cacheKey}", cacheKey);
+    //     var cachedResponse = await _redisService.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey);
+
+    //     if (cachedResponse == null)
+    //     {
+    //         _logger.LogWarning("MaterialEmbeddingResponse for material {matId} is not found in cache", matId);
+    //         return;
+    //     }
+
+    //     if (cachedResponse.Embedding == null)
+    //     {
+    //         _logger.LogWarning("Embedding is not provided for material {matId}", matId);
+    //         return;
+    //     }
+
+    //     if (!cachedResponse.Embedding.Any())
+    //     {
+    //         _logger.LogWarning("Embedding contains no coordinate values for material {matId}", matId);
+    //         return;
+    //     }
+
+    //     _logger.LogInformation("Successfully retrieved MaterialEmbeddingResponse from cache key {cacheKey}\n{embedding}", cacheKey, JsonSerializer.Serialize(cachedResponse));
+
+    //     await SaveMaterialEmbeddingsAsync(
+    //         matId,
+    //         cachedResponse.Embedding, 
+    //         GetEmbeddingType(cachedResponse));
+    // }
 }

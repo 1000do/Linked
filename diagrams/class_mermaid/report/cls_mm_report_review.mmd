@@ -12,6 +12,7 @@ class ReportControllerFE["ReportController"] {
 class CreateReviewReportViewModel {
     <<view model>>
     + ReviewId : int
+    + ReviewType : string
     + Reason : string
     + Description : string?
 }
@@ -24,6 +25,7 @@ class ReportControllerBE["ReportController"] {
     
     + ReportCourseReview(request: CreateCourseReviewReportRequest) Task~IActionResult~
     + ReportLessonReview(request: CreateLessonReviewReportRequest) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -105,6 +107,7 @@ class ReportSubmissionService {
     - ValidateCourseReviewReportAsync(reporterId: int, courseReviewId: int, reason: string) Task
     - ValidateLessonReviewReportAsync(reporterId: int, lessonReviewId: int, reason: string) Task
     - SaveChangesAndHandleExceptionsAsync() Task
+    - NotifyManagersAsync(title: string, content: string, linkAction: string?) Task
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================

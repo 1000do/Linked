@@ -47,17 +47,11 @@ opt Form Validation Failed
     view -->> act: Display validation error message
 end
 
-view -> act: Display confirmation dialog
 
-opt Admin Cancels Confirmation
-    act -> view: Click cancel button
-    view -->> act: Close dialog
-end
-
-act -> view: Click confirm button
 
 view -> fe_ctrl++: Send POST request to /AdminAiService/UpdateThresholds
-fe_ctrl -> fe_ctrl++: Validate Admin authorization
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
@@ -68,7 +62,14 @@ else Unauthorized Access
     fe_ctrl -->> error_view: Redirect to ErrorPage
     activate error_view
     error_view -->> act--: Display error message
-else Valid Admin authorization
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++: Validate ModelState
+    fe_ctrl--
+
+    opt Invalid ModelState
+        fe_ctrl -->> view: Return BadRequest()
+        view -->> act: Display validation error message
+    end
     fe_ctrl -> be_ctrl++: Send POST request to /api/admin/ai-service/thresholds
     
     be_ctrl -> sv++: Call UpdateThresholdsAsync(req)
@@ -94,7 +95,7 @@ else Valid Admin authorization
         repo -->> sv: Throw SystemConfigException
         sv -->> be_ctrl: Throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
-        fe_ctrl -->> view: Return statusCode 400
+        fe_ctrl -->> view: Return BadRequest()
         view -->> act: Display database save failure message
     else Database Save Success
         db -->> ctx--: Return numberOfRowsAffected
@@ -103,7 +104,7 @@ else Valid Admin authorization
         
         sv -->> be_ctrl--: Return true
         be_ctrl -->> fe_ctrl--: Return statusCode 200
-        fe_ctrl -->> view--: Return statusCode 200
+        fe_ctrl -->> view--: Return Ok()
         view -->> act--: Display success notification
     end
 end

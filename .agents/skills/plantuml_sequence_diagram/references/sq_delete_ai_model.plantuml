@@ -42,19 +42,11 @@ database Database as db
 act ++
 act -> view++: Click the status toggle button on a model entry
 
-view -> view++: Prompt confirmation dialog
-view--
 
-opt Admin Cancels Confirmation
-    act -> view: Click cancel
-    view -->> act: Close dialog
-end
-
-act -> view: Confirm the action
 
 view -> fe_ctrl++: Send PATCH request to /AdminAiService/ToggleModelStatus?id={id}
 
-fe_ctrl -> fe_ctrl++: Validate Admin Authorization
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
@@ -65,7 +57,7 @@ else Unauthorized Access
     fe_ctrl -->> error_view: Redirect to ErrorPage
     activate error_view
     error_view -->> act--: Display error message
-else Valid Admin Authorization
+else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++: Send PATCH request to /api/admin/ai-service/models/{id}/status
     
     be_ctrl -> sv++: Call ToggleModelStatusAsync(id)
@@ -80,7 +72,7 @@ else Valid Admin Authorization
     alt Model Not Found
         sv -->> be_ctrl: throw KeyNotFoundException
         be_ctrl -->> fe_ctrl: Return statusCode 404
-        fe_ctrl -->> view: Return statusCode 400
+        fe_ctrl -->> view: Return BadRequest()
         view -->> act: Display error message
     else Valid Model
         sv -> sv++: Toggle model status between active and inactive
@@ -99,7 +91,7 @@ else Valid Admin Authorization
             repo -->> sv: throw AiModelException
             sv -->> be_ctrl: throw BadRequestException
             be_ctrl -->> fe_ctrl: Return statusCode 400
-            fe_ctrl -->> view: Return statusCode 400
+            fe_ctrl -->> view: Return BadRequest()
             view -->> act: Display error message
         else Database Save Success
             db -->> ctx--: Return numberOfRowsAffected
@@ -108,7 +100,7 @@ else Valid Admin Authorization
             
             sv -->> be_ctrl--: Return true
             be_ctrl -->> fe_ctrl--: Return statusCode 200
-            fe_ctrl -->> view--: Return JSON (success = true)
+            fe_ctrl -->> view--: Return Ok()
             view -->> act--: Display success notification
         end
     end

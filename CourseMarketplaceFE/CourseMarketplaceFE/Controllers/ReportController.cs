@@ -33,34 +33,20 @@ namespace CourseMarketplaceFE.Controllers
             }
 
             var response = await _apiClient.PostJsonAsync("/api/report/courses", model);
-            
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                return Unauthorized(new { Message = "Unauthorized access." });
-
             var content = await response.Content.ReadAsStringAsync();
-            
-            if (!response.IsSuccessStatusCode)
-            {
-                string? message = null;
-                try
-                {
-                    var apiResponse = JsonSerializer.Deserialize<BaseApiResponse>(content, _jsonOptions);
-                    message = apiResponse?.Message;
-                }
-                catch { }
-                return BadRequest(new { Message = message ?? "Failed to submit report.", Details = content });
-            }
-
-            return Ok(new { Message = "Your report has been submitted and will be reviewed by our moderation team." });
+            var jsonContent = JsonSerializer.Deserialize<object>(content, _jsonOptions);
+            return StatusCode((int)response.StatusCode, jsonContent);
         }
 
         // ── Gửi báo cáo đánh giá khóa học ───────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> ReportCourseReview([FromBody] CreateReviewReportViewModel model)
         {
-            if (model == null || model.ReviewId <= 0 || string.IsNullOrWhiteSpace(model.Reason))
+            if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "Please select a reason for your report." });
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Message = "Validation failed", Errors = errors });
             }
 
             var payload = new
@@ -72,33 +58,19 @@ namespace CourseMarketplaceFE.Controllers
 
             var response = await _apiClient.PostJsonAsync("/api/report/course-reviews", payload);
             var content = await response.Content.ReadAsStringAsync();
-
-            string? message = null;
-            try
-            {
-                using var doc = JsonDocument.Parse(content);
-                if (doc.RootElement.TryGetProperty("message", out var msgEl))
-                {
-                    message = msgEl.GetString();
-                }
-            }
-            catch { }
-
-            if (response.IsSuccessStatusCode)
-            {
-                return Json(new { success = true, message = message ?? "Your report has been submitted and will be reviewed by our moderation team." });
-            }
-
-            return Json(new { success = false, message = message ?? "An unexpected error occurred. Please try again later." });
+            var jsonContent = JsonSerializer.Deserialize<object>(content, _jsonOptions);
+            return StatusCode((int)response.StatusCode, jsonContent);
         }
 
         // ── Gửi báo cáo đánh giá bài học ────────────────────────────────────────────
         [HttpPost]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> ReportLessonReview([FromBody] CreateReviewReportViewModel model)
         {
-            if (model == null || model.ReviewId <= 0 || string.IsNullOrWhiteSpace(model.Reason))
+            if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "Please select a reason for your report." });
+                var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage);
+                return BadRequest(new { Message = "Validation failed", Errors = errors });
             }
 
             var payload = new
@@ -110,24 +82,8 @@ namespace CourseMarketplaceFE.Controllers
 
             var response = await _apiClient.PostJsonAsync("/api/report/lesson-reviews", payload);
             var content = await response.Content.ReadAsStringAsync();
-
-            string? message = null;
-            try
-            {
-                using var doc = JsonDocument.Parse(content);
-                if (doc.RootElement.TryGetProperty("message", out var msgEl))
-                {
-                    message = msgEl.GetString();
-                }
-            }
-            catch { }
-
-            if (response.IsSuccessStatusCode)
-            {
-                return Json(new { success = true, message = message ?? "Your report has been submitted and will be reviewed by our moderation team." });
-            }
-
-            return Json(new { success = false, message = message ?? "An unexpected error occurred. Please try again later." });
+            var jsonContent = JsonSerializer.Deserialize<object>(content, _jsonOptions);
+            return StatusCode((int)response.StatusCode, jsonContent);
         }
 
         // ── Xem lịch sử báo cáo của tôi ─────────────────────────────────────────────

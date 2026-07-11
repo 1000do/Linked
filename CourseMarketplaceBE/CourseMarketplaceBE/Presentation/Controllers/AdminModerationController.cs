@@ -181,6 +181,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             {
                 return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
+            }
         }
 
         /// <summary>
@@ -212,6 +216,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             {
                 return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
+            }
         }
 
         /// <summary>
@@ -242,6 +250,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
 
