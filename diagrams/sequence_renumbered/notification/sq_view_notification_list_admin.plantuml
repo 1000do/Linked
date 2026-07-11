@@ -1,0 +1,108 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Notification List (Staff/Admin)
+
+actor Admin as act
+participant "NotificationManagementPage" as view
+participant "ErrorPage" as error_page
+participant "LoginPage" as login_view
+participant "NotificationController" as fe_ctrl <<frontend controller>>
+participant "NotificationController" as be_ctrl <<backend controller>>
+participant ":INotificationService" as sv
+participant ":NotificationAdminResponseDto" as notif_admin_dto
+participant ":INotificationRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant "NotificationHub" as hub
+
+act++
+act->view++:1. Access System Notifications page
+view->fe_ctrl++:2. Send GET /Notification/Admin
+fe_ctrl-->>view--:3. Return Admin View
+
+view->view++:4. Validate Access Token
+view--
+group opt [Token is missing or expired]
+    view -->> login_view:4.1. Redirect to Login page
+    activate login_view
+    login_view -->> act:4.1.1. Display Login page
+    deactivate login_view
+end
+
+view->hub++:5. Start SignalR connection to /notificationHub (with AccessToken)
+hub-->>view:6. Connection established successfully
+
+view->fe_ctrl++:7. Send GET /Notification/GetAllAdmin
+fe_ctrl->be_ctrl++:8. Send GET /api/Notification/all (with Bearer Token)
+
+alt [Unauthorized role]
+    be_ctrl-->>fe_ctrl:8.1. Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>error_page++:8.1.1. Redirect to ErrorPage
+    error_page-->>act--:8.1.2. Display Access Denied message
+else [Authorized Admin/Staff]
+    be_ctrl->sv++:8.2. Call GetAllNotificationsForAdminAsync()
+    
+    sv->repo++:8.2.1. Call AutoCleanupAdminNotificationsAsync()
+    repo->ctx++:8.2.2. Query old read notifications (> 90 days)
+    ctx->db++:8.2.3. Execute SELECT query
+    db-->>ctx--:8.2.4. Return old notifications list
+    ctx-->>repo--:8.2.5. Return old notifications list
+    
+opt [Old notifications exist]
+        repo->ctx++:8.2.5.2. Mark IsRemoved = true for old notifications
+        ctx-->>repo--:8.2.5.2.1. Return
+        repo->ctx++:8.2.5.2.2. Call SaveChangesAsync()
+        ctx->db++:8.2.5.2.3. Execute UPDATE statement
+        db-->>ctx--:8.2.5.2.4. Return result
+        ctx-->>repo--:8.2.5.2.5. Return result
+end
+    repo-->>sv--:8.2.6. Return
+    
+    sv->repo++:8.2.7. Call GetAllAsync()
+    repo->ctx++:8.2.8. Query active notifications
+    ctx->db++:8.2.9. Execute SELECT query
+    db-->>ctx--:8.2.10. Return active notifications list
+    ctx-->>repo--:8.2.11. Return active notifications list
+    repo-->>sv--:8.2.12. Return active notifications list
+    
+    sv->notif_admin_dto++:8.2.13. Call NotificationAdminResponseDto()
+    
+    notif_admin_dto-->>sv--:8.2.14. Return NotificationAdminResponseDto list
+    sv-->>be_ctrl--:8.2.15. Return PagedResult<NotificationAdminResponseDto>
+    be_ctrl-->>fe_ctrl--:8.2.16. Return statusCode 200 (Ok)
+    fe_ctrl-->>view--:8.2.17. Return JSON notifications list
+    
+    view->view++:8.2.18. Apply default filters and sorting
+    view--
+    view->view++:8.2.19. Render notifications in table
+    view--
+    view-->>act--:8.2.20. Display system notifications list
+end
+
+@enduml

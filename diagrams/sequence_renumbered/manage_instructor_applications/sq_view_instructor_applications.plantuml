@@ -1,0 +1,74 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor Applications
+
+actor Staff as act
+participant "AdminApprovalIndexPage" as view
+participant "Login.cshtml" as login_view
+participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
+participant "AdminApprovalController" as be_ctrl <<backend controller>>
+participant ":InstructorApprovalService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Access instructor applications queue page
+view -> fe_ctrl++:2. GET /AdminApproval/Index (page, pageSize)
+
+fe_ctrl -> be_ctrl++:3. GET /api/AdminApproval/pending-instructors (with page/pageSize & Bearer Token)
+
+alt Unauthorized role
+    be_ctrl -->> fe_ctrl:3.1. Return statusCode 401
+    fe_ctrl -->> login_view--:3.1.1. Redirect to Login page
+    activate login_view
+    login_view -->> act--:3.1.2. Display Login page
+else Authorized Staff/Admin
+    be_ctrl -> sv++:3.2. Call GetPendingListAsync(page, pageSize)
+    sv -> repo++:3.2.1. Call GetPendingInstructorsAsync(page, pageSize)
+    repo -> ctx++:3.2.2. Call GetPendingInstructorsAsync(page, pageSize)
+    ctx -> db++:3.2.3. Execute SELECT query
+    
+    db -->> ctx--:3.2.4. Return instructors list & totalCount
+    ctx -->> repo--:3.2.5. Return instructors list & totalCount
+    repo -->> sv--:3.2.6. Return instructors list & totalCount
+    
+    sv -> sv++:3.2.7. Call MapToInstructorApprovalDto for each item
+    sv --
+    
+    sv -->> be_ctrl--:3.2.8. Return PagedResult<InstructorApprovalDto>
+    be_ctrl -->> fe_ctrl--:3.2.9. Return statusCode 200
+    fe_ctrl -->> view--:3.2.10. Return View with model
+    
+    view -> view++:3.2.11. Render pending applications table
+    view --
+    view -->> act--:3.2.12. Display list of pending instructor applications
+end
+
+@enduml

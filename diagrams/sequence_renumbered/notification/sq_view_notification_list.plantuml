@@ -1,0 +1,76 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Notification List (User/Instructor)
+
+actor User as act
+participant "NotificationPage" as view
+participant "ErrorPage" as error_page
+participant "NotificationController" as fe_ctrl <<frontend controller>>
+participant "NotificationController" as be_ctrl <<backend controller>>
+participant ":INotificationService" as sv
+participant ":NotificationResponseDto" as notif_dto
+participant ":INotificationRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Access "My Notifications" page
+view->fe_ctrl++:2. Send GET /Notification/Index
+
+fe_ctrl->be_ctrl++:3. Send GET /api/Notification (with Bearer Token)
+
+alt [Token is valid]
+    be_ctrl->sv++:3.1. Call GetNotificationsForUserAsync(userId, page, pageSize)
+    sv->repo++:3.1.1. Call GetByReceiverIdAsync(userId, page, pageSize)
+    repo->ctx++:3.1.2. Query notifications by receiverId
+    ctx->db++:3.1.3. Execute SELECT query
+    db-->>ctx--:3.1.4. Return notification list
+    ctx-->>repo--:3.1.5. Return notification list & count
+    repo-->>sv--:3.1.6. Return notification list & count
+    
+alt [notifications exist]
+        sv->notif_dto++:3.1.6.1. Call NotificationResponseDto()
+        notif_dto-->>sv--:3.1.6.1.1. Return NotificationResponseDto list
+        sv-->>be_ctrl:3.1.6.1.2. Return PagedResult<NotificationResponseDto>
+        be_ctrl-->>fe_ctrl:3.1.6.1.3. Return statusCode 200 (Ok)
+        fe_ctrl-->>view:3.1.6.1.4. Return View with notifications
+        view-->>act:3.1.6.1.5. Display notification list
+else [no notifications found (throws KeyNotFoundException)]
+        sv-->>be_ctrl--:3.1.6.2. throw KeyNotFoundException
+        be_ctrl-->>fe_ctrl:3.1.6.2.1. Return statusCode 200 (Ok) with empty list
+        fe_ctrl-->>view:3.1.6.2.2. Return View with empty list
+        view-->>act:3.1.6.2.3. Display empty list message
+end
+else [Token is missing or invalid]
+    be_ctrl-->>fe_ctrl--:3.2. Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>error_page++:3.2.1. Redirect to ErrorPage
+    error_page-->>act--:3.2.2. Display empty list / redirect to Login
+end
+
+@enduml

@@ -1,0 +1,109 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Clear Chat History (Manager)
+
+actor Staff as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
+participant ":IChatService" as sv
+participant ":IChatRepository" as repo
+participant ":IRedisService" as redis
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click the clear chat button
+view->view++:2. Confirm deletion with dialog
+view--
+
+alt [User cancels]
+    view-->>act:2.1. Do nothing
+else [User confirms]
+    view->fe_ctrl++:2.2. Send DELETE /Chat/ClearHistory?chatId={chatId}
+    fe_ctrl->be_ctrl++:2.2.1. Send DELETE /api/Chat/{chatId}/clear (with Bearer Token)
+    
+    be_ctrl->sv++:2.2.2. Call ClearChatHistoryAsync(chatId, accountId)
+    
+    sv->repo++:2.2.3. Call GetParticipantAsync(chatId, accountId)
+    repo->ctx++:2.2.4. Call GetParticipantAsync(chatId, accountId)
+    ctx->db++:2.2.5. Execute SELECT query
+    
+    db-->>ctx--:2.2.6. Return participant
+    ctx-->>repo--:2.2.7. Return participant
+    repo-->>sv--:2.2.8. Return participant
+    
+alt [participant == null]
+        sv-->>be_ctrl:2.2.8.1. Return false
+        be_ctrl-->>fe_ctrl:2.2.8.1.1. Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view:2.2.8.1.2. Return BadRequest
+        view-->>act:2.2.8.1.3. Display error message
+else [participant != null]
+        sv->sv++:2.2.8.2. Set participant.ClearedAt = DateTime.UtcNow
+        sv--
+        
+        sv->repo:2.2.8.2.1. Call UpdateParticipantAsync(participant)
+        
+        sv->repo++:2.2.8.2.2. Call SaveChangesAsync()
+        repo->ctx++:2.2.8.2.3. Call SaveChangesAsync()
+        ctx->db++:2.2.8.2.4. Save changes (Execute UPDATE statement)
+        
+alt [Database Save Fails (throws DbUpdateException)]
+            db-->>ctx:2.2.8.2.4.1. Throw DbUpdateException
+            ctx-->>repo:2.2.8.2.4.1.1. Throw DbUpdateException
+            repo-->>sv:2.2.8.2.4.1.2. Throw DbUpdateException
+            sv-->>be_ctrl:2.2.8.2.4.1.3. Throw DbUpdateException
+            be_ctrl-->>fe_ctrl:2.2.8.2.4.1.4. Return statusCode 500 (InternalServerError)
+            fe_ctrl-->>view:2.2.8.2.4.1.5. Return JSON error
+            view-->>act:2.2.8.2.4.1.6. Display database error message
+else [Database Save Succeeds]
+            db-->>ctx--:2.2.8.2.4.2. Return result
+            ctx-->>repo--:2.2.8.2.4.2.1. Return result
+            repo-->>sv--:2.2.8.2.4.2.2. Return result
+            
+            sv->redis++:2.2.8.2.4.2.3. Call ClearUnreadCountAsync(accountId, chatId)
+            redis-->>sv--:2.2.8.2.4.2.4. Return
+            
+            sv-->>be_ctrl--:2.2.8.2.4.2.5. Return true
+            be_ctrl-->>fe_ctrl--:2.2.8.2.4.2.6. Return statusCode 200 (Ok)
+            fe_ctrl-->>view--:2.2.8.2.4.2.7. Return Ok
+            
+            view->view++:2.2.8.2.4.2.8. Clear message list UI
+            view--
+            view->view++:2.2.8.2.4.2.9. Hide chat content panel
+            view--
+            view->view++:2.2.8.2.4.2.10. Show empty state
+            view--
+            
+            view-->>act--:2.2.8.2.4.2.11. Display empty panel and success message
+end
+end
+end
+
+@enduml

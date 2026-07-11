@@ -1,0 +1,77 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Search Conversations
+
+actor User as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
+participant ":IChatService" as sv
+participant ":ChatListDto" as chat_dto
+participant ":IChatRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Type search query in "search-chats" input field
+view->view++:2. EventListener: input event triggered
+
+view->view++:3. handleSearchInput() (with debounce)
+view--
+
+view->fe_ctrl++:4. Send GET /Chat/Search?q={query}
+fe_ctrl->be_ctrl++:5. Send GET /api/Chat/search?q={query} (with Bearer Token)
+
+be_ctrl->sv++:6. Call SearchChatsAsync(accountId, query)
+
+sv->repo++:7. Call SearchParticipantsByAccountIdAsync(accountId, query)
+repo->ctx++:8. Call SearchParticipantsByAccountIdAsync(accountId, query)
+ctx->db++:9. Execute SELECT query
+
+db-->>ctx--:10. Return filtered ChatParticipants list
+ctx-->>repo--:11. Return filtered ChatParticipants list
+repo-->>sv--:12. Return filtered ChatParticipants list
+
+sv->chat_dto++:13. Call ChatListDto()
+
+chat_dto-->>sv--:14. Return ChatListDto items
+
+sv-->>be_ctrl--:15. Return ChatListDto list
+be_ctrl-->>fe_ctrl--:16. Return statusCode 200 (Ok)
+fe_ctrl-->>view--:17. Return JSON search results
+
+view->view++:18. applyChatFilters()
+view--
+view->view++:19. renderChatList(searchResults)
+view--
+
+view-->>act--:20. Display filtered conversations in sidebar list
+deactivate view
+
+@enduml

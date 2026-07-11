@@ -1,0 +1,149 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Approve Refund Request
+
+actor "Admin" as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant "AdminFinanceController" as be_ctrl <<backend controller>>
+participant ":IAdminFinanceService" as finance_sv
+participant ":IAdminFinanceRepository" as finance_repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":IGiftRepository" as gift_repo
+participant ":TransactionExt" as tx_ext_ett
+participant ":RefundResultResponse" as refund_res
+participant ":IPaymentGatewayService" as payment_gw
+participant ":INotificationService" as noti_sv
+act ++
+act -> view++:1. Click "Approve" button on a pending refund request row
+view -->> act:2. Display "Approve Refund" confirmation dialog
+act -> view:3. Input optional feedback and click "Approve & Refund"
+view -> fe_ctrl++:4. POST /AdminFinance/ApproveRefundDecision
+
+fe_ctrl -> fe_ctrl++:5. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view++:5.1. Redirect to LoginPage
+    login_view -->> act--:5.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++:5.2. Redirect to ErrorPage
+    error_view -->> act--:5.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++:5.3. POST /api/admin/finance/refunds/{id}/approve
+
+    be_ctrl -> finance_sv++:5.3.1. ApproveRefundAsync(transactionId, adminNote)
+
+    finance_sv -> finance_repo++:5.3.2. GetTransactionWithFullGraphAsync(transactionId)
+    finance_repo -> ctx++:5.3.3. Query Transaction with full graph
+    ctx -> db++:5.3.4. Execute SELECT
+    db -->> ctx--:5.3.5. Return database record
+    ctx -->> finance_repo--:5.3.6. Return Transaction entity
+    finance_repo -->> finance_sv--:5.3.7. Return Transaction entity
+
+    finance_sv -> finance_sv++:5.3.8. Validate Transaction status
+    finance_sv--
+
+    finance_sv -> gift_repo++:5.3.9. GetByOrderItemIdAsync(orderItemId)
+    gift_repo -->> finance_sv--:5.3.10. Return Gift entity
+
+alt Transaction Not Found
+        finance_sv -->> be_ctrl:5.3.10.1. throw InvalidOperationException
+        be_ctrl -->> fe_ctrl:5.3.10.1.1. Return statusCode 400
+        fe_ctrl -->> view:5.3.10.1.2. Return JSON (success=false, message)
+        view -->> act:5.3.10.1.3. Display error message
+else Status is Not refund_pending
+        finance_sv -->> be_ctrl:5.3.10.2. throw InvalidOperationException
+        be_ctrl -->> fe_ctrl:5.3.10.2.1. Return statusCode 400
+        fe_ctrl -->> view:5.3.10.2.2. Return JSON (success=false, message)
+        view -->> act:5.3.10.2.3. Display error message
+else Gift Already Claimed
+        finance_sv -> tx_ext_ett++:5.3.10.3. Call TransactionExt(transactionId, rejectNote)
+        tx_ext_ett -->> finance_sv--:5.3.10.3.1. Return TransactionExt object
+
+        finance_sv -> finance_repo++:5.3.10.3.2. SaveChangesAsync()
+        finance_repo -> ctx++:5.3.10.3.3. Save changes to database
+        ctx -> db++:5.3.10.3.4. Execute UPDATE
+        db -->> ctx--:5.3.10.3.5. Return database record
+        ctx -->> finance_repo--:5.3.10.3.6. Return numberOfRowsAffected
+        finance_repo -->> finance_sv--:5.3.10.3.7. Return numberOfRowsAffected
+
+        finance_sv -> noti_sv++:5.3.10.3.8. SendNotificationAsync(studentId, "Refund REJECTED")
+        noti_sv -->> finance_sv--:5.3.10.3.9. Return result
+
+        finance_sv -->> be_ctrl:5.3.10.3.10. throw InvalidOperationException
+        be_ctrl -->> fe_ctrl:5.3.10.3.11. Return statusCode 400
+        fe_ctrl -->> view:5.3.10.3.12. Return JSON (success=false, message)
+        view -->> act:5.3.10.3.13. Display error message
+else Valid Refund Request
+        finance_sv -> tx_ext_ett++:5.3.10.4. Call TransactionExt(transactionId, adminNote)
+        tx_ext_ett -->> finance_sv--:5.3.10.4.1. Return TransactionExt object
+
+        finance_sv -> finance_sv++:5.3.10.4.2. Call RefundTransactionAsync(transactionId, reason)
+        
+        finance_sv -> finance_repo++:5.3.10.4.3. GetStripeTransferIdByDestinationPaymentAsync(stripeTransferId)
+        finance_repo -> ctx++:5.3.10.4.4. Query StripeTransferId
+        ctx -> db++:5.3.10.4.5. Execute SELECT
+        db -->> ctx--:5.3.10.4.6. Return database record
+        ctx -->> finance_repo--:5.3.10.4.7. Return stripeTransferId
+        finance_repo -->> finance_sv--:5.3.10.4.8. Return stripeTransferId
+
+        finance_sv -> payment_gw++:5.3.10.4.9. ReverseTransferAsync(stripeTransferId)
+        payment_gw -->> finance_sv--:5.3.10.4.10. Return reversalId
+
+        finance_sv -> payment_gw++:5.3.10.4.11. RefundAsync(paymentIntentId, amount, reason)
+        payment_gw -->> finance_sv--:5.3.10.4.12. Return refundId
+
+        finance_sv -> finance_sv:5.3.10.4.13. Update Transaction status, Negate amounts & Revoke enrollment
+
+        finance_sv -> finance_repo++:5.3.10.4.14. SaveChangesAsync()
+        finance_repo -> ctx++:5.3.10.4.15. Save changes to database
+        ctx -> db++:5.3.10.4.16. Execute UPDATE
+        db -->> ctx--:5.3.10.4.17. Return database record
+        ctx -->> finance_repo--:5.3.10.4.18. Return numberOfRowsAffected
+        finance_repo -->> finance_sv--:5.3.10.4.19. Return numberOfRowsAffected
+
+        finance_sv -> refund_res++:5.3.10.4.20. Call RefundResultResponse(refundId, reversalId, amount)
+        refund_res -->> finance_sv--:5.3.10.4.21. Return RefundResultResponse object
+        finance_sv--
+
+        finance_sv -> noti_sv++:5.3.10.4.22. SendNotificationAsync(studentId, "Refund APPROVED")
+        noti_sv -->> finance_sv--:5.3.10.4.23. Return result
+
+        finance_sv -->> be_ctrl--:5.3.10.4.24. Return result
+        be_ctrl -->> fe_ctrl--:5.3.10.4.25. Return statusCode 200
+
+        fe_ctrl -->> view--:5.3.10.4.26. Return JSON (success=true)
+        view -->> act--:5.3.10.4.27. Close dialog and display success notification
+end
+end
+
+@enduml

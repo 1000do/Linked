@@ -1,0 +1,61 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Course Moderation List
+
+actor Admin as act
+participant "CourseModerationPage" as view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":CourseModerationService" as sv
+participant ":ICourseRepository" as repo
+participant ":PagedResult<CourseModerationDto>" as res
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Access Moderation Dashboard
+view -> fe_ctrl++:2. GET /AdminModeration/Pending
+fe_ctrl -> be_ctrl++:3. GET /api/admin-moderation/courses/pending
+
+be_ctrl -> sv++:4. Call GetPendingCoursesAsync(filter)
+
+sv -> repo++:5. Call GetPendingCoursesModerationAsync(filter)
+repo -> ctx++:6. Execute query
+ctx -> db++:7. Fetch pending courses
+db -->> ctx--:8. Return query results
+ctx -->> repo--:9. Return entities and totalCount
+
+repo -> res++:10. Call PagedResult(courses, totalCount)
+res -->> repo--:11. Return PagedResult object
+
+repo -->> sv--:12. Return PagedResult object
+sv -->> be_ctrl--:13. Return PagedResult object
+
+be_ctrl -->> fe_ctrl--:14. Return statusCode 200
+fe_ctrl -->> view--:15. Return View(PagedResult)
+view -->> act--:16. Display list of pending courses

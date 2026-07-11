@@ -1,0 +1,130 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Chat History
+
+actor User as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
+participant "ChatHub" as hub
+participant ":ChatService" as sv
+participant ":IChatRepository" as repo
+participant ":MessageDto" as msg_dto
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click on partner in Chat List
+view->view++:2. Select chat (chatId)
+view--
+
+view->fe_ctrl++:3. Send GET /Chat/GetHistory?roomId={chatId}
+fe_ctrl->be_ctrl++:4. Send GET /api/chat/history?roomId={chatId} (with Bearer Token)
+
+be_ctrl->sv++:5. Call GetChatHistoryAsync(chatId, accountId)
+
+sv->sv++:6. Call HasAccessToChatAsync(accountId, chatId)
+sv->repo++:7. Call IsParticipantAsync(chatId, accountId)
+repo->ctx++:8. Call IsParticipantAsync(chatId, accountId)
+ctx->db++:9. Execute SELECT query
+
+db-->>ctx--:10. Return isParticipant
+ctx-->>repo--:11. Return isParticipant
+repo-->>sv--:12. Return isParticipant
+sv-->>sv--:13. Return hasAccess
+
+alt [hasAccess == false]
+    sv-->>be_ctrl:13.1. throw UnauthorizedAccessException
+    be_ctrl-->>fe_ctrl:13.1.1. Return statusCode 403 (Forbidden)
+    fe_ctrl-->>view:13.1.2. Return Forbidden
+    view-->>act:13.1.3. Display unauthorized error message
+else [hasAccess == true]
+    sv->sv++:13.2. Call MarkChatAsReadAsync(chatId, accountId)
+    
+    sv->repo++:13.2.1. Call MarkAsReadAsync(chatId, accountId)
+    repo->ctx++:13.2.2. Call MarkAsReadAsync(chatId, accountId)
+    ctx-->>repo--:13.2.3. Return success
+    repo-->>sv--:13.2.4. Return success
+    
+    sv->repo++:13.2.5. Call SaveChangesAsync()
+    repo->ctx++:13.2.6. Call SaveChangesAsync()
+    ctx->db++:13.2.7. Save changes (Execute UPDATE statement)
+    
+alt [Database Save Fails (throws DbUpdateException)]
+        db-->>ctx:13.2.7.1. Throw DbUpdateException
+        ctx-->>repo:13.2.7.1.1. Throw DbUpdateException
+        repo-->>sv:13.2.7.1.2. Throw DbUpdateException
+        sv-->>be_ctrl:13.2.7.1.3. Throw DbUpdateException
+        be_ctrl-->>fe_ctrl:13.2.7.1.4. Return statusCode 500 (InternalServerError)
+        fe_ctrl-->>view:13.2.7.1.5. Return JSON error
+        view-->>act:13.2.7.1.6. Display database error message
+else [Database Save Succeeds]
+        db-->>ctx--:13.2.7.2. Return result
+        ctx-->>repo--:13.2.7.2.1. Return result
+        repo-->>sv--:13.2.7.2.2. Return result
+        sv-->>sv--:13.2.7.2.3. Return success
+        
+        sv->repo++:13.2.7.2.4. Call GetParticipantAsync(chatId, accountId)
+        repo->ctx++:13.2.7.2.5. Call GetParticipantAsync(chatId, accountId)
+        ctx->db++:13.2.7.2.6. Execute SELECT query
+        db-->>ctx--:13.2.7.2.7. Return ChatParticipant
+        ctx-->>repo--:13.2.7.2.8. Return ChatParticipant
+        repo-->>sv--:13.2.7.2.9. Return ChatParticipant
+        
+        sv->repo++:13.2.7.2.10. Call GetMessagesByChatIdAsync(chatId)
+        repo->ctx++:13.2.7.2.11. Call GetMessagesByChatIdAsync(chatId)
+        ctx->db++:13.2.7.2.12. Execute SELECT query
+        db-->>ctx--:13.2.7.2.13. Return Messages list
+        ctx-->>repo--:13.2.7.2.14. Return List<Message>
+        repo-->>sv--:13.2.7.2.15. Return List<Message>
+        
+        sv->sv++:13.2.7.2.16. Filter messages where SentAt > ClearedAt
+        sv--
+        sv->msg_dto++:13.2.7.2.17. Call MessageDto()
+        msg_dto-->>sv--:13.2.7.2.18. Return MessageDto list
+        
+        sv-->>be_ctrl--:13.2.7.2.19. Return List<MessageDto>
+        be_ctrl-->>fe_ctrl--:13.2.7.2.20. Return statusCode 200 (Ok) with message list
+        fe_ctrl-->>view--:13.2.7.2.21. Return JSON message list
+        
+        view->view++:13.2.7.2.22. renderChatHistory(messages)
+        view--
+        view->view++:13.2.7.2.23. scrollToBottom()
+        view--
+        
+        view->hub++:13.2.7.2.24. Invoke MarkAsRead(chatId) via SignalR
+        hub->hub++:13.2.7.2.25. Broadcast ReadReceipt to Group ("Chat_{chatId}")
+        hub--
+        hub-->>view--:13.2.7.2.26. Broadcast read status update
+        
+        view-->>act--:13.2.7.2.27. Display chat messages and history
+end
+end
+
+@enduml

@@ -1,0 +1,153 @@
+@startuml resolve_report
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Resolve Report
+actor Staff as act
+
+participant "Reports" as view
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++:1. Click "Moderate" on a report row
+view-->>act:2. Display moderation modal\n(status, resolutionNote, removeContent)
+act->view:3. Fill in decision and click "Submit Decision"
+
+group alt [Resolve Course Report]
+    view->be_ctrl++:4. PATCH /api/admin/moderation/reports/courses/{reportId}
+    be_ctrl->be_ctrl++:5. GetUserId() from JWT claims
+    be_ctrl--
+    be_ctrl->sv++:6. ResolveCourseReportAsync(reportId, resolverId, request)
+    sv->repo++:7. GetCourseReportByIdAsync(reportId)
+    repo->ctx++:8. Query CourseReport by id
+    ctx->db++:9. Execute SQL query
+    db-->>ctx:10. Return result
+    ctx-->>repo:11. Return CourseReport
+    repo-->>sv:12. Return CourseReport
+    sv->sv++:13. Check escalation status & resolver role
+    sv--
+    sv->sv++:14. Update report fields\n(status, resolutionNote, resolverId, resolvedAt)
+    sv--
+    sv->sv++:15. GetByIdAsync(courseId) & apply flag penalty\n(reject / archive course, notify instructor)
+    sv--
+    sv->repo++:16. UpdateCourseReport(report)
+    repo-->>sv--:17. void
+    sv->repo++:18. SaveChangesAsync()
+    repo->ctx++:19. SaveChangesAsync()
+    ctx->db++:20. Save changes to Database
+    db-->>ctx:21. Return numberOfRowsAffected
+    ctx-->>repo:22. Return numberOfRowsAffected
+    repo-->>sv:23. Return numberOfRowsAffected
+    sv->sv++:24. Check numberOfRowsAffected > 0
+    sv--
+alt numberOfRowsAffected > 0
+        sv->sv++:24.1. SendNotificationAsync() to reporter
+        sv--
+        sv-->>be_ctrl--:24.1.1. Return true
+        be_ctrl-->>view--:24.1.2. Return statusCode 200
+        view-->>act:24.1.3. Display success message, reload list
+else numberOfRowsAffected = 0
+        sv-->>be_ctrl--:24.2. throw InvalidOperationException
+        be_ctrl-->>view--:24.2.1. Return statusCode 400
+        view-->>act:24.2.2. Display error message
+end
+else [Resolve Course Review Report]
+    view->be_ctrl++:25. PATCH /api/admin/moderation/reports/course-reviews/{reportId}
+    be_ctrl->be_ctrl++:26. GetUserId() from JWT claims
+    be_ctrl--
+    be_ctrl->sv++:27. ResolveCourseReviewReportAsync(reportId, resolverId, request)
+    sv->repo++:28. GetCourseReviewReportByIdAsync(reportId)
+    repo->ctx++:29. Query CourseReviewReport by id
+    ctx->db++:30. Execute SQL query
+    db-->>ctx:31. Return result
+    ctx-->>repo:32. Return CourseReviewReport
+    repo-->>sv:33. Return CourseReviewReport
+    sv->sv++:34. Update report fields & soft-remove review if RemoveContent=true
+    sv--
+    sv->repo++:35. UpdateCourseReviewReport(report)
+    repo-->>sv--:36. void
+    sv->repo++:37. SaveChangesAsync()
+    repo->ctx++:38. SaveChangesAsync()
+    ctx->db++:39. Save changes to Database
+    db-->>ctx:40. Return numberOfRowsAffected
+    ctx-->>repo:41. Return numberOfRowsAffected
+    repo-->>sv:42. Return numberOfRowsAffected
+    sv->sv++:43. Check numberOfRowsAffected > 0
+    sv--
+alt numberOfRowsAffected > 0
+        sv->sv++:43.1. SendNotificationAsync() to reporter
+        sv--
+        sv-->>be_ctrl--:43.1.1. Return true
+        be_ctrl-->>view--:43.1.2. Return statusCode 200
+        view-->>act:43.1.3. Display success message, reload list
+else numberOfRowsAffected = 0
+        sv-->>be_ctrl--:43.2. throw InvalidOperationException
+        be_ctrl-->>view--:43.2.1. Return statusCode 400
+        view-->>act:43.2.2. Display error message
+end
+else [Resolve Lesson Review Report]
+    view->be_ctrl++:44. PATCH /api/admin/moderation/reports/lesson-reviews/{reportId}
+    be_ctrl->be_ctrl++:45. GetUserId() from JWT claims
+    be_ctrl--
+    be_ctrl->sv++:46. ResolveLessonReviewReportAsync(reportId, resolverId, request)
+    sv->repo++:47. GetLessonReviewReportByIdAsync(reportId)
+    repo->ctx++:48. Query LessonReviewReport by id
+    ctx->db++:49. Execute SQL query
+    db-->>ctx:50. Return result
+    ctx-->>repo:51. Return LessonReviewReport
+    repo-->>sv:52. Return LessonReviewReport
+    sv->sv++:53. Update report fields & soft-remove review if RemoveContent=true
+    sv--
+    sv->repo++:54. UpdateLessonReviewReport(report)
+    repo-->>sv--:55. void
+    sv->repo++:56. SaveChangesAsync()
+    repo->ctx++:57. SaveChangesAsync()
+    ctx->db++:58. Save changes to Database
+    db-->>ctx:59. Return numberOfRowsAffected
+    ctx-->>repo:60. Return numberOfRowsAffected
+    repo-->>sv:61. Return numberOfRowsAffected
+    sv->sv++:62. Check numberOfRowsAffected > 0
+    sv--
+alt numberOfRowsAffected > 0
+        sv->sv++:62.1. SendNotificationAsync() to reporter
+        sv--
+        sv-->>be_ctrl--:62.1.1. Return true
+        be_ctrl-->>view--:62.1.2. Return statusCode 200
+        view-->>act:62.1.3. Display success message, reload list
+else numberOfRowsAffected = 0
+        sv-->>be_ctrl--:62.2. throw InvalidOperationException
+        be_ctrl-->>view--:62.2.1. Return statusCode 400
+        view-->>act:62.2.2. Display error message
+end
+end
+act--
+@enduml

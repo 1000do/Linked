@@ -1,0 +1,97 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Chat List (System)
+
+actor Staff as act
+participant "ChatIndexPage" as view
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
+participant ":IChatService" as sv
+participant ":IChatRepository" as repo
+participant ":IRedisService" as redis
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->fe_ctrl++:1. Access Chat Page (/Chat/Index)
+fe_ctrl->fe_ctrl++:2. GetActorFromCookie()
+fe_ctrl--
+
+fe_ctrl->view++:3. Render Chat Index View (ViewBag.Actor = "Admin")
+fe_ctrl--
+
+view->view++:4. DOMContentLoaded (Init Page)
+view->view++:5. initSignalR()
+view--
+
+view->fe_ctrl++:6. Send GET /Chat/GetList
+fe_ctrl->be_ctrl++:7. Send GET /api/Chat/list (with Bearer Token)
+
+be_ctrl->sv++:8. Call GetMyChatsAsync(accountId)
+
+sv->repo++:9. Call GetParticipantsByAccountIdAsync(accountId)
+repo->ctx++:10. Call GetParticipantsByAccountIdAsync(accountId)
+ctx->db++:11. Execute SELECT query
+
+db-->>ctx--:12. Return ChatParticipants list
+ctx-->>repo--:13. Return ChatParticipants list
+repo-->>sv--:14. Return ChatParticipants list
+
+loop for each participant p in participants
+    sv->sv++:15. Check if chat is cleared (LastMessageAt <= ClearedAt)
+    sv--
+    
+alt Chat is cleared
+        sv->sv++:15.1. continue (skip to next participant)
+        sv--
+else Chat is not cleared
+        sv->redis++:15.2. Call GetUnreadCountAsync(accountId, p.ChatId)
+        redis-->>sv--:15.2.1. Return unread count
+        
+        sv->redis++:15.2.2. Call IsUserOnlineAsync(partnerId)
+        redis-->>sv--:15.2.3. Return partner online status (isOnline)
+        
+        sv->sv++:15.2.4. Map and populate ChatListDto
+        sv--
+end
+end
+
+sv-->>be_ctrl--:16. Return ChatListDto list
+be_ctrl-->>fe_ctrl--:17. Return statusCode 200 (Ok)
+fe_ctrl-->>view--:18. Return JSON chat list
+
+view->view++:19. applyChatFilters()
+view--
+view->view++:20. renderChatList(filteredChats)
+view--
+
+view-->>act--:21. Display chat list in sidebar with online statuses and unread counts
+deactivate view
+
+@enduml

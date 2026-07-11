@@ -1,0 +1,54 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Instructor Applications
+
+actor Staff as act
+participant "AdminApprovalIndexPage" as view
+
+act ++
+act -> view++:1. Select sorting option in sort dropdown
+view -> view++:2. EventListener: change event triggered
+
+view -> view++:3. applyFilters() (runs client-side sorting on cached applications)
+note over view
+    Sorts applications by selected criteria:
+    - oldest: Instructor ID ascending (FIFO)
+    - newest: Instructor ID descending (LIFO)
+    - name-asc: Full Name alphabetically ascending (A-Z)
+    - name-desc: Full Name alphabetically descending (Z-A)
+end note
+view --
+
+view -> view++:4. renderTable() (renders sorted results)
+view --
+
+view -->> act--:5. Display sorted pending instructor applications
+deactivate view
+
+@enduml

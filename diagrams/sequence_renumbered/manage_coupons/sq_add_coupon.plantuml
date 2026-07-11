@@ -1,0 +1,89 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add Coupon
+actor Admin as act
+
+participant "AdminCouponView" as view
+participant "CouponController" as be_ctrl <<backend controller>>
+participant ":CreateCouponRequestDTO" as be_req
+participant ":ICouponService" as sv
+participant ":Coupon" as coupon
+participant ":ICouponRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click "Add Coupon" & enter details
+view->be_ctrl++:2. POST /api/coupon
+
+be_ctrl->be_req++:3. Call CreateCouponRequestDTO()
+be_req-->>be_ctrl--:4. Return CreateCouponRequestDTO object
+
+be_ctrl->sv++:5. Call Create(req, managerId)
+sv->sv++:6. Call NormalizeType() & ValidateCreate()
+sv--
+
+alt Invalid Request Data
+    sv-->>be_ctrl:6.1. Throw ArgumentException
+    be_ctrl-->>view:6.1.1. Return statusCode 400
+    view-->>act:6.1.2. Display error toast message
+else Valid Request Data
+    sv->repo++:6.2. Call GetByCodeAsync(req.CouponCode)
+    repo->ctx++:6.2.1. Query Coupon
+    ctx->db++:6.2.2. Execute query
+    db-->>ctx--:6.2.3. Return result
+    ctx-->>repo--:6.2.4. Return Coupon entity
+    repo-->>sv--:6.2.5. Return Coupon entity
+    
+alt Coupon Code Already Exists
+        sv-->>be_ctrl:6.2.5.1. Throw InvalidOperationException
+        be_ctrl-->>view:6.2.5.1.1. Return statusCode 400
+        view-->>act:6.2.5.1.2. Display error toast message
+else Coupon Code is Unique
+        sv->coupon++:6.2.5.2. Call Coupon()
+        coupon-->>sv--:6.2.5.2.1. Return Coupon entity
+        
+        sv->repo++:6.2.5.2.2. Call AddAsync(coupon)
+        repo->ctx++:6.2.5.2.3. Add Coupon entity to ChangeTracker
+        ctx-->>repo--:6.2.5.2.4. Completed
+        repo-->>sv--:6.2.5.2.5. Completed
+        
+        sv->repo++:6.2.5.2.6. Call SaveChangesAsync()
+        repo->ctx++:6.2.5.2.7. Commit tracked changes
+        ctx->db++:6.2.5.2.8. Save changes to database
+        db-->>ctx--:6.2.5.2.9. Return result
+        ctx-->>repo--:6.2.5.2.10. Return numberOfRowsAffected
+        repo-->>sv--:6.2.5.2.11. Return success
+        
+        sv-->>be_ctrl--:6.2.5.2.12. Return success
+        be_ctrl-->>view--:6.2.5.2.13. Return statusCode 200
+        view-->>act--:6.2.5.2.14. Render updated Coupon List / Display success message
+end
+end
+@enduml

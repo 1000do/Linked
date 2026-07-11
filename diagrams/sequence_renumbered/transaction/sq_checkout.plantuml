@@ -1,0 +1,171 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Checkout
+
+actor User as act
+participant "CartPage" as cart_view
+participant "CheckoutPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "MyCoursesPage" as my_courses_view
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":ICheckoutService" as sv
+participant ":ICheckoutRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant "Stripe API" as stripe_api <<external>>
+
+act ++
+
+act -> cart_view++:1. Click "Checkout" button
+cart_view -> fe_ctrl++:2. GET /Cart/Checkout
+
+fe_ctrl -> fe_ctrl++:3. Validate User's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:3.2.1. Display error message
+else Valid User's authentication and authorization
+    fe_ctrl -> fe_ctrl++:3.3. Read coupon map from cookie
+    fe_ctrl--
+
+    fe_ctrl -> be_ctrl++:3.3.1. GET /api/cart/summary?couponCode={codes}
+    be_ctrl -->> fe_ctrl--:3.3.2. Return statusCode 200
+
+    fe_ctrl -> fe_ctrl++:3.3.3. Check cart is not empty
+    fe_ctrl--
+
+opt Cart is empty
+        fe_ctrl -->> cart_view--:3.3.3.1. Return statusCode 302
+        activate cart_view
+        cart_view -->> act:3.3.3.1.1. Display empty cart error message
+end
+
+    fe_ctrl -> be_ctrl++:3.3.4. GET /api/Profile
+    be_ctrl -->> fe_ctrl--:3.3.5. Return statusCode 200
+
+    fe_ctrl -->> view--:3.3.6. Return statusCode 200
+    deactivate cart_view
+    activate view
+    view -->> act:3.3.7. Display CheckoutPage
+
+    act -> view:3.3.8. Page initializes
+    view -> fe_ctrl++:3.3.9. POST /Cart/CreatePaymentIntentAjax
+
+    fe_ctrl -> be_ctrl++:3.3.10. POST /api/checkout/create-intent
+
+    be_ctrl -> sv++:3.3.11. InitiatePaymentIntentAsync(userId, couponCode)
+
+    sv -> repo++:3.3.12. GetCartItemsWithCourseAndInstructorAsync(userId)
+    repo -->> sv--:3.3.13. Return cartItems
+
+    sv -> sv++:3.3.14. Validate cart items and course eligibility
+    sv--
+
+opt Coupon Code Present
+        sv -> sv++:3.3.14.2. Validate coupon eligibility for cart items
+        sv--
+end
+
+    sv -> sv++:3.3.15. Calculate total amount and apply discounts
+    sv--
+
+    sv -> stripe_api++:3.3.16. POST /v1/payment_intents (Create PaymentIntent with metadata)
+    stripe_api -->> sv--:3.3.17. Return PaymentIntent (clientSecret, paymentIntentId)
+
+    sv -->> be_ctrl--:3.3.18. Return CheckoutResponse (clientSecret, paymentIntentId)
+
+alt Invalid checkout request
+        be_ctrl -->> fe_ctrl--:3.3.18.1. Return statusCode 400
+        fe_ctrl -->> view--:3.3.18.1.1. Return statusCode 400
+        view -->> act:3.3.18.1.2. Display error message
+else Payment intent created successfully
+        be_ctrl -->> fe_ctrl--:3.3.18.2. Return statusCode 200
+        fe_ctrl -->> view--:3.3.18.2.1. Return statusCode 200
+
+        view -> view++:3.3.18.2.2. Initialize Stripe Elements with clientSecret
+        view--
+
+        act -> view:3.3.18.2.3. Enter card details and click "Pay now"
+        view -> stripe_api++:3.3.18.2.4. stripe.confirmPayment() [Stripe.js]
+
+alt Incorrect Card Information / Payment Declined
+            stripe_api -->> view:3.3.18.2.4.1. Return error (Declined / Invalid)
+            view -->> act:3.3.18.2.4.1.1. Display payment error message
+else Payment Processed Successfully
+            stripe_api -->> view--:3.3.18.2.4.2. Redirect to /Cart/CheckoutSuccess?payment_intent={id}
+
+            view -> fe_ctrl++:3.3.18.2.4.2.1. GET /Cart/CheckoutSuccess?payment_intent={id}
+
+            fe_ctrl -> be_ctrl++:3.3.18.2.4.2.2. GET /api/checkout/success-intent?payment_intent_id={id}
+
+            be_ctrl -> sv++:3.3.18.2.4.2.3. ProcessPaymentIntentSuccessAsync(paymentIntentId)
+
+            sv -> sv++:3.3.18.2.4.2.4. Check transaction already processed
+            sv--
+
+            sv -> stripe_api++:3.3.18.2.4.2.5. GET /v1/payment_intents/{id}
+            stripe_api -->> sv--:3.3.18.2.4.2.6. Return PaymentIntent Details (metadata, status = "succeeded")
+
+            sv -> repo++:3.3.18.2.4.2.7. BeginTransactionAsync()
+            repo -->> sv--:3.3.18.2.4.2.8. Return IDbContextTransaction
+
+            sv -> sv++:3.3.18.2.4.2.9. Process all courses and finalize order
+            ref over sv, repo, ctx, db:3.3.18.2.4.2.10. Process Successful Payment Core
+            sv--
+
+alt Database Transaction Failure / InvalidOperationException
+                sv -->> be_ctrl--:3.3.18.2.4.2.10.1. throw InvalidOperationException
+                be_ctrl -->> fe_ctrl--:3.3.18.2.4.2.10.1.1. Return statusCode 400
+                fe_ctrl -->> view--:3.3.18.2.4.2.10.1.2. Return statusCode 302
+                activate cart_view
+                cart_view -->> act--:3.3.18.2.4.2.10.1.3. Display payment processing error message
+else Transaction Committed Successfully
+                sv -->> be_ctrl--:3.3.18.2.4.2.10.2. Return result
+                be_ctrl -->> fe_ctrl--:3.3.18.2.4.2.10.2.1. Return statusCode 200
+
+                fe_ctrl -> fe_ctrl++:3.3.18.2.4.2.10.2.2. Delete coupon cookie
+                fe_ctrl--
+
+                fe_ctrl -->> my_courses_view--:3.3.18.2.4.2.10.2.3. Return statusCode 302
+                deactivate view
+                activate my_courses_view
+                my_courses_view -->> act--:3.3.18.2.4.2.10.2.4. Display success message
+end
+end
+end
+end
+
+@enduml
