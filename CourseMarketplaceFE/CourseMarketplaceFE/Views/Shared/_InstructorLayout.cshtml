@@ -156,8 +156,9 @@
 
             @{
                 bool isQuestionBank = currentController == "QuestionBank";
-                bool isQuizList = currentController == "Quiz";
-                bool isQuizGroupOpen = isQuestionBank || isQuizList;
+                bool isAttemptsHistory = currentController == "Quiz" && currentAction == "AttemptsHistory";
+                bool isQuizList = currentController == "Quiz" && currentAction != "AttemptsHistory";
+                bool isQuizGroupOpen = isQuestionBank || isQuizList || isAttemptsHistory;
                 
                 string quizGroupClass = isQuizGroupOpen 
                     ? "nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold text-[#006a62] group cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden" 
@@ -177,6 +178,10 @@
                     <a href="/Quiz" class="@GetNavClass(isQuizList) @disabledClass">
                         <span class="material-symbols-outlined text-[16px] @(isQuizList ? "text-[#006b60]" : "text-slate-400")">arrow_right</span>
                         Quizzes
+                    </a>
+                    <a href="/Quiz/AttemptsHistory" class="@GetNavClass(isAttemptsHistory) @disabledClass">
+                        <span class="material-symbols-outlined text-[16px] @(isAttemptsHistory ? "text-[#006b60]" : "text-slate-400")">arrow_right</span>
+                        Student Attempts History
                     </a>
                 </div>
             </details>
@@ -242,9 +247,7 @@
                         Url = avatarUrl, 
                         Role = "instructor", 
                         Name = userName, 
-                        Size = "md",
-                        ShowFrame = true,
-                        FrameUrl = ""
+                        Size = "md"
                     })
                     <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-teal-500 border-2 border-white rounded-full"></span>
                 </div>

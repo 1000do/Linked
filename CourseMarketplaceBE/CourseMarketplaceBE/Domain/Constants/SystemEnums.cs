@@ -195,7 +195,9 @@ namespace CourseMarketplaceBE.Domain.Constants
         Active,
         Removed,
         Rejected,
-        Flagged
+        Flagged,
+        Pending,
+        Draft
     }
 
     public static class LearningStatusExtensions
@@ -208,6 +210,8 @@ namespace CourseMarketplaceBE.Domain.Constants
                 LearningStatus.Removed => "removed",
                 LearningStatus.Rejected => "rejected",
                 LearningStatus.Flagged => "flagged",
+                LearningStatus.Pending => "pending",
+                LearningStatus.Draft => "draft",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid learning status")
             };
         }
@@ -216,7 +220,9 @@ namespace CourseMarketplaceBE.Domain.Constants
     public enum LessonStatus
     {
         Active,
-        Rejected
+        Rejected,
+        Pending,
+        Draft
     }
 
     public static class LessonStatusExtensions
@@ -227,6 +233,8 @@ namespace CourseMarketplaceBE.Domain.Constants
             {
                 LessonStatus.Active => "active",
                 LessonStatus.Rejected => "rejected",
+                LessonStatus.Pending => "pending",
+                LessonStatus.Draft => "draft",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid lesson status")
             };
         }

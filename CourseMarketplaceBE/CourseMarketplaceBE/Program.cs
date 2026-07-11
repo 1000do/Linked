@@ -143,7 +143,6 @@ public class Program
         builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
-        builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
         builder.Services.AddScoped<ICourseQueryService, CourseQueryService>();
         builder.Services.AddScoped<ICourseCommandService, CourseCommandService>();
         builder.Services.AddScoped<ILessonService, LessonService>();
@@ -238,8 +237,6 @@ public class Program
         builder.Services.AddScoped<ICourseReviewModerationLogRepository, CourseReviewModerationLogRepository>();
         builder.Services.AddScoped<ILessonReviewModerationLogRepository, LessonReviewModerationLogRepository>();
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
-        builder.Services.AddScoped<IAvatarFrameRepository, AvatarFrameRepository>();
-        builder.Services.AddScoped<IAvatarFrameService, AvatarFrameService>();
         builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer, Ganss.Xss.HtmlSanitizer>();
         builder.Services.AddScoped<IHtmlTextManipulationService, HtmlTextManipulationService>();
 

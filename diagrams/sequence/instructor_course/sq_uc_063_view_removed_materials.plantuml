@@ -1,0 +1,63 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View list of removed learning materials
+
+actor Instructor as act
+participant "TrashBinPage" as view
+participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "LessonController" as be_ctrl <<backend controller>>
+participant ":LessonService" as sv
+participant ":MaterialTrashResponse" as res
+participant ":IMaterialRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: View Trash Bin
+view -> fe_ctrl++: GET /Lesson/TrashMaterials
+fe_ctrl -> be_ctrl++: GET /api/lessons/materials/trash
+
+be_ctrl -> sv++: Call GetTrashMaterialsAsync(instructorId)
+
+sv -> repo++: Call GetTrashMaterialsAsync(instructorId)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch removed materials
+db -->> ctx--: Return query results
+ctx -->> repo--: Return material entities
+repo -->> sv--: Return material entities
+
+sv -> sv++: Map materials to MaterialTrashResponse DTOs
+sv--
+
+sv -> res++: Call MaterialTrashResponse()
+res -->> sv--: Return List<MaterialTrashResponse>
+
+sv -->> be_ctrl--: Return List<MaterialTrashResponse>
+be_ctrl -->> fe_ctrl--: Return statusCode 200
+fe_ctrl -->> view--: Return View(MaterialTrashViewModel)
+view -->> act--: Display list of removed materials

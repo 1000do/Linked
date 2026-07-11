@@ -1,0 +1,72 @@
+classDiagram
+    class QuizAttemptDetailPage {
+        <<view>>
+        +displayAttemptDetail()
+        +displayError(message)
+    }
+
+    class QuizAttemptController_FE {
+        <<frontend controller>>
+        +Detail(attemptId: int): IActionResult
+    }
+
+    class QuizAttemptController_BE {
+        <<backend controller>>
+        +GetAttemptDetail(attemptId: int): IActionResult
+    }
+
+    class IQuizService {
+        <<interface>>
+        +GetAttemptDetailAsync(attemptId: int, userId: int): Task~QuizAttemptDetailResponse~
+    }
+
+    class QuizService {
+        <<service>>
+        -IQuizRepository repo
+        +GetAttemptDetailAsync(attemptId: int, userId: int): Task~QuizAttemptDetailResponse~
+    }
+
+    class IQuizRepository {
+        <<interface>>
+        +GetAttemptByIdAsync(attemptId: int): Task~QuizAttempt~
+    }
+
+    class QuizRepository {
+        <<repository>>
+        -AppDbContext ctx
+        +GetAttemptByIdAsync(attemptId: int): Task~QuizAttempt~
+    }
+
+    class AppDbContext {
+        <<dbcontext>>
+        +QuizAttempts: DbSet~QuizAttempt~
+    }
+
+    class QuizAttempt {
+        <<entity>>
+        +int Id
+        +int UserId
+        +int QuizId
+        +decimal Score
+        +bool IsPassed
+        +DateTime AttemptedAt
+        +List~QuizAttemptAnswer~ Answers
+    }
+
+    class QuizAttemptDetailResponse {
+        <<dto>>
+        +int AttemptId
+        +decimal Score
+        +bool IsPassed
+        +List~QuestionDetailResponse~ Questions
+    }
+
+    QuizAttemptDetailPage ..> QuizAttemptController_FE : submits request
+    QuizAttemptController_FE ..> QuizAttemptController_BE : calls API
+    QuizAttemptController_BE ..> IQuizService : injects
+    IQuizService <|.. QuizService : implements
+    QuizService ..> IQuizRepository : injects
+    IQuizRepository <|.. QuizRepository : implements
+    QuizRepository ..> AppDbContext : uses
+    AppDbContext ..> QuizAttempt : queries
+    QuizService ..> QuizAttemptDetailResponse : maps to

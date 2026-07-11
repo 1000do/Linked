@@ -1,0 +1,124 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class EnrollmentControllerFE["EnrollmentController"] {
+    <<frontend controller>>
+    + Index() Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class EnrollmentControllerBE["EnrollmentController"] {
+    <<backend controller>>
+    - _enrollmentService : IEnrollmentService
+    
+    + GetMyCourses() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class EnrolledCourseDto {
+    <<dto>>
+    + CourseId : int
+    + Title : string
+    + ThumbnailUrl : string?
+    + InstructorName : string?
+    + EnrolledAt : DateTime?
+    + TotalMaterials : int
+    + LearnedMaterials : int
+    + ProgressPercentage : decimal
+    + IsArchived : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Enrollment {
+    <<entity>>
+    + EnrollmentId : int
+    + UserId : int
+    + CourseId : int
+    + EnrolledAt : DateTime?
+    + Course : Course?
+    + User : User?
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IEnrollmentService {
+    <<interface>>
+    + GetMyEnrolledCoursesAsync(userId: int) Task~List~EnrolledCourseDto~~ *
+}
+
+class IEnrollmentRepository {
+    <<interface>>
+    + GetUserEnrollmentsAsync(userId: int) Task~List~Enrollment~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class EnrollmentService {
+    - _repo : IEnrollmentRepository
+    
+    + GetMyEnrolledCoursesAsync(userId: int) Task~List~EnrolledCourseDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class EnrollmentRepository {
+    - _context : AppDbContext
+    
+    + GetUserEnrollmentsAsync(userId: int) Task~List~Enrollment~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Enrollments : DbSet~Enrollment~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+EnrollmentControllerBE --> IEnrollmentService
+EnrollmentService --> IEnrollmentRepository
+EnrollmentRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+EnrollmentService ..|> IEnrollmentService
+EnrollmentRepository ..|> IEnrollmentRepository
+
+%% === DEPENDENCY ===
+EnrollmentControllerFE ..> EnrollmentControllerBE
+EnrollmentControllerBE ..> EnrolledCourseDto
+EnrollmentService ..> EnrolledCourseDto
+EnrollmentService ..> Enrollment
+EnrollmentRepository ..> Enrollment
+EnrollmentRepository ..> Course
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

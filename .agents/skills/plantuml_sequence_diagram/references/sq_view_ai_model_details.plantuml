@@ -43,7 +43,7 @@ database Database as db
 act ++
 act -> view++: Access AiServiceManagementPage
 view -> fe_ctrl++: Send GET request to /AdminAiService/Index
-fe_ctrl -> fe_ctrl++: Validate Admin authorization
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
@@ -54,7 +54,7 @@ else Unauthorized Access
     fe_ctrl -->> error_view: Redirect to ErrorPage
     activate error_view
     error_view -->> act--: Display error message
-else Valid Admin authorization
+else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++: Send GET request to /api/admin/ai-service/models
         
         be_ctrl -> sv++: Call GetPagedModelsAsync(request)
@@ -70,7 +70,7 @@ else Valid Admin authorization
             repo -->> sv: Return empty list, totalCount = 0
             sv -->> be_ctrl: throw KeyNotFoundException
             be_ctrl -->> fe_ctrl: Return statusCode 404
-            fe_ctrl -->> view: Return empty HTML
+            fe_ctrl -->> view: Return View(empty ViewModel)
             view -->> act: Display empty state message
         else Database Query Success
             db -->> ctx--: Return data
@@ -81,12 +81,12 @@ else Valid Admin authorization
             res -->> sv--: Return PagedResult<AiModelAdminDto> object
             
             sv -->> be_ctrl--: Return PagedResult<AiModelAdminDto>
-            be_ctrl -->> fe_ctrl--: Return statusCode 200 with JSON data
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
             
             fe_ctrl -> view_model++: Map to AdminAiServicePageViewModel
             view_model -->> fe_ctrl--: Return AdminAiServicePageViewModel object
                 
-            fe_ctrl -->> view: Return View with AdminAiServicePageViewModel
+            fe_ctrl -->> view: Return View(populated ViewModel)
             deactivate fe_ctrl
             
             view -->> act: Display AI model list

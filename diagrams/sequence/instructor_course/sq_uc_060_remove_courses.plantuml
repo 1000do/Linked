@@ -1,0 +1,131 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Remove Courses
+
+actor Instructor as act
+participant "InstructorDashboardPage" as view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as be_ctrl <<backend controller>>
+participant ":CourseCommandService" as sv
+participant ":IReviewLockoutRepository" as lockout_repo
+participant ":ICourseRepository" as repo
+participant ":ILessonRepository" as lesson_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click Delete Course
+view -> fe_ctrl++: POST /InstructorCourse/Delete/{id}
+fe_ctrl -> be_ctrl++: DELETE /api/courses/{id}
+
+be_ctrl -> sv++: Call DeleteCourseAsync(id, instructorId)
+
+sv -> repo++: Call GetByIdAsync(id)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch course
+db -->> ctx--: Return query results
+ctx -->> repo--: Return course entity
+repo -->> sv--: Return course entity
+
+alt Course Not Found
+    sv -->> be_ctrl: throw Exception
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display course not found message
+else Course Found
+    alt Not Course Owner
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display unauthorized message
+    else Is Course Owner
+        sv -> lockout_repo++: Call GetActiveLockoutAsync(instructorId, "instructor")
+        lockout_repo -->> sv--: Return activeLockout
+        
+        alt Account is locked out
+            sv -->> be_ctrl: throw BadRequestException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display lockout restriction message
+        else Account is active
+            alt Archived and Flagged >= 3
+                sv -->> be_ctrl: throw BadRequestException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display permanently discontinued message
+            else Pending Review
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display pending review message
+            else Can Delete
+                sv -> repo++: Call HasEnrollmentsAsync(id)
+                repo -->> sv--: Return hasEnrollments flag
+                
+                alt hasEnrollments == true
+                    sv -->> be_ctrl: throw BadRequestException
+                    be_ctrl -->> fe_ctrl: Return statusCode 400
+                    fe_ctrl -->> view: Return JSON (success=false)
+                    view -->> act: Display active students error message
+                else hasEnrollments == false
+                    sv -> sv++: Set course.IsRemoved = true
+                    sv--
+                    
+                    sv -> lesson_repo++: Call GetByCourseIdAsync(id)
+                    lesson_repo -->> sv--: Return lessons
+                    
+                    sv -> sv++: Soft delete course and cascade to lessons
+                    sv--
+                    
+                    sv -> repo++: Call SaveChangesAsync()
+                    repo -> ctx++: Save changes to database
+                    ctx -> db++: Update entities (Soft Delete)
+                    
+                    alt Database Save Failure
+                        db -->> ctx: throw DbUpdateException
+                        ctx -->> repo: throw DbUpdateException
+                        repo -->> sv: throw DbUpdateException
+                        sv -->> be_ctrl: throw DbUpdateException
+                        be_ctrl -->> fe_ctrl: Return statusCode 500
+                        fe_ctrl -->> view: Return JSON (success=false)
+                        view -->> act: Display server error message
+                    else Database Save Success
+                        db -->> ctx--: Return returnCode
+                        ctx -->> repo--: Return numberOfRowsAffected
+                        repo -->> sv--: Return numberOfRowsAffected
+                        
+                        sv -->> be_ctrl--: Return success
+                        be_ctrl -->> fe_ctrl--: Return statusCode 200
+                        fe_ctrl -->> view--: Return JSON (success=true)
+                        view -->> act--: Display course deleted successfully
+                    end
+                end
+            end
+        end
+    end
+end

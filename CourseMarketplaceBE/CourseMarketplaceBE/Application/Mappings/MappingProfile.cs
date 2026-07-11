@@ -90,7 +90,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.InstructorReviewCount, opt => opt.Ignore())
             .ForMember(dest => dest.InstructorStudentsCount, opt => opt.Ignore())
             .ForMember(dest => dest.Lessons, opt => opt.MapFrom(src => src.Lessons))
-            .ForMember(dest => dest.CourseQuizzes, opt => opt.MapFrom(src => src.CourseQuizzes));
+            .ForMember(dest => dest.CourseQuizzes, opt => opt.MapFrom(src => src.CourseQuizzes))
+            .ForMember(dest => dest.FieldFeedbacks, opt => opt.MapFrom(src => src.FieldModerationFeedbacks));
+
+        CreateMap<CourseFieldModerationFeedback, CourseFieldFeedbackDto>();
 
         CreateMap<CourseQuiz, CourseQuizItemResponse>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.Quiz != null ? src.Quiz.Title : ""))

@@ -1,0 +1,104 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor's Course Revenue
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "ApplicationStatusPage" as app_status_view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":AdminFinanceService" as finance_sv
+participant ":InstructorCourseRevenueResponse" as dto
+participant ":AdminFinanceRepository" as finance_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act -> view++: Access Earnings Dashboard
+view -> fe_tx_ctrl++: GET /Transaction/Instructor?year={y}&month={m}
+
+fe_tx_ctrl -> fe_tx_ctrl++: Validate actor's authentication and authorization
+fe_tx_ctrl--
+
+alt Session Invalid
+    fe_tx_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_tx_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_tx_ctrl -> fe_tx_ctrl++: Check Request.Cookies["InstructorApprovalStatus"]
+    fe_tx_ctrl--
+    
+    alt Not Approved Instructor
+        fe_tx_ctrl -->> app_status_view++: Redirect to ApplicationStatus
+        app_status_view -->> act--: Display status
+    else Approved Instructor
+        fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor/course-revenues
+        
+        be_tx_ctrl -> be_tx_ctrl++: Validate login session & Parse userId
+        be_tx_ctrl--
+        
+        alt Invalid login session
+            be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 401
+            fe_tx_ctrl -->> login_view++: Redirect to LoginPage
+            login_view -->> act--: Display login form
+        else Valid Request
+            be_tx_ctrl -> finance_sv++: GetInstructorCourseRevenuesByInstructorAsync(userId, year, month)
+            finance_sv -> finance_repo++: GetInstructorCourseRevenuesByInstructorAsync(userId, year, month)
+            
+            finance_repo -> ctx++: Query Courses by InstructorId
+            ctx -> db++: Execute SELECT
+            db -->> ctx--: Return database record
+            
+            ctx -> db++: Query Transactions (succeeded or refund_pending)
+            db -->> ctx--: Return database record
+            ctx -->> finance_repo--: Return list of Raw entities
+            
+            finance_repo -> finance_repo: Calculate Monthly, Previous Month, Yearly, Lifetime Net Revenue
+            finance_repo -> finance_repo: Calculate Growth % / New Sales
+            
+            finance_repo -->> finance_sv--: Return List<InstructorCourseRevenueProjection>
+            
+            finance_sv -> dto++: Map to List<InstructorCourseRevenueResponse>
+            dto -->> finance_sv--: Return List<InstructorCourseRevenueResponse>
+            
+            finance_sv -->> be_tx_ctrl--: Return List<InstructorCourseRevenueResponse>
+            be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (Data)
+            
+            fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
+            view -->> act--: Display Earnings dashboard (Defaults to Learner Purchases tab)
+            
+            act -> view++: Click "Course Revenues" tab
+            view -->> act--: Display course revenue table \n(Course Title, Sales Qty, Monthly Rev, Yearly Rev, Lifetime Rev, Growth %)
+        end
+    end
+end
+
+@enduml

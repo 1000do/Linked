@@ -28,7 +28,9 @@ public class AdminFinanceController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════
     // GET /api/admin/finance/summary
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-136 (2.2.3.136): Filter Financial Dashboard by Period — Chỉ Admin
     [HttpGet("summary")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetFinancialSummary([FromQuery] int? year, [FromQuery] int? month)
     {
         try
@@ -46,7 +48,9 @@ public class AdminFinanceController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════
     // GET /api/admin/finance/payouts
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-124: View Instructor Payout — Chỉ Admin
     [HttpGet("payouts")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetPayouts([FromQuery] int? year, [FromQuery] int? month, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         try
@@ -84,7 +88,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/transfer-rate
     // UC-120: Cập nhật tỷ lệ chia sẻ doanh thu
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-134: Set Transfer Rate — Chỉ Admin
     [HttpPost("transfer-rate")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> SetTransferRate([FromBody] SetTransferRateRequest request)
     {
         try
@@ -107,7 +113,9 @@ public class AdminFinanceController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════
     // GET /api/admin/finance/payout-days
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-135: Set Payout Schedule — Chỉ Admin
     [HttpGet("payout-days")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetPayoutDays()
     {
         try
@@ -124,7 +132,9 @@ public class AdminFinanceController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════
     // POST /api/admin/finance/payout-days
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-135: Set Payout Schedule — Chỉ Admin
     [HttpPost("payout-days")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> SetPayoutDays([FromBody] SetPayoutDaysRequest request)
     {
         try
@@ -148,7 +158,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/payouts/{payoutId}/mark-paid
     // Đánh dấu khoản thanh toán là đã thanh toán
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-124: Mark Payout Paid — Chỉ Admin
     [HttpPost("payouts/{payoutId:int}/mark-paid")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> MarkPayoutAsPaid(int payoutId)
     {
         try
@@ -170,7 +182,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/payouts/{payoutId}/stripe-transfer
     // Chuyển tiền thật qua Stripe Connect
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-124: Stripe Transfer (Pay Instructor) — Chỉ Admin
     [HttpPost("payouts/{payoutId:int}/stripe-transfer")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> TransferViaStripe(int payoutId)
     {
         try
@@ -192,7 +206,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/payouts/sync-all
     // Đồng bộ tất cả Payouts của giảng viên từ Stripe
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-124: Sync All Payouts — Chỉ Admin
     [HttpPost("payouts/sync-all")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> SyncAllPayouts()
     {
         try
@@ -210,7 +226,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/reset-stripe/{instructorId}
     // ★ Reset Stripe account bị lỗi region → xóa account cũ, cho phép tạo lại
     // ═══════════════════════════════════════════════════════════════════════
+    // Admin reset Stripe account Instructor bị lỗi — Chỉ Admin
     [HttpPost("reset-stripe/{instructorId:int}")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> ResetStripeAccount(int instructorId)
     {
         try
@@ -233,7 +251,9 @@ public class AdminFinanceController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>GET /api/admin/finance/balance — Lấy số dư Stripe Platform</summary>
+    // UC-123: View Balance (For System) — Chỉ Admin
     [HttpGet("balance")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetPlatformBalance()
     {
         try
@@ -248,7 +268,9 @@ public class AdminFinanceController : ControllerBase
     }
 
     /// <summary>POST /api/admin/finance/withdraw — Tạo lệnh rút tiền</summary>
+    // UC-136: Withdraw Funds — Chỉ Admin
     [HttpPost("withdraw")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> Withdraw([FromBody] WithdrawRequest request)
     {
         try
@@ -271,7 +293,9 @@ public class AdminFinanceController : ControllerBase
     }
 
     /// <summary>GET /api/admin/finance/withdrawals — Lịch sử rút tiền</summary>
+    // UC-125: View Funds Withdrawal History — Chỉ Admin
     [HttpGet("withdrawals")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetWithdrawalHistory([FromQuery] int? year, [FromQuery] int? month, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         try
@@ -289,7 +313,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/transactions/{transactionId}/refund
     // Hoàn tiền toàn bộ cho 1 giao dịch qua Stripe
     // ═══════════════════════════════════════════════════════════════════════
+    // Admin Refund trực tiếp 1 transaction — Chỉ Admin
     [HttpPost("transactions/{transactionId:int}/refund")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> RefundTransaction(int transactionId, [FromBody] RefundRequest? request)
     {
         try
@@ -311,7 +337,9 @@ public class AdminFinanceController : ControllerBase
     // GET /api/admin/finance/refunds/pending
     // Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-126: View List of Refund Requests — Chỉ Admin
     [HttpGet("refunds/pending")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetPendingRefundRequests([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         try
@@ -329,7 +357,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/refunds/{transactionId}/approve
     // Phê duyệt yêu cầu hoàn tiền (gọi Stripe)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-127: Approve Refund Request — Chỉ Admin
     [HttpPost("refunds/{transactionId:int}/approve")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> ApproveRefund(int transactionId, [FromBody] RefundDecisionRequest request)
     {
         try
@@ -351,7 +381,9 @@ public class AdminFinanceController : ControllerBase
     // POST /api/admin/finance/refunds/{transactionId}/reject
     // Từ chối yêu cầu hoàn tiền
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-128: Reject Refund Request — Chỉ Admin
     [HttpPost("refunds/{transactionId:int}/reject")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> RejectRefund(int transactionId, [FromBody] RefundDecisionRequest request)
     {
         try
@@ -372,7 +404,9 @@ public class AdminFinanceController : ControllerBase
     // ═══════════════════════════════════════════════════════════════════════
     // GET /api/admin/finance/instructor-courses-revenue
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-74: View Instructor's Course Revenue (For Admin View) — Chỉ Admin
     [HttpGet("instructor-courses-revenue")]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetInstructorCourseRevenues([FromQuery] int year, [FromQuery] int month)
     {
         try

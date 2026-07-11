@@ -73,6 +73,8 @@ public class InstructorDashboardDto
     public int PendingCoursesCount { get; set; }
     public int DraftCoursesCount { get; set; }
     public decimal TotalRevenue { get; set; }
+    public double EnrollmentGrowthPercentage { get; set; }
+    public int InstructorRankPercentage { get; set; }
 }
 
 public class InstructorPayoutDto

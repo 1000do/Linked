@@ -23,11 +23,6 @@ namespace CourseMarketplaceBE.Infrastructure.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<AiModerationService> _logger;
-        private readonly IAiModelRepository _aiModelRepository;
-        private readonly ICourseAiUsageLogRepository _usageLogRepository;
-        private readonly ISystemConfigRepository _configRepository;
-        private readonly ICourseRepository _courseRepository;
-        private readonly IRedisService _redisService;
         private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
         private readonly IAsyncPolicy<HttpResponseMessage> _circuitBreakerPolicy;
 
@@ -36,21 +31,11 @@ namespace CourseMarketplaceBE.Infrastructure.Services
 
         public AiModerationService(
             HttpClient httpClient,
-            ILogger<AiModerationService> logger,
-            IAiModelRepository aiModelRepository,
-            ICourseAiUsageLogRepository usageLogRepository,
-            ISystemConfigRepository configRepository,
-            ICourseRepository courseRepository,
-            IRedisService redisService)
+            ILogger<AiModerationService> logger)
         {
             _httpClient = httpClient;
-            _httpClient.Timeout = TimeSpan.FromMinutes(10);
+            _httpClient.Timeout = TimeSpan.FromMinutes(30);
             _logger = logger;
-            _aiModelRepository = aiModelRepository;
-            _usageLogRepository = usageLogRepository;
-            _configRepository = configRepository;
-            _courseRepository = courseRepository;
-            _redisService = redisService;
 
             // Setup retry policy
             _retryPolicy = Policy
@@ -96,86 +81,7 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             return await response.Content.ReadFromJsonAsync<CourseModerationResult>() ?? new CourseModerationResult { CourseId = semanticReq.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
         }
 
-        public async Task<Dictionary<string, float>> GetScoreThresholdConfigAsync(string key)
-        {
-            var val = await _configRepository.GetValueAsync(key);
-            if (string.IsNullOrEmpty(val))
-            {
-                return new Dictionary<string, float>
-                {
-                    { AiModelConst.Similarity, AiModelConst.DefaultSimilarityScoreThreshold },
-                    { AiModelConst.Spam, AiModelConst.DefaultSpamScoreThreshold },
-                    { AiModelConst.Toxic, AiModelConst.DefaultToxicScoreThreshold }
-                };
-            }
 
-            return JsonSerializer.Deserialize<Dictionary<string, float>>(val) ?? new Dictionary<string, float>();
-        }
-
-        public async Task<List<int>> GetModelIdsByType(string type)
-        {
-            var models = await _aiModelRepository.GetByTypeAsync(type);
-            return models.Select(m => m.ModelId).ToList();
-        }
-
-        public async Task<List<AiModelDto>> GetModelsByTypeAsync(string modelType)
-        {
-            string cacheKey = CacheKeys.AiModelType.GetKey(modelType);
-            var cached = await _redisService.GetCacheAsync<List<AiModelDto>>(cacheKey);
-            if (cached != null)
-            {
-                return cached;
-            }
-
-            var dbModels = await _aiModelRepository.GetModelsByTypeAsync(modelType);
-            var result = dbModels.Select(m => new AiModelDto
-            {
-                ModelId = m.ModelId,
-                ModelName = m.ModelName,
-                ModelType = m.ModelType,
-                ModelProvider = m.ModelProvider,
-                ModelVersion = m.ModelVersion,
-                ModelStatus = m.ModelStatus,
-                Description = m.Description,
-                ModelPath = m.ModelPath,
-                ProcessType = m.ProcessType
-            }).ToList();
-
-            await _redisService.SetCacheAsync(cacheKey, result, CacheTtl.Medium.GetTtl());
-            return result;
-        }
-
-        public async Task SaveCourseAiUsageLog(SaveCourseAiUsageLogCommand command)
-        {
-            var log = new CourseAiUsageLog
-            {
-                IntegrationId = command.IntegrationId,
-                InteractionType = command.InteractionType,
-                InputJson = command.InputJson,
-                OutputJson = command.OutputJson,
-                LatencyMs = command.LatencyMs,
-                TokenUsage = command.TokenUsage,
-                ErrorMessage = command.ErrorMessage,
-                LogCreatedAt = DateTime.UtcNow
-            };
-
-            await _usageLogRepository.AddAsync(log);
-            await SaveUsageLogChangesAsync();
-        }
-
-        private async Task<int> SaveUsageLogChangesAsync()
-        {
-            try
-            {
-                int numberOfRowsAffected = await _usageLogRepository.SaveChangesAsync();
-                /* zero rows exception removed */
-                return numberOfRowsAffected;
-            }
-            catch (CourseAiUsageLogException ex)
-            {
-                throw new BadRequestException(ex.Message);
-            }
-        }
 
         public async Task<bool> HealthCheckAsync()
         {

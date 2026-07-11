@@ -1,0 +1,110 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Course Detail
+
+actor Guest as act
+participant "CourseDetailPage" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "CoursePublicController" as be_ctrl <<backend controller>>
+participant ":CourseQueryService" as sv
+participant ":IRedisCacheService" as redis
+participant ":CourseDetailResponse" as res
+participant ":ICourseRepository" as repo
+participant ":IInstructorRepository" as inst_repo
+participant ":ICartRepository" as cart_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click on a course
+view -> fe_ctrl++: GET /Course/Details/{id}
+fe_ctrl -> be_ctrl++: GET /api/public/courses/{id}
+be_ctrl -> sv++: Call GetCourseWithDetailsAsync(id, userId, role)
+
+sv -> redis++: Call GetCacheAsync(cacheKey)
+redis -->> sv--: Return cachedResponse
+
+alt cachedResponse == null
+    sv -> repo++: Call GetCourseWithDetailsAsync(id)
+    repo -> ctx++: Execute query
+    ctx -> db++: Fetch course details
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return course entity
+    repo -->> sv--: Return course entity
+    
+    alt Course Not Found
+        sv -->> be_ctrl: throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return View("NotFound")
+        view -->> act: Display course not found message
+    else Course Found
+        sv -> repo++: Call GetCourseStatsAsync(id)
+        repo -->> sv--: Return stats
+        
+        opt InstructorId HasValue
+            sv -> inst_repo++: Call GetStatsAsync(InstructorId)
+            inst_repo -->> sv--: Return instructor stats
+        end
+        
+        sv -> res++: Call CourseDetailResponse()
+        res -->> sv--: Return CourseDetailResponse object
+        
+        sv -> redis++: Call SetCacheAsync(cacheKey, response)
+        redis -->> sv--: Return result
+    end
+else cachedResponse != null
+    sv -> sv++: Use cachedResponse
+    sv--
+end
+
+sv -> cart_repo++: Call IsCourseInAnyCartAsync(id)
+cart_repo -->> sv--: Return IsInAnyCart flag
+
+opt userId HasValue
+    sv -> repo++: Call IsEnrolledAsync(userId, courseId)
+    repo -->> sv--: Return IsEnrolled flag
+end
+
+alt Course Status != Published
+    alt Unauthorized Access (Not Owner and Not Admin/Staff)
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return View("AccessDenied")
+        view -->> act: Display access denied message
+    else Valid actor's authentication and authorization
+        sv -->> be_ctrl: Return CourseDetailResponse object
+        be_ctrl -->> fe_ctrl: Return statusCode 200
+        fe_ctrl -->> view: Return View(CourseDetailViewModel)
+        view -->> act: Display course details
+    end
+else Course Status == Published
+    sv -->> be_ctrl--: Return CourseDetailResponse object
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return View(CourseDetailViewModel)
+    view -->> act--: Display course details
+end

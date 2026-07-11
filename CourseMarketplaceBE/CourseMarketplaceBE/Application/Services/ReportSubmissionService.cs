@@ -181,27 +181,37 @@ public class ReportSubmissionService : IReportSubmissionService
     private async Task ValidateCourseReviewReportAsync(int reporterId, int courseReviewId, string reason)
     {
         var review = await _reviewRepo.GetCourseReviewByIdAsync(courseReviewId)
-            ?? throw new InvalidOperationException("Review not found.");
+            ?? throw new KeyNotFoundException("Review not found.");
+
+        if (review.IsRemoved == true || 
+            review.CourseReviewStatus.Equals(ReviewStatus.Removed.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            review.CourseReviewStatus.Equals(ReviewStatus.Violating.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new BadRequestException("This review has been removed and cannot be reported.");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
+            throw new BadRequestException("Report reason cannot be empty.");
 
         var existing = await _reportRepo.GetPendingCourseReviewReportAsync(reporterId, courseReviewId, reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+            throw new BadRequestException("You already have a pending report with this reason for this review.");
     }
 
     private async Task ValidateLessonReviewReportAsync(int reporterId, int lessonReviewId, string reason)
     {
         var review = await _reviewRepo.GetLessonReviewByIdAsync(lessonReviewId)
-            ?? throw new InvalidOperationException("Review not found.");
+            ?? throw new KeyNotFoundException("Review not found.");
+
+        if (review.IsRemoved == true || 
+            review.LessonReviewStatus.Equals(ReviewStatus.Removed.ToValue(), StringComparison.OrdinalIgnoreCase) || 
+            review.LessonReviewStatus.Equals(ReviewStatus.Violating.ToValue(), StringComparison.OrdinalIgnoreCase))
+            throw new BadRequestException("This review has been removed and cannot be reported.");
 
         if (string.IsNullOrWhiteSpace(reason))
-            throw new InvalidOperationException("Report reason cannot be empty.");
+            throw new BadRequestException("Report reason cannot be empty.");
 
         var existing = await _reportRepo.GetPendingLessonReviewReportAsync(reporterId, lessonReviewId, reason);
         if (existing != null)
-            throw new InvalidOperationException("You already have a pending report with this reason for this review.");
+            throw new BadRequestException("You already have a pending report with this reason for this review.");
     }
 
     private async Task SaveChangesAndHandleExceptionsAsync()

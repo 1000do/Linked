@@ -157,10 +157,7 @@
                 Monitor Chats
                 <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-chat-badge"></span>
             </a>
-            <a href="/AdminAvatarFrame" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
-                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">military_tech</span> 
-                Manage Avatar Frames
-            </a>
+
 
             @if (!isStaff) {
                 <div class="px-3 mb-3 mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Finance & Transactions</div>
@@ -187,9 +184,7 @@
                     Url = avatarUrl, 
                     Role = isStaff ? "staff" : "admin", 
                     Name = managerName, 
-                    Size = "md",
-                    ShowFrame = true,
-                    FrameUrl = ""
+                    Size = "md"
                 })
                 <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
             </div>
@@ -229,9 +224,7 @@
                         Url = avatarUrl, 
                         Role = isStaff ? "staff" : "admin", 
                         Name = managerName, 
-                        Size = "sm",
-                        ShowFrame = true,
-                        FrameUrl = ""
+                        Size = "sm"
                     })
                 </div>
             </div>

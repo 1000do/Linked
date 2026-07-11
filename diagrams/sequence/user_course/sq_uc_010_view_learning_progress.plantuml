@@ -1,0 +1,91 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Learning Progress
+
+actor User as act
+participant "CourseLearnSidebar" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "EnrollmentController" as be_ctrl <<backend controller>>
+participant ":EnrollmentService" as sv
+participant ":ProgressResponse" as res
+participant ":IEnrollmentRepository" as repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: View learning progress
+view -> fe_ctrl++: GET /Course/Learn/{id}
+fe_ctrl -> be_ctrl++: GET /api/enrollment/progress/{courseId}
+be_ctrl -> sv++: Call GetProgressAsync(userId, courseId)
+
+sv -> repo++: Call GetEnrollmentAsync(userId, courseId)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch enrollment
+db -->> ctx--: Return query results
+ctx -->> repo--: Return enrollment entity
+repo -->> sv--: Return enrollment entity
+
+alt Enrollment Not Found
+    sv -> course_repo++: Call GetByIdAsync(courseId)
+    course_repo -->> sv--: Return course entity
+    
+    alt Course Found and User is Instructor
+        sv -> course_repo++: Call GetCourseStatsAsync(courseId)
+        course_repo -->> sv--: Return course stats
+        
+        sv -> res++: Call ProgressResponse()
+        res -->> sv--: Return ProgressResponse object (mocked full progress)
+        sv -->> be_ctrl: Return ProgressResponse object
+    else Course Not Found or User is Not Instructor
+        sv -->> be_ctrl: Return null
+    end
+else Enrollment Found
+    sv -> repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
+    repo -->> sv--: Return completed count
+    
+    sv -> course_repo++: Call GetCourseStatsAsync(courseId)
+    course_repo -->> sv--: Return course stats
+    
+    sv -> repo++: Call GetLastAccessedMaterialIdAsync(enrollmentId)
+    repo -->> sv--: Return last accessed material id
+    
+    sv -> res++: Call ProgressResponse()
+    res -->> sv--: Return ProgressResponse object
+    sv -->> be_ctrl: Return ProgressResponse object
+end
+
+alt Progress Not Found
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display error message
+else Progress Found
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return JSON (success=true)
+    view -->> act--: Display learning progress
+end

@@ -35,6 +35,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Coupon> Coupons { get; set; }
     public virtual DbSet<Course> Courses { get; set; }
+    public virtual DbSet<CourseFieldModerationFeedback> CourseFieldModerationFeedbacks { get; set; }
     public virtual DbSet<Enrollment> Enrollments { get; set; }
     public virtual DbSet<Instructor> Instructors { get; set; }
     public virtual DbSet<InstructorPayout> InstructorPayouts { get; set; }
@@ -66,8 +67,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<AuditLog> AuditLogs { get; set; }
     public virtual DbSet<MessageAttachment> MessageAttachments { get; set; }
     public virtual DbSet<MessageModerationLog> MessageModerationLogs { get; set; }
-    public virtual DbSet<AvatarFrame> AvatarFrames { get; set; }
-    public virtual DbSet<UserAvatarFrame> UserAvatarFrames { get; set; }
+
     public virtual DbSet<PlatformWithdrawal> PlatformWithdrawals { get; set; }
     public virtual DbSet<Gift> Gifts { get; set; }
 
@@ -689,6 +689,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Description).HasColumnName("description");
             entity.Property(e => e.ThumbnailUrl).HasColumnName("thumbnail_url");
             entity.Property(e => e.LessonStatus).HasMaxLength(50).HasColumnName("lesson_status");
+            entity.Property(e => e.ModerationFeedback).HasColumnName("moderation_feedback");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
@@ -1244,40 +1245,6 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("platform_withdrawals_manager_id_fkey");
         });
 
-
-        // ── avatar_frames ────────────────────────────────────────────────────
-        modelBuilder.Entity<AvatarFrame>(entity =>
-        {
-            entity.HasKey(e => e.Id).HasName("avatar_frames_pkey");
-            entity.ToTable("avatar_frames");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.Name).HasMaxLength(100).HasColumnName("name");
-            entity.Property(e => e.ImageUrl).HasColumnName("image_url");
-            entity.Property(e => e.Description).HasColumnName("description");
-            entity.Property(e => e.RequirementType).HasMaxLength(50).HasColumnName("requirement_type");
-            entity.Property(e => e.RequirementValue).HasDefaultValue(0).HasColumnName("requirement_value");
-            entity.Property(e => e.IsActive).HasDefaultValue(true).HasColumnName("is_active");
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("created_at");
-        });
-
-        // ── user_avatar_frames ────────────────────────────────────────────────
-        modelBuilder.Entity<UserAvatarFrame>(entity =>
-        {
-            entity.HasKey(e => new { e.UserId, e.FrameId }).HasName("user_avatar_frames_pkey");
-            entity.ToTable("user_avatar_frames");
-
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.FrameId).HasColumnName("frame_id");
-            entity.Property(e => e.IsEquipped).HasDefaultValue(false).HasColumnName("is_equipped");
-            entity.Property(e => e.UnlockedAt).HasDefaultValueSql("CURRENT_TIMESTAMP").HasColumnName("unlocked_at");
-
-            entity.HasOne(d => d.Frame).WithMany()
-                .HasForeignKey(d => d.FrameId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("user_avatar_frames_frame_id_fkey");
-        });
-
         // ── course_reports ────────────────────────────────────────────────────
         modelBuilder.Entity<CourseReport>(entity =>
         {
@@ -1449,6 +1416,11 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey(e => e.QuizId).HasName("quizzes_pkey");
             entity.ToTable("quizzes");
+
+            entity.HasIndex(e => new { e.Title, e.InstructorId })
+                  .IsUnique()
+                  .HasDatabaseName("ix_quizzes_title_instructor_id")
+                  .HasFilter("is_removed = false");
 
             entity.Property(e => e.QuizId).HasColumnName("quiz_id");
             entity.Property(e => e.InstructorId).HasColumnName("instructor_id");
@@ -1646,6 +1618,26 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.SelectedOptionId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("quiz_attempt_answers_selected_option_id_fkey");
+        });
+
+        modelBuilder.Entity<CourseFieldModerationFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("course_field_moderation_feedbacks_pkey");
+            entity.ToTable("course_field_moderation_feedbacks");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.CourseId).HasColumnName("course_id");
+            entity.Property(e => e.FieldName).HasMaxLength(100).HasColumnName("field_name");
+            entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.DateAdded)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("date_added");
+
+            entity.HasOne(d => d.Course).WithMany(p => p.FieldModerationFeedbacks)
+                  .HasForeignKey(d => d.CourseId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("course_field_moderation_feedbacks_course_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);

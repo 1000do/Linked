@@ -1,0 +1,79 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor Profile
+
+actor Guest as act
+participant "InstructorProfilePage" as view
+participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorPublicProfileDto" as res
+participant ":IUserRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click on instructor name
+view -> fe_ctrl++: GET /Instructor/Profile/{id}
+fe_ctrl -> be_ctrl++: GET /api/instructor/profile/{id}
+be_ctrl -> sv++: Call GetPublicProfileAsync(id)
+
+sv -> repo++: Call GetByIdWithNavigationAsync(id)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch instructor data
+db -->> ctx--: Return query results
+ctx -->> repo--: Return instructor entity
+repo -->> sv--: Return instructor entity
+
+alt Instructor Not Found or Not Approved
+    sv -->> be_ctrl: Return null
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Redirect to HomePage
+    activate view
+    view -->> act: Display HomePage
+else Instructor Found
+    sv -> repo++: Call GetStatsAsync(id)
+    repo -->> sv--: Return instructor stats
+    
+    sv -> repo++: Call CountActiveCoursesAsync(id)
+    repo -->> sv--: Return active courses count
+    
+    sv -> sv++: Extract published courses
+    sv--
+    
+    sv -> repo++: Call CountInstructorReviewsAsync(id)
+    repo -->> sv--: Return total reviews
+    
+    sv -> res++: Call InstructorPublicProfileDto()
+    res -->> sv--: Return InstructorPublicProfileDto object
+    
+    sv -->> be_ctrl--: Return InstructorPublicProfileDto object
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
+    fe_ctrl -->> view--: Return View(InstructorPublicProfileViewModel)
+    view -->> act--: Display instructor profile
+end

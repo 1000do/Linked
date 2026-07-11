@@ -174,9 +174,8 @@ public class ReviewService : IReviewService
 
     // ── Thống kê phân bổ sao ───────────────────────────────────────────
 
-    public async Task<ReviewStatsResponse> GetReviewStatsAsync(int courseId)
+    private ReviewStatsResponse CalculateReviewStats(IList<float> ratings)
     {
-        var ratings = await _reviewRepo.GetCourseReviewRatingsAsync(courseId);
         var total = ratings.Count;
         return new ReviewStatsResponse
         {
@@ -190,20 +189,16 @@ public class ReviewService : IReviewService
         };
     }
 
+    public async Task<ReviewStatsResponse> GetReviewStatsAsync(int courseId)
+    {
+        var ratings = await _reviewRepo.GetCourseReviewRatingsAsync(courseId);
+        return CalculateReviewStats(ratings);
+    }
+
     public async Task<ReviewStatsResponse> GetLessonReviewStatsAsync(int lessonId)
     {
         var ratings = await _reviewRepo.GetLessonReviewRatingsAsync(lessonId);
-        var total = ratings.Count;
-        return new ReviewStatsResponse
-        {
-            AverageRating = total > 0 ? Math.Round(ratings.Average(), 1) : 0,
-            TotalReviews = total,
-            Star5Count = ratings.Count(r => r >= 4.5f),
-            Star4Count = ratings.Count(r => r >= 3.5f && r < 4.5f),
-            Star3Count = ratings.Count(r => r >= 2.5f && r < 3.5f),
-            Star2Count = ratings.Count(r => r >= 1.5f && r < 2.5f),
-            Star1Count = ratings.Count(r => r < 1.5f)
-        };
+        return CalculateReviewStats(ratings);
     }
 
     public async Task<List<LessonRatingStatsResponse>> GetLessonRatingsForCourseAsync(int courseId)

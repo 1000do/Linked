@@ -1,0 +1,132 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class EnrollmentControllerFE["EnrollmentController"] {
+    <<frontend controller>>
+    + EnrollFree(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class EnrollmentControllerBE["EnrollmentController"] {
+    <<backend controller>>
+    - _enrollmentService : IEnrollmentService
+    - _authService : IAuthService
+    
+    + FreeEnroll(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Enrollment {
+    <<entity>>
+    + EnrollmentId : int
+    + UserId : int
+    + CourseId : int
+    + EnrolledAt : DateTime?
+    + Course : Course?
+    + User : User?
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IEnrollmentService {
+    <<interface>>
+    + EnrollFreeAsync(userId: int, courseId: int) Task *
+}
+
+class IAuthService {
+    <<interface>>
+    + IsEmailVerifiedAsync(userId: int) Task~bool~ *
+}
+
+class IEnrollmentRepository {
+    <<interface>>
+    + IsUserEnrolledAsync(userId: int, courseId: int) Task~bool~ *
+    + AddAsync(enrollment: Enrollment) void *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class EnrollmentService {
+    - _repo : IEnrollmentRepository
+    - _courseRepo : ICourseRepository
+    
+    + EnrollFreeAsync(userId: int, courseId: int) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class EnrollmentRepository {
+    - _context : AppDbContext
+    
+    + IsUserEnrolledAsync(userId: int, courseId: int) Task~bool~
+    + AddAsync(enrollment: Enrollment) void
+}
+
+class CourseRepository {
+    - _context : AppDbContext
+    
+    + GetByIdAsync(id: int) Task~Course?~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Enrollments : DbSet~Enrollment~
+    + Courses : DbSet~Course~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+EnrollmentControllerBE --> IEnrollmentService
+EnrollmentControllerBE --> IAuthService
+EnrollmentService --> IEnrollmentRepository
+EnrollmentService --> ICourseRepository
+EnrollmentRepository --> AppDbContext
+CourseRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+EnrollmentService ..|> IEnrollmentService
+EnrollmentRepository ..|> IEnrollmentRepository
+CourseRepository ..|> ICourseRepository
+
+%% === DEPENDENCY ===
+EnrollmentControllerFE ..> EnrollmentControllerBE
+EnrollmentService ..> Enrollment
+EnrollmentRepository ..> Enrollment
+CourseRepository ..> Course
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -3,6 +3,7 @@ using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -46,7 +47,9 @@ public class CheckoutController : ControllerBase
     /// Khởi tạo checkout: tạo Order, gọi Stripe, trả về URL thanh toán.
     /// FE sẽ redirect user tới URL này.
     /// </summary>
+    // UC-33: Checkout — User/Instructor thanh toán giỏ hàng
     [HttpPost("process")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> Process([FromBody] CheckoutRequest request)
     {
         var userId = GetUserId();
@@ -84,7 +87,9 @@ public class CheckoutController : ControllerBase
     // POST /api/checkout/create-intent
     // Tạo Stripe PaymentIntent và trả về Client Secret cho FE.
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-33: Checkout (PaymentIntent flow) — User/Instructor thanh toán giỏ hàng
     [HttpPost("create-intent")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> CreateIntent([FromBody] CheckoutRequest request)
     {
         var userId = GetUserId();
@@ -113,7 +118,9 @@ public class CheckoutController : ControllerBase
     // POST /api/checkout/direct
     // Mua trực tiếp 1 khóa học sử dụng Destination Charges (bỏ giỏ hàng)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-33: Checkout trực tiếp (bỏ giỏ hàng) — User/Instructor mua ngay 1 khóa học
     [HttpPost("direct")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> DirectProcess([FromBody] DirectCheckoutRequest request)
     {
         var userId = GetUserId();
@@ -151,7 +158,9 @@ public class CheckoutController : ControllerBase
     // POST /api/checkout/gift
     // Khởi tạo thanh toán Stripe Checkout cho Quà Tặng (UC-17)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-17/18: Gift Courses & Pay for Gift — User/Instructor tặng khóa học
     [HttpPost("gift")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GiftCheckout([FromBody] GiftCheckoutRequest request)
     {
         var userId = GetUserId();
@@ -183,7 +192,9 @@ public class CheckoutController : ControllerBase
     // POST /api/checkout/gift-intent
     // Tạo Stripe PaymentIntent cho Quà Tặng
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-18: Pay for Gift (PaymentIntent flow) — User/Instructor tặng khóa học
     [HttpPost("gift-intent")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GiftCreateIntent([FromBody] GiftCheckoutRequest request)
     {
         var userId = GetUserId();

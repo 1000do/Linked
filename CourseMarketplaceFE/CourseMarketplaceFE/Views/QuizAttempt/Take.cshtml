@@ -6,8 +6,11 @@
 }
 
 <style>
-    /* Hide header and footer for immersive quiz experience */
-    header, footer { display: none !important; }
+    /* Hide header, footer, and support chat for immersive quiz experience */
+    header, footer, nav.glass-nav, .support-popup { display: none !important; }
+    
+    /* Reset layout padding */
+    main { padding-top: 0 !important; }
     
     body {
         background-color: #f8fafc;
@@ -127,11 +130,189 @@
                                     Start Quiz <span class="material-symbols-outlined text-[24px]">arrow_forward</span>
                                 </button>
                             </div>
+                            
+                            <!-- History Section -->
+                            <div id="quiz-history-container" class="mt-10 border-t border-slate-100 pt-8 hidden">
+                                <h3 class="text-lg font-bold text-slate-900 mb-4">Your Attempt History</h3>
+                                <div id="quiz-history-list" class="space-y-3"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
             document.getElementById('quiz-app').innerHTML = html;
+            loadHistory();
+        }
+
+        async function loadHistory(page = 1) {
+            try {
+                const res = await fetch(`/QuizAttempt/History/${quizData.quizId}?page=${page}&pageSize=5`);
+                const result = await res.json();
+                if (result.success && result.data && result.data.items && result.data.items.length > 0) {
+                    const container = document.getElementById('quiz-history-container');
+                    const list = document.getElementById('quiz-history-list');
+                    container.classList.remove('hidden');
+
+                    let hHtml = '';
+                    result.data.items.forEach((attempt, index) => {
+                        const dateStr = attempt.submittedAt ? new Date(attempt.submittedAt).toLocaleString() : 'Incomplete';
+                        const statusHtml = attempt.isPassed 
+                            ? '<span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded border border-emerald-200">Passed</span>' 
+                            : '<span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded border border-rose-200">Failed</span>';
+                        
+                        hHtml += `
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between hover:border-emerald-300 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 rounded-lg ${attempt.isPassed ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} flex items-center justify-center shrink-0">
+                                        <span class="material-symbols-outlined">${attempt.isPassed ? 'workspace_premium' : 'cancel'}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-900">Attempt ID: ${attempt.attemptId}</p>
+                                        <p class="text-xs text-slate-500">${dateStr}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="text-right">
+                                        <p class="font-black text-slate-900">${attempt.score}%</p>
+                                        ${attempt.submittedAt ? statusHtml : '<span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">Pending</span>'}
+                                    </div>
+                                    ${attempt.submittedAt ? `<button onclick="showAttemptDetails(${attempt.attemptId})" class="text-emerald-600 hover:text-emerald-700 text-sm font-bold bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded transition-colors">View Details</button>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    // Pagination controls
+                    if (result.data.totalPages > 1) {
+                        hHtml += `<div class="flex justify-center items-center gap-2 mt-4">`;
+                        for (let i = 1; i <= result.data.totalPages; i++) {
+                            hHtml += `<button onclick="loadHistory(${i})" class="px-3 py-1 rounded-md text-sm font-bold transition-colors ${i === result.data.currentPage ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}">${i}</button>`;
+                        }
+                        hHtml += `</div>`;
+                    }
+                    
+                    list.innerHTML = hHtml;
+                }
+            } catch (err) { console.error('Failed to load history', err); }
+        }
+
+        async function showAttemptDetails(attemptId) {
+            try {
+                const res = await fetch(`/QuizAttempt/Details/${attemptId}`);
+                const result = await res.json();
+                if (result.success && result.data) {
+                    renderAttemptDetails(result.data);
+                } else {
+                    alert(result.message || 'Failed to load details.');
+                }
+            } catch (err) { console.error('Failed to load attempt details', err); }
+        }
+
+        function renderAttemptDetails(details) {
+            let html = `
+                <div id="attempt-details-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+                    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeAttemptDetails()"></div>
+                    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                            <h3 class="text-xl font-bold text-slate-900">Attempt Details</h3>
+                            <button onclick="closeAttemptDetails()" class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div class="p-6 overflow-y-auto custom-scrollbar flex-1">
+                            <div class="flex items-center gap-6 mb-8 bg-slate-50 p-6 rounded-xl border border-slate-100">
+                                <div>
+                                    <p class="text-sm font-bold text-slate-500 mb-1">Score</p>
+                                    <p class="text-3xl font-black ${details.isPassed ? 'text-emerald-600' : 'text-rose-600'}">${details.score}%</p>
+                                </div>
+                                <div class="w-px h-12 bg-slate-200"></div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-500 mb-1">Result</p>
+                                    <p class="text-xl font-bold ${details.isPassed ? 'text-emerald-600' : 'text-rose-600'}">${details.isPassed ? 'Passed' : 'Failed'}</p>
+                                </div>
+                                <div class="w-px h-12 bg-slate-200"></div>
+                                <div>
+                                    <p class="text-sm font-bold text-slate-500 mb-1">Correct Answers</p>
+                                    <p class="text-xl font-bold text-slate-900">${details.correctCount} / ${details.totalQuestions}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-6">
+            `;
+            
+            details.questions.forEach((q, idx) => {
+                const isCorrect = q.isCorrect;
+                html += `
+                    <div class="bg-white border ${isCorrect ? 'border-emerald-200' : 'border-rose-200'} rounded-xl p-5 shadow-sm">
+                        <div class="flex gap-4 mb-4">
+                            <div class="w-8 h-8 rounded-full ${isCorrect ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'} flex items-center justify-center shrink-0 font-bold text-sm">
+                                ${idx + 1}
+                            </div>
+                            <div>
+                                <p class="text-slate-900 font-medium">${q.questionText}</p>
+                            </div>
+                        </div>
+                        <div class="ml-12 space-y-2">
+                `;
+                
+                q.options.forEach(opt => {
+                    let optClass = "border-slate-200 bg-slate-50 text-slate-700";
+                    let icon = "";
+                    if (opt.optionId === q.selectedOptionId) {
+                        if (opt.isCorrect) {
+                            optClass = "border-emerald-500 bg-emerald-50 text-emerald-700 font-bold";
+                            icon = '<span class="material-symbols-outlined text-emerald-500 text-lg ml-auto">check_circle</span>';
+                        } else {
+                            optClass = "border-rose-500 bg-rose-50 text-rose-700 font-bold";
+                            icon = '<span class="material-symbols-outlined text-rose-500 text-lg ml-auto">cancel</span>';
+                        }
+                    } else if (opt.isCorrect) {
+                        optClass = "border-emerald-300 bg-emerald-50/50 text-emerald-600 font-medium";
+                        icon = '<span class="material-symbols-outlined text-emerald-500 text-lg ml-auto">check</span>';
+                    }
+                    
+                    html += `
+                        <div class="px-4 py-3 rounded-lg border ${optClass} flex items-center">
+                            <span class="text-sm">${opt.optionText}</span>
+                            ${icon}
+                        </div>
+                    `;
+                });
+                
+                if (q.explanation) {
+                    html += `
+                        <div class="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg text-sm text-indigo-900 flex gap-3">
+                            <span class="material-symbols-outlined text-indigo-400">lightbulb</span>
+                            <div>
+                                <p class="font-bold mb-1">Explanation</p>
+                                <p>${q.explanation}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const div = document.createElement('div');
+            div.id = 'attempt-details-wrapper';
+            div.innerHTML = html;
+            document.body.appendChild(div);
+        }
+        
+        function closeAttemptDetails() {
+            const wrapper = document.getElementById('attempt-details-wrapper');
+            if (wrapper) wrapper.remove();
         }
 
         function startQuiz() {
@@ -167,6 +348,24 @@
                 renderQuiz();
             }
         }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!isSubmitted && document.getElementById('quiz-app')) {
+                renderQuiz();
+            }
+        });
 
         function renderQuiz() {
             const totalQuestions = quizData.questions.length;
@@ -224,6 +423,9 @@
                                 ${formatTime(timeRemaining)}
                             </div>
                         ` : ''}
+                        <button onclick="toggleFullscreen()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors" title="Toggle Fullscreen">
+                            <span class="material-symbols-outlined">${document.fullscreenElement ? 'fullscreen_exit' : 'fullscreen'}</span>
+                        </button>
                         <button onclick="confirmSubmit()" id="btn-submit" class="px-6 py-2 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md">
                             Submit
                         </button>

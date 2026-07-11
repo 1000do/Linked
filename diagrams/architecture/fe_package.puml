@@ -1,0 +1,57 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "Front - End" {
+    folder "Controllers" {
+    }
+    
+    folder "Helpers" {
+    }
+
+    folder "Models" {
+        folder "Common"
+        folder "ViewModels"
+    }
+
+    folder "Views" {
+        folder "Account"
+        folder "AdminAccount"
+        folder "AdminAiService"
+        folder "AdminApproval"
+        folder "AdminAvatarFrame"
+        folder "AdminFinance"
+        folder "AdminModeration"
+        folder "AdminProfile"
+        folder "Cart"
+        folder "Chat"
+        folder "Coupon"
+        folder "Course"
+        folder "Gift"
+        folder "Home"
+        folder "Instructor"
+        folder "InstructorCourse"
+        folder "Notification"
+        folder "QuestionBank"
+        folder "Quiz"
+        folder "QuizAttempt"
+        folder "Report"
+        folder "Shared"
+        folder "Transaction"
+        folder "Wishlist"
+    }
+
+    folder "wwwroot" {
+        folder "css"
+        folder "img"
+        folder "js"
+        folder "lib"
+    }
+}
+
+Views ..> Models : <<import>>
+Controllers ..> Models : <<import>>
+Controllers ..> Helpers : <<import>>
+Views ..> wwwroot : <<import>>
+@enduml

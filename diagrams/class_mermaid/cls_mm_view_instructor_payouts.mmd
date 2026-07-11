@@ -1,4 +1,4 @@
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -6,14 +6,11 @@ direction LR
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
     - _api : ApiClient
-    - _jsonOpts : JsonSerializerOptions
     + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
-    + SyncAllPayouts() Task~IActionResult~
-    + PayViaStripe(payoutId: int) Task~IActionResult~
-    + MarkAsPaid(payoutId: int) Task~IActionResult~
 }
 
 class AdminFinanceUnifiedVM {
+    <<view model>>
     + Dashboard : FinanceDashboardVM
     + Withdraw : WithdrawPageVM
     + Transactions : TransactionPagedVM
@@ -22,10 +19,21 @@ class AdminFinanceUnifiedVM {
     + PendingRefunds : PagedResult~RefundRequestVM~
     + PayoutDays : string
     + CourseRevenues : List~InstructorCourseRevenueResponse~
-    + YearlySummaries : Dictionary~int,FinancialSummaryVM~
+    + YearlySummaries : Dictionary~int, FinancialSummaryVM~
+}
+
+class PagedResultPayoutDetailVM["PagedResult~PayoutDetailVM~"] {
+    + Items : List~PayoutDetailVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
 }
 
 class PayoutDetailVM {
+    <<view model>>
     + PayoutId : int
     + TransactionId : int
     + InstructorName : string
@@ -50,14 +58,31 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
     - _financeService : IAdminFinanceService
     + GetPayouts(year: int?, month: int?, page: int, pageSize: int) Task~IActionResult~
-    + SyncAllPayouts() Task~IActionResult~
-    + TransferViaStripe(payoutId: int) Task~IActionResult~
-    + MarkPayoutAsPaid(payoutId: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
+class ApiResponsePayout["ApiResponse~PagedResult~PayoutDetailResponse~~"] {
+    <<dto>>
+    + Success : bool
+    + Message : string
+    + Data : PagedResult~PayoutDetailResponse~
+    + Errors : List~string~
+}
+
+class PagedResultPayoutDetailResponse["PagedResult~PayoutDetailResponse~"] {
+    <<dto>>
+    + Items : List~PayoutDetailResponse~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
+}
+
 class PayoutDetailResponse {
+    <<dto>>
     + PayoutId : int
     + TransactionId : int
     + InstructorName : string
@@ -68,15 +93,16 @@ class PayoutDetailResponse {
     + PlatformReceived : decimal
     + TransferRate : decimal
     + IsPaid : bool
+    + TransactionDate : DateTime?
+    + PayoutDate : DateTime
     + PayoutStatus : string
     + StripeTransferId : string?
     + StripePayoutId : string?
     + PaidToBankAt : DateTime?
-    + TransactionDate : DateTime?
-    + PayoutDate : DateTime
 }
 
 class PayoutDetailProjection {
+    <<dto>>
     + PayoutId : int
     + TransactionId : int
     + InstructorName : string
@@ -94,21 +120,36 @@ class PayoutDetailProjection {
     + PaidToBankAt : DateTime?
 }
 
-class StripePayoutDto {
-    + Id : string
-    + Status : string
-    + ArrivalDate : DateTime?
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~ *
 }
 
-class StripeBalanceTransactionDto {
-    + Type : string
-    + SourceId : string?
+class IAdminFinanceRepository {
+    <<interface>>
+    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PayoutDetailProjection~, int~~ *
 }
 
-class StripeTransferResponseDto {
-    + Id : string
-    + DestinationPaymentId : string
-    + DestinationAmount : decimal
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PayoutDetailProjection~, int~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + InstructorPayouts : DbSet~InstructorPayout~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -148,6 +189,42 @@ class Transaction {
     + InstructorPayouts : ICollection~InstructorPayout~
 }
 
+class OrderItem {
+    + Id : int
+    + OrderId : int?
+    + CourseId : int?
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
+    + Transactions : ICollection~Transaction~
+}
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
 class Instructor {
     + InstructorId : int
     + ProfessionalTitle : string?
@@ -165,6 +242,7 @@ class Instructor {
     + StripeCountry : string?
     + Courses : ICollection~Course~
     + InstructorPayouts : ICollection~InstructorPayout~
+    + Quizzes : ICollection~Quiz~
     + InstructorNavigation : User
 }
 
@@ -179,124 +257,49 @@ class User {
     + OrderInfos : ICollection~OrderInfo~
     + UserNavigation : Account
     + WishlistItems : ICollection~WishlistItem~
-}
-
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class IAdminFinanceService {
-    <<interface>>
-    + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~ *
-    + SyncAllPayoutsWithStripeAsync() Task *
-    + PerformStripeTransferAsync(payoutId: int) Task~string~ *
-    + MarkPayoutAsPaidAsync(payoutId: int) Task *
-}
-
-class IStripeConnectService {
-    <<interface>>
-    + ListPayoutsAsync(stripeAccountId: string) Task~List~StripePayoutDto~~ *
-    + ListBalanceTransactionsAsync(stripeAccountId: string, stripePayoutId: string) Task~List~StripeBalanceTransactionDto~~ *
-    + CreateConnectTransferAsync(amount: decimal, currency: string, destinationAccountId: string, description: string, payoutId: int) Task~StripeTransferResponseDto~ *
-}
-
-%% ==================== BACKEND - REPOSITORY INTERFACES ====================
-
-class IAdminFinanceRepository {
-    <<interface>>
-    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PayoutDetailProjection~,int~~ *
-    + GetPayoutsByStripePayoutIdAsync(stripePayoutId: string) Task~List~InstructorPayout~~ *
-    + GetPayoutByTransferIdAsync(transferId: string) Task~InstructorPayout?~ *
-    + GetPayoutByIdAsync(payoutId: int) Task~InstructorPayout?~ *
-    + SaveChangesAsync() Task~int~ *
-}
-
-class IInstructorRepository {
-    <<interface>>
-    + GetInstructorsWithStripeAsync() Task~List~Instructor~~ *
-    + SaveChangesAsync() Task~int~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
-
-class AdminFinanceService {
-    - _repo : IAdminFinanceRepository
-    - _instructorRepo : IInstructorRepository
-    - _stripeConnect : IStripeConnectService
-    + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~
-    + SyncAllPayoutsWithStripeAsync() Task
-    + PerformStripeTransferAsync(payoutId: int) Task~string~
-    + MarkPayoutAsPaidAsync(payoutId: int) Task
-}
-
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
-
-class AdminFinanceRepository {
-    - _context : AppDbContext
-    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PayoutDetailProjection~,int~~
-    + GetPayoutsByStripePayoutIdAsync(stripePayoutId: string) Task~List~InstructorPayout~~
-    + GetPayoutByTransferIdAsync(transferId: string) Task~InstructorPayout?~
-    + GetPayoutByIdAsync(payoutId: int) Task~InstructorPayout?~
-    + SaveChangesAsync() Task~int~
-}
-
-class InstructorRepository {
-    - _context : AppDbContext
-    + GetInstructorsWithStripeAsync() Task~List~Instructor~~
-    + SaveChangesAsync() Task~int~
-}
-
-%% ==================== BACKEND - DbContext ====================
-
-class AppDbContext {
-    + InstructorPayouts : DbSet~InstructorPayout~
-    + Transactions : DbSet~Transaction~
-    + Instructors : DbSet~Instructor~
-    + Users : DbSet~User~
+    + QuizAttempts : ICollection~QuizAttempt~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION (hollow diamond) ===
-AdminFinanceUnifiedVM o-- PayoutDetailVM
-Instructor o-- InstructorPayout
-
 %% === COMPOSITION (filled diamond) ===
-Transaction *-- InstructorPayout
+Instructor *-- User
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE
+%% === AGGREGATION (hollow diamond) ===
+AdminFinanceUnifiedVM o-- PagedResultPayoutDetailVM
+PagedResultPayoutDetailVM o-- PayoutDetailVM
+PagedResultPayoutDetailResponse o-- PayoutDetailResponse
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AdminFinanceControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
-AdminFinanceService --> IInstructorRepository
-AdminFinanceService --> IStripeConnectService
 AdminFinanceRepository --> AppDbContext
-InstructorRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
-InstructorRepository ..|> IInstructorRepository
 
-%% === ASSOCIATIONS (bidirectional) ===
-Instructor -- User
+%% === BIDIRECTIONAL ASSOCIATION (solid line) ===
+InstructorPayout -- Transaction
+InstructorPayout -- Instructor
+Transaction -- OrderItem
+OrderItem -- Course
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
-AdminFinanceControllerBE ..> PayoutDetailResponse
-IAdminFinanceService ..> PayoutDetailResponse
+AdminFinanceControllerFE ..> PagedResultPayoutDetailVM
+
+AdminFinanceControllerBE ..> ApiResponsePayout
+AdminFinanceControllerBE ..> PagedResultPayoutDetailResponse
+
 AdminFinanceService ..> PayoutDetailResponse
-AdminFinanceService ..> PayoutDetailResponse
-IAdminFinanceRepository ..> PayoutDetailProjection
+AdminFinanceService ..> PayoutDetailProjection
+AdminFinanceService ..> PagedResultPayoutDetailResponse
+
 AdminFinanceRepository ..> PayoutDetailProjection
-IInstructorRepository ..> Instructor
-InstructorRepository ..> Instructor
-IStripeConnectService ..> StripePayoutDto
-IStripeConnectService ..> StripeBalanceTransactionDto
-IStripeConnectService ..> StripeTransferResponseDto
-AdminFinanceService ..> StripePayoutDto
-AdminFinanceService ..> StripeBalanceTransactionDto
-AdminFinanceService ..> StripeTransferResponseDto
 AdminFinanceRepository ..> InstructorPayout
-AdminFinanceRepository ..> Transaction
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

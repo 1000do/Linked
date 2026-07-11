@@ -336,4 +336,246 @@ public class ModerationPenaltyServiceTests
         await _notificationServiceMock.Received(1).SendNotificationAsync(101, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
         await _notificationServiceMock.Received(1).SendNotificationAsync(102, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
+
+    [Fact]
+    public async Task ProcessCourseStrikeAsync_AlreadyAtThreeStrikes_CapsAtThree_ArchivesCourse_ReturnsTrue()
+    {
+        // Arrange 1
+        int courseId = 1;
+        var course = new Course { CourseId = courseId, Title = "Test", InstructorId = 2, CourseFlagCount = 3, CourseStatus = "active" };
+        var instructor = new Instructor { InstructorId = 2 };
+        string resolutionNote = "bad content";
+
+        // Arrange 2
+        _courseRepoMock.GetByIdAsync(courseId).Returns(course);
+        _instructorRepoMock.GetByIdAsync(2).Returns(instructor);
+
+        // Act
+        var result = await _sut.ProcessCourseStrikeAsync(courseId, resolutionNote);
+
+        // Assert
+        result.Should().BeTrue();
+        course.CourseFlagCount.Should().Be(3);
+        course.CourseStatus.Should().Be(CourseStatus.Archived.ToValue());
+
+        await _courseRepoMock.Received(1).GetByIdAsync(courseId);
+        await _instructorRepoMock.Received(2).GetByIdAsync(2);
+        
+        await _lockoutRepoMock.Received(1).AddAsync(Arg.Any<Lockout>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(
+            2,
+            "Permanent Course Discontinuation Notice",
+            Arg.Any<string>(),
+            "/Course/Details/1"
+        );
+    }
+
+    [Fact]
+    public async Task ProcessCourseStrikeAsync_UnderThreeStrikes_NoInstructorId_ReturnsTrue_DoesNotSendWarning()
+    {
+        // Arrange 1
+        int courseId = 1;
+        var course = new Course { CourseId = courseId, Title = "Test", InstructorId = null, CourseFlagCount = 1 };
+        string resolutionNote = "bad content";
+
+        // Arrange 2
+        _courseRepoMock.GetByIdAsync(courseId).Returns(course);
+
+        // Act
+        var result = await _sut.ProcessCourseStrikeAsync(courseId, resolutionNote);
+
+        // Assert
+        result.Should().BeTrue();
+        course.CourseFlagCount.Should().Be(2);
+
+        await _courseRepoMock.Received(1).GetByIdAsync(courseId);
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ProcessCourseStrikeAsync_ThreeStrikes_NoInstructorId_ReturnsTrue_DoesNotAddLockoutOrNotice()
+    {
+        // Arrange 1
+        int courseId = 1;
+        var course = new Course { CourseId = courseId, Title = "Test", InstructorId = null, CourseFlagCount = 2, CourseStatus = "active" };
+        string resolutionNote = "bad content";
+
+        // Arrange 2
+        _courseRepoMock.GetByIdAsync(courseId).Returns(course);
+
+        // Act
+        var result = await _sut.ProcessCourseStrikeAsync(courseId, resolutionNote);
+
+        // Assert
+        result.Should().BeTrue();
+        course.CourseFlagCount.Should().Be(3);
+        course.CourseStatus.Should().Be(CourseStatus.Archived.ToValue());
+
+        await _courseRepoMock.Received(1).GetByIdAsync(courseId);
+        await _instructorRepoMock.DidNotReceive().GetByIdAsync(Arg.Any<int>());
+        await _lockoutRepoMock.DidNotReceive().AddAsync(Arg.Any<Lockout>());
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ProcessCourseStrikeAsync_ThreeStrikes_InstructorNotFound_ReturnsTrue_SendsNoticeButNoLockout()
+    {
+        // Arrange 1
+        int courseId = 1;
+        var course = new Course { CourseId = courseId, Title = "Test", InstructorId = 2, CourseFlagCount = 2, CourseStatus = "active" };
+        string resolutionNote = "bad content";
+
+        // Arrange 2
+        _courseRepoMock.GetByIdAsync(courseId).Returns(course);
+        _instructorRepoMock.GetByIdAsync(2).Returns((Instructor?)null);
+
+        // Act
+        var result = await _sut.ProcessCourseStrikeAsync(courseId, resolutionNote);
+
+        // Assert
+        result.Should().BeTrue();
+        course.CourseFlagCount.Should().Be(3);
+        course.CourseStatus.Should().Be(CourseStatus.Archived.ToValue());
+
+        await _courseRepoMock.Received(1).GetByIdAsync(courseId);
+        await _instructorRepoMock.Received(1).GetByIdAsync(2);
+        
+        await _lockoutRepoMock.DidNotReceive().AddAsync(Arg.Any<Lockout>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(
+            2,
+            "Permanent Course Discontinuation Notice",
+            Arg.Any<string>(),
+            "/Course/Details/1"
+        );
+    }
+
+    [Fact]
+    public async Task ProcessReviewStrikeAsync_AlreadyAtThreeStrikes_CapsAtThree_BansAccount_ReturnsTrue()
+    {
+        // Arrange 1
+        int userId = 1;
+        var account = new Account { AccountId = userId, AccountFlagCount = 3, AccountStatus = "active" };
+        var instructor = new Instructor { InstructorId = userId, ApprovalStatus = "approved" };
+        
+        // Arrange 2
+        _userRepoMock.GetAccountByIdAsync(userId).Returns(account);
+        _userRepoMock.UpdateAccountAsync(account).Returns(true);
+        _instructorRepoMock.GetByIdAsync(userId).Returns(instructor);
+
+        // Act
+        var result = await _sut.ProcessReviewStrikeAsync(userId, "note", "/link");
+
+        // Assert
+        result.Should().BeTrue();
+        account.AccountFlagCount.Should().Be(3);
+        account.AccountStatus.Should().Be(AccountStatus.Banned.ToValue());
+
+        await _lockoutRepoMock.Received(1).AddAsync(Arg.Any<Lockout>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(userId, "Account Suspended (3rd Violation)", Arg.Any<string>(), "/link");
+        await _clientProxyMock.Received(1).SendCoreAsync("AccountLockedOut", Arg.Any<object[]>());
+        
+        await _userRepoMock.Received(1).UpdateAccountAsync(account);
+    }
+
+    [Fact]
+    public async Task ProcessReviewStrikeAsync_ThirdStrike_InstructorNull_ReturnsTrue_NoStudentSuspensionNotice()
+    {
+        // Arrange 1
+        int userId = 1;
+        var account = new Account { AccountId = userId, AccountFlagCount = 2, AccountStatus = "active" };
+        
+        // Arrange 2
+        _userRepoMock.GetAccountByIdAsync(userId).Returns(account);
+        _userRepoMock.UpdateAccountAsync(account).Returns(true);
+        _instructorRepoMock.GetByIdAsync(userId).Returns((Instructor?)null);
+
+        // Act
+        var result = await _sut.ProcessReviewStrikeAsync(userId, "note", "/link");
+
+        // Assert
+        result.Should().BeTrue();
+        account.AccountFlagCount.Should().Be(3);
+        account.AccountStatus.Should().Be(AccountStatus.Banned.ToValue());
+
+        await _lockoutRepoMock.Received(1).AddAsync(Arg.Any<Lockout>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(userId, "Account Suspended (3rd Violation)", Arg.Any<string>(), "/link");
+        await _clientProxyMock.Received(1).SendCoreAsync("AccountLockedOut", Arg.Any<object[]>());
+        
+        await _userRepoMock.Received(1).UpdateAccountAsync(account);
+        await _instructorRepoMock.Received(1).GetByIdAsync(userId);
+    }
+
+    [Fact]
+    public async Task ProcessReviewStrikeAsync_ThirdStrike_InstructorNotApproved_ReturnsTrue_NoStudentSuspensionNotice()
+    {
+        // Arrange 1
+        int userId = 1;
+        var account = new Account { AccountId = userId, AccountFlagCount = 2, AccountStatus = "active" };
+        var instructor = new Instructor { InstructorId = userId, ApprovalStatus = "pending" };
+        
+        // Arrange 2
+        _userRepoMock.GetAccountByIdAsync(userId).Returns(account);
+        _userRepoMock.UpdateAccountAsync(account).Returns(true);
+        _instructorRepoMock.GetByIdAsync(userId).Returns(instructor);
+
+        // Act
+        var result = await _sut.ProcessReviewStrikeAsync(userId, "note", "/link");
+
+        // Assert
+        result.Should().BeTrue();
+        account.AccountFlagCount.Should().Be(3);
+        account.AccountStatus.Should().Be(AccountStatus.Banned.ToValue());
+
+        await _lockoutRepoMock.Received(1).AddAsync(Arg.Any<Lockout>());
+        await _notificationServiceMock.Received(1).SendNotificationAsync(userId, "Account Suspended (3rd Violation)", Arg.Any<string>(), "/link");
+        await _clientProxyMock.Received(1).SendCoreAsync("AccountLockedOut", Arg.Any<object[]>());
+        
+        await _userRepoMock.Received(1).UpdateAccountAsync(account);
+        await _instructorRepoMock.Received(1).GetByIdAsync(userId);
+    }
+
+    [Fact]
+    public async Task NotifyStudentsAboutInstructorSuspensionAsync_CoursesIsNull_ReturnsFalse()
+    {
+        // Arrange 1
+        int instructorId = 1;
+        var instructor = new Instructor { InstructorId = instructorId };
+
+        // Arrange 2
+        _instructorRepoMock.GetByIdAsync(instructorId).Returns(instructor);
+        _courseRepoMock.GetInstructorCoursesAsync(instructorId).Returns((IEnumerable<Course>?)null);
+
+        // Act
+        var result = await _sut.NotifyStudentsAboutInstructorSuspensionAsync(instructorId);
+
+        // Assert
+        result.Should().BeFalse();
+        await _instructorRepoMock.Received(1).GetByIdAsync(instructorId);
+        await _courseRepoMock.Received(1).GetInstructorCoursesAsync(instructorId);
+    }
+
+    [Fact]
+    public async Task NotifyStudentsAboutInstructorSuspensionAsync_CoursesHaveNoStudents_ReturnsFalse()
+    {
+        // Arrange 1
+        int instructorId = 1;
+        var instructor = new Instructor { InstructorId = instructorId };
+        var courses = new List<Course> { new Course { CourseId = 10 } };
+        var students = new List<int>(); // Empty
+
+        // Arrange 2
+        _instructorRepoMock.GetByIdAsync(instructorId).Returns(instructor);
+        _courseRepoMock.GetInstructorCoursesAsync(instructorId).Returns(courses);
+        _enrollmentRepoMock.GetEnrolledUserIdsAsync(10).Returns(students);
+
+        // Act
+        var result = await _sut.NotifyStudentsAboutInstructorSuspensionAsync(instructorId);
+
+        // Assert
+        result.Should().BeFalse();
+        await _instructorRepoMock.Received(1).GetByIdAsync(instructorId);
+        await _courseRepoMock.Received(1).GetInstructorCoursesAsync(instructorId);
+        await _enrollmentRepoMock.Received(1).GetEnrolledUserIdsAsync(10);
+        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
 }

@@ -1,0 +1,76 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Quiz Details
+
+actor Instructor as act
+participant "QuizEditorPage" as view
+participant "QuizController" as fe_ctrl <<frontend controller>>
+participant "QuizController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":IQuizRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Access Quiz Details
+view -> fe_ctrl++: GET /Quiz/Detail/{id}
+fe_ctrl -> be_ctrl++: GET /api/quizzes/{id}
+
+be_ctrl -> sv++: Call GetQuizDetailAsync(id, instructorId)
+
+sv -> repo++: Call GetByIdWithQuestionsAsync(id)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch quiz and questions
+db -->> ctx--: Return query results
+ctx -->> repo--: Return quiz entity
+repo -->> sv--: Return quiz entity
+
+alt Quiz Not Found
+    sv -->> be_ctrl: throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display quiz not found message
+else Quiz Found
+    sv -> sv++: Call EnsureOwnership(quiz, instructorId)
+    sv--
+    
+    alt Not Quiz Owner
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display unauthorized message
+    else Is Quiz Owner
+        sv -> sv++: Call MapToDetail(quiz)
+        sv--
+        
+        sv -->> be_ctrl--: Return QuizDetailResponse object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return View(QuizDetailResponse)
+        view -->> act--: Display quiz details
+    end
+end

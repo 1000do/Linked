@@ -62,6 +62,7 @@ You MUST use the following testing frameworks when writing the unit tests:
     *   Advise them to aim for at least 90% branch coverage alongside the 100% line coverage.
     *   Prioritize covering explicit conditional or iteration branches (`for`, `while`, `if`, `else`, `switch`). Only tackle shorthand branches (like `?.`, `??`) if all explicit branches are already covered.
 *   **Note**: In C#, coverage for `async` methods often appears under compiler-generated state machine structs (e.g., `<MethodName>d__12`) rather than the parent class. Ensure your parser accounts for this when verifying 100% coverage.
+*   **Presentation**: At the very end of the workflow, ALWAYS provide the absolute paths to the specific generated HTML test report files for the requested services (e.g., `file:///path/to/TestHTMLReports/Namespace_ClassName.html`) in your final response. Do NOT just link the generic `index.html`. This allows the user to click and manually review the exact coverage details for the specific classes they requested.
 
 ## Structure Example
 ```csharp

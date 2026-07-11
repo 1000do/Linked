@@ -1,0 +1,115 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuizControllerFE["QuizController"] {
+    <<frontend controller>>
+    + CreateQuiz(model: CreateQuizViewModel) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuizControllerBE["QuizController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + CreateQuiz(request: QuizCreateRequest) Task~IActionResult~
+    - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuizCreateRequest {
+    <<dto>>
+    + CourseId : int
+    + LessonId : int?
+    + Title : string
+    + Description : string?
+    + TimeLimitMinutes : int?
+    + PassingScore : int?
+    + MaxAttempts : int?
+}
+
+class QuizResponse {
+    <<dto>>
+    + QuizId : int
+    + Title : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Quiz {
+    <<entity>>
+    + QuizId : int
+    + CourseId : int
+    + LessonId : int?
+    + Title : string
+    + Description : string?
+    + TimeLimitMinutes : int?
+    + PassingScore : int?
+    + MaxAttempts : int?
+    + IsHidden : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<interface>>
+    + CreateQuizAsync(request: QuizCreateRequest, instructorId: int) Task~QuizResponse~ *
+}
+
+class IQuizRepository {
+    <<interface>>
+    + AddAsync(quiz: Quiz) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    - _quizRepo : IQuizRepository
+    
+    + CreateQuizAsync(request: QuizCreateRequest, instructorId: int) Task~QuizResponse~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    - _context : AppDbContext
+    
+    + AddAsync(quiz: Quiz) void
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Quizzes : DbSet~Quiz~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+QuizControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY ===
+QuizControllerFE ..> QuizControllerBE
+QuizControllerBE ..> QuizCreateRequest
+QuizService ..> QuizCreateRequest
+QuizService ..> QuizResponse
+QuizService ..> Quiz
+QuizRepository ..> Quiz
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

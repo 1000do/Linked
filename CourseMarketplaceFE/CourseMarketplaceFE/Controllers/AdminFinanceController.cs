@@ -1,6 +1,7 @@
 using System.Text.Json;
 using CourseMarketplaceFE.Helpers;
 using CourseMarketplaceFE.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers;
@@ -30,7 +31,9 @@ public class AdminFinanceController : Controller
     // GET /AdminFinance
     // Dashboard chính — gọi 2 API song song: summary + payouts
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-123 to UC-133, 2.2.3.136: Finance Dashboard & List — Chỉ Admin
     [HttpGet]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string? keyword = null, string? sortBy = "date_desc", string? status = null, string tab = "tx", int? year = null, int? month = null, int payoutPage = 1, int withdrawPage = 1)
     {
         var vm = new AdminFinanceUnifiedVM();
@@ -164,8 +167,10 @@ public class AdminFinanceController : Controller
     // POST /AdminFinance/SetTransferRate
     // Cập nhật tỷ lệ chia sẻ doanh thu
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-134: Set Transfer Rate — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> SetTransferRate(decimal rate)
     {
         var response = await _api.PostJsonAsync("admin/finance/transfer-rate", new { Rate = rate });
@@ -194,8 +199,10 @@ public class AdminFinanceController : Controller
     // POST /AdminFinance/SetPayoutDays
     // Cập nhật ngày thanh toán tự động định kỳ
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-135: Set Payout Schedule — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> SetPayoutDays(string payoutDays)
     {
         var response = await _api.PostJsonAsync("admin/finance/payout-days", new { PayoutDays = payoutDays });
@@ -223,8 +230,10 @@ public class AdminFinanceController : Controller
     // ═══════════════════════════════════════════════════════════════════════
     // POST /AdminFinance/MarkAsPaid/{payoutId}
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-124: Mark Payout Paid — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> MarkAsPaid(int payoutId)
     {
         var response = await _api.PostAsync($"admin/finance/payouts/{payoutId}/mark-paid");
@@ -246,8 +255,10 @@ public class AdminFinanceController : Controller
     // POST /AdminFinance/PayViaStripe/{payoutId}
     // Chuyển tiền thật qua Stripe Connect API
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-124: Stripe Transfer (Pay Instructor) — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> PayViaStripe(int payoutId)
     {
         var response = await _api.PostAsync($"admin/finance/payouts/{payoutId}/stripe-transfer");
@@ -285,8 +296,10 @@ public class AdminFinanceController : Controller
 
 
 
+    // UC-136: Withdraw Funds — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Withdraw(decimal? amount, string? description)
     {
         var response = await _api.PostJsonAsync("admin/finance/withdraw", new
@@ -321,8 +334,10 @@ public class AdminFinanceController : Controller
     // POST /AdminFinance/Refund/{transactionId}
     // Hoàn tiền cho 1 giao dịch qua Stripe
     // ═══════════════════════════════════════════════════════════════════════
+    // Admin Refund trực tiếp — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Refund(int transactionId, string? reason)
     {
         var response = await _api.PostJsonAsync($"admin/finance/transactions/{transactionId}/refund", new
@@ -362,8 +377,10 @@ public class AdminFinanceController : Controller
         return RedirectToAction("Detail", "Transaction", new { id = transactionId });
     }
 
+    // UC-124: Sync All Payouts — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> SyncAllPayouts()
     {
         var response = await _api.PostAsync("admin/finance/payouts/sync-all");
@@ -389,8 +406,10 @@ public class AdminFinanceController : Controller
         return RedirectToAction(nameof(Index), new { tab = "po" });
     }
 
+    // UC-127: Approve Refund Request — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> ApproveRefundDecision(int transactionId, string? adminNote)
     {
         var response = await _api.PostJsonAsync($"admin/finance/refunds/{transactionId}/approve", new
@@ -416,8 +435,10 @@ public class AdminFinanceController : Controller
         return Json(new { success = false, message = message });
     }
 
+    // UC-128: Reject Refund Request — Chỉ Admin
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> RejectRefundDecision(int transactionId, string? adminNote)
     {
         var response = await _api.PostJsonAsync($"admin/finance/refunds/{transactionId}/reject", new
@@ -446,7 +467,9 @@ public class AdminFinanceController : Controller
     // GET /AdminFinance/InstructorRevenues
     // Dedicated page for Instructor Course Revenues with KPIs, search, period filter, sorting
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-74 (Admin View): View Instructor Course Revenues — Chỉ Admin
     [HttpGet]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> InstructorRevenues(int? year = null, int? month = null, string? keyword = null, string? sortBy = "sales_desc")
     {
         int selectedYear = year ?? DateTime.UtcNow.Year;

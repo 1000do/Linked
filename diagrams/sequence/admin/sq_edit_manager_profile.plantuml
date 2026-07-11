@@ -1,0 +1,120 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Edit Profile (For Manager)
+
+actor "Manager\n(Admin/Staff)" as act
+participant "ProfilePage" as view
+participant "EditProfilePage" as edit_view
+participant "LoginPage" as login_view
+participant "AdminProfileController" as fe_ctrl <<frontend controller>>
+participant "AdminProfileController" as be_ctrl <<backend controller>>
+participant ":ManagerProfileService" as profile_sv
+participant ":FileUploadService" as upload_sv
+participant ":ManagerRepository" as manager_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view: Click the "Edit Profile" link
+view -> fe_ctrl++: GET /AdminProfile/Edit
+
+fe_ctrl -> fe_ctrl: Validate active login session
+alt Session Invalid (Not Logged In)
+    fe_ctrl -->> login_view: Redirect to /Account/Login
+    activate login_view
+    login_view -->> act: Display Login page
+    deactivate login_view
+else Valid Session
+    fe_ctrl -> be_ctrl++: GET /api/admin/profile
+    be_ctrl -->> fe_ctrl--: Return profile data
+    
+    fe_ctrl -> fe_ctrl: Map to UpdateAdminProfileViewModel
+    fe_ctrl -->> edit_view: Return View(UpdateAdminProfileViewModel)
+    activate edit_view
+    edit_view -->> act: Display current profile details
+end
+
+alt A.1 Cancel editing
+    act -> edit_view: Click "Cancel" or "Back to Profile"
+    edit_view -->> act: Redirect back to Profile page
+else Save Profile
+    act -> edit_view: Update details and click "Save Profile"
+    
+    edit_view -> edit_view: Validate input fields and show confirmation prompt
+    edit_view -->> act: Display confirmation prompt
+    
+    act -> edit_view: Click confirmation button
+    
+    edit_view -> fe_ctrl: POST /AdminProfile/Edit\n(multipart/form-data)
+    
+    fe_ctrl -> fe_ctrl: Validate active login session
+    alt Session Invalid (Not Logged In)
+        fe_ctrl -->> edit_view: Return Json(success=false)
+        edit_view -->> act: Display authentication error message\nRedirect to login page
+    else Valid Session
+        fe_ctrl -> be_ctrl++: PUT /api/admin/profile/update
+        
+        be_ctrl -> be_ctrl: Validate ClaimTypes.NameIdentifier
+        
+        be_ctrl -> profile_sv++: UpdateProfileAsync(userId, request)
+        
+        alt Has AvatarFile
+            profile_sv -> upload_sv++: UploadImageAsync(request.AvatarFile)
+            upload_sv -->> profile_sv--: return avatarUrl
+            alt File Upload Service offline
+                profile_sv -->> be_ctrl: return false
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> edit_view: Return Json(success=false, message="Failed to update...")
+                edit_view -->> act: Display error message regarding file upload failure
+            end
+        end
+        
+        profile_sv -> manager_repo++: UpdateManagerProfileAsync(...)
+        manager_repo -> ctx++: Query Manager and Update Fields
+        ctx -> db++: Execute UPDATE
+        db -->> ctx--: 1 row affected
+        ctx -->> manager_repo--: return true
+        manager_repo -->> profile_sv--: return true
+        
+        profile_sv -->> be_ctrl--: return true
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+        fe_ctrl -> be_ctrl++: GET /api/admin/profile (Sync Cookies)
+        be_ctrl -->> fe_ctrl--: Return updated profile data
+        
+        fe_ctrl -> fe_ctrl: Update Cookies ("UserName", "AvatarUrl")
+        
+        fe_ctrl -->> edit_view--: Return Json(success=true, avatarUrl, userName)
+        
+        edit_view -> edit_view: Update layout dynamically
+        edit_view -->> act--: Display success confirmation message
+    end
+end
+@enduml

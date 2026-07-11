@@ -1,0 +1,99 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor's Transaction History
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "ApplicationStatusPage" as app_status_view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":TransactionService" as tx_sv
+participant ":PagedResult<TransactionListDto>" as dto
+participant ":TransactionRepository" as tx_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+
+act -> view++: Click "Revenue & Payouts" \n(or use Learner Purchases filters: keyword, status, sortBy)
+view -> fe_tx_ctrl++: GET /Transaction/Instructor?page={p}&keyword={k}&status={s}&sortBy={sort}
+
+fe_tx_ctrl -> fe_tx_ctrl++: Validate actor's authentication and authorization
+fe_tx_ctrl--
+
+alt Session Invalid
+    fe_tx_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_tx_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_tx_ctrl -> fe_tx_ctrl++: Check Request.Cookies["InstructorApprovalStatus"]
+    fe_tx_ctrl--
+    
+    alt Not Approved Instructor
+        fe_tx_ctrl -->> app_status_view++: Redirect to ApplicationStatus
+        app_status_view -->> act--: Display status
+    else Approved Instructor
+        fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor\n(paged for {y}, {m})
+        
+        be_tx_ctrl -> be_tx_ctrl++: Validate login session & Parse userId
+        be_tx_ctrl--
+        
+        alt Invalid login session
+            be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 401
+            fe_tx_ctrl -->> login_view++: Redirect to LoginPage
+            login_view -->> act--: Display login form
+        else Valid Request
+            be_tx_ctrl -> tx_sv++: GetInstructorTransactionsAsync(...)
+            tx_sv -> tx_repo++: GetInstructorTransactionsAsync(...)
+            tx_repo -> ctx++: Query Transactions
+            ctx -> db++: Execute SELECT
+            db -->> ctx--: Return database record
+            ctx -->> tx_repo--: Return list of Transaction entities
+            tx_repo -->> tx_sv--: Return List
+            
+            tx_sv -> dto++: Map to PagedResult<TransactionListDto>
+            dto -->> tx_sv--: Return PagedResult<TransactionListDto>
+            
+            tx_sv -->> be_tx_ctrl--: Return PagedResult<TransactionListDto>
+            be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (TransactionPagedVM)
+            
+            alt Empty History (No Sales)
+                fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
+                view -->> act--: Display empty state "No transactions yet..."
+            else Has Transactions
+                fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
+                view -->> act--: Display "Learner Purchases" tab with Transaction Table\n(Date, Course/Purchaser, Net Earnings, Status, Actions)
+            end
+        end
+    end
+end
+
+@enduml

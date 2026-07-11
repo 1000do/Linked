@@ -58,6 +58,8 @@ public partial class Course
 
     public virtual ICollection<CourseQuiz> CourseQuizzes { get; set; } = new List<CourseQuiz>();
 
+    public virtual ICollection<CourseFieldModerationFeedback> FieldModerationFeedbacks { get; set; } = new List<CourseFieldModerationFeedback>();
+
     public string? WhatYouWillLearn { get; set; }
 
     public string? Requirements { get; set; }

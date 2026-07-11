@@ -1,0 +1,93 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View transaction list (For System)
+
+actor "Admin" as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":ITransactionService" as tx_sv
+participant ":ITransactionRepository" as tx_repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":AdminFinanceUnifiedVM" as vm
+participant ":PagedResult<TransactionListDto>" as paged_dto
+participant ":ApiResponse" as api_resp
+
+act -> view++: Access Admin Finance Dashboard (or click "Transactions" tab)
+
+view -> fe_ctrl++: GET /AdminFinance?tab=transactions
+
+fe_ctrl -> vm++: Call AdminFinanceUnifiedVM()
+vm -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display authentication error and login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display access denied error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/transactions?page=1&pageSize=10
+    
+    be_ctrl -> tx_sv++: GetTransactionsAsync(page, pageSize, null, null, null, null, null)
+    
+    tx_sv -> tx_repo++: GetTransactionsAsync(page, pageSize, null, null, null, null, null)
+    
+    tx_repo -> ctx++: Transactions.OrderByDescending(t => t.TransactionCreatedAt).Skip().Take()
+    ctx -> db++: Execute SELECT statement
+    db -->> ctx--: Return transaction records
+    ctx -->> tx_repo--: Return List<TransactionListDto> and totalCount
+    
+    tx_repo -->> tx_sv--: Return List<TransactionListDto> and totalCount
+    
+    tx_sv -> paged_dto++: Call PagedResult<TransactionListDto>()
+    paged_dto -->> tx_sv--: Return PagedResult object
+
+    tx_sv -->> be_ctrl--: Return PagedResult object
+    
+    be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
+    api_resp -->> be_ctrl--: Return ApiResponse object
+
+    be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
+    
+    alt Empty List (No transactions exist)
+        fe_ctrl -->> view: Return View with empty Transactions list
+        view -->> act: Display empty state
+    else Transactions Found
+        fe_ctrl -->> view--: Return View with populated Transactions list
+        view -->> act--: Display transaction table (ID, Stripe Tx ID, Course, Purchased By, Instructor, Amount, Date, Status)
+    end
+end
+
+@enduml

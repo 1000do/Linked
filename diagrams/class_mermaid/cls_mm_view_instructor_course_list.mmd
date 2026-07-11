@@ -1,0 +1,168 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorCourseControllerFE["InstructorCourseController"] {
+    <<frontend controller>>
+    + Index(page: int, query: string, status: string) Task~IActionResult~
+}
+
+class InstructorStudioViewModel {
+    <<viewmodel>>
+    + Courses : List~CourseListViewModel~
+    + TotalStudents : int
+    + AverageRating : double
+    + ActiveCoursesCount : int
+    + PendingCoursesCount : int
+    + DraftCoursesCount : int
+    + TotalRevenue : decimal
+    + EnrollmentGrowthPercentage : double
+    + InstructorRankPercentage : int
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CourseController {
+    <<backend controller>>
+    - _courseQueryService : ICourseQueryService
+    + GetInstructorCourses(page: int, pageSize: int, query: string, status: string) Task~IActionResult~
+}
+
+class InstructorController {
+    <<backend controller>>
+    - _instructorService : IInstructorService
+    + GetInstructorDashboardAsync() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class PagedResultCourseResponse["PagedResult~CourseResponse~"] {
+    <<dto>>
+    + Items : List~CourseResponse~
+    + TotalCount : int
+}
+
+class CourseResponse {
+    <<dto>>
+    + CourseId : int
+    + Title : string
+    + Price : decimal
+}
+
+class InstructorDashboardDto {
+    <<dto>>
+    + TotalStudents : int
+    + AverageRating : decimal
+    + ActiveCoursesCount : int
+    + PendingCoursesCount : int
+    + DraftCoursesCount : int
+    + TotalRevenue : decimal
+    + EnrollmentGrowthPercentage : double
+    + InstructorRankPercentage : int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    <<entity>>
+}
+
+class InstructorStats {
+    <<entity>>
+}
+
+class Enrollment {
+    <<entity>>
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICourseQueryService {
+    <<interface>>
+    + GetInstructorCoursesAsync(instructorId: int, page: int, pageSize: int, query: string, status: string) Task~PagedResult~CourseResponse~~ *
+}
+
+class IInstructorService {
+    <<interface>>
+    + GetInstructorDashboardAsync(userId: int) Task~InstructorDashboardDto?~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetInstructorCoursesAsync(...) Task~PagedResult~CourseResponse~~ *
+}
+
+class IInstructorRepository {
+    <<interface>>
+    + GetDashboardDtoAsync(userId: int) Task~InstructorDashboardDto?~ *
+    + GetEnrollmentGrowthAsync(instructorId: int) Task~double~ *
+    + GetInstructorRankingPercentageAsync(instructorId: int) Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class CourseQueryService {
+    - _courseRepository : ICourseRepository
+    + GetInstructorCoursesAsync(...) Task~PagedResult~CourseResponse~~
+}
+
+class InstructorService {
+    - _repo : IInstructorRepository
+    + GetInstructorDashboardAsync(userId: int) Task~InstructorDashboardDto?~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class CourseRepository {
+    - _context : AppDbContext
+    + GetInstructorCoursesAsync(...) Task~PagedResult~CourseResponse~~
+}
+
+class InstructorRepository {
+    - _context : AppDbContext
+    + GetDashboardDtoAsync(userId: int) Task~InstructorDashboardDto?~
+    + GetEnrollmentGrowthAsync(instructorId: int) Task~double~
+    + GetInstructorRankingPercentageAsync(instructorId: int) Task~int~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Courses : DbSet~Course~
+    + InstructorStats : DbSet~InstructorStats~
+    + Enrollments : DbSet~Enrollment~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+InstructorCourseControllerFE --> InstructorStudioViewModel
+InstructorCourseControllerFE ..> CourseController
+InstructorCourseControllerFE ..> InstructorController
+
+CourseController --> ICourseQueryService
+InstructorController --> IInstructorService
+
+CourseQueryService ..|> ICourseQueryService
+InstructorService ..|> IInstructorService
+
+CourseQueryService --> ICourseRepository
+InstructorService --> IInstructorRepository
+
+CourseRepository ..|> ICourseRepository
+InstructorRepository ..|> IInstructorRepository
+
+CourseRepository --> AppDbContext
+InstructorRepository --> AppDbContext
+
+CourseQueryService ..> PagedResultCourseResponse
+CourseRepository ..> Course
+
+InstructorService ..> InstructorDashboardDto
+InstructorRepository ..> InstructorDashboardDto
+InstructorRepository ..> InstructorStats
+InstructorRepository ..> Enrollment
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
