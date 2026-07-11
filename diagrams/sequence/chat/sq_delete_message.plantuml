@@ -29,6 +29,7 @@ mainframe Delete Message
 
 actor User as act
 participant "ChatRoom" as view
+participant "LoginPage" as login_view
 participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
@@ -42,8 +43,21 @@ act -> view++: Click "Delete for me"
 view -> view++: deleteMsg(messageId)
 view--
 view -> fe_ctrl++: DELETE /Chat/DeleteMessage?messageId={id}
-fe_ctrl -> be_ctrl++: DELETE /api/chat/message/{id}
-be_ctrl -> sv++: Call DeleteMessageAsync(messageId, accountId)
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: DELETE /api/chat/message/{id}
+    be_ctrl -> sv++: Call DeleteMessageAsync(messageId, accountId)
 
 sv -> repo++: Call GetMessageByIdAsync(messageId)
 repo -> ctx++: FindAsync(messageId)
@@ -89,8 +103,9 @@ else Message not found
     view -->> act: Display error message
 else Unauthorized (Not sender)
     sv -->> be_ctrl: throw UnauthorizedAccessException
-    be_ctrl -->> fe_ctrl: Return statusCode 403
+    be_ctrl -->> fe_ctrl--: Return statusCode 403
     fe_ctrl-->>error_page++: Redirect to ErrorPage
     error_page-->>act--: Display error message
+end
 end
 @enduml

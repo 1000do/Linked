@@ -30,12 +30,14 @@ mainframe View Instructor Applications Detail
 
 actor Staff as act
 participant "AdminApprovalIndexPage" as index_view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "AdminApprovalDetailPage" as detail_view
 participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
 participant "AdminApprovalController" as be_ctrl <<backend controller>>
-participant ":InstructorApprovalService" as sv
+participant ":IInstructorApprovalService" as sv
 participant ":InstructorApplicationDetailResponse" as app_detail_dto
-participant ":InstructorRepository" as repo
+participant ":IInstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -43,9 +45,21 @@ act ++
 act -> index_view++: Click "View Info" button on application row
 index_view -> fe_ctrl++: GET /AdminApproval/Detail/{id}
 
-fe_ctrl -> be_ctrl++: GET /api/AdminApproval/{id} (with Bearer Token)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-be_ctrl -> sv++: Call GetDetailAsync(id)
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/AdminApproval/{id}
+    
+    be_ctrl -> sv++: Call GetDetailAsync(id)
 sv -> repo++: Call GetByIdAsync(id)
 repo -> ctx++: Call GetByIdAsync(id)
 ctx -> db++: Execute SELECT query
@@ -54,20 +68,22 @@ db -->> ctx--: Return instructor application
 ctx -->> repo--: Return instructor application
 repo -->> sv--: Return instructor application
 
-alt application == null
-    sv -->> be_ctrl: Return null
-    be_ctrl -->> fe_ctrl: Return statusCode 404
-    fe_ctrl -->> index_view--: Return statusCode 302
-    index_view -->> act--: Display pending list
-else application exists
-    sv -> sv++: Call MapToInstructorApprovalDto(i)
-    sv --
-    sv -->> be_ctrl--: Return InstructorApprovalDto
-    be_ctrl -->> fe_ctrl--: Return statusCode 200
-    
-    fe_ctrl -> detail_view++: Return Detail View with model
-    detail_view -->> act--: Display instructor application detail
-    fe_ctrl --
+    alt application == null
+        sv -->> be_ctrl: Return null
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> index_view: Return statusCode 302
+        index_view -->> act: Display pending list
+    else application exists
+        sv -> sv++: Call MapToInstructorApprovalDto(i)
+        sv --
+        sv -->> be_ctrl--: Return InstructorApprovalDto
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+        fe_ctrl -->> detail_view++: Return Detail View with model
+        deactivate index_view
+        detail_view -->> act--: Display instructor application detail
+        deactivate fe_ctrl
+    end
 end
 
 @enduml
