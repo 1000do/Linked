@@ -27,7 +27,7 @@
 hide footbox
 
 mainframe Edit Profile (For Manager)
-autonumber
+
 
 actor Staff as act
 

@@ -27,66 +27,78 @@
 hide footbox
 mainframe View Balance (For System)
 
-actor "Administrator" as act
+actor Admin as act
 participant "AdminFinanceDashboard" as view
 participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant ":AdminFinanceUnifiedVM" as view_model
 participant "AdminFinanceController" as be_ctrl <<backend controller>>
-participant ":AdminFinanceService" as finance_sv
-participant ":AdminFinanceRepository" as finance_repo
+participant ":IAdminFinanceService" as finance_sv
+participant ":IAdminFinanceRepository" as finance_repo
+participant ":FinancialSummaryVM" as res_summary
+participant ":IStripeConnectService" as stripe_sv
+participant ":PlatformBalanceVM" as res_balance
+participant ":AppDbContext" as ctx
 database Database as db
-participant "Stripe API" as stripe
-participant ":StripeConnectService" as stripe_sv
 
 act ++
-view ++
 
-act -> view: Access Admin Finance Dashboard
-view -> fe_ctrl++: GET /AdminFinance\n(default: current year/month)
+act -> view++: Access Admin Finance Dashboard
+view -> fe_ctrl++: GET /AdminFinance
 
-fe_ctrl -> fe_ctrl: Validate active login session
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
 alt Session Invalid
-    fe_ctrl -->> login_view: Redirect to /Account/Login
-    activate login_view
-    login_view -->> act: Display authentication error message\nRedirect to login page
-    deactivate login_view
-else Valid Session
-    par Fetch Dashboard Data (Task.WhenAll)
-        group Summary & Payouts
-            fe_ctrl -> be_ctrl++: GET /api/admin/finance/summary
-            be_ctrl -> finance_sv++: GetFinancialSummaryAsync()
-            finance_sv -> finance_repo++: Query Transactions & Courses
-            finance_repo -> db++: Execute SELECT
-            db -->> finance_repo--: Data
-            finance_repo -->> finance_sv--: Data
-            finance_sv -->> be_ctrl--: FinancialSummaryResponse
-            be_ctrl -->> fe_ctrl--: Return statusCode 200 (Data)
-        end
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    
+    par Summary Data
+        fe_ctrl -> be_ctrl++: GET /api/admin/finance/summary
+        be_ctrl -> finance_sv++: GetFinancialSummaryAsync()
+        finance_sv -> finance_repo++: GetFinancialSummaryAsync()
+        finance_repo -> ctx++: Query Transactions & Courses
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Return data
+        ctx -->> finance_repo--: Return data
         
-        group Stripe Gateway Balances
-            fe_ctrl -> be_ctrl++: GET /api/admin/finance/balance
-            be_ctrl -> finance_sv++: GetPlatformBalanceAsync()
-            finance_sv -> stripe_sv++: GetPlatformBalanceAsync()
-            stripe_sv -> stripe++: Request Stripe Connect Balance
-            stripe -->> stripe_sv--: Balance Data
-            stripe_sv -->> finance_sv--: PlatformBalanceResponse
-            finance_sv -->> be_ctrl--: PlatformBalanceResponse
-            be_ctrl -->> fe_ctrl--: Return statusCode 200 (Data)
-        end
+        finance_repo -> res_summary++: Call FinancialSummaryVM()
+        res_summary -->> finance_repo--: Return FinancialSummaryVM object
         
-        group Config Settings
-            fe_ctrl -> be_ctrl: GET /api/admin/finance/payout-days
-            fe_ctrl -> be_ctrl: GET /api/admin/finance/transfer-rate
-        end
+        finance_repo -->> finance_sv--: Return FinancialSummaryVM object
+        finance_sv -->> be_ctrl--: Return FinancialSummaryVM object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+    else Stripe Gateway Balance
+        fe_ctrl -> be_ctrl++: GET /api/admin/finance/balance
+        be_ctrl -> finance_sv++: GetPlatformBalanceAsync()
+        finance_sv -> stripe_sv++: GetPlatformBalanceAsync()
+        
+        stripe_sv -> res_balance++: Call PlatformBalanceVM()
+        res_balance -->> stripe_sv--: Return PlatformBalanceVM object
+        
+        stripe_sv -->> finance_sv--: Return PlatformBalanceVM object
+        finance_sv -->> be_ctrl--: Return PlatformBalanceVM object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+else Main Thread Return
+        fe_ctrl -> fe_ctrl++: Deserialize JSON responses
+        fe_ctrl--
+        
+        fe_ctrl -> view_model++: Call AdminFinanceUnifiedVM()
+        view_model -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
+        
+        fe_ctrl -> fe_ctrl++: Map parsed data to AdminFinanceUnifiedVM
+        fe_ctrl--
+        
+        fe_ctrl -->> view--: Return View(vm)
+        
+        view -->> act--: Display Course Revenue, Splits, Stripe Gateway Balances, Config statuses, and Monthly Financial Performance chart
     end
-    
-    fe_ctrl -> fe_ctrl: Map to AdminFinanceUnifiedVM
-    fe_ctrl -->> view--: Return View(AdminFinanceUnifiedVM)
-    
-    view -->> act: Display Course Revenue, Splits,\nStripe Gateway Balances, Config statuses,\nand Monthly Financial Performance chart
 end
-
-
-
 
 @enduml

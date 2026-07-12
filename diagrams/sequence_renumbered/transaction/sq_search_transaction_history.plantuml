@@ -94,7 +94,7 @@ else Valid actor's authentication and authorization
     view--
     
 alt Matching results found (totalCount > 0)
-        view -->> act--:4.3.17.1. Display filtered list of transactions
+        view -->> act:4.3.17.1. Display filtered list of transactions
 
 else No matching results found (totalCount == 0)
         view -->> act--:4.3.17.2. Display empty state screen with "No transactions found" message

@@ -32,13 +32,13 @@ participant "GiftCheckoutPage" as view
 participant "MyCoursesPage" as my_courses_view
 participant "GiftController" as fe_gift_ctrl <<frontend controller>>
 participant "CheckoutController" as be_ctrl <<backend controller>>
-participant ":ICheckoutService" as sv
+participant ":IGiftCheckoutService" as sv
 participant ":CheckoutResponse" as res_dto
 participant ":OrderInfo" as order_ett
 participant ":OrderItem" as item_ett
 participant ":Transaction" as tx_ett
 participant ":IPaymentGatewayService" as stripe
-participant ":IOrderRepository" as order_repo
+participant ":ICheckoutRepository" as repo
 
 participant ":AppDbContext" as ctx
 database Database as db
@@ -99,94 +99,56 @@ alt Payment declined
     view -->> act:14.1. Display payment error message
 else Payment Successful
     view -> fe_gift_ctrl++:14.2. GET /Gift/CheckoutSuccess?payment_intent_id=...
-    fe_gift_ctrl -> be_ctrl++:14.2.1. GET /api/checkout/success-intent
+    fe_gift_ctrl -> be_ctrl++:14.2.1. GET /api/checkout/gift-success-intent
+    
     be_ctrl -> sv++:14.2.2. ProcessPaymentIntentSuccessAsync(paymentIntentId)
-    
-    sv -> sv++:14.2.3. IsTransactionAlreadyProcessedAsync(paymentIntentId)
-    sv--
-    
-    sv -> stripe++:14.2.4. GetPaymentIntentMetadataAsync(paymentIntentId)
-    stripe -->> sv--:14.2.5. Return metadata
-    
-    sv -> sv++:14.2.6. ProcessSuccessfulPaymentCoreAsync
-    
-    sv -> order_repo++:14.2.7. BeginTransactionAsync()
-    order_repo -> ctx++:14.2.8. Database.BeginTransactionAsync()
-    ctx -> db++:14.2.9. Begin transaction
-    db -->> ctx--:14.2.10. Transaction started
-    ctx -->> order_repo--:14.2.11. Return IDbContextTransaction
-    order_repo -->> sv--:14.2.12. Return transaction
-    
-    sv -> order_ett++:14.2.13. Call OrderInfo(...)
-    order_ett -->> sv--:14.2.14. Return OrderInfo object
-    
-    sv -> order_repo++:14.2.15. AddOrderAsync(order)
-    order_repo -->> sv--:14.2.16. Return result
-    
-    sv -> order_repo++:14.2.17. SaveChangesAsync()
-    order_repo -> ctx++:14.2.18. SaveChangesAsync()
-    ctx -> db++:14.2.19. Save changes to database
-    db -->> ctx--:14.2.20. Return numberOfRowsAffected
-    ctx -->> order_repo--:14.2.21. Return numberOfRowsAffected
-    order_repo -->> sv--:14.2.22. Return numberOfRowsAffected
-    
-loop for each course in courseIds
-        sv -> item_ett++:14.2.23. Call OrderItem(...)
-        item_ett -->> sv--:14.2.24. Return OrderItem object
         
-        sv -> order_repo++:14.2.25. AddOrderItemAsync(orderItem)
-        order_repo -->> sv--:14.2.26. Return result
+
+        sv -> stripe++:14.2.3. GetPaymentIntentMetadataAsync(paymentIntentId)
+        stripe -->> sv--:14.2.4. Return metadata
         
-        sv -> order_repo++:14.2.27. SaveChangesAsync()
-        order_repo -> ctx++:14.2.28. SaveChangesAsync()
-        ctx -> db++:14.2.29. Save changes to database
-        db -->> ctx--:14.2.30. Return numberOfRowsAffected
-        ctx -->> order_repo--:14.2.31. Return numberOfRowsAffected
-        order_repo -->> sv--:14.2.32. Return numberOfRowsAffected
+        sv -> sv++:14.2.5. Call ProcessSuccessfulGiftPaymentCoreAsync
         
-        sv -> tx_ett++:14.2.33. Call Transaction(...)
-        tx_ett -->> sv--:14.2.34. Return Transaction object
+
+        sv -> sv++:14.2.6. Call CreateGiftEntitiesAsync
         
-        sv -> order_repo++:14.2.35. AddTransactionAsync(transaction)
-        order_repo -->> sv--:14.2.36. Return result
+        sv -> order_ett++:14.2.7. Call OrderInfo(...)
+        order_ett -->> sv--:14.2.8. Return OrderInfo object
         
-        sv -> order_repo++:14.2.37. SaveChangesAsync()
-        order_repo -> ctx++:14.2.38. SaveChangesAsync()
-        ctx -> db++:14.2.39. Save changes to database
-        db -->> ctx--:14.2.40. Return numberOfRowsAffected
-        ctx -->> order_repo--:14.2.41. Return numberOfRowsAffected
-        order_repo -->> sv--:14.2.42. Return numberOfRowsAffected
+
+        sv -> item_ett++:14.2.9. Call OrderItem(...)
+        item_ett -->> sv--:14.2.10. Return OrderItem object
         
-        sv -> sv++:14.2.43. ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
+        sv -> tx_ett++:14.2.11. Call Transaction(...)
+        tx_ett -->> sv--:14.2.12. Return Transaction object
+        
+        sv -> sv++:14.2.13. Call AddEntitiesToContext(order, orderItem, transaction)
         sv--
         
-        sv -> sv++:14.2.44. ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv -> repo++:14.2.14. SaveChangesAsync()
+        repo -> ctx++:14.2.15. SaveChangesAsync()
+        ctx -> db++:14.2.16. Save changes to database
+        db -->> ctx--:14.2.17. Return numberOfRowsAffected
+        ctx -->> repo--:14.2.18. Return numberOfRowsAffected
+        repo -->> sv--:14.2.19. Return numberOfRowsAffected
+        
         sv--
-end
+        
+        sv -> sv++:14.2.20. Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
+        sv--
+        
+        sv -> sv++:14.2.21. Call ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv--
+        
+
+        sv--
+        sv -->> be_ctrl--:14.2.22. Return result
     
-    sv -> order_repo++:14.2.45. SaveChangesAsync()
-    order_repo -> ctx++:14.2.46. SaveChangesAsync()
-    ctx -> db++:14.2.47. Save changes to database
-    db -->> ctx--:14.2.48. Return numberOfRowsAffected
-    ctx -->> order_repo--:14.2.49. Return numberOfRowsAffected
-    order_repo -->> sv--:14.2.50. Return numberOfRowsAffected
+    be_ctrl -->> fe_gift_ctrl--:14.2.23. Return statusCode 200
     
-    sv -> sv++:14.2.51. Commit transaction
-    sv -> ctx++:14.2.52. transaction.CommitAsync()
-    ctx -> db++:14.2.53. Commit
-    db -->> ctx--:14.2.54. Return result
-    ctx -->> sv--:14.2.55. Return result
-    sv--
-    
-    sv--
-    sv -->> be_ctrl--:14.2.56. Return result
-    be_ctrl -->> fe_gift_ctrl--:14.2.57. Return statusCode 200
-    
-    fe_gift_ctrl -->> my_courses_view--:14.2.58. Redirect to My Courses page
+    fe_gift_ctrl -->> my_courses_view--:14.2.24. Redirect to My Courses page
     activate my_courses_view
-    my_courses_view -->> act:14.2.59. Display checkout success message
-    deactivate my_courses_view
-    deactivate view
+    my_courses_view -->> act--:14.2.25. Display checkout success message
 end
 
 @enduml

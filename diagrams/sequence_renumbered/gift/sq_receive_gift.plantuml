@@ -1,4 +1,4 @@
-@startuml 
+@startuml
 <style>
     sequenceDiagram{
         actor{
@@ -25,134 +25,153 @@
 </style>
 
 hide footbox
-mainframe Receive a gift
+mainframe Receive Gift
 
 actor User as act
-participant "GiftClaimPage" as view
-
+participant "ClaimPage" as view
 participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "GiftController" as fe_ctrl <<frontend controller>>
 participant "GiftController" as be_ctrl <<backend controller>>
-participant ":GiftService" as sv
-
-participant ":GiftRepository" as gift_repo
-
-participant ":CourseRepository" as course_repo
-participant ":EnrollmentRepository" as enroll_repo
-participant ":TransactionRepository" as trans_repo
-participant ":AppDbContext" as ctx
+participant ":IGiftService" as sv
+participant ":Enrollment" as enrollment
+participant ":IGiftRepository" as gift_repo
+participant ":ICourseRepository" as course_repo
+participant ":IEnrollmentRepository" as enroll_repo
+participant ":ITransactionRepository" as transaction_repo
 database Database as db
 
 act ++
+act -> view++:1. Click "Claim Gift" button
+view -> fe_ctrl++:2. POST /Gift/ClaimGiftAjax
 
-
-act -> view++:1. Click "Claim Your Gift" button
-view -> fe_ctrl++:2. POST /Gift/ClaimGiftAjax (AJAX)
-
-fe_ctrl -> fe_ctrl++:3. Check AccessToken
+fe_ctrl -> fe_ctrl++:3. Validate actor's authentication and authorization
 fe_ctrl--
-alt Unauthenticated
-    fe_ctrl -->> view:3.1. Return JSON (success=false, "Please login first")
-    view -->> login_view:3.1.1. Redirect to Login/Registration page
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
     activate login_view
-    login_view -->> act:3.1.2. Display Login/Registration page
-    deactivate login_view
-else Authenticated
-    fe_ctrl -> be_ctrl++:3.2. POST /api/gift/claim
-    be_ctrl -> sv++:3.2.1. ClaimGiftAsync(userId, token)
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:3.2.1. Display error message
+else Valid actor's authentication and authorization
     
-    sv -> gift_repo++:3.2.2. GetByTokenAsync(token)
-    gift_repo -> ctx++:3.2.3. Gifts.FirstOrDefaultAsync(...)
-    ctx -> db++:3.2.4. Execute query
-    db -->> ctx--:3.2.5. Return data
-    ctx -->> gift_repo--:3.2.6. Return Gift entity
-    gift_repo -->> sv--:3.2.7. Return Gift entity
+    fe_ctrl -> be_ctrl++:3.3. POST /api/gift/claim
     
-    sv -> sv++:3.2.8. ValidateGiftForClaiming(gift)
-    sv--
-alt Gift Already Claimed
-        sv -->> be_ctrl:3.2.8.1. throw InvalidOperationException
-        be_ctrl -->> fe_ctrl:3.2.8.1.1. Return statusCode 400
-        fe_ctrl -->> view:3.2.8.1.2. Return JSON (success=false, "already claimed")
-        view -->> act:3.2.8.1.3. Display already claimed message
-else Refunded Gift
-        sv -->> be_ctrl:3.2.8.2. throw InvalidOperationException
-        be_ctrl -->> fe_ctrl:3.2.8.2.1. Return statusCode 400
-        fe_ctrl -->> view:3.2.8.2.2. Return JSON (success=false, "This gift has been refunded and cannot be claimed.")
-        view -->> act:3.2.8.2.3. Display refunded error message
-else Gift Valid For Claim
-        sv -> course_repo++:3.2.8.3. GetByIdAsync(courseId)
-        course_repo -> ctx++:3.2.8.3.1. Courses.FirstOrDefaultAsync(...)
-        ctx -> db++:3.2.8.3.2. Execute query
-        db -->> ctx--:3.2.8.3.3. Return data
-        ctx -->> course_repo--:3.2.8.3.4. Return Course entity
-        course_repo -->> sv--:3.2.8.3.5. Return Course entity
-        
-        sv -> enroll_repo++:3.2.8.3.6. GetEnrollmentAsync(userId, courseId)
-        enroll_repo -> ctx++:3.2.8.3.7. Enrollments.FirstOrDefaultAsync(...)
-        ctx -> db++:3.2.8.3.8. Execute query
-        db -->> ctx--:3.2.8.3.9. Return data
-        ctx -->> enroll_repo--:3.2.8.3.10. Return Enrollment entity or null
-        enroll_repo -->> sv--:3.2.8.3.11. Return Enrollment entity or null
-        
-        sv -> sv++:3.2.8.3.12. EnsureRecipientNotAlreadyEnrolled
-        sv--
+    be_ctrl -> be_ctrl++:3.3.1. Validate ModelState
+    be_ctrl--
+    
+opt Invalid ModelState
+        be_ctrl -->> fe_ctrl:3.3.1.1. Return statusCode 400
+        fe_ctrl -->> view:3.3.1.1.1. Return Json(success=false)
+        view -->> act:3.3.1.1.2. Display error message
+end
+    
+    be_ctrl -> sv++:3.3.2. ClaimGiftAsync(userId, token)
+            
+            sv -> gift_repo++:3.3.3. GetByTokenAsync(token)
+            gift_repo -> db++:3.3.4. Execute query
+            db -->> gift_repo--:3.3.5. Return result
+            gift_repo -->> sv--:3.3.6. Return Gift object
+            
+            sv -> sv++:3.3.7. Validate gift and token
+            sv--
+            
+alt Gift not found or token invalid
+                sv -->> be_ctrl:3.3.7.1. throw InvalidOperationException
+                be_ctrl -->> fe_ctrl:3.3.7.1.1. Return statusCode 400
+                fe_ctrl -->> view:3.3.7.1.2. Return Json(success=false)
+                view -->> act:3.3.7.1.3. Display error message
+else Gift already claimed or refunded
+                sv -->> be_ctrl:3.3.7.2. throw InvalidOperationException
+                be_ctrl -->> fe_ctrl:3.3.7.2.1. Return statusCode 400
+                fe_ctrl -->> view:3.3.7.2.2. Return Json(success=false)
+                view -->> act:3.3.7.2.3. Display error message
+else Valid gift
+                
+                sv -> course_repo++:3.3.7.3. GetByIdAsync(courseId)
+                course_repo -> db++:3.3.7.3.1. Execute query
+                db -->> course_repo--:3.3.7.3.2. Return result
+                course_repo -->> sv--:3.3.7.3.3. Return Course object
+                
+                sv -> sv++:3.3.7.3.4. Validate course
+                sv--
+                
+alt Course not found
+                    sv -->> be_ctrl:3.3.7.3.4.1. throw InvalidOperationException
+                    be_ctrl -->> fe_ctrl:3.3.7.3.4.1.1. Return statusCode 400
+                    fe_ctrl -->> view:3.3.7.3.4.1.2. Return Json(success=false)
+                    view -->> act:3.3.7.3.4.1.3. Display error message
+else Course found
+                    
+                    sv -> enroll_repo++:3.3.7.3.4.2. GetEnrollmentAsync(userId, courseId)
+                    enroll_repo -> db++:3.3.7.3.4.2.1. Execute query
+                    db -->> enroll_repo--:3.3.7.3.4.2.2. Return result
+                    enroll_repo -->> sv--:3.3.7.3.4.2.3. Return Enrollment object
+                    
+                    sv -> sv++:3.3.7.3.4.2.4. Check enrollment status
+                    sv--
+                    
 alt Recipient already enrolled
-            sv -->> be_ctrl:3.2.8.3.12.1. throw InvalidOperationException
-            be_ctrl -->> fe_ctrl:3.2.8.3.12.1.1. Return statusCode 400
-            fe_ctrl -->> view:3.2.8.3.12.1.2. Return JSON (success=false, "You already own this course in your library")
-            view -->> act:3.2.8.3.12.1.3. Display already enrolled error message
-else Not Enrolled
-            sv -> enroll_repo++:3.2.8.3.12.2. BeginTransactionAsync()
-            enroll_repo -> ctx++:3.2.8.3.12.2.1. Database.BeginTransactionAsync()
-            ctx -> db++:3.2.8.3.12.2.2. Begin transaction
-            db -->> ctx--:3.2.8.3.12.2.3. Transaction started
-            ctx -->> enroll_repo--:3.2.8.3.12.2.4. Return IDbContextTransaction
-            enroll_repo -->> sv--:3.2.8.3.12.2.5. Return transaction
-            
-            sv -> sv++:3.2.8.3.12.2.6. CreateEnrollmentWithinTransactionAsync
-            sv -> enroll_repo++:3.2.8.3.12.2.7. AddEnrollmentAsync(enrollment)
-            enroll_repo -->> sv--:3.2.8.3.12.2.8. Return result
-            sv -> enroll_repo++:3.2.8.3.12.2.9. SaveChangesAsync()
-            enroll_repo -> ctx++:3.2.8.3.12.2.10. SaveChangesAsync()
-            ctx -> db++:3.2.8.3.12.2.11. Execute query
-            db -->> ctx--:3.2.8.3.12.2.12. Return data
-            ctx -->> enroll_repo--:3.2.8.3.12.2.13. Return 1
-            enroll_repo -->> sv--:3.2.8.3.12.2.14. Return 1
-            sv--
-            
-            sv -> sv++:3.2.8.3.12.2.15. MarkGiftAsClaimedWithinTransactionAsync
-            sv -> gift_repo++:3.2.8.3.12.2.16. Update(gift)
-            gift_repo -->> sv--:3.2.8.3.12.2.17. Return result
-            sv -> gift_repo++:3.2.8.3.12.2.18. SaveChangesAsync()
-            gift_repo -> ctx++:3.2.8.3.12.2.19. SaveChangesAsync()
-            ctx -> db++:3.2.8.3.12.2.20. Execute query
-            db -->> ctx--:3.2.8.3.12.2.21. Return data
-            ctx -->> gift_repo--:3.2.8.3.12.2.22. Return 1
-            gift_repo -->> sv--:3.2.8.3.12.2.23. Return 1
-            sv--
-            
-            sv -> trans_repo++:3.2.8.3.12.2.24. RejectPendingRefundForGiftClaimedAsync(orderItemId)
-            trans_repo -> ctx++:3.2.8.3.12.2.25. Transactions.FirstOrDefaultAsync(...)
-            ctx -> db++:3.2.8.3.12.2.26. Execute query
-            db -->> ctx--:3.2.8.3.12.2.27. Return data
-            ctx -->> trans_repo--:3.2.8.3.12.2.28. Return result
-            trans_repo -->> sv--:3.2.8.3.12.2.29. Return boolean
-            
-            sv -> sv++:3.2.8.3.12.2.30. Commit transaction
-            sv -> ctx++:3.2.8.3.12.2.31. transaction.CommitAsync()
-            ctx -> db++:3.2.8.3.12.2.32. Commit
-            db -->> ctx--:3.2.8.3.12.2.33. Committed
-            ctx -->> sv--:3.2.8.3.12.2.34. Return result
-            sv--
-            
-            sv -> sv++:3.2.8.3.12.2.35. NotifyAdminFinanceOfRefundRejectionAsync
-            sv--
-            
-            sv -->> be_ctrl--:3.2.8.3.12.2.36. Return result
-            be_ctrl -->> fe_ctrl--:3.2.8.3.12.2.37. Return statusCode 200
-            fe_ctrl -->> view--:3.2.8.3.12.2.38. Return JSON (success=true)
-            view -->> act--:3.2.8.3.12.2.39. Display claim success message and redirect to study page
+                        sv -->> be_ctrl:3.3.7.3.4.2.4.1. throw InvalidOperationException
+                        be_ctrl -->> fe_ctrl:3.3.7.3.4.2.4.1.1. Return statusCode 400
+                        fe_ctrl -->> view:3.3.7.3.4.2.4.1.2. Return Json(success=false)
+                        view -->> act:3.3.7.3.4.2.4.1.3. Display error message
+else Recipient not enrolled
+                        
+                        sv -> enroll_repo++:3.3.7.3.4.2.4.2. BeginTransactionAsync()
+                        enroll_repo -> db++:3.3.7.3.4.2.4.2.1. Execute query
+                        db -->> enroll_repo--:3.3.7.3.4.2.4.2.2. Return result
+                        enroll_repo -->> sv--:3.3.7.3.4.2.4.2.3. Return result
+                        
+                        sv -> sv++:3.3.7.3.4.2.4.2.4. CreateEnrollmentWithinTransactionAsync(userId, course)
+                        
+                        sv -> enrollment++:3.3.7.3.4.2.4.2.5. Call Enrollment()
+                        enrollment -->> sv--:3.3.7.3.4.2.4.2.6. Return Enrollment object
+                        
+                        sv -> enroll_repo++:3.3.7.3.4.2.4.2.7. AddEnrollmentAsync(enrollment)
+                        enroll_repo -> db++:3.3.7.3.4.2.4.2.8. Execute query
+                        db -->> enroll_repo--:3.3.7.3.4.2.4.2.9. Return result
+                        enroll_repo -->> sv--:3.3.7.3.4.2.4.2.10. Return result
+                        
+                        sv -> enroll_repo++:3.3.7.3.4.2.4.2.11. SaveChangesAsync()
+                        enroll_repo -> db++:3.3.7.3.4.2.4.2.12. Save changes to database
+                        db -->> enroll_repo--:3.3.7.3.4.2.4.2.13. Return result
+                        enroll_repo -->> sv--:3.3.7.3.4.2.4.2.14. Return result
+                        sv--
+                        
+                        sv -> sv++:3.3.7.3.4.2.4.2.15. MarkGiftAsClaimedWithinTransactionAsync(gift, userId)
+                        sv -> gift_repo++:3.3.7.3.4.2.4.2.16. Update(gift)
+                        gift_repo -->> sv--:3.3.7.3.4.2.4.2.17. Return result
+                        
+                        sv -> gift_repo++:3.3.7.3.4.2.4.2.18. SaveChangesAsync()
+                        gift_repo -> db++:3.3.7.3.4.2.4.2.19. Save changes to database
+                        db -->> gift_repo--:3.3.7.3.4.2.4.2.20. Return result
+                        gift_repo -->> sv--:3.3.7.3.4.2.4.2.21. Return result
+                        sv--
+                        
+                        sv -> transaction_repo++:3.3.7.3.4.2.4.2.22. RejectPendingRefundForGiftClaimedAsync(orderItemId)
+                        transaction_repo -> db++:3.3.7.3.4.2.4.2.23. Execute query
+                        db -->> transaction_repo--:3.3.7.3.4.2.4.2.24. Return result
+                        transaction_repo -->> sv--:3.3.7.3.4.2.4.2.25. Return result (rejected boolean)
+                        
+                        sv -> enroll_repo++:3.3.7.3.4.2.4.2.26. Commit transaction
+                        enroll_repo -> db++:3.3.7.3.4.2.4.2.27. Execute query
+                        db -->> enroll_repo--:3.3.7.3.4.2.4.2.28. Return result
+                        enroll_repo -->> sv--:3.3.7.3.4.2.4.2.29. Return result
+                        
+opt rejected == true
+                            sv -> sv++:3.3.7.3.4.2.4.2.29.2. NotifyAdminFinanceOfRefundRejectionAsync()
+                            sv--
+end
+                        
+                        sv -->> be_ctrl--:3.3.7.3.4.2.4.2.30. Return result
+                        be_ctrl -->> fe_ctrl--:3.3.7.3.4.2.4.2.31. Return statusCode 200
+                        fe_ctrl -->> view--:3.3.7.3.4.2.4.2.32. Return Json(success=true)
+                        view -->> act--:3.3.7.3.4.2.4.2.33. Display success message
+end
 end
 end
 end

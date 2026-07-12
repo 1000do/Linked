@@ -39,7 +39,7 @@ participant ":InstructorCourseRevenueResponse" as dto
 participant ":AdminFinanceRepository" as finance_repo
 participant ":AppDbContext" as ctx
 database Database as db
-
+act ++
 act -> view++:1. Access Earnings Dashboard
 view -> fe_tx_ctrl++:2. GET /Transaction/Instructor?year={y}&month={m}
 
