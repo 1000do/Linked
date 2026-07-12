@@ -156,13 +156,18 @@ else Valid Form Data
         
         alt Database Save Failure (numberOfRowsAffected = 0)
             sv -->> be_ctrl: throw InvalidOperationException
+            sv--
             be_ctrl -->> fe_ctrl: Return statusCode 500
+            be_ctrl--
             fe_ctrl -->> view: Return statusCode 500
+            fe_ctrl--
             view -->> act: Display error message
+            view--
         else Database Save Success (numberOfRowsAffected > 0)
             sv -->> be_ctrl--: Return success message
             be_ctrl -->> fe_ctrl--: Return statusCode 200
             fe_ctrl -->> status_view++: Return statusCode 302
+            fe_ctrl--
             deactivate view
             status_view -->> act--: Display "Your application has been submitted successfully!"
         end

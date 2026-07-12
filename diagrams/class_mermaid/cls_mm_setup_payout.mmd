@@ -1,4 +1,5 @@
-classDiagram-v2
+```mermaid
+classDiagram
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -9,12 +10,11 @@ class InstructorControllerFE["InstructorController"] {
     + StripeReturn(instructorId: int) Task~IActionResult~
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND - CONTROLLERS ====================
 
 class InstructorControllerBE["InstructorController"] {
     <<backend controller>>
     - _instructorService : IInstructorService
-    
     + SetupPayout() Task~IActionResult~
     + StripeReturn(instructorId: int) Task~IActionResult~
 }
@@ -40,25 +40,37 @@ class StripeAccountStatusDto {
     + ChargesEnabled : bool
 }
 
-%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ApprovalStatus : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool
+    + ChargesEnabled : bool
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IInstructorService {
     <<interface>>
-    + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~
-    + VerifyStripeOnboardingAsync(instructorId: int) Task~string~
-}
-
-class IStripeConnectService {
-    <<interface>>
-    + SetupExpressAccountAsync(userId: int, email: string, country: string, title: string, categories: string, existingStripeAccountId: string?) Task~StripeConnectSetupResponse~
-    + GetAccountStatusAsync(stripeAccountId: string) Task~StripeAccountStatusDto~
+    + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~ *
+    + VerifyStripeOnboardingAsync(instructorId: int) Task~string~ *
 }
 
 class IInstructorRepository {
     <<interface>>
-    + GetByIdWithNavigationAsync(userId: int) Task~Instructor~
-    + GetByIdAsync(userId: int) Task~Instructor~
-    + SaveChangesAsync() Task~int~
+    + GetByIdWithNavigationAsync(id: int) Task~Instructor~ *
+    + GetByIdAsync(id: int) Task~Instructor~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IStripeConnectService {
+    <<interface>>
+    + SetupExpressAccountAsync(userId: int, email: string, country: string, ...) Task~StripeConnectSetupResponse~ *
+    + GetAccountStatusAsync(stripeAccountId: string) Task~StripeAccountStatusDto~ *
 }
 
 %% ==================== BACKEND - IMPLEMENTATIONS ====================
@@ -66,53 +78,55 @@ class IInstructorRepository {
 class InstructorService {
     - _repo : IInstructorRepository
     - _stripeConnect : IStripeConnectService
-    
     + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~
     + VerifyStripeOnboardingAsync(instructorId: int) Task~string~
 }
 
 class InstructorRepository {
     - _context : AppDbContext
-    + GetByIdWithNavigationAsync(userId: int) Task~Instructor~
-    + GetByIdAsync(userId: int) Task~Instructor~
+    + GetByIdWithNavigationAsync(id: int) Task~Instructor~
+    + GetByIdAsync(id: int) Task~Instructor~
     + SaveChangesAsync() Task~int~
+}
+
+class StripeConnectService {
+    + SetupExpressAccountAsync(...) Task~StripeConnectSetupResponse~
+    + GetAccountStatusAsync(...) Task~StripeAccountStatusDto~
 }
 
 class AppDbContext {
     + Instructors : DbSet~Instructor~
 }
 
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Instructor {
-    + InstructorId : int
-    + StripeAccountId : string?
-    + StripeOnboardingStatus : string?
-    + PayoutsEnabled : bool
-    + ChargesEnabled : bool
-    + ApprovalStatus : string
-}
-
 %% ==================== RELATIONSHIPS ====================
 
-InstructorControllerFE ..> InstructorControllerBE
-
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 InstructorControllerBE --> IInstructorService
-InstructorControllerBE ..> StripeSetupResponse
-
-InstructorService ..|> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorService --> IStripeConnectService
-InstructorService ..> StripeConnectSetupResponse
-InstructorService ..> StripeAccountStatusDto
-InstructorService ..> Instructor
-
-InstructorRepository ..|> IInstructorRepository
 InstructorRepository --> AppDbContext
-InstructorRepository ..> Instructor
 
-AppDbContext --> Instructor
+%% === INTERFACE REALIZATION ===
+InstructorService ..|> IInstructorService
+InstructorRepository ..|> IInstructorRepository
+StripeConnectService ..|> IStripeConnectService
+
+%% === DEPENDENCY (dashed arrows) ===
+InstructorControllerFE ..> InstructorControllerBE
+
+InstructorControllerBE ..> StripeSetupResponse
+InstructorService ..> StripeSetupResponse
+
+InstructorService ..> StripeConnectSetupResponse
+StripeConnectService ..> StripeConnectSetupResponse
+
+InstructorService ..> StripeAccountStatusDto
+StripeConnectService ..> StripeAccountStatusDto
+
+InstructorRepository ..> Instructor
+InstructorService ..> Instructor
 
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+```

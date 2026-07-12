@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white   
+            BackgroundColor white
         }
         groupHeader{
             BackgroundColor white
@@ -27,66 +27,75 @@
 hide footbox
 mainframe Sort Instructor's Transaction History
 
-actor "Instructor" as act
-participant "EarningsDashboard" as view
+actor Instructor as act
+participant "EarningsInstructorPage" as view
 participant "LoginPage" as login_view
-participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
-participant "TransactionController" as be_tx_ctrl <<backend controller>>
-participant ":TransactionService" as tx_sv
-participant ":TransactionRepository" as tx_repo
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as app_view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":ITransactionService" as sv
+participant ":ITransactionRepository" as repo
+participant ":TransactionListDto" as dto
+participant ":InstructorFinancePageVM" as vm
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-view ++
+act -> view ++: Click on table header to sort (e.g., Date, Amount)
+view -> fe_ctrl ++: GET /Transaction/Instructor?tab=tx&sortBy=...
 
-act -> view: Select sorting option (or "Reset") \n& click "Filter"
-view -> fe_tx_ctrl++: GET /Transaction/Instructor?sortBy={sort}&keyword={k}&status={s}&year={y}&month={m}
+fe_ctrl -> fe_ctrl ++: Validate actor's authentication and authorization
+fe_ctrl --
 
-fe_tx_ctrl -> fe_tx_ctrl++: Check Request.Cookies["InstructorApprovalStatus"]
-fe_tx_ctrl--
-
-alt Not Approved Instructor
-    fe_tx_ctrl -->> view: Return statusCode 302
-    view -->> act: Redirect to /Instructor/ApplicationStatus
-else Approved Instructor
-    fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor\n(paged, with sortBy)
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act --: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --: Display error message
+else Valid actor's authentication and authorization
     
-    alt Session Invalid / Unauthorized Access
-        be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 401
-        fe_tx_ctrl -->> login_view: Redirect to /Account/Login
-        activate login_view
-        login_view -->> act: Display Login page
-        deactivate login_view
-    else Authorized
-        be_tx_ctrl -> tx_sv++: GetInstructorTransactionsAsync(..., sortBy, ...)
-        tx_sv -> tx_repo++: GetInstructorTransactionsAsync(..., sortBy, ...)
-        tx_repo -> ctx++: Query Transactions with OrderBy(sortBy)
-        ctx -> db++: Execute SELECT
+    fe_ctrl -> fe_ctrl ++: Check Cookies["InstructorApprovalStatus"]
+    fe_ctrl --
+    
+    alt Status != "Approved"
+        fe_ctrl -->> app_view: Redirect to ApplicationStatusPage
+        activate app_view
+        app_view -->> act --: Display application status
+    else Status == "Approved"
         
-        alt Database query failure (EX-9)
-            db -->> ctx: throw SqlException
-            ctx -->> tx_repo: throw SqlException
-            tx_repo -->> tx_sv: throw SqlException
-            tx_sv -->> be_tx_ctrl: throw SqlException
-            be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 500 (ErrorResponse)
-            fe_tx_ctrl -->> view: Return View with error message
-            view -->> act: Display error message regarding query failure
-        else Query Success
-            db -->> ctx--: Sorted Data
-            ctx -->> tx_repo--: Transactions List
-            tx_repo -->> tx_sv--: Return PagedResult
-            tx_sv -->> be_tx_ctrl--: Return PagedResult
-            be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (TransactionPagedVM)
-            
-            alt No transactions found (Empty)
-                fe_tx_ctrl -->> view: Return View with InstructorFinancePageVM
-                view -->> act: Display "No purchases recorded for this period."
-            else Has Transactions
-                fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
-                view -->> act--: Display sorted list of transactions
-            end
+        fe_ctrl -> be_ctrl ++: GET /api/transactions/instructor?page=1&pageSize=20&sortBy=...
+        be_ctrl -> sv ++: Call GetInstructorTransactionsAsync(...)
+        sv -> repo ++: Call GetInstructorTransactionsAsync(...)
+        
+        repo -> repo ++: Apply sorting conditions (.OrderBy) based on sortBy parameter
+        repo --
+        
+        repo -> ctx ++: Query Transactions
+        ctx -> db ++: Execute query with Skip() and Take()
+        db -->> ctx --: Return sorted transactions list and total count
+        ctx -->> repo --: Return transactions list and count
+        
+        repo -> dto ++: Call TransactionListDto()
+        dto -->> repo --: Return TransactionListDto object
+        
+        repo -->> sv --: Return PagedResult<TransactionListDto>
+        sv -->> be_ctrl --: Return PagedResult<TransactionListDto>
+        be_ctrl -->> fe_ctrl --: Return statusCode 200
+        
+        fe_ctrl -> vm ++: Call InstructorFinancePageVM()
+        vm -->> fe_ctrl --: Return InstructorFinancePageVM object
+        
+        fe_ctrl -->> view --: Return View(vm)
+        
+        alt vm.Transactions.Items.Count == 0
+            view -->> act: Display empty message "No purchases recorded for this period."
+        else vm.Transactions.Items.Count > 0
+            view -->> act --: Display sorted list of transactions
         end
     end
-
+end
 @enduml

@@ -1,0 +1,131 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    + ApproveRefundDecision(transactionId: int, adminNote: string?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class AdminFinanceControllerBE["AdminFinanceController"] {
+    <<backend controller>>
+    - _financeService : IAdminFinanceService
+    + ApproveRefund(transactionId: int, request: RefundDecisionRequest) Task~IActionResult~
+}
+
+class RefundDecisionRequest {
+    <<dto>>
+    + AdminNote : string?
+}
+
+%% ==================== BACKEND - SERVICES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + ApproveRefundAsync(transactionId: int, adminNote: string) Task *
+}
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    - _paymentGateway : IPaymentGatewayService
+    - _notiService : INotificationService
+    + ApproveRefundAsync(transactionId: int, adminNote: string) Task
+    - RefundTransactionAsync(transactionId: int, reason: string?) Task~RefundResultResponse~
+}
+
+class IPaymentGatewayService {
+    <<interface>>
+    + ReverseTransferAsync(stripeTransferId: string) Task~string~ *
+    + RefundAsync(paymentIntentId: string, amount: decimal, reason: string?) Task~string~ *
+}
+
+class StripePaymentGatewayService {
+    + ReverseTransferAsync(stripeTransferId: string) Task~string~
+    + RefundAsync(paymentIntentId: string, amount: decimal, reason: string?) Task~string~
+}
+
+class INotificationService {
+    <<interface>>
+    + SendNotificationAsync(accountId: int, title: string, message: string, link: string) Task *
+}
+
+class NotificationService {
+    + SendNotificationAsync(accountId: int, title: string, message: string, link: string) Task
+}
+
+%% ==================== BACKEND - REPOSITORIES ====================
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction~ *
+    + GetStripeTransferIdByDestinationPaymentAsync(destinationPaymentId: string) Task~string~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction~
+    + GetStripeTransferIdByDestinationPaymentAsync(destinationPaymentId: string) Task~string~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + Transactions : DbSet~Transaction~
+}
+
+%% ==================== BACKEND - ENTITIES ====================
+
+class Transaction {
+    + TransactionId : int
+    + Amount : decimal
+    + Currency : string
+    + TransactionsStatus : string
+    + StripePaymentintentId : string
+    + TransactionExt : TransactionExt?
+    + InstructorPayouts : ICollection~InstructorPayout~
+}
+
+class TransactionExt {
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+class InstructorPayout {
+    + PayoutId : int
+    + IsPaid : bool
+    + StripeTransferId : string
+    + PayoutStatus : string
+    + PayoutAmount : decimal
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === REALIZATION ===
+AdminFinanceService ..|> IAdminFinanceService
+StripePaymentGatewayService ..|> IPaymentGatewayService
+NotificationService ..|> INotificationService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+%% === ASSOCIATION ===
+AdminFinanceControllerBE --> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceService --> IPaymentGatewayService
+AdminFinanceService --> INotificationService
+AdminFinanceRepository --> AppDbContext
+AppDbContext --> Transaction
+Transaction --> TransactionExt : 1..1
+Transaction --> InstructorPayout : 1..N
+
+%% === DEPENDENCY ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE : API calls
+AdminFinanceControllerBE ..> RefundDecisionRequest
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
