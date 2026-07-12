@@ -75,7 +75,7 @@ db-->>ctx--: Return isParticipant
 ctx-->>repo--: Return isParticipant
 repo-->>sv--: Return isParticipant
 
-alt [isParticipant == false]
+alt isParticipant == false
     sv->user_repo++: Call GetRoleByAccountIdAsync(accountId)
     user_repo->ctx++: Call GetRoleByAccountIdAsync(accountId)
     ctx->db++: Execute SELECT query
@@ -84,7 +84,7 @@ alt [isParticipant == false]
     ctx-->>user_repo--: Return role
     user_repo-->>sv--: Return role
     
-    alt [role == "admin" || role == "staff"]
+    alt role == "admin" || role == "staff"
         sv->repo++: Call HasActiveReportForChatAsync(chatId)
         repo->ctx++: Call HasActiveReportForChatAsync(chatId)
         ctx->db++: Execute SELECT query
@@ -97,7 +97,7 @@ end
 
 sv-->>sv--: Return hasAccess
 
-alt [hasAccess == false]
+alt hasAccess == false
     sv-->>be_ctrl: Throw UnauthorizedAccessException
     be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
     fe_ctrl-->>view: Return statusCode 403 (Forbidden)
