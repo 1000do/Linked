@@ -29,6 +29,8 @@ mainframe Pay for a gift
 
 actor User as act
 participant "GiftCheckoutPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "MyCoursesPage" as my_courses_view
 participant "GiftController" as fe_gift_ctrl <<frontend controller>>
 participant "CheckoutController" as be_ctrl <<backend controller>>
@@ -65,11 +67,26 @@ end
 
 ' note right of view: Intent is created ON SUBMIT\nto prevent incomplete intents in Stripe
 view -> fe_gift_ctrl++: POST /Gift/CreateGiftPaymentIntentAjax (AJAX)
-fe_gift_ctrl -> be_ctrl++: POST /api/checkout/gift-intent
-be_ctrl -> sv++: InitiateGiftPaymentIntentAsync(userId, request)
 
-sv -> sv++: ValidateCourseForGiftAsync(course, recipientEmail, courseId)
-sv--
+fe_gift_ctrl -> fe_gift_ctrl ++: Validate actor's authentication and authorization
+fe_gift_ctrl --
+
+alt Session Invalid
+    fe_gift_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act --: Display login form
+else Unauthorized Access
+    fe_gift_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --: Display error message
+else Valid actor's authentication and authorization
+    
+    fe_gift_ctrl -> be_ctrl ++: POST /api/checkout/gift-intent
+    
+    be_ctrl -> sv++: InitiateGiftPaymentIntentAsync(userId, request)
+    
+    sv -> sv++: ValidateCourseForGiftAsync(course, recipientEmail, courseId)
+    sv--
 
 alt Gift Details Missing or Invalid
     sv -->> be_ctrl: throw ArgumentException
@@ -83,12 +100,13 @@ else Valid Gift Details
     sv -> res_dto++: Call CheckoutResponse(ClientSecret, PaymentIntentId)
     res_dto -->> sv--: Return CheckoutResponse object
     
-    sv -->> be_ctrl: Return CheckoutResponse object
-    deactivate sv
-    be_ctrl -->> fe_gift_ctrl: Return statusCode 200
-    deactivate be_ctrl
-    fe_gift_ctrl -->> view: Return JSON (ClientSecret)
-    deactivate fe_gift_ctrl
+        sv -->> be_ctrl: Return CheckoutResponse object
+        deactivate sv
+        be_ctrl -->> fe_gift_ctrl: Return statusCode 200
+        deactivate be_ctrl
+        fe_gift_ctrl -->> view: Return JSON (ClientSecret)
+        deactivate fe_gift_ctrl
+    end
 end
 
 ' == Process Stripe Payment ==
@@ -99,6 +117,7 @@ alt Payment declined
     view -->> act: Display payment error message
 else Payment Successful
     view -> fe_gift_ctrl++: GET /Gift/CheckoutSuccess?payment_intent_id=...
+    
     fe_gift_ctrl -> be_ctrl++: GET /api/checkout/gift-success-intent
     
     be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
@@ -143,12 +162,15 @@ else Payment Successful
 
         sv--
         sv -->> be_ctrl--: Return result
-    
-    be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
-    
-    fe_gift_ctrl -->> my_courses_view--: Redirect to My Courses page
-    activate my_courses_view
-    my_courses_view -->> act--: Display checkout success message
-end
+        
+        be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
+        
+        fe_gift_ctrl -->> view--: Return Redirect to /Course/MyCourses
+        view -->> my_courses_view: Redirect to My Courses page
+        deactivate view
+        activate my_courses_view
+        my_courses_view -->> act--: Display checkout success message
+    end
+
 
 @enduml
