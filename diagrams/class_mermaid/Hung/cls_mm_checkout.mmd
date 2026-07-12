@@ -1,0 +1,162 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class CartControllerFE["CartController"] {
+    <<frontend controller>>
+    + Checkout() Task~IActionResult~
+    + CreatePaymentIntentAjax(couponCode: string?) Task~IActionResult~
+    + CheckoutSuccess(session_id: string?, payment_intent: string?, payment_intent_id: string?) Task~IActionResult~
+    + CheckoutCancel(order_id: int) Task~IActionResult~
+}
+
+class CheckoutViewModel {
+    <<view model>>
+    + PublishableKey : string
+    + ClientSecret : string
+    + PaymentIntentId : string
+    + Email : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CheckoutControllerBE["CheckoutController"] {
+    <<backend controller>>
+    - _checkoutService : ICheckoutService
+    
+    + CreateIntent(request: CheckoutRequest) Task~IActionResult~
+    + SuccessIntent(paymentIntentId: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CheckoutRequest {
+    <<dto>>
+    + CouponCode : string?
+    + SuccessUrl : string
+    + CancelUrl : string
+}
+
+class CheckoutResponse {
+    <<dto>>
+    + SessionUrl : string
+    + SessionId : string
+}
+
+%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+
+class ICheckoutService {
+    <<interface>>
+    + InitiatePaymentIntentAsync(userId: int, couponCode: string?) Task~CheckoutResponse~
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
+}
+
+class IPaymentGatewayService {
+    <<interface>>
+    + CreatePaymentIntentAsync(amount: decimal, currency: string, metadata: Dictionary~string, string~) Task~PaymentSessionResult~
+    + VerifyPaymentIntentAsync(paymentIntentId: string) Task~bool~
+}
+
+class ICheckoutRepository {
+    <<interface>>
+    + AddAsync(order: Order) Task
+    + ClearCartAsync(userId: int) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class IEnrollmentRepository {
+    <<interface>>
+    + AddRangeAsync(enrollments: List~Enrollment~) Task
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
+
+class CheckoutService {
+    - _repo : ICheckoutRepository
+    - _enrollmentRepo : IEnrollmentRepository
+    - _paymentGateway : IPaymentGatewayService
+    
+    + InitiatePaymentIntentAsync(userId: int, couponCode: string?) Task~CheckoutResponse~
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
+}
+
+class CheckoutRepository {
+    - _context : AppDbContext
+    + AddAsync(order: Order) Task
+    + ClearCartAsync(userId: int) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class EnrollmentRepository {
+    - _context : AppDbContext
+    + AddRangeAsync(enrollments: List~Enrollment~) Task
+}
+
+class AppDbContext {
+    + Orders : DbSet~Order~
+    + Enrollments : DbSet~Enrollment~
+    + InstructorPayouts : DbSet~InstructorPayout~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Order {
+    + OrderId : int
+    + UserId : int
+    + TotalAmount : decimal
+    + DiscountAmount : decimal
+    + Status : string
+    + PaymentIntentId : string?
+    + SessionId : string?
+}
+
+class InstructorPayout {
+    + PayoutId : int
+    + OrderId : int
+    + InstructorId : int
+    + Amount : decimal
+    + Status : string
+}
+
+class Enrollment {
+    + EnrollmentId : int
+    + UserId : int
+    + CourseId : int
+    + EnrolledAt : DateTime
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+CartControllerFE ..> CheckoutViewModel
+CartControllerFE ..> CheckoutControllerBE
+
+CheckoutControllerBE --> ICheckoutService
+CheckoutControllerBE ..> CheckoutRequest
+CheckoutControllerBE ..> CheckoutResponse
+
+CheckoutService ..|> ICheckoutService
+CheckoutService --> ICheckoutRepository
+CheckoutService --> IEnrollmentRepository
+CheckoutService --> IPaymentGatewayService
+CheckoutService ..> Order
+CheckoutService ..> InstructorPayout
+CheckoutService ..> Enrollment
+
+ICheckoutRepository ..> Order
+ICheckoutRepository ..> InstructorPayout
+IEnrollmentRepository ..> Enrollment
+
+CheckoutRepository ..|> ICheckoutRepository
+CheckoutRepository --> AppDbContext
+
+EnrollmentRepository ..|> IEnrollmentRepository
+EnrollmentRepository --> AppDbContext
+
+AppDbContext --> Order
+AppDbContext --> Enrollment
+AppDbContext --> InstructorPayout
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

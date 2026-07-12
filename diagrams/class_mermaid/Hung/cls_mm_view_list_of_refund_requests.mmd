@@ -1,0 +1,309 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    - _api : IApiClient
+    + Index(tab: string?, page: int, pageSize: int, year: int?, month: int?) Task~IActionResult~
+}
+
+class AdminFinanceUnifiedVM {
+    <<view model>>
+    + Dashboard : FinanceDashboardVM
+    + Withdraw : WithdrawPageVM
+    + Transactions : TransactionPagedVM
+    + Payouts : PagedResult~PayoutDetailVM~
+    + Withdrawals : PagedResult~WithdrawalHistoryVM~
+    + PendingRefunds : PagedResult~RefundRequestVM~
+    + PayoutDays : string
+    + CourseRevenues : List~InstructorCourseRevenueResponse~
+    + YearlySummaries : Dictionary~int, FinancialSummaryVM~
+}
+
+class PagedResultRefundRequestVM["PagedResult~RefundRequestVM~"] {
+    + Items : List~RefundRequestVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
+}
+
+class RefundRequestVM {
+    <<view model>>
+    + TransactionId : int
+    + Amount : decimal
+    + Currency : string?
+    + RefundReason : string?
+    + RefundRequestedAt : DateTime?
+    + TransactionCreatedAt : DateTime?
+    + OrderItem : OrderItemDto?
+    + AccountFromNavigation : AccountDto?
+    + TransactionExt : TransactionExtDto?
+    + CourseTitle : string
+    + BuyerName : string
+}
+
+class TransactionExtDto {
+    <<dto>>
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+class OrderItemDto {
+    <<dto>>
+    + Course : CourseDto?
+}
+
+class CourseDto {
+    <<dto>>
+    + Title : string
+}
+
+class AccountDto {
+    <<dto>>
+    + User : UserDto?
+}
+
+class UserDto {
+    <<dto>>
+    + FullName : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminFinanceControllerBE["AdminFinanceController"] {
+    <<backend controller>>
+    - _financeService : IAdminFinanceService
+    
+    + GetPendingRefundRequests(page: int, pageSize: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class ApiResponseTransaction["ApiResponse~PagedResult~Transaction~~"] {
+    <<dto>>
+    + Success : bool
+    + Message : string
+    + Data : PagedResult~Transaction~
+    + Errors : List~string~
+}
+
+class PagedResultTransaction["PagedResult~Transaction~"] {
+    <<dto>>
+    + Items : List~Transaction~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+    + HasNextPage : bool
+    + HasPreviousPage : bool
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + GetPendingRefundRequestsAsync(page: int, pageSize: int) Task~PagedResult~Transaction~~ *
+}
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + GetPendingRefundRequestsAsync(page: int, pageSize: int) Task~ValueTuple~List~Transaction~, int~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    
+    + GetPendingRefundRequestsAsync(page: int, pageSize: int) Task~PagedResult~Transaction~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    
+    + GetPendingRefundRequestsAsync(page: int, pageSize: int) Task~ValueTuple~List~Transaction~, int~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + Transactions : DbSet~Transaction~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Transaction {
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
+}
+
+class TransactionExt {
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
+}
+
+class OrderItem {
+    + Id : int
+    + OrderId : int?
+    + CourseId : int?
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+    + Course : Course?
+    + Order : OrderInfo?
+    + Transactions : ICollection~Transaction~
+}
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + CourseQuizzes : ICollection~CourseQuiz~
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + Lockouts : ICollection~Lockout~
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + Manager : Manager?
+    + NotificationReceivers : ICollection~Notification~
+    + NotificationSenders : ICollection~Notification~
+    + User : User?
+    + UserReportReporters : ICollection~UserReport~
+    + UserReportResolvers : ICollection~UserReport~
+    + UserReportTargets : ICollection~UserReport~
+    + TransactionFroms : ICollection~Transaction~
+    + TransactionTos : ICollection~Transaction~
+    + ChatParticipants : ICollection~ChatParticipant~
+    + Messages : ICollection~Message~
+}
+
+class User {
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+    + CartItems : ICollection~CartItem~
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + OrderInfos : ICollection~OrderInfo~
+    + UserNavigation : Account
+    + WishlistItems : ICollection~WishlistItem~
+    + QuizAttempts : ICollection~QuizAttempt~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+Transaction *-- TransactionExt
+Account *-- User
+
+%% === AGGREGATION (hollow diamond) ===
+AdminFinanceUnifiedVM o-- PagedResultRefundRequestVM
+PagedResultRefundRequestVM o-- RefundRequestVM
+RefundRequestVM o-- TransactionExtDto
+RefundRequestVM o-- OrderItemDto
+RefundRequestVM o-- AccountDto
+OrderItemDto o-- CourseDto
+AccountDto o-- UserDto
+
+PagedResultTransaction o-- Transaction
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+AdminFinanceControllerBE --> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+%% === BIDIRECTIONAL ASSOCIATION (solid line) ===
+Transaction -- OrderItem
+Transaction -- Account
+OrderItem -- Course
+
+%% === DEPENDENCY (dashed arrows) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
+AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
+AdminFinanceControllerFE ..> PagedResultRefundRequestVM
+
+AdminFinanceControllerBE ..> ApiResponseTransaction
+AdminFinanceControllerBE ..> PagedResultTransaction
+AdminFinanceService ..> PagedResultTransaction
+
+%% DTO and Entities passed between layers
+AdminFinanceService ..> Transaction
+AdminFinanceRepository ..> Transaction
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -40,6 +40,7 @@ participant ":AdminFinanceRepository" as finance_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
+act ++
 act -> view++: Access Earnings Dashboard
 view -> fe_tx_ctrl++: GET /Transaction/Instructor?year={y}&month={m}
 

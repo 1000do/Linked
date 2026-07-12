@@ -1,0 +1,135 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminProfileControllerFE["AdminProfileController"] {
+    <<frontend controller>>
+    + Index() Task~IActionResult~
+}
+
+class AdminProfileViewModel {
+    <<view model>>
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+    + AccountCreatedAt : DateTime?
+    + LockoutStart : DateTime?
+    + LockoutEnd : DateTime?
+    + Email : string
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class AdminProfileControllerBE["AdminProfileController"] {
+    <<backend controller>>
+    - _profileService : IManagerProfileService
+    + GetProfile() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class ManagerProfileResponse {
+    <<dto>>
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+    + AccountCreatedAt : DateTime?
+    + LockoutStart : DateTime?
+    + LockoutEnd : DateTime?
+    + Email : string
+}
+
+%% ==================== BACKEND - SERVICES ====================
+
+class IManagerProfileService {
+    <<interface>>
+    + GetProfileAsync(managerId: int) Task~ManagerProfileResponse?~ *
+}
+
+class ManagerProfileService {
+    - _managerRepo : IManagerRepository
+    + GetProfileAsync(managerId: int) Task~ManagerProfileResponse?~
+}
+
+%% ==================== BACKEND - REPOSITORIES ====================
+
+class IManagerRepository {
+    <<interface>>
+    + GetManagerByIdAsync(managerId: int) Task~Manager?~ *
+}
+
+class ManagerRepository {
+    - _context : AppDbContext
+    + GetManagerByIdAsync(managerId: int) Task~Manager?~
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + Managers : DbSet~Manager~
+    + Accounts : DbSet~Account~
+    + Lockouts : DbSet~Lockout~
+}
+
+%% ==================== BACKEND - ENTITIES ====================
+
+class Manager {
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+}
+
+class Account {
+    + AccountId : int
+    + Email : string
+    + PasswordHash : string?
+    + AccountStatus : string?
+    + AccountCreatedAt : DateTime?
+}
+
+class Lockout {
+    + LockoutId : int
+    + AccountId : int?
+    + LockoutType : string?
+    + LockoutStart : DateTime?
+    + LockoutEnd : DateTime?
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+AdminProfileControllerBE --> IManagerProfileService
+ManagerProfileService --> IManagerRepository
+ManagerRepository --> AppDbContext
+AppDbContext --> Manager
+Manager --> Account : 1..1
+Account --> Lockout : 1..*
+
+%% === REALIZATION ===
+ManagerProfileService ..|> IManagerProfileService
+ManagerRepository ..|> IManagerRepository
+
+%% === DEPENDENCY ===
+AdminProfileControllerFE ..> AdminProfileViewModel
+AdminProfileControllerFE ..> AdminProfileControllerBE : API
+AdminProfileControllerBE ..> ManagerProfileResponse
+IManagerProfileService ..> ManagerProfileResponse
+ManagerProfileService ..> ManagerProfileResponse
+IManagerRepository ..> Manager
+ManagerRepository ..> Manager
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

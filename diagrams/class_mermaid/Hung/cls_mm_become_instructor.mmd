@@ -1,0 +1,148 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorControllerFE["InstructorController"] {
+    <<frontend controller>>
+    + Apply() Task~IActionResult~
+    + Apply(model: InstructorApplyViewModel) Task~IActionResult~
+    + ApplicationStatus() Task~IActionResult~
+    - LoadEmailVerifiedAsync() Task
+    - LoadStripeCountriesAsync() Task~List~
+    - LoadCategoriesAsync() Task~List~
+}
+
+class InstructorApplyViewModel {
+    <<view model>>
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentFile : IFormFile?
+    + DocumentFiles : List~IFormFile~?
+    + ExistingDocumentUrl : string?
+    + ExistingDocumentUrls : List~string~?
+    + RetainedDocumentUrls : List~string~?
+    + IsResubmit : bool
+    + RejectionReason : string?
+    + StripeCountry : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class InstructorControllerBE["InstructorController"] {
+    <<backend controller>>
+    - _instructorService : IInstructorService
+    
+    + Apply(request: InstructorApplicationRequest) Task~IActionResult~
+    + GetApplyInfo() Task~IActionResult~
+    + GetDashboard() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class InstructorApplicationRequest {
+    <<dto>>
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentFile : IFormFile?
+    + DocumentFiles : List~IFormFile~?
+    + RetainedDocumentUrls : List~string~?
+    + StripeCountry : string
+}
+
+class InstructorDashboardDto {
+    <<dto>>
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + DocumentUrl : string?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + StripeCountry : string?
+}
+
+%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+
+class IInstructorService {
+    <<interface>>
+    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~
+    + GetRejectedApplicationInfoAsync(userId: int) Task~InstructorDashboardDto?~
+    + GetInstructorDashboardAsync(userId: int) Task~InstructorDashboardDto?~
+}
+
+class IFileUploadService {
+    <<interface>>
+    + UploadImageAsync(file: IFormFile) Task~string~
+}
+
+class IInstructorRepository {
+    <<interface>>
+    + GetByIdAsync(userId: int) Task~Instructor~
+    + AddAsync(instructor: Instructor) Task
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
+
+class InstructorService {
+    - _repo : IInstructorRepository
+    - _uploadService : IFileUploadService
+    
+    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~
+}
+
+class InstructorRepository {
+    - _context : AppDbContext
+    + GetByIdAsync(userId: int) Task~Instructor~
+    + AddAsync(instructor: Instructor) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class AppDbContext {
+    + Instructors : DbSet~Instructor~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Instructor {
+    + InstructorId : int
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string
+    + ApprovalStatus : string
+    + StripeCountry : string
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+InstructorControllerFE ..> InstructorApplyViewModel
+InstructorControllerFE ..> InstructorControllerBE
+
+InstructorControllerBE --> IInstructorService
+InstructorControllerBE ..> InstructorApplicationRequest
+InstructorControllerBE ..> InstructorDashboardDto
+
+InstructorService ..|> IInstructorService
+InstructorService --> IInstructorRepository
+InstructorService --> IFileUploadService
+InstructorService ..> InstructorApplicationRequest
+InstructorService ..> InstructorDashboardDto
+InstructorService ..> Instructor
+
+InstructorRepository ..|> IInstructorRepository
+InstructorRepository --> AppDbContext
+InstructorRepository ..> Instructor
+
+AppDbContext --> Instructor
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -1,4 +1,3 @@
-```mermaid
 classDiagram
 direction LR
 
@@ -6,18 +5,10 @@ direction LR
 
 class TransactionControllerFE["TransactionController"] {
     <<frontend controller>>
-    + Instructor(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
-}
-
-class InstructorFinancePageVM {
-    <<view model>>
-    + Transactions : TransactionPagedVM
-    + Payouts : InstructorPayoutPagedViewModel
-    + CourseRevenues : List~InstructorCourseRevenueResponse~
+    + History(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~IActionResult~
 }
 
 class TransactionPagedVM {
-    <<view model>>
     + Items : List~TransactionListItemVM~
     + TotalCount : int
     + Page : int
@@ -26,7 +17,6 @@ class TransactionPagedVM {
 }
 
 class TransactionListItemVM {
-    <<view model>>
     + TransactionId : int
     + StripeSessionId : string?
     + Date : DateTime?
@@ -51,13 +41,12 @@ class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
     - _transactionService : ITransactionService
     
-    + GetInstructorTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
+    + GetMyTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
 class PagedResultTransactionListDto["PagedResult~TransactionListDto~"] {
-    <<dto>>
     + Items : IEnumerable~TransactionListDto~
     + TotalCount : int
     + Page : int
@@ -66,7 +55,6 @@ class PagedResultTransactionListDto["PagedResult~TransactionListDto~"] {
 }
 
 class TransactionListDto {
-    <<dto>>
     + TransactionId : int
     + StripeSessionId : string?
     + Date : DateTime?
@@ -89,57 +77,53 @@ class TransactionListDto {
 
 class Transaction {
     + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
     + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
     + Currency : string?
     + TransactionsStatus : string?
+    + TransactionType : string?
     + TransactionCreatedAt : DateTime?
-    + AccountFromNavigation : User?
+    + TransactionExt : TransactionExt?
     + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
     + InstructorPayouts : ICollection~InstructorPayout~
-}
-
-class OrderItem {
-    + OrderItemId : int
-    + Course : Course?
-}
-
-class Course {
-    + CourseId : int
-    + Title : string?
-    + Instructor : Instructor?
-}
-
-class User {
-    + UserId : int
-    + FullName : string?
-    + Email : string?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ITransactionService {
     <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~PagedResult~TransactionListDto~~ *
 }
 
 class ITransactionRepository {
     <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~Tuple~List~TransactionListDto~, int~~ *
 }
 
-%% ==================== BACKEND - IMPLEMENTATIONS ====================
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class TransactionService {
-    - _repo : ITransactionRepository
+    - _transactionRepository : ITransactionRepository
     
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~PagedResult~TransactionListDto~~
 }
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class TransactionRepository {
     - _context : AppDbContext
     
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
+    + GetUserTransactionsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?) Task~Tuple~List~TransactionListDto~, int~~
 }
+
+%% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
     + Transactions : DbSet~Transaction~
@@ -147,33 +131,29 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-InstructorFinancePageVM *-- TransactionPagedVM
-TransactionPagedVM *-- TransactionListItemVM
-PagedResultTransactionListDto *-- TransactionListDto
-Transaction *-- OrderItem
-Transaction *-- User
+%% === AGGREGATION ===
+TransactionPagedVM o-- TransactionListItemVM
+PagedResultTransactionListDto o-- TransactionListDto
 
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === UNIDIRECTIONAL ASSOCIATION ===
 TransactionControllerBE --> ITransactionService
 TransactionService --> ITransactionRepository
 TransactionRepository --> AppDbContext
-OrderItem --> Course
 
 %% === INTERFACE REALIZATION ===
 TransactionService ..|> ITransactionService
 TransactionRepository ..|> ITransactionRepository
 
-%% === DEPENDENCY (dashed arrows) ===
+%% === DEPENDENCY ===
+TransactionControllerFE ..> TransactionPagedVM
 TransactionControllerFE ..> TransactionControllerBE
-TransactionControllerFE ..> InstructorFinancePageVM
 TransactionControllerBE ..> PagedResultTransactionListDto
+ITransactionService ..> PagedResultTransactionListDto
 TransactionService ..> PagedResultTransactionListDto
-TransactionRepository ..> PagedResultTransactionListDto
+ITransactionRepository ..> TransactionListDto
 TransactionRepository ..> TransactionListDto
 TransactionRepository ..> Transaction
 
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
-```
