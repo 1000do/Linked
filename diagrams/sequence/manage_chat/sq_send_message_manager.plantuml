@@ -33,6 +33,7 @@ participant "ChatIndexPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
 participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
 participant ":ICloudinaryUploadService" as upload_sv
 participant "ChatHub" as hub
@@ -46,15 +47,17 @@ participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++: Enter message text
-act->view: Select files (Optional)
-act->view: Click "Send" button (or press Enter)
 
-opt With Attachments
+alt Send Message in Existing Chat
+    act->view++: Enter message text
+    act->view: Select files (Optional)
+    act->view: Click "Send" button (or press Enter)
+    
+    opt With Attachments
     loop for each selected file f
         view->fe_ctrl++: POST /Chat/UploadAttachment
         
-        fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+        fe_ctrl -> fe_ctrl++: Validate attachment upload
         fe_ctrl--
         
         alt Session Invalid
@@ -65,33 +68,23 @@ opt With Attachments
             fe_ctrl -->> error_page: Redirect to ErrorPage
             activate error_page
             error_page -->> act--: Display error message
-        else Valid actor's authentication and authorization
+        else File size > 10MB
+            fe_ctrl->be_att_ctrl++: POST /api/ChatAttachment/upload
+            be_att_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return BadRequest
+            view-->>act: Display file size validation error
+        else File size <= 10MB
             fe_ctrl->be_att_ctrl++: POST /api/ChatAttachment/upload
             
-            be_att_ctrl->be_att_ctrl++: Check ChatSettings:EnableAttachments
-            be_att_ctrl--
-        
-        alt EnableAttachments = false
-            be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-            fe_ctrl-->>view: Return BadRequest
-            view-->>act: Display feature disabled warning
-        else EnableAttachments = true
-            alt file size > 10MB
-                be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-                fe_ctrl-->>view: Return BadRequest
-                view-->>act: Display file size validation error
-            else file size <= 10MB
-                be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
-                upload_sv->upload_sv++: Upload to Cloudinary
-                upload_sv--
-                upload_sv-->>be_att_ctrl--: Return SecureUrl
-                
-                be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
-                fe_ctrl-->>view--: Return JSON with attachment metadata
-                view-->>act: Display uploaded file in UI
-            end
+            be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+            upload_sv->upload_sv++: Upload to Cloudinary
+            upload_sv--
+            upload_sv-->>be_att_ctrl--: Return SecureUrl
+            
+            be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
+            fe_ctrl-->>view--: Return JSON with attachment metadata
+            view-->>act: Display uploaded file in UI
         end
-    end
 end
 end
 
@@ -165,6 +158,7 @@ else Valid Permissions
         view--
         view-->>act--: Display sent message on UI
     end
-end
+
+
 
 @enduml
