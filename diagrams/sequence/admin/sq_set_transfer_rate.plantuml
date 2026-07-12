@@ -37,6 +37,8 @@ participant ":IAdminFinanceService" as finance_sv
 participant ":ISystemConfigRepository" as config_repo
 participant ":IInstructorRepository" as instructor_repo
 participant ":INotificationService" as noti_sv
+participant ":AppDbContext" as ctx
+database Database as db
 
 act -> view++: Enter rate and click "Save Rate" button
 view -->> act: Display "Confirm Rate Change" dialog
@@ -72,9 +74,17 @@ else Valid actor's authentication and authorization
         view -->> act: Display error notification
     else Valid Rate
         finance_sv -> config_repo++: UpsertConfigAsync(TransferRateKey, rate, description)
+        config_repo -> ctx++: SystemConfigs.FirstOrDefaultAsync(...) \n(or Add/Update)
+        ctx -> db++: Execute query
+        db -->> ctx--: Return data
+        ctx -->> config_repo--: Return result
         config_repo -->> finance_sv--: Return rows affected
 
         finance_sv -> instructor_repo++: GetInstructorsWithStripeAsync()
+        instructor_repo -> ctx++: Instructors.Where(...).ToListAsync()
+        ctx -> db++: Execute query
+        db -->> ctx--: Return data
+        ctx -->> instructor_repo--: Return List<Instructor>
         instructor_repo -->> finance_sv--: Return List<Instructor>
 
         group opt [For each Instructor with Stripe]
