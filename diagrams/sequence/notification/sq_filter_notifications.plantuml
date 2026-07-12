@@ -73,7 +73,7 @@ else Valid actor's authentication and authorization
     db-->>ctx--: Return old notifications list
     ctx-->>repo--: Return old notifications list
     
-    opt [Old notifications exist]
+    opt Old notifications exist
         repo->ctx++: Mark IsRemoved = true for old notifications
         ctx-->>repo--: Return
         repo->ctx++: Call SaveChangesAsync()
@@ -104,7 +104,7 @@ else Valid actor's authentication and authorization
     
     view-->>act: Display system notifications list
 
-    alt [Click role tab]
+    alt Click role tab
         act->view++: Click a role tab (all / student / instructor / staff-admin)
         view->view++: switchRoleTab(role) (updates activeRoleTab & styles active button)
         view--

@@ -44,7 +44,7 @@ act->view++: Click "Remove" button on a course in cart
 view->view++: Prompt confirmation dialog
 view--
 
-alt [User cancels]
+alt User cancels
     view-->>act: Do nothing
 else [User confirms]
     view->fe_ctrl++: POST /Cart/RemoveFromCart
@@ -73,7 +73,7 @@ else [User confirms]
             ctx-->>repo--: Return CartItem entity
             repo-->>sv--: Return CartItem entity
             
-            alt [item == null]
+            alt item == null
                 sv-->>be_ctrl: throw InvalidOperationException("Course not found in the cart.")
                 be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
                 fe_ctrl-->>view: Return statusCode 302 (Redirect)

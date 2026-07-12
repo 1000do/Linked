@@ -74,7 +74,7 @@ ctx-->>repo--: Return isParticipant
 repo-->>sv--: Return isParticipant
 sv-->>sv--: Return hasAccess
 
-alt [hasAccess == false]
+alt hasAccess == false
     sv-->>be_ctrl: throw UnauthorizedAccessException
     be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
     fe_ctrl-->>view: Return Forbidden

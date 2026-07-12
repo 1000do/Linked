@@ -46,7 +46,7 @@ view->view++: Populate and display notification detail modal
 view--
 view-->>act: Display Notification Detail Modal
 
-alt [User role is staff AND notification belongs to user AND notification is unread]
+alt User role is staff AND notification belongs to user AND notification is unread
     view->fe_ctrl++: PUT /Notification/MarkAsRead/{id}
     
     fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
@@ -71,7 +71,7 @@ alt [User role is staff AND notification belongs to user AND notification is unr
     ctx-->>repo--: Return notification entity
     repo-->>sv--: Return notification entity
     
-    alt [notification == null || notification.ReceiverId != userId]
+    alt notification == null || notification.ReceiverId != userId
         sv-->>be_ctrl: throw KeyNotFoundException
         be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
         fe_ctrl-->>view: Return JSON error response
