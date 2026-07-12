@@ -1,12 +1,35 @@
 classDiagram
 direction LR
 
-%% ==================== BACKEND - HUB ====================
+%% ==================== FRONTEND ====================
+
+class ChatControllerFE["ChatController"] {
+    <<frontend controller>>
+    + RequestSupport(dto: SupportRequestDto) Task~IActionResult~
+    + CreateChat(dto: CreateChatDto) Task~IActionResult~
+    + UploadAttachment(file: IFormFile) Task~IActionResult~
+}
+
+%% ==================== BACKEND - HUB & CONTROLLERS ====================
 
 class ChatHub {
     <<signalr hub>>
     - _chatService : IChatService
     + SendMessage(dto: SendMessageDto) Task
+}
+
+class ChatControllerBE["ChatController"] {
+    <<backend controller>>
+    - _chatService : IChatService
+    - _hubContext : IHubContext~ChatHub~
+    + RequestSupport(dto: SupportRequestDto) Task~IActionResult~
+    + CreateChat(dto: CreateChatDto) Task~IActionResult~
+}
+
+class ChatAttachmentController {
+    <<backend controller>>
+    - _uploadService : ICloudinaryUploadService
+    + Upload(file: IFormFile) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -24,6 +47,30 @@ class AttachmentInputDto {
     + FileName : string?
     + FileType : string?
     + FileSize : long?
+}
+
+class SupportRequestDto {
+    <<dto>>
+    + Content : string
+    + TargetRole : string
+}
+
+class CreateChatDto {
+    <<dto>>
+    + TargetAccountId : int
+    + ContextType : string?
+    + ContextId : int?
+}
+
+class SupportTicketDto {
+    <<dto>>
+    + TicketId : string
+    + SenderId : int
+    + SenderName : string
+    + SenderAvatar : string?
+    + InitialMessage : string
+    + RequestedAt : DateTime
+    + TargetRole : string
 }
 
 class MessageDto {
@@ -80,11 +127,20 @@ class Chat {
 class IChatService {
     <<interface>>
     + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~ *
+    + CreateSupportRequestAsync(senderId: int, dto: SupportRequestDto) Task~SupportTicketDto~ *
+    + GetOrCreateChatAsync(senderId: int, dto: CreateChatDto) Task~int~ *
 }
 
 class IRedisService {
     <<interface>>
     + IncrementUnreadCountAsync(accountId: int, chatId: int) Task *
+}
+
+class ICloudinaryUploadService {
+    <<interface>>
+    + UploadImageAsync(file: IFormFile) Task~string?~ *
+    + UploadVideoAsync(file: IFormFile) Task~string?~ *
+    + UploadFileAsync(file: IFormFile) Task~string?~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
@@ -106,6 +162,8 @@ class ChatService {
     - _chatRepository : IChatRepository
     - _redisService : IRedisService
     + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~
+    + CreateSupportRequestAsync(senderId: int, dto: SupportRequestDto) Task~SupportTicketDto~
+    + GetOrCreateChatAsync(senderId: int, dto: CreateChatDto) Task~int~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -132,6 +190,10 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
+ChatControllerFE --> ChatControllerBE
+ChatControllerFE --> ChatAttachmentController
+ChatControllerBE --> IChatService
+ChatAttachmentController --> ICloudinaryUploadService
 ChatHub --> IChatService
 ChatService --> IChatRepository
 ChatService --> IRedisService
@@ -148,11 +210,18 @@ ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
 %% === DEPENDENCY ===
+ChatControllerFE ..> SupportRequestDto
+ChatControllerFE ..> CreateChatDto
+ChatControllerBE ..> SupportRequestDto
+ChatControllerBE ..> CreateChatDto
 ChatHub ..> SendMessageDto
 ChatHub ..> MessageDto
 ChatService ..> SendMessageDto
 ChatService ..> MessageDto
 ChatService ..> Message
+ChatService ..> SupportRequestDto
+ChatService ..> SupportTicketDto
+ChatService ..> CreateChatDto
 ChatRepository ..> Message
 ChatRepository ..> Chat
 
