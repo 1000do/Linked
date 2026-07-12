@@ -72,7 +72,7 @@ else Valid actor's authentication and authorization
         ctx-->>repo--:3.3.7. Return List<CartItem>
         repo-->>sv--:3.3.8. Return List<CartItem>
         
-opt [couponCode is provided]
+opt couponCode is provided
 loop for each couponCode in list
                 sv->couponRepo++:3.3.8.1. Call GetByCodeAsync(code)
                 couponRepo->ctx++:3.3.8.1.1. Call GetByCodeAsync(code)
@@ -81,12 +81,12 @@ loop for each couponCode in list
                 ctx-->>couponRepo--:3.3.8.1.4. Return Coupon
                 couponRepo-->>sv--:3.3.8.1.5. Return Coupon
                 
-alt [coupon is null OR inactive OR expired/limit reached]
+alt coupon is null OR inactive OR expired/limit reached
                     sv-->>be_ctrl:3.3.8.1.5.1. throw InvalidOperationException
                     be_ctrl-->>fe_ctrl:3.3.8.1.5.1.1. Return statusCode 400 (BadRequest)
                     fe_ctrl-->>view:3.3.8.1.5.1.2. Return statusCode 400 (BadRequest)
                     view-->>act:3.3.8.1.5.1.3. Display coupon error message
-else [coupon is valid]
+else coupon is valid
                     sv->sv++:3.3.8.1.5.2. Calculate eligibleSubTotal & discountAmount
                     sv--
 end

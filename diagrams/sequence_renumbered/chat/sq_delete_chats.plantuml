@@ -45,9 +45,9 @@ act->view++:1. Click the clear chat button
 view->view++:2. Confirm deletion with dialog
 view--
 
-alt [User cancels]
+alt User cancels
     view-->>act:2.1. Do nothing
-else [User confirms]
+else User confirms
     view->fe_ctrl++:2.2. DELETE /Chat/ClearHistory?chatId={chatId}
     
     fe_ctrl -> fe_ctrl++:2.2.1. Validate actor's authentication and authorization
@@ -74,12 +74,12 @@ else Valid actor's authentication and authorization
     ctx-->>repo--:2.2.1.3.6. Return participant
     repo-->>sv--:2.2.1.3.7. Return participant
     
-alt [participant == null]
+alt participant == null
         sv-->>be_ctrl:2.2.1.3.7.1. Return false
         be_ctrl-->>fe_ctrl:2.2.1.3.7.1.1. Return statusCode 400 (BadRequest)
         fe_ctrl-->>view:2.2.1.3.7.1.2. Return BadRequest
         view-->>act:2.2.1.3.7.1.3. Display error message
-else [participant != null]
+else participant != null
         sv->sv++:2.2.1.3.7.2. Set participant.ClearedAt = DateTime.UtcNow
         sv--
         

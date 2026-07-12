@@ -77,13 +77,13 @@ repo-->>sv--:25. Return numberOfRowsAffected
 repo->repo++:26. Check numberOfRowsAffected
 repo--
 
-alt [numberOfRowsAffected > 0]
+alt numberOfRowsAffected > 0
     repo-->>sv:26.1. Return true
     sv-->>be_ctrl--:26.1.1. Return CheckoutResponse DTO (with SessionUrl & SessionId)
     be_ctrl-->>fe_ctrl--:26.1.2. Return statusCode 200 (Ok) with CheckoutResponse JSON
     fe_ctrl-->>view--:26.1.3. Redirect User to Stripe SessionUrl
     view-->>act--:26.1.4. Redirected to Stripe Checkout form
-else [numberOfRowsAffected = 0]
+else numberOfRowsAffected = 0
     repo-->>sv--:26.2. Return false
     sv->sv++:26.2.1. throw InvalidOperationException
     sv--
@@ -111,12 +111,12 @@ db-->>ctx--:38. Return Transactions list
 ctx-->>repo--:39. Return result
 repo-->>sv--:40. Return result
 
-alt [Payment has already been processed]
+alt Payment has already been processed
     sv-->>be_ctrl--:40.1. Return
     be_ctrl-->>fe_ctrl--:40.1.1. Return statusCode 200 (Ok)
     fe_ctrl-->>view++:40.1.2. Return View("Success")
     view-->>act--:40.1.3. Display Purchase Success confirmation page
-else [Payment is new]
+else Payment is new
     sv->repo++:40.2. Update OrderInfo (Status = Succeeded) and Add OrderItems
     repo-->>sv--:40.2.1. Return
     
@@ -138,13 +138,13 @@ else [Payment is new]
     repo->repo++:40.2.14. Check numberOfRowsAffected
     repo--
     
-alt [numberOfRowsAffected > 0]
+alt numberOfRowsAffected > 0
         repo-->>sv:40.2.14.1. Return true
         sv-->>be_ctrl--:40.2.14.1.1. Return completion Task
         be_ctrl-->>fe_ctrl--:40.2.14.1.2. Return statusCode 200 (Ok)
         fe_ctrl-->>view++:40.2.14.1.3. Return View("Success")
         view-->>act--:40.2.14.1.4. Display Purchase Success confirmation page
-else [numberOfRowsAffected = 0]
+else numberOfRowsAffected = 0
         repo-->>sv--:40.2.14.2. Return false
         sv->sv++:40.2.14.2.1. throw InvalidOperationException
         sv--
