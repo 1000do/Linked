@@ -390,7 +390,7 @@ public class GiftController : Controller
             HttpResponseMessage response;
             if (!string.IsNullOrWhiteSpace(paymentIntentId))
             {
-                response = await _api.GetAsync($"checkout/success-intent?payment_intent_id={Uri.EscapeDataString(paymentIntentId)}");
+                response = await _api.GetAsync($"checkout/gift-success-intent?payment_intent_id={Uri.EscapeDataString(paymentIntentId)}");
             }
             else
             {

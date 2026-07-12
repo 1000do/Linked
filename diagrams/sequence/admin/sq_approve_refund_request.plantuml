@@ -42,7 +42,7 @@ participant ":TransactionExt" as tx_ext_ett
 participant ":RefundResultResponse" as refund_res
 participant ":IPaymentGatewayService" as payment_gw
 participant ":INotificationService" as noti_sv
-
+act++
 act -> view++: Click "Approve" button on a pending refund request row
 view -->> act: Display "Approve Refund" confirmation dialog
 act -> view: Input optional feedback and click "Approve & Refund"

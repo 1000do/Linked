@@ -88,15 +88,20 @@ class CourseResponse {
     + IsOwner : bool
     + TotalReviews : int
     + LastApprovedAt : DateTime?
+    + ModerationFeedback : string?
     + AppliedCouponCode : string?
     + AppliedCouponType : string?
     + AppliedCouponValue : decimal?
     + IsRemoved : bool
     + IsInAnyCart : bool
     + FlagCount : int
+    + FieldFeedbacks : List~CourseFieldFeedbackDto~?
 }
 
-
+class CourseDetailResponse {
+    + Lessons : List~LessonResponse~
+    + CourseQuizzes : List~CourseQuizItemResponse~
+}
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
@@ -160,7 +165,7 @@ class IGiftService {
 
 class ICourseQueryService {
     <<interface>>
-    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseResponse~ *
+    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~ *
 }
 
 class ICourseRepository {
@@ -205,7 +210,7 @@ class CourseQueryService {
     - _redisService : IRedisService
     - _cartRepository : ICartRepository
     
-    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseResponse~
+    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -233,7 +238,8 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-
+%% === INHERITANCE ===
+CourseDetailResponse --|> CourseResponse
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
 GiftControllerBE --> IGiftService
@@ -255,8 +261,8 @@ GiftControllerFE ..> GiftSetupViewModel
 GiftControllerFE ..> PublicCourseViewModel
 GiftControllerFE ..> GiftControllerBE
 IUserRepository ..> Account
-ICourseQueryService ..> CourseResponse
-CourseQueryService ..> CourseResponse
+ICourseQueryService ..> CourseDetailResponse
+CourseQueryService ..> CourseDetailResponse
 ICourseRepository ..> Course
 CourseRepository ..> Course
 
