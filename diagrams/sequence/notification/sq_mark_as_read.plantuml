@@ -66,7 +66,7 @@ db-->>ctx--: Return notification entity
 ctx-->>repo--: Return notification entity
 repo-->>sv--: Return notification entity
 
-alt [notification == null || notification.ReceiverId != userId]
+alt notification == null || notification.ReceiverId != userId
     sv-->>be_ctrl: throw KeyNotFoundException
     be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
     fe_ctrl-->>view: Return JSON error response

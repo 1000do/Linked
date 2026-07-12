@@ -72,7 +72,7 @@ act->view++: Access Shopping Cart page
         ctx-->>repo--: Return List<CartItem>
         repo-->>sv--: Return List<CartItem>
         
-        opt [couponCode is provided]
+        opt couponCode is provided
             loop for each couponCode in list
                 sv->couponRepo++: Call GetByCodeAsync(code)
                 couponRepo->ctx++: Call GetByCodeAsync(code)
@@ -81,7 +81,7 @@ act->view++: Access Shopping Cart page
                 ctx-->>couponRepo--: Return Coupon
                 couponRepo-->>sv--: Return Coupon
                 
-                alt [coupon is null OR inactive OR expired/limit reached]
+                alt coupon is null OR inactive OR expired/limit reached
                     sv-->>be_ctrl: throw InvalidOperationException
                     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
                     fe_ctrl-->>view: Return statusCode 400 (BadRequest)

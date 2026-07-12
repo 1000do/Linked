@@ -5,7 +5,7 @@ direction LR
 
 class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + Index(page: int, query: string, status: string) Task~IActionResult~
+    + Index(searchTerm: string?, status: string?, page: int) Task~IActionResult~
 }
 
 class InstructorStudioViewModel {
@@ -19,6 +19,24 @@ class InstructorStudioViewModel {
     + TotalRevenue : decimal
     + EnrollmentGrowthPercentage : double
     + InstructorRankPercentage : int
+    + CurrentPage : int
+    + TotalPages : int
+    + TotalItems : int
+    + SearchTerm : string?
+    + FilterStatus : string?
+}
+
+class CourseListViewModel {
+    <<viewmodel>>
+    + Id : int
+    + Title : string
+    + Students : int
+    + Rating : double
+    + Status : string
+    + ThumbnailUrl : string
+    + UpdatedAt : DateTime
+    + IsRemoved : bool
+    + FlagCount : int
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -26,7 +44,7 @@ class InstructorStudioViewModel {
 class CourseController {
     <<backend controller>>
     - _courseQueryService : ICourseQueryService
-    + GetInstructorCourses(page: int, pageSize: int, query: string, status: string) Task~IActionResult~
+    + GetInstructorCourses(page: int, pageSize: int, query: string?, status: string?) Task~IActionResult~
 }
 
 class InstructorController {
@@ -66,14 +84,61 @@ class InstructorDashboardDto {
 
 class Course {
     <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 class InstructorStats {
     <<entity>>
+    + InstructorId : int
+    + InstructorRating : double
+    + TotalRevenue : decimal
+    + TotalStudentsCount : int
 }
 
 class Enrollment {
     <<entity>>
+    + EnrollmentId : int
+    + UserId : int?
+    + CourseId : int?
+    + Title : string?
+    + Description : string?
+    + CompletedDate : DateOnly?
+    + IsCompleted : bool?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
+    + Course : Course?
+    + CourseReviews : ICollection~CourseReview~
+    + LessonReviews : ICollection~LessonReview~
+    + User : User?
+    + MaterialCompletions : ICollection~MaterialCompletion~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -136,27 +201,35 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-InstructorCourseControllerFE --> InstructorStudioViewModel
-InstructorCourseControllerFE ..> CourseController
-InstructorCourseControllerFE ..> InstructorController
+%% === COMPOSITION & AGGREGATION ===
+InstructorStudioViewModel o-- CourseListViewModel
+PagedResultCourseResponse o-- CourseResponse
+Course -- Enrollment
 
+%% === UNIDIRECTIONAL ASSOCIATION ===
 CourseController --> ICourseQueryService
 InstructorController --> IInstructorService
-
-CourseQueryService ..|> ICourseQueryService
-InstructorService ..|> IInstructorService
 
 CourseQueryService --> ICourseRepository
 InstructorService --> IInstructorRepository
 
-CourseRepository ..|> ICourseRepository
-InstructorRepository ..|> IInstructorRepository
-
 CourseRepository --> AppDbContext
 InstructorRepository --> AppDbContext
 
+%% === INTERFACE REALIZATION ===
+CourseQueryService ..|> ICourseQueryService
+InstructorService ..|> IInstructorService
+CourseRepository ..|> ICourseRepository
+InstructorRepository ..|> IInstructorRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+InstructorCourseControllerFE ..> CourseController
+InstructorCourseControllerFE ..> InstructorController
+InstructorCourseControllerFE ..> InstructorStudioViewModel
+
 CourseQueryService ..> PagedResultCourseResponse
 CourseRepository ..> Course
+CourseRepository ..> PagedResultCourseResponse
 
 InstructorService ..> InstructorDashboardDto
 InstructorRepository ..> InstructorDashboardDto
