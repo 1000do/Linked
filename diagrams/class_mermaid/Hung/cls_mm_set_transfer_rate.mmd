@@ -1,0 +1,140 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND - CONTROLLER ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    + SetTransferRate(rate: decimal) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminFinanceControllerBE["AdminFinanceController"] {
+    <<backend controller>>
+    - _financeService : IAdminFinanceService
+    - _instructorService : IInstructorService
+    + SetTransferRate(request: SetTransferRateRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + SetTransferRateAsync(rate: decimal) Task *
+}
+
+class ISystemConfigRepository {
+    <<interface>>
+    + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~ *
+}
+
+class IInstructorRepository {
+    <<interface>>
+    + GetInstructorsWithStripeAsync() Task~List~Instructor~~ *
+}
+
+class INotificationService {
+    <<interface>>
+    + SendNotificationAsync(userId: int, title: string, content: string, link: string) Task *
+}
+
+%% ==================== BACKEND - SERVICE/REPO IMPLEMENTATIONS ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    - _paymentGateway : IPaymentGatewayService
+    - _instructorRepo : IInstructorRepository
+    - _notiService : INotificationService
+    - _hubContext : IHubContext~FinanceHub~
+    - _logger : ILogger~AdminFinanceService~
+    - _configRepo : ISystemConfigRepository
+    - _courseRepo : ICourseRepository
+    - _stripeConnect : IStripeConnectService
+    - _giftRepo : IGiftRepository
+    + SetTransferRateAsync(rate: decimal) Task
+}
+
+class SystemConfigRepository {
+    - _context : AppDbContext
+    + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~
+}
+
+class InstructorRepository {
+    - _context : AppDbContext
+    + GetInstructorsWithStripeAsync() Task~List~Instructor~~
+}
+
+class NotificationService {
+    - _context : AppDbContext
+    + SendNotificationAsync(userId: int, title: string, content: string, link: string) Task
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + SystemConfigs : DbSet~SystemConfig~
+    + Instructors : DbSet~Instructor~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class SystemConfig {
+    <<entity>>
+    + ConfigId : int
+    + ManagerId : int?
+    + ConfigKey : string
+    + ConfigValue : string?
+    + Description : string?
+    + UpdatedAt : DateTime?
+    + Manager : Manager?
+}
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
+    + Quizzes : ICollection~Quiz~
+    + InstructorNavigation : User
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === ASSOCIATION (solid arrow) ===
+AdminFinanceControllerBE --> IAdminFinanceService
+AdminFinanceService --> ISystemConfigRepository
+AdminFinanceService --> IInstructorRepository
+AdminFinanceService --> INotificationService
+SystemConfigRepository --> AppDbContext
+InstructorRepository --> AppDbContext
+NotificationService --> AppDbContext
+
+%% === REALIZATION (hollow arrow) ===
+AdminFinanceService ..|> IAdminFinanceService
+SystemConfigRepository ..|> ISystemConfigRepository
+InstructorRepository ..|> IInstructorRepository
+NotificationService ..|> INotificationService
+
+%% === DEPENDENCY (dashed arrow) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
+AdminFinanceService ..> Instructor
+SystemConfigRepository ..> SystemConfig
+InstructorRepository ..> Instructor
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
