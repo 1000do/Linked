@@ -161,6 +161,8 @@ class ChatService {
     + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~
     + CreateSupportRequestAsync(senderId: int, dto: SupportRequestDto) Task~SupportTicketDto~
     + GetParticipantIdsAsync(chatId: int) Task~List~int~~
+    - ValidateMessageSendingAccessAsync(senderId: int, chatId: int) Task~void~
+    - UpdateChatAndNotifyRecipientsAsync(senderId: int, chatId: int, sentAt: DateTime?) Task~void~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -180,6 +182,7 @@ class AppDbContext {
     + Chats : DbSet~Chat~
     + Messages : DbSet~Message~
     + MessageAttachments : DbSet~MessageAttachment~
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================

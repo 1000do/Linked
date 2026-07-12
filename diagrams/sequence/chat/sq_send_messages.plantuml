@@ -58,7 +58,7 @@ alt Send Message in Existing Chat
     loop for each selected file f
         view->fe_ctrl++: POST /Chat/UploadAttachment
         
-        fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+        fe_ctrl -> fe_ctrl++: Validate attachment upload
         fe_ctrl--
         
         alt Session Invalid
@@ -69,33 +69,23 @@ alt Send Message in Existing Chat
             fe_ctrl -->> error_page: Redirect to ErrorPage
             activate error_page
             error_page -->> act--: Display error message
-        else Valid actor's authentication and authorization
+        else File size > 10MB
+            fe_ctrl->be_att_ctrl++: POST /api/ChatAttachment/upload
+            be_att_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return BadRequest
+            view-->>act: Display file size validation error
+        else File size <= 10MB
             fe_ctrl->be_att_ctrl++: POST /api/ChatAttachment/upload
             
-            be_att_ctrl->be_att_ctrl++: Check ChatSettings:EnableAttachments
-            be_att_ctrl--
-        
-        alt EnableAttachments = false
-            be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-            fe_ctrl-->>view: Return BadRequest
-            view-->>act: Display feature disabled warning
-        else EnableAttachments = true
-            alt file size > 10MB
-                be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-                fe_ctrl-->>view: Return BadRequest
-                view-->>act: Display file size validation error
-            else file size <= 10MB
-                be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
-                upload_sv->upload_sv++: Upload to Cloudinary
-                upload_sv--
-                upload_sv-->>be_att_ctrl--: Return SecureUrl
-                
-                be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
-                fe_ctrl-->>view--: Return JSON with attachment metadata
-                view-->>act: Display uploaded file in UI
-            end
+            be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+            upload_sv->upload_sv++: Upload to Cloudinary
+            upload_sv--
+            upload_sv-->>be_att_ctrl--: Return SecureUrl
+            
+            be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
+            fe_ctrl-->>view--: Return JSON with attachment metadata
+            view-->>act: Display uploaded file in UI
         end
-    end
 end
 end
 
@@ -107,24 +97,10 @@ hub->hub++: GetAccountId()
 hub--
 
 hub->sv++: Call SaveMessageAsync(senderId, dto)
-sv->repo++: Call IsParticipantAsync(dto.ChatId, senderId)
-repo->ctx++: Call IsParticipantAsync(chatId, senderId)
-ctx->db++: Execute SELECT query
-
-db-->>ctx--: Return isParticipant
-ctx-->>repo--: Return isParticipant
-repo-->>sv--: Return isParticipant
+    sv->sv++: Call ValidateMessageSendingAccessAsync(senderId, dto.ChatId)
+    sv--
 
 alt isParticipant == false
-    sv->repo++: Call HasActiveReportForChatAsync(dto.ChatId)
-    repo->ctx++: Call HasActiveReportForChatAsync(chatId)
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return hasActiveReport
-    ctx-->>repo--: Return hasActiveReport
-    repo-->>sv--: Return hasActiveReport
-end
-
-alt isParticipant == false && hasActiveReport == false
     sv-->>hub: Throw UnauthorizedAccessException
     hub->hub++: Send error message to Caller
     hub--
@@ -144,10 +120,7 @@ else Valid Permissions
     ctx-->>repo--: Return success
     repo-->>sv--: Return success
     
-    sv->sv++: Update chat.LastMessageAt
-    sv--
-    
-    sv->sv++: Increment unread counts for participants in Redis
+    sv->sv++: Call UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt)
     sv--
     
     sv->repo++: Call SaveChangesAsync()
@@ -186,63 +159,5 @@ else Valid Permissions
         view--
         view-->>act--: Display sent message on UI
     end
-else Request Chat With Support
-    act->view++: Click "Request Support"
-    view->fe_ctrl++: POST /Chat/RequestSupport
-    
-    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
-    fe_ctrl--
-    
-    alt Session Invalid
-        fe_ctrl -->> login_view: Redirect to LoginPage
-        activate login_view
-        login_view -->> act--: Display login form
-    else Unauthorized Access
-        fe_ctrl -->> error_page: Redirect to ErrorPage
-        activate error_page
-        error_page -->> act--: Display error message
-    else Valid actor's authentication and authorization
-        fe_ctrl->be_ctrl++: POST /api/chat/request-support
-        
-        be_ctrl->sv++: Call CreateSupportRequestAsync(accountId, dto)
-        sv->sv++: Execute support ticket creation logic
-        sv--
-        sv-->>be_ctrl--: Return SupportTicketDto object
-        
-        be_ctrl->hub++: Broadcast NewSupportRequest via SignalR
-        hub-->>be_ctrl--: Return
-        
-        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-        fe_ctrl-->>view--: Return Json(success=true)
-        view-->>act--: Display support request sent message
-    end
-else Request Direct Chat With Instructor
-    act->view++: Click "Message Instructor"
-    view->fe_ctrl++: POST /Chat/CreateChat
-    
-    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
-    fe_ctrl--
-    
-    alt Session Invalid
-        fe_ctrl -->> login_view: Redirect to LoginPage
-        activate login_view
-        login_view -->> act--: Display login form
-    else Unauthorized Access
-        fe_ctrl -->> error_page: Redirect to ErrorPage
-        activate error_page
-        error_page -->> act--: Display error message
-    else Valid actor's authentication and authorization
-        fe_ctrl->be_ctrl++: POST /api/chat/create
-        
-        be_ctrl->sv++: Call GetOrCreateChatAsync(accountId, dto)
-        sv->sv++: Execute chat creation or fetching logic
-        sv--
-        sv-->>be_ctrl--: Return chatId
-        
-        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-        fe_ctrl-->>view--: Return Json(success=true)
-        view-->>act--: Redirect to Chat screen
-    end
-end
 
 @enduml

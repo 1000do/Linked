@@ -57,7 +57,7 @@ alt Send Message in Existing Chat
     loop for each selected file f
         view->fe_ctrl++: POST /Chat/UploadAttachment
         
-        fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+        fe_ctrl -> fe_ctrl++: Validate attachment upload
         fe_ctrl--
         
         alt Session Invalid
@@ -68,33 +68,23 @@ alt Send Message in Existing Chat
             fe_ctrl -->> error_page: Redirect to ErrorPage
             activate error_page
             error_page -->> act--: Display error message
-        else Valid actor's authentication and authorization
+        else File size > 10MB
+            fe_ctrl->be_att_ctrl++: POST /api/ChatAttachment/upload
+            be_att_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view: Return BadRequest
+            view-->>act: Display file size validation error
+        else File size <= 10MB
             fe_ctrl->be_att_ctrl++: POST /api/ChatAttachment/upload
             
-            be_att_ctrl->be_att_ctrl++: Check ChatSettings:EnableAttachments
-            be_att_ctrl--
-        
-        alt EnableAttachments = false
-            be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-            fe_ctrl-->>view: Return BadRequest
-            view-->>act: Display feature disabled warning
-        else EnableAttachments = true
-            alt file size > 10MB
-                be_att_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
-                fe_ctrl-->>view: Return BadRequest
-                view-->>act: Display file size validation error
-            else file size <= 10MB
-                be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
-                upload_sv->upload_sv++: Upload to Cloudinary
-                upload_sv--
-                upload_sv-->>be_att_ctrl--: Return SecureUrl
-                
-                be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
-                fe_ctrl-->>view--: Return JSON with attachment metadata
-                view-->>act: Display uploaded file in UI
-            end
+            be_att_ctrl->upload_sv++: Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+            upload_sv->upload_sv++: Upload to Cloudinary
+            upload_sv--
+            upload_sv-->>be_att_ctrl--: Return SecureUrl
+            
+            be_att_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with metadata
+            fe_ctrl-->>view--: Return JSON with attachment metadata
+            view-->>act: Display uploaded file in UI
         end
-    end
 end
 end
 
@@ -168,36 +158,7 @@ else Valid Permissions
         view--
         view-->>act--: Display sent message on UI
     end
-else Request Chat With Admin
-    act->view++: Click "Request Admin Support"
-    view->fe_ctrl++: POST /Chat/RequestSupport
-    
-    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
-    fe_ctrl--
-    
-    alt Session Invalid
-        fe_ctrl -->> login_view: Redirect to LoginPage
-        activate login_view
-        login_view -->> act--: Display login form
-    else Unauthorized Access
-        fe_ctrl -->> error_page: Redirect to ErrorPage
-        activate error_page
-        error_page -->> act--: Display error message
-    else Valid actor's authentication and authorization
-        fe_ctrl->be_ctrl++: POST /api/chat/request-support
-        
-        be_ctrl->sv++: Call CreateSupportRequestAsync(accountId, dto)
-        sv->sv++: Execute support ticket creation logic
-        sv--
-        sv-->>be_ctrl--: Return SupportTicketDto object
-        
-        be_ctrl->hub++: Broadcast NewSupportRequest via SignalR
-        hub-->>be_ctrl--: Return
-        
-        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-        fe_ctrl-->>view--: Return Json(success=true)
-        view-->>act--: Display support request sent message
-    end
-end
+
+
 
 @enduml

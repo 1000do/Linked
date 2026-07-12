@@ -16,6 +16,7 @@ class ChatHub {
     <<signalr hub>>
     - _chatService : IChatService
     + SendMessage(dto: SendMessageDto) Task
+    - GetAccountId() int
 }
 
 class ChatControllerBE["ChatController"] {
@@ -148,7 +149,6 @@ class ICloudinaryUploadService {
 class IChatRepository {
     <<interface>>
     + IsParticipantAsync(chatId: int, accountId: int) Task~bool~ *
-    + HasActiveReportForChatAsync(chatId: int) Task~bool~ *
     + AddMessageAsync(message: Message) Task *
     + GetChatByIdAsync(chatId: int) Task~Chat?~ *
     + UpdateChatAsync(chat: Chat) Task *
@@ -156,14 +156,22 @@ class IChatRepository {
     + SaveChangesAsync() Task~int~ *
 }
 
+class IUserRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~User?~ *
+}
+
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
     - _chatRepository : IChatRepository
+    - _userRepository : IUserRepository
     - _redisService : IRedisService
     + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~
     + CreateSupportRequestAsync(senderId: int, dto: SupportRequestDto) Task~SupportTicketDto~
     + GetOrCreateChatAsync(senderId: int, dto: CreateChatDto) Task~int~
+    - ValidateMessageSendingAccessAsync(senderId: int, chatId: int) Task~void~
+    - UpdateChatAndNotifyRecipientsAsync(senderId: int, chatId: int, sentAt: DateTime?) Task~void~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -171,7 +179,6 @@ class ChatService {
 class ChatRepository {
     - _context : AppDbContext
     + IsParticipantAsync(chatId: int, accountId: int) Task~bool~
-    + HasActiveReportForChatAsync(chatId: int) Task~bool~
     + AddMessageAsync(message: Message) Task
     + GetChatByIdAsync(chatId: int) Task~Chat?~
     + UpdateChatAsync(chat: Chat) Task
@@ -185,6 +192,7 @@ class AppDbContext {
     + Messages : DbSet~Message~
     + MessageAttachments : DbSet~MessageAttachment~
     + Chats : DbSet~Chat~
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -196,6 +204,7 @@ ChatControllerBE --> IChatService
 ChatAttachmentController --> ICloudinaryUploadService
 ChatHub --> IChatService
 ChatService --> IChatRepository
+ChatService --> IUserRepository
 ChatService --> IRedisService
 ChatRepository --> AppDbContext
 
