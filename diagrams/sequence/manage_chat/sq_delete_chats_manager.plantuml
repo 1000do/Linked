@@ -45,7 +45,7 @@ act->view++: Click the clear chat button
 view->view++: Confirm deletion with dialog
 view--
 
-alt [User cancels]
+alt User cancels
     view-->>act: Do nothing
 else [User confirms]
     view->fe_ctrl++: DELETE /Chat/ClearHistory?chatId={chatId}
@@ -74,7 +74,7 @@ else [User confirms]
     ctx-->>repo--: Return participant
     repo-->>sv--: Return participant
     
-    alt [participant == null]
+    alt participant == null
         sv-->>be_ctrl: Return false
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
         fe_ctrl-->>view: Return BadRequest

@@ -45,7 +45,7 @@ act++
 act->view++: Access Chat page
 view->fe_ctrl++: Send GET /Chat/Index
 
-alt [AccessToken cookie is missing]
+alt AccessToken cookie is missing
     fe_ctrl-->>view: Return statusCode 302 (Redirect)
     view->login_view++: Redirect to Login page
     deactivate view

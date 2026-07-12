@@ -67,7 +67,7 @@ else Valid actor's authentication and authorization
     ctx-->>auth_sv--: Return verification status
     auth_sv-->>be_ctrl--: Return isVerified
     
-    alt [isVerified == false]
+    alt isVerified == false
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
         fe_ctrl-->>view: Return JSON (success = false, message = "Please verify your email address.")
         view-->>act: Display email verification required message
@@ -98,7 +98,7 @@ else Valid actor's authentication and authorization
         sv->sv++: Validate Add to Cart request
         sv--
         
-        alt [course == null || status != Published]
+        alt course == null || status != Published
             sv-->>be_ctrl: throw InvalidOperationException("Course does not exist or is not published.")
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON (success = false)
