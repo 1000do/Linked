@@ -108,7 +108,7 @@ else Valid actor's authentication and authorization
         act->view++: Click a role tab (all / student / instructor / staff-admin)
         view->view++: switchRoleTab(role) (updates activeRoleTab & styles active button)
         view--
-    else [Change status select]
+    else Change status select
         act->view++: Select option in status dropdown (all / unread / read)
     end
     

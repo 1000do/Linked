@@ -71,7 +71,7 @@ else Valid actor's authentication and authorization
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
         fe_ctrl-->>view: Return JSON (success = false, message = "Please verify your email address.")
         view-->>act: Display email verification required message
-    else [isVerified == true]
+    else isVerified == true
         be_ctrl->sv++: Call AddToCartAsync(userId, courseId)
         
         sv->courseRepo++: Call GetByIdAsync(courseId)
@@ -103,22 +103,22 @@ else Valid actor's authentication and authorization
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON (success = false)
             view-->>act: Display course unavailable message
-        else [course.InstructorId == userId]
+        else course.InstructorId == userId
             sv-->>be_ctrl: throw InvalidOperationException("You cannot add your own course to the cart.")
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON (success = false)
             view-->>act: Display instructor restriction message
-        else [isEnrolled == true]
+        else isEnrolled == true
             sv-->>be_ctrl: throw InvalidOperationException("You have already purchased this course.")
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON (success = false)
             view-->>act: Display already purchased message
-        else [isInCart == true]
+        else isInCart == true
             sv-->>be_ctrl: throw InvalidOperationException("Course is already in the cart.")
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON (success = false)
             view-->>act: Display already in cart message
-        else [Valid Add to Cart request]
+        else Valid Add to Cart request
             sv->cart_ett++: Call CartItem()
             cart_ett-->>sv--: Return CartItem object
             

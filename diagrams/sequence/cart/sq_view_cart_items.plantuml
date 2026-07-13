@@ -86,7 +86,7 @@ act->view++: Access Shopping Cart page
                     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
                     fe_ctrl-->>view: Return statusCode 400 (BadRequest)
                     view-->>act: Display coupon error message
-                else [coupon is valid]
+                else coupon is valid
                     sv->sv++: Calculate eligibleSubTotal & discountAmount
                     sv--
                 end
