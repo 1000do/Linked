@@ -1,0 +1,90 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Assign Quiz to Course
+
+actor Instructor as act
+participant "CourseEditorPage" as view
+participant "CourseQuizController" as fe_ctrl <<frontend controller>>
+participant "CourseQuizController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":CourseQuizResponse" as res
+participant ":CourseQuiz" as ett
+participant ":IQuizRepository" as repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Select a quiz to add
+view -> fe_ctrl++: POST /CourseQuiz/Add
+
+fe_ctrl -> be_ctrl++: POST /api/courses/{courseId}/quizzes
+
+be_ctrl -> sv++: Call AddQuizToCourseAsync(request, instructorId)
+
+sv -> sv++: Call EnsureInstructorOwnsCourseAsync(request.CourseId, instructorId)
+sv--
+
+sv -> course_repo++: Call GetByIdAsync(request.CourseId)
+course_repo -->> sv--: Return course entity
+
+alt Course Not Found Or Unauthorized
+    sv -->> be_ctrl: throw UnauthorizedAccessException
+    be_ctrl -->> fe_ctrl: Return statusCode 403
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display unauthorized error message
+else Authorized
+    sv -> ett++: Call CourseQuiz()
+    ett -->> sv--: Return CourseQuiz entity
+    
+    sv -> repo++: Call AddCourseQuizAsync(courseQuiz)
+    repo -> ctx++: Save changes to database
+    ctx -> db++: Insert CourseQuiz
+    
+    alt Database Save Failure
+        db -->> ctx: throw DbUpdateException
+        ctx -->> repo: throw DbUpdateException
+        repo -->> sv: throw DbUpdateException
+        sv -->> be_ctrl: throw DbUpdateException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display server error message
+    else Database Save Success
+        db -->> ctx--: Return returnCode
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return void
+        
+        sv -> res++: Call CourseQuizResponse()
+        res -->> sv--: Return CourseQuizResponse object
+        
+        sv -->> be_ctrl--: Return CourseQuizResponse object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON (success=true)
+        view -->> act--: Display quiz assigned successfully
+    end
+end

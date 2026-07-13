@@ -1,0 +1,134 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuestionBankControllerFE["QuestionBankController"] {
+    <<frontend controller>>
+    + GetQuestions(lessonId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuestionBankControllerBE["QuestionBankController"] {
+    <<backend controller>>
+    - _questionBankService : IQuestionBankService
+    
+    + GetQuestionsByLesson(lessonId: int) Task~ActionResult~List~QuizQuestionResponse~~~
+    - GetCurrentUserId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuizQuestionResponse {
+    <<dto>>
+    + QuestionId : int
+    + CourseId : int
+    + LessonId : int?
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + Options : List~QuizOptionResponse~
+}
+
+class QuizOptionResponse {
+    <<dto>>
+    + OptionId : int
+    + OptionText : string
+    + IsCorrect : bool
+    + OrderIndex : int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class QuizQuestion {
+    + QuestionId : int
+    + CourseId : int
+    + LessonId : int
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + CreatedAt : DateTime?
+    + Course : Course?
+    + Lesson : Lesson?
+    + QuizOptions : ICollection~QuizOption~
+    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
+}
+
+class QuizOption {
+    + OptionId : int
+    + QuestionId : int
+    + OptionText : string
+    + IsCorrect : bool
+    + OrderIndex : int
+    + QuizQuestion : QuizQuestion?
+    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
+}
+
+class Lesson {
+    + LessonId : int
+    + CourseId : int
+    + Title : string
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuestionBankService {
+    <<interface>>
+    + GetQuestionsByLessonAsync(lessonId: int, instructorId: int) Task~List~QuizQuestionResponse~~ *
+}
+
+class IQuestionBankRepository {
+    <<interface>>
+    + GetQuestionsByLessonAsync(lessonId: int) Task~List~QuizQuestion~~ *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Lesson?~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuestionBankService {
+    - _questionBankRepository : IQuestionBankRepository
+    - _courseRepository : ICourseRepository
+    - _lessonRepository : ILessonRepository
+    
+    + GetQuestionsByLessonAsync(lessonId: int, instructorId: int) Task~List~QuizQuestionResponse~~
+    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
+    - MapToResponse(q: QuizQuestion) QuizQuestionResponse
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+QuizQuestionResponse *-- QuizOptionResponse
+QuizQuestion *-- QuizOption
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+QuestionBankControllerBE --> IQuestionBankService
+QuestionBankService --> IQuestionBankRepository
+QuestionBankService --> ICourseRepository
+QuestionBankService --> ILessonRepository
+
+%% === INTERFACE REALIZATION ===
+QuestionBankService ..|> IQuestionBankService
+
+%% === DEPENDENCY (dashed arrows) ===
+QuestionBankControllerFE ..> QuestionBankControllerBE
+QuestionBankControllerBE ..> QuizQuestionResponse
+QuestionBankService ..> QuizQuestionResponse
+QuestionBankService ..> QuizQuestion
+QuestionBankService ..> Lesson
+IQuestionBankRepository ..> QuizQuestion
+ILessonRepository ..> Lesson
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

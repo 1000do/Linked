@@ -1,0 +1,155 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuestionBankControllerFE["QuestionBankController"] {
+    <<frontend controller>>
+    + UpdateQuestion(qId: int, request: object) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuestionBankControllerBE["QuestionBankController"] {
+    <<backend controller>>
+    - _questionBankService : IQuestionBankService
+    
+    + UpdateQuestion(questionId: int, request: QuizUpdateQuestionRequest) Task~ActionResult~QuizQuestionResponse~~
+    - GetCurrentUserId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuizUpdateQuestionRequest {
+    <<dto>>
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + Options : List~QuizOptionRequest~
+}
+
+class QuizOptionRequest {
+    <<dto>>
+    + OptionText : string
+    + IsCorrect : bool
+}
+
+class QuizQuestionResponse {
+    <<dto>>
+    + QuestionId : int
+    + CourseId : int
+    + LessonId : int?
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + Options : List~QuizOptionResponse~
+}
+
+class QuizOptionResponse {
+    <<dto>>
+    + OptionId : int
+    + OptionText : string
+    + IsCorrect : bool
+    + OrderIndex : int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class QuizQuestion {
+    + QuestionId : int
+    + CourseId : int
+    + LessonId : int
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + CreatedAt : DateTime?
+    + Course : Course?
+    + Lesson : Lesson?
+    + QuizOptions : ICollection~QuizOption~
+    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
+}
+
+class QuizOption {
+    + OptionId : int
+    + QuestionId : int
+    + OptionText : string
+    + IsCorrect : bool
+    + OrderIndex : int
+    + QuizQuestion : QuizQuestion?
+    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuestionBankService {
+    <<interface>>
+    + UpdateQuestionAsync(questionId: int, request: QuizUpdateQuestionRequest, instructorId: int) Task~QuizQuestionResponse~ *
+}
+
+class IQuestionBankRepository {
+    <<interface>>
+    + GetQuestionByIdAsync(questionId: int) Task~QuizQuestion?~ *
+    + UpdateQuestionAsync(question: QuizQuestion) Task~QuizQuestion~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuestionBankService {
+    - _questionBankRepository : IQuestionBankRepository
+    - _courseRepository : ICourseRepository
+    
+    + UpdateQuestionAsync(questionId: int, request: QuizUpdateQuestionRequest, instructorId: int) Task~QuizQuestionResponse~
+    - ValidateQuizOptions(options: List~QuizOptionRequest~) void
+    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
+    - MapToResponse(q: QuizQuestion) QuizQuestionResponse
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuestionBankRepository {
+    - _context : AppDbContext
+    
+    + GetQuestionByIdAsync(questionId: int) Task~QuizQuestion?~
+    + UpdateQuestionAsync(question: QuizQuestion) Task~QuizQuestion~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + QuizQuestions : DbSet~QuizQuestion~
+    + QuizOptions : DbSet~QuizOption~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+QuizQuestion *-- QuizOption
+QuizUpdateQuestionRequest *-- QuizOptionRequest
+QuizQuestionResponse *-- QuizOptionResponse
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+QuestionBankControllerBE --> IQuestionBankService
+QuestionBankService --> IQuestionBankRepository
+QuestionBankService --> ICourseRepository
+QuestionBankRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuestionBankService ..|> IQuestionBankService
+QuestionBankRepository ..|> IQuestionBankRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+QuestionBankControllerFE ..> QuestionBankControllerBE
+QuestionBankControllerBE ..> QuizUpdateQuestionRequest
+QuestionBankService ..> QuizUpdateQuestionRequest
+QuestionBankService ..> QuizQuestionResponse
+QuestionBankService ..> QuizQuestion
+QuestionBankRepository ..> QuizQuestion
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
