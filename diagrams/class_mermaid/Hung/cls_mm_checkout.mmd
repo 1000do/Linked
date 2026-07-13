@@ -1,4 +1,5 @@
-classDiagram-v2
+```mermaid
+classDiagram
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -6,157 +7,158 @@ direction LR
 class CartControllerFE["CartController"] {
     <<frontend controller>>
     + Checkout() Task~IActionResult~
-    + CreatePaymentIntentAjax(couponCode: string?) Task~IActionResult~
-    + CheckoutSuccess(session_id: string?, payment_intent: string?, payment_intent_id: string?) Task~IActionResult~
-    + CheckoutCancel(order_id: int) Task~IActionResult~
+    + CreatePaymentIntentAjax(couponCode: string) Task~IActionResult~
+    + CheckoutSuccess(payment_intent_id: string) Task~IActionResult~
 }
 
 class CheckoutViewModel {
     <<view model>>
-    + PublishableKey : string
-    + ClientSecret : string
-    + PaymentIntentId : string
+    + Cart : CartSummaryResponse
     + Email : string
+    + PublishableKey : string
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
+class CartSummaryResponse {
+    <<view model>>
+    + Items : List~CartItemViewModel~
+    + SubTotal : decimal
+    + Total : decimal
+    + HasDiscount : bool
+    + DiscountAmount : decimal
+    + AppliedCouponCode : string
+}
+
+class UserProfile {
+    <<view model>>
+    + Email : string
+    + FullName : string
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
 
 class CheckoutControllerBE["CheckoutController"] {
     <<backend controller>>
     - _checkoutService : ICheckoutService
-    
-    + CreateIntent(request: CheckoutRequest) Task~IActionResult~
-    + SuccessIntent(paymentIntentId: string) Task~IActionResult~
+    + CreateIntent(userId: string, couponCode: string) Task~IActionResult~
+    + SuccessIntent(payment_intent_id: string) Task~IActionResult~
+    + GetCartSummary(couponCode: string) Task~IActionResult~
+    + GetProfile() Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
-
-class CheckoutRequest {
-    <<dto>>
-    + CouponCode : string?
-    + SuccessUrl : string
-    + CancelUrl : string
-}
 
 class CheckoutResponse {
     <<dto>>
     + SessionUrl : string
     + SessionId : string
+    + ClientSecret : string
 }
 
-%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class OrderInfo {
+    <<entity>>
+    + OrderId : int
+    + UserId : int
+    + OrderDate : DateTime
+    + OrderStatus : string
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int
+    + CourseId : int
+    + PurchasePrice : decimal
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + AccountFrom : int
+    + AccountTo : int
+    + Amount : decimal
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICheckoutService {
     <<interface>>
-    + InitiatePaymentIntentAsync(userId: int, couponCode: string?) Task~CheckoutResponse~
-    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
-}
-
-class IPaymentGatewayService {
-    <<interface>>
-    + CreatePaymentIntentAsync(amount: decimal, currency: string, metadata: Dictionary~string, string~) Task~PaymentSessionResult~
-    + VerifyPaymentIntentAsync(paymentIntentId: string) Task~bool~
+    + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~ *
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task *
 }
 
 class ICheckoutRepository {
     <<interface>>
-    + AddAsync(order: Order) Task
-    + ClearCartAsync(userId: int) Task
-    + SaveChangesAsync() Task~int~
+    + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~ *
+    + SaveChangesAsync() Task~int~ *
 }
 
-class IEnrollmentRepository {
+class IPaymentGatewayService {
     <<interface>>
-    + AddRangeAsync(enrollments: List~Enrollment~) Task
+    + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~ *
+    + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~ *
 }
 
 %% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class CheckoutService {
     - _repo : ICheckoutRepository
-    - _enrollmentRepo : IEnrollmentRepository
     - _paymentGateway : IPaymentGatewayService
-    
-    + InitiatePaymentIntentAsync(userId: int, couponCode: string?) Task~CheckoutResponse~
+    + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~
     + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
+    - AddEntitiesToContext(order: OrderInfo, orderItem: OrderItem, transaction: Transaction) void
+    - ClearCartItemsFromContext(userId: string) void
 }
 
 class CheckoutRepository {
     - _context : AppDbContext
-    + AddAsync(order: Order) Task
-    + ClearCartAsync(userId: int) Task
+    + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~
     + SaveChangesAsync() Task~int~
 }
 
-class EnrollmentRepository {
-    - _context : AppDbContext
-    + AddRangeAsync(enrollments: List~Enrollment~) Task
+class StripePaymentService {
+    + CreatePaymentIntentAsync(...) Task~Tuple~
+    + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
 }
 
 class AppDbContext {
-    + Orders : DbSet~Order~
-    + Enrollments : DbSet~Enrollment~
-    + InstructorPayouts : DbSet~InstructorPayout~
-}
-
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Order {
-    + OrderId : int
-    + UserId : int
-    + TotalAmount : decimal
-    + DiscountAmount : decimal
-    + Status : string
-    + PaymentIntentId : string?
-    + SessionId : string?
-}
-
-class InstructorPayout {
-    + PayoutId : int
-    + OrderId : int
-    + InstructorId : int
-    + Amount : decimal
-    + Status : string
-}
-
-class Enrollment {
-    + EnrollmentId : int
-    + UserId : int
-    + CourseId : int
-    + EnrolledAt : DateTime
+    + Orders : DbSet~OrderInfo~
+    + OrderItems : DbSet~OrderItem~
+    + Transactions : DbSet~Transaction~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-CartControllerFE ..> CheckoutViewModel
-CartControllerFE ..> CheckoutControllerBE
+%% === AGGREGATION ===
+CheckoutViewModel o-- CartSummaryResponse
 
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 CheckoutControllerBE --> ICheckoutService
-CheckoutControllerBE ..> CheckoutRequest
-CheckoutControllerBE ..> CheckoutResponse
-
-CheckoutService ..|> ICheckoutService
 CheckoutService --> ICheckoutRepository
-CheckoutService --> IEnrollmentRepository
 CheckoutService --> IPaymentGatewayService
-CheckoutService ..> Order
-CheckoutService ..> InstructorPayout
-CheckoutService ..> Enrollment
-
-ICheckoutRepository ..> Order
-ICheckoutRepository ..> InstructorPayout
-IEnrollmentRepository ..> Enrollment
-
-CheckoutRepository ..|> ICheckoutRepository
 CheckoutRepository --> AppDbContext
 
-EnrollmentRepository ..|> IEnrollmentRepository
-EnrollmentRepository --> AppDbContext
+%% === INTERFACE REALIZATION ===
+CheckoutService ..|> ICheckoutService
+CheckoutRepository ..|> ICheckoutRepository
+StripePaymentService ..|> IPaymentGatewayService
 
-AppDbContext --> Order
-AppDbContext --> Enrollment
-AppDbContext --> InstructorPayout
+%% === DEPENDENCY (dashed arrows) ===
+CartControllerFE ..> CheckoutControllerBE
+
+CartControllerFE ..> CheckoutViewModel
+CartControllerFE ..> CartSummaryResponse
+CartControllerFE ..> UserProfile
+
+CheckoutControllerBE ..> CheckoutResponse
+CheckoutService ..> CheckoutResponse
+
+CheckoutService ..> OrderInfo
+CheckoutService ..> OrderItem
+CheckoutService ..> Transaction
 
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+```
