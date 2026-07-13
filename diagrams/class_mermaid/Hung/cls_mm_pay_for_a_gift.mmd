@@ -1,22 +1,22 @@
+```mermaid
 classDiagram
 direction LR
 
 %% ==================== FRONTEND ====================
 
-class GiftController {
+class GiftControllerFE["GiftController"] {
     <<frontend controller>>
-    + CreateGiftPaymentIntentAjax(courseId: int, recipientEmail: string, recipientName: string?, giftMessage: string?, cardTheme: string) Task~IActionResult~
+    + CreateGiftPaymentIntentAjax(request) Task~IActionResult~
     + CheckoutSuccess(payment_intent_id: string) Task~IActionResult~
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND - CONTROLLERS ====================
 
-class CheckoutController {
+class CheckoutControllerBE["CheckoutController"] {
     <<backend controller>>
     - _giftCheckoutService : IGiftCheckoutService
-    
     + GiftCreateIntent(request: GiftCheckoutRequest) Task~IActionResult~
-    + GiftSuccessIntent(paymentIntentId: string) Task~IActionResult~
+    + GiftSuccessIntent(payment_intent_id: string) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -25,17 +25,41 @@ class GiftCheckoutRequest {
     <<dto>>
     + CourseId : int
     + RecipientEmail : string
-    + RecipientName : string?
-    + GiftMessage : string?
-    + CardTheme : string
-    + SuccessUrl : string
-    + CancelUrl : string
+    + DeliveryDate : DateTime?
+    + Message : string?
+    + CouponCode : string?
 }
 
 class CheckoutResponse {
     <<dto>>
     + SessionUrl : string
     + SessionId : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class OrderInfo {
+    <<entity>>
+    + OrderId : int
+    + UserId : int
+    + OrderDate : DateTime
+    + OrderStatus : string
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int
+    + CourseId : int
+    + PurchasePrice : decimal
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + AccountFrom : int
+    + AccountTo : int
+    + Amount : decimal
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -46,103 +70,54 @@ class IGiftCheckoutService {
     + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task *
 }
 
-class IPaymentGatewayService {
-    <<interface>>
-    + CreatePaymentIntentAsync(amount: decimal, currency: string, metadata: Dictionary~string, string~) Task~Tuple~string, string~~ *
-    + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~string, string~~ *
-}
-
 class ICheckoutRepository {
     <<interface>>
+    + BeginTransactionAsync() Task~IDbContextTransaction~ *
+    + AddOrderAsync(order: OrderInfo) Task *
+    + AddOrderItemAsync(item: OrderItem) Task *
+    + AddTransactionAsync(transaction: Transaction) Task *
     + SaveChangesAsync() Task~int~ *
 }
 
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+class IPaymentGatewayService {
+    <<interface>>
+    + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~ *
+    + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~ *
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class GiftCheckoutService {
     - _repo : ICheckoutRepository
     - _paymentGateway : IPaymentGatewayService
-    
     + InitiateGiftPaymentIntentAsync(userId: int, request: GiftCheckoutRequest) Task~CheckoutResponse~
     + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
-    - ValidateCourseForGiftAsync(course: Course?, recipientEmail: string, courseId: int) Task
-    - ProcessSuccessfulGiftPaymentCoreAsync(sessionId: string, paymentIntentId: string?, metadata: Dictionary~string, string~, userId: int) Task
-    - CreateGiftEntitiesAsync(...) Task
-    - AddEntitiesToContext(order: OrderInfo, orderItem: OrderItem, transaction: Transaction) void
-    - ProcessGiftFulfillmentAsync(...) Task
-    - ProcessPayoutAndNotificationAsync(...) Task
 }
-
-%% ==================== BACKEND - REPOSITORY & DbContext ====================
 
 class CheckoutRepository {
     - _context : AppDbContext
-    
+    + BeginTransactionAsync() Task~IDbContextTransaction~
+    + AddOrderAsync(order: OrderInfo) Task
+    + AddOrderItemAsync(item: OrderItem) Task
+    + AddTransactionAsync(transaction: Transaction) Task
     + SaveChangesAsync() Task~int~
+}
+
+class StripePaymentService {
+    + CreatePaymentIntentAsync(...) Task~Tuple~
+    + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
 }
 
 class AppDbContext {
-    + OrderInfos : DbSet~OrderInfo~
+    + Orders : DbSet~OrderInfo~
     + OrderItems : DbSet~OrderItem~
     + Transactions : DbSet~Transaction~
-    + SaveChangesAsync() Task~int~
-}
-
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class OrderInfo {
-    + OrderId : int
-    + UserId : int?
-    + OrderDate : DateTime?
-    + OrderStatus : string?
-    + PaymentMethod : string?
-    + OrderItems : ICollection~OrderItem~
-    + User : User?
-}
-
-class OrderItem {
-    + Id : int
-    + OrderId : int?
-    + CourseId : int?
-    + PurchasePrice : decimal
-    + CouponUsed : bool?
-    + OriginalPrice : decimal?
-    + CouponCode : string?
-    + CouponType : string?
-    + DiscountAmount : decimal
-    + Course : Course?
-    + Order : OrderInfo?
-    + Transactions : ICollection~Transaction~
-}
-
-class Transaction {
-    + TransactionId : int
-    + OrderItemId : int?
-    + AccountFrom : int?
-    + AccountTo : int?
-    + Amount : decimal
-    + TransferRate : decimal
-    + StripeSessionId : string?
-    + StripePaymentintentId : string?
-    + Currency : string?
-    + TransactionsStatus : string?
-    + TransactionType : string?
-    + TransactionCreatedAt : DateTime?
-    + TransactionExt : TransactionExt?
-    + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-    + AccountToNavigation : Account?
-    + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-OrderInfo *-- OrderItem
-OrderItem *-- Transaction
-
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-CheckoutController --> IGiftCheckoutService
+CheckoutControllerBE --> IGiftCheckoutService
 GiftCheckoutService --> ICheckoutRepository
 GiftCheckoutService --> IPaymentGatewayService
 CheckoutRepository --> AppDbContext
@@ -150,25 +125,27 @@ CheckoutRepository --> AppDbContext
 %% === INTERFACE REALIZATION ===
 GiftCheckoutService ..|> IGiftCheckoutService
 CheckoutRepository ..|> ICheckoutRepository
+PaymentGatewayService ..|> IPaymentGatewayService
 
 %% === DEPENDENCY (dashed arrows) ===
-GiftController ..> CheckoutController
-CheckoutController ..> GiftCheckoutRequest
-CheckoutController ..> CheckoutResponse
-IGiftCheckoutService ..> CheckoutResponse
-IGiftCheckoutService ..> GiftCheckoutRequest
-GiftCheckoutService ..> CheckoutResponse
+GiftControllerFE ..> CheckoutControllerBE
+
+CheckoutControllerBE ..> GiftCheckoutRequest
 GiftCheckoutService ..> GiftCheckoutRequest
-GiftCheckoutService ..> OrderInfo
-GiftCheckoutService ..> OrderItem
-GiftCheckoutService ..> Transaction
-ICheckoutRepository ..> OrderInfo
-ICheckoutRepository ..> OrderItem
-ICheckoutRepository ..> Transaction
+
+CheckoutControllerBE ..> CheckoutResponse
+GiftCheckoutService ..> CheckoutResponse
+
 CheckoutRepository ..> OrderInfo
+GiftCheckoutService ..> OrderInfo
+
 CheckoutRepository ..> OrderItem
+GiftCheckoutService ..> OrderItem
+
 CheckoutRepository ..> Transaction
-CheckoutRepository ..> AppDbContext
+GiftCheckoutService ..> Transaction
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+```
