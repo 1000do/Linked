@@ -25,7 +25,7 @@
 </style>
 
 hide footbox
-mainframe View List of Course Review Report
+mainframe View List of Lesson Review Report
 
 actor "Staff / Admin" as act
 participant "ReportCenterPage" as view
@@ -33,18 +33,18 @@ participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
 participant "HomePage" as home_view
 participant "AdminModerationController" as fe_ctrl <<frontend controller>>
-participant ":PagedResult<ReviewReportDetailViewModel>" as view_model <<view model>>
+participant ":ReviewReportDetailViewModel" as view_model <<view model>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":IReportModerationService" as sv
-participant ":PagedResult<ReviewReportDetailResponse>" as res <<dto>>
+participant ":ReviewReportDetailResponse" as res <<dto>>
 participant ":IReportRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-act -> view++: Select "Course Review Reports" tab
+act -> view++: Select "Lesson Review Reports" tab
 
-
-view -> fe_ctrl++: GET /AdminModeration/GetCourseReviewReports
+view -> fe_ctrl++: GET /AdminModeration/GetLessonReviewReports
 
 fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
@@ -58,22 +58,27 @@ else Unauthorized Access
     activate error_view
     error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
-    fe_ctrl -> be_ctrl++: GET /api/admin/moderation/reports/course-reviews
-    be_ctrl -> sv++: Call GetAllCourseReviewReportsAsync(request)
+    fe_ctrl -> be_ctrl++: GET /api/admin/moderation/reports/lesson-reviews
+    be_ctrl -> sv++: Call GetAllLessonReviewReportsAsync(request)
     
-    sv -> repo++: GetAllCourseReviewReportsAsync(status, page, pageSize)
-    repo -> db++: Query course review reports from database
+    sv -> repo++: GetAllLessonReviewReportsAsync(status, page, pageSize)
+    repo -> ctx++: Query lesson review reports from database
+    ctx -> db++: Query lesson review reports from database
     
-    alt Empty Course Review Report List
-        db -->> repo: Return empty list, totalCount = 0
+    alt Empty Lesson Review Report List
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> repo: Return empty list, totalCount = 0
         repo -->> sv: Return empty list, totalCount = 0
         sv -->> be_ctrl: throw KeyNotFoundException
         be_ctrl -->> fe_ctrl: Return statusCode 404
         fe_ctrl -->> view: Return PartialView(empty viewModel)
         view -->> act: Display empty state message
     else Database Query Success
-        db -->> repo: Return (reports, totalCount)
+        db -->> ctx: Return (reports, totalCount)
         db--
+        ctx -->> repo: Return (reports, totalCount)
+
+        ctx--
         repo -->> sv: Return (reports, totalCount)
         repo--
         
@@ -92,7 +97,7 @@ else Valid actor's authentication and authorization
         
         fe_ctrl -->> view--: Return PartialView(populated viewModel)
         
-        view -->> act--: Display course review reports
+        view -->> act--: Display lesson review reports
     end
 end
 @enduml

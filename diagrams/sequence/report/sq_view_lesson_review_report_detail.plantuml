@@ -33,11 +33,12 @@ participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
 participant "HomePage" as home_view
 participant "AdminModerationController" as fe_ctrl <<frontend controller>>
-participant ":PagedResult<ReviewReportDetailViewModel>" as view_model <<view model>>
+participant ":ReviewReportDetailViewModel" as view_model <<view model>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":IReportModerationService" as sv
-participant ":PagedResult<ReviewReportDetailResponse>" as res <<dto>>
+participant ":ReviewReportDetailResponse" as res <<dto>>
 participant ":IReportRepository" as repo
+participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
@@ -61,18 +62,23 @@ else Valid actor's authentication and authorization
     be_ctrl -> sv++: Call GetAllLessonReviewReportsAsync(request)
     
     sv -> repo++: GetAllLessonReviewReportsAsync(status, page, pageSize)
-    repo -> db++: Query lesson review reports from database
+    repo -> ctx++: Query lesson review reports from database
+    ctx -> db++: Query lesson review reports from database
     
     alt Empty Lesson Review Report List
-        db -->> repo: Return empty list, totalCount = 0
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> repo: Return empty list, totalCount = 0
         repo -->> sv: Return empty list, totalCount = 0
         sv -->> be_ctrl: throw KeyNotFoundException
         be_ctrl -->> fe_ctrl: Return statusCode 404
         fe_ctrl -->> view: Return PartialView(empty viewModel)
         view -->> act: Display empty state message
     else Database Query Success
-        db -->> repo: Return (reports, totalCount)
+        db -->> ctx: Return (reports, totalCount)
         db--
+        ctx -->> repo: Return (reports, totalCount)
+
+        ctx--
         repo -->> sv: Return (reports, totalCount)
         repo--
         
