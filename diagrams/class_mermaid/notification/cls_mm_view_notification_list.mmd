@@ -5,10 +5,10 @@ direction LR
 
 class FrontendController["NotificationController"] {
     <<frontend controller>>
-    - _client : HttpClient
     + Index() Task~IActionResult~
     + GetListTiny() Task~IActionResult~
-    + Admin() IActionResult
+    + GetMyNotifications() Task~IActionResult~
+    + GetUnreadSummary() Task~IActionResult~
 }
 
 class NotificationViewModel {
@@ -33,34 +33,29 @@ class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     - _chatService : IChatService
-    + GetMyNotifications() Task~IActionResult~
-    + GetAllNotifications() Task~IActionResult~
+    
+    + GetMyNotifications(page: int, pageSize: int) Task~IActionResult~
     + GetUnreadSummary() Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class NotificationDto {
+class NotificationResponseDto {
     <<dto>>
     + NotificationId : int
-    + SenderId : int?
-    + ReceiverId : int?
-    + Title : string?
-    + Content : string?
+    + SenderId : int
+    + ReceiverId : int
+    + Title : string
+    + Content : string
     + LinkAction : string?
     + IsRead : bool?
-    + CreatedAt : DateTime?
+    + CreatedAt : DateTime
 }
 
-class NotificationAdminResponseDto {
+class PagedResultNotificationResponseDto["PagedResult~NotificationResponseDto~"] {
     <<dto>>
-    + NotificationId : int
-    + Title : string?
-    + Content : string?
-    + IsRead : bool?
-    + CreatedAt : DateTime?
-    + ReceiverEmail : string?
-    + ReceiverFullName : string?
+    + Items : List~NotificationResponseDto~?
+    + TotalCount : int
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -79,41 +74,11 @@ class Notification {
     + Sender : Account?
 }
 
-class Account {
-    + AccountId : int
-    + Email : string
-    + Username : string?
-    + PasswordHash : string?
-    + PhoneNumber : string?
-    + AccountStatus : string?
-    + AccountFlagCount : int?
-    + AccountLastLoginAt : DateTime?
-    + AuthProvider : string?
-    + AvatarUrl : string?
-    + RefreshToken : string?
-    + RefreshTokenExpiryTime : DateTime?
-    + IsVerified : bool
-    + AccountCreatedAt : DateTime?
-    + AccountUpdatedAt : DateTime?
-    + User : User?
-    + NotificationReceivers : ICollection~Notification~
-    + NotificationSenders : ICollection~Notification~
-}
-
-class User {
-    + UserId : int
-    + FullName : string
-    + Bio : string?
-    + DateOfBirth : DateOnly?
-}
-
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
     <<interface>>
-    + GetNotificationsForUserAsync(userId: int) Task~List~NotificationDto~~ *
-    + GetAllNotificationsForAdminAsync() Task~List~NotificationAdminResponseDto~~ *
-    + GetAllNotificationsAsync() Task~List~NotificationDto~~ *
+    + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
 }
 
@@ -126,19 +91,16 @@ class IChatService {
 
 class INotificationRepository {
     <<interface>>
-    + GetByReceiverIdAsync(userId: int) Task~List~Notification~~ *
-    + GetAllAsync() Task~List~Notification~~ *
+    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
-    + AutoCleanupAdminNotificationsAsync() Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
     - _repo : INotificationRepository
-    + GetNotificationsForUserAsync(userId: int) Task~List~NotificationDto~~
-    + GetAllNotificationsAsync() Task~List~NotificationDto~~
-    + GetAllNotificationsForAdminAsync() Task~List~NotificationAdminResponseDto~~
+    
+    + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~
     + GetUnreadCountAsync(userId: int) Task~int~
 }
 
@@ -146,18 +108,15 @@ class NotificationService {
 
 class NotificationRepository {
     - _context : AppDbContext
-    + GetByReceiverIdAsync(userId: int) Task~List~Notification~~
-    + GetAllAsync() Task~List~Notification~~
+    
+    + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
     + GetUnreadCountAsync(userId: int) Task~int~
-    + AutoCleanupAdminNotificationsAsync() Task
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
-    + Accounts : DbSet~Account~
     + Notifications : DbSet~Notification~
-    + Users : DbSet~User~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
@@ -165,12 +124,10 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-Account *-- User
-Account *-- Notification
+%% === AGGREGATION (hollow diamond) ===
+PagedResultNotificationResponseDto o-- NotificationResponseDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-FrontendController ..> BackendController
 BackendController --> INotificationService
 BackendController --> IChatService
 NotificationService --> INotificationRepository
@@ -181,13 +138,27 @@ NotificationService ..|> INotificationService
 NotificationRepository ..|> INotificationRepository
 
 %% === DEPENDENCY (dashed arrows) ===
+FrontendController ..> BackendController
 FrontendController ..> NotificationViewModel
-BackendController ..> NotificationDto
-BackendController ..> NotificationAdminResponseDto
-NotificationService ..> NotificationDto
-NotificationService ..> NotificationAdminResponseDto
+BackendController ..> PagedResultNotificationResponseDto
+NotificationService ..> PagedResultNotificationResponseDto
+NotificationService ..> NotificationResponseDto
 NotificationRepository ..> Notification
 
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+
+%% ==================== LINKS ====================
+click FrontendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Controllers/NotificationController.cs" "NotificationController.cs"
+click NotificationViewModel href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/NotificationViewModel.cs" "NotificationViewModel.cs"
+click BackendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/NotificationController.cs" "NotificationController.cs"
+click NotificationResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/NotificationDto.cs" "NotificationDto.cs"
+click PagedResultNotificationResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/Common/PagedResult.cs" "PagedResult.cs"
+click Notification href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Notification.cs" "Notification.cs"
+click INotificationService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/INotificationService.cs" "INotificationService.cs"
+click IChatService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IChatService.cs" "IChatService.cs"
+click INotificationRepository href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/INotificationRepository.cs" "INotificationRepository.cs"
+click NotificationService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/NotificationService.cs" "NotificationService.cs"
+click NotificationRepository href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/NotificationRepository.cs" "NotificationRepository.cs"
+click AppDbContext href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Data/AppDbContext.cs" "AppDbContext.cs"

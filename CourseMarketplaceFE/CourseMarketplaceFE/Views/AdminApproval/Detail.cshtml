@@ -133,7 +133,7 @@
                 </div>
             </div>
 
-            <!-- Uploaded Documents / Resume -->
+            <!-- Uploaded Documentss / Resume -->
             <div class="space-y-2.5">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                     <span class="material-symbols-outlined text-[16px]">description</span>
@@ -174,119 +174,7 @@
         </div>
     </div>
 
-    <!-- Actions Footer -->
-    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex items-center justify-between">
-        
-        <div class="flex items-center gap-3">
-            <button onclick="processApproval('Rejected')" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 hover:border-red-650 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
-                <span class="material-symbols-outlined text-[16px] font-bold">close</span> Reject
-            </button>
-            <button onclick="processApproval('Approved')" class="inline-flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-650 rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all duration-300">
-                <span class="material-symbols-outlined text-[16px] font-bold">check</span> Approve
-            </button>
-        </div>
-    </div>
+
 </div>
 
-@section Scripts {
-    <script>
-        async function processApproval(status) {
-            const id = @Model.InstructorId;
-            let reason = '';
-            
-            if (status === 'Approved') {
-                const confirmResult = await Swal.fire({
-                    title: 'Approve Application',
-                    text: 'Are you absolutely sure you want to approve this instructor application?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#10b981',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Approve',
-                    cancelButtonText: 'Cancel',
-                    background: '#ffffff',
-                    customClass: {
-                        popup: 'rounded-2xl border border-slate-100 shadow-xl'
-                    }
-                });
-                if (!confirmResult.isConfirmed) return;
-            } else {
-                // Rejected -> Open SweetAlert2 with Textarea for Reason
-                const { value: text, isConfirmed } = await Swal.fire({
-                    title: 'Reject Application',
-                    input: 'textarea',
-                    inputLabel: 'Reason for Rejection',
-                    inputPlaceholder: 'Please type the reason why this application is rejected...',
-                    inputAttributes: {
-                        'aria-label': 'Type your reason here'
-                    },
-                    showCancelButton: true,
-                    confirmButtonColor: '#ef4444',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Reject',
-                    cancelButtonText: 'Cancel',
-                    background: '#ffffff',
-                    customClass: {
-                        popup: 'rounded-2xl border border-slate-100 shadow-xl'
-                    },
-                    inputValidator: (value) => {
-                        if (!value || value.trim() === '') {
-                            return 'You must enter a reason for rejection!';
-                        }
-                    }
-                });
-                if (!isConfirmed) return;
-                reason = text;
-            }
 
-            const actionText = status === 'Approved' ? 'approved' : 'rejected';
-
-            try {
-                const response = await fetch(`/AdminApproval/Process?id=${id}&status=${status}&reason=${encodeURIComponent(reason)}`, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    await Swal.fire({
-                        title: 'Success!',
-                        text: `The instructor profile has been successfully ${actionText}.`,
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false,
-                        background: '#ffffff',
-                        customClass: {
-                            popup: 'rounded-2xl border border-slate-100 shadow-xl'
-                        }
-                    });
-
-                    // Redirect back to main list page
-                    window.location.href = '/AdminApproval';
-                } else {
-                    Swal.fire({
-                        title: 'Execution Error',
-                        text: result.message || "Failed to process execution.",
-                        icon: 'error',
-                        confirmButtonColor: '#10b981',
-                        background: '#ffffff',
-                        customClass: {
-                            popup: 'rounded-2xl'
-                        }
-                    });
-                }
-            } catch (err) {
-                Swal.fire({
-                    title: 'Connection Error',
-                    text: "Could not connect to the remote server.",
-                    icon: 'error',
-                    confirmButtonColor: '#10b981',
-                    background: '#ffffff',
-                    customClass: {
-                        popup: 'rounded-2xl'
-                    }
-                });
-            }
-        }
-    </script>
-}

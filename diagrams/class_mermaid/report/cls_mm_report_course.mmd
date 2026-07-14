@@ -56,12 +56,12 @@ class CourseReport {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IReportSubmissionService {
-    <<interface>>
+    <<service interface>>
     + CreateCourseReportAsync(reporterId: int, request: CreateCourseReportRequest) Task~bool~ *
 }
 
 class IReportRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPendingCourseReportAsync(reporterId: int, courseId: int, reason: string) Task~CourseReport?~ *
     + AddCourseReportAsync(report: CourseReport) Task *
     + SaveChangesAsync() Task~int~ *
@@ -70,6 +70,7 @@ class IReportRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ReportSubmissionService {
+    <<service>>
     - _reportRepo : IReportRepository
     
     + CreateCourseReportAsync(reporterId: int, request: CreateCourseReportRequest) Task~bool~
@@ -81,6 +82,7 @@ class ReportSubmissionService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ReportRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetPendingCourseReportAsync(reporterId: int, courseId: int, reason: string) Task~CourseReport?~
@@ -91,6 +93,7 @@ class ReportRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReports : DbSet~CourseReport~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void

@@ -32,7 +32,7 @@ participant "CourseDetailPage" as view
 participant "ReviewController" as fe_ctrl <<frontend controller>>
 participant "ReviewController" as be_ctrl <<backend controller>>
 participant ":ReviewService" as sv
-participant ":PagedResult<ReviewResponse>" as res
+participant ":ReviewResponse" as res
 participant ":IReviewRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -50,13 +50,10 @@ db -->> ctx--: Return query results
 ctx -->> repo--: Return review entities and totalCount
 repo -->> sv--: Return (reviews, totalCount)
 
-sv -> sv++: Map reviews to ReviewResponse DTOs
-sv--
+sv -> res++: Call ReviewResponse() (via IMapper)
+res -->> sv--: Return List<ReviewResponse>
 
-sv -> res++: Call PagedResult(reviewResponses, totalCount)
-res -->> sv--: Return PagedResult object
-
-sv -->> be_ctrl--: Return PagedResult object
+sv -->> be_ctrl--: Return List<ReviewResponse>
 be_ctrl -->> fe_ctrl--: Return statusCode 200
-fe_ctrl -->> view--: Return View(PagedResult)
+fe_ctrl -->> view--: Return View(List<ReviewResponse>)
 view -->> act--: Display review list

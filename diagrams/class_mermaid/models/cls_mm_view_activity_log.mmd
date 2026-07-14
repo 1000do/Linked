@@ -64,24 +64,6 @@ class PagedRequestDto {
     + PageSize : int
 }
 
-class PagedResultCourseAdminDto["PagedResult~CourseModerationLogAdminDto~"] {
-    <<dto>>
-    + Items : IEnumerable~CourseModerationLogAdminDto~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
-}
-
-class PagedResultReviewAdminDto["PagedResult~ReviewModerationLogAdminDto~"] {
-    <<dto>>
-    + Items : IEnumerable~ReviewModerationLogAdminDto~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
-}
-
 class BaseAiLogAdminDto {
     <<dto>>
     + LogId : int
@@ -148,30 +130,31 @@ class LessonReviewModerationLog {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAiModerationLogService {
-    <<interface>>
+    <<service interface>>
     + GetCourseModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~CourseModerationLogAdminDto~~ *
     + GetCourseReviewModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~ReviewModerationLogAdminDto~~ *
     + GetLessonReviewModerationLogsAsync(req: PagedRequestDto) Task~PagedResult~ReviewModerationLogAdminDto~~ *
 }
 
 class ICourseAiUsageLogRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseAiUsageLog~, int)~ *
 }
 
 class ICourseReviewModerationLogRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseReviewModerationLog~, int)~ *
 }
 
 class ILessonReviewModerationLogRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~LessonReviewModerationLog~, int)~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AiModerationLogService {
+    <<service>>
     - _courseLogRepo : ICourseAiUsageLogRepository
     - _courseReviewLogRepo : ICourseReviewModerationLogRepository
     - _lessonReviewLogRepo : ILessonReviewModerationLogRepository
@@ -184,16 +167,19 @@ class AiModerationLogService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseAiUsageLogRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseAiUsageLog~, int)~
 }
 
 class CourseReviewModerationLogRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~CourseReviewModerationLog~, int)~
 }
 
 class LessonReviewModerationLogRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~LessonReviewModerationLog~, int)~
 }
@@ -201,6 +187,7 @@ class LessonReviewModerationLogRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseAiUsageLogs : DbSet~CourseAiUsageLog~
     + CourseReviewModerationLogs : DbSet~CourseReviewModerationLog~
     + LessonReviewModerationLogs : DbSet~LessonReviewModerationLog~
@@ -231,8 +218,6 @@ LessonReviewModerationLogRepository --> AppDbContext
 AdminAiServicePageViewModel o-- CourseModerationLogViewModel
 AdminAiServicePageViewModel o-- ReviewModerationLogViewModel
 
-PagedResultCourseAdminDto o-- CourseModerationLogAdminDto
-PagedResultReviewAdminDto o-- ReviewModerationLogAdminDto
 
 %% === INTERFACE REALIZATION ===
 AiModerationLogService ..|> IAiModerationLogService
@@ -245,12 +230,10 @@ AdminAiServiceControllerFE ..> AdminAiServiceControllerBE
 AdminAiServiceControllerFE ..> AdminAiServicePageViewModel
 
 AdminAiServiceControllerBE ..> PagedRequestDto
-AdminAiServiceControllerBE ..> PagedResultCourseAdminDto
-AdminAiServiceControllerBE ..> PagedResultReviewAdminDto
+AdminAiServiceControllerBE ..> CourseModerationLogAdminDto
+AdminAiServiceControllerBE ..> ReviewModerationLogAdminDto
 
 AiModerationLogService ..> PagedRequestDto
-AiModerationLogService ..> PagedResultCourseAdminDto
-AiModerationLogService ..> PagedResultReviewAdminDto
 AiModerationLogService ..> CourseModerationLogAdminDto
 AiModerationLogService ..> ReviewModerationLogAdminDto
 
