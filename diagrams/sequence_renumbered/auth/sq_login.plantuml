@@ -1,0 +1,144 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Login
+actor "User/Instructor/Staff/Admin" as act
+
+participant "LoginView" as view
+participant "AdminNotificationView" as admin_view
+participant "HomeIndexView" as home_view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant "AuthController" as be_ctrl <<backend controller>>
+participant ":LoginRequestDTO" as req
+participant ":LoginResponseDTO" as res
+participant ":IAuthService" as sv
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lock_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Enter Username/Email and Password\nand click "Sign In"
+view->fe_ctrl++:2. POST /Account/Login
+
+fe_ctrl->be_ctrl++:3. POST /api/auth/login
+
+be_ctrl->req++:4. Call LoginRequestDTO()
+req-->>be_ctrl--:5. Return LoginRequestDTO object
+
+be_ctrl->sv++:6. Call LoginAsync(req)
+
+sv->u_repo++:7. Call GetAccountByEmailOrUsernameAsync(usernameOrEmail)
+u_repo->ctx++:8. Query Account
+ctx->db++:9. Execute query
+db-->>ctx--:10. Return result
+ctx-->>u_repo--:11. Return account
+u_repo-->>sv--:12. Return account
+
+sv->sv++:13. Verify password hash
+sv--
+
+alt Invalid credentials
+    sv-->>be_ctrl:13.1. Return null
+    be_ctrl-->>fe_ctrl:13.1.1. Return statusCode 401
+    fe_ctrl-->>view:13.1.2. Return statusCode 401
+    view-->>act:13.1.3. Display error message
+else Valid credentials
+    sv->lock_repo++:13.2. Call GetActiveLockoutAsync(accountId, "account")
+    lock_repo->ctx++:13.2.1. Query active lockout
+    ctx->db++:13.2.2. Execute query
+    db-->>ctx--:13.2.3. Return result
+    ctx-->>lock_repo--:13.2.4. Return lockout
+    lock_repo-->>sv--:13.2.5. Return activeLockout
+
+    sv->sv++:13.2.6. Check activeLockout
+    sv--
+
+alt Account is locked out
+        sv-->>be_ctrl:13.2.6.1. throw UnauthorizedAccessException
+        be_ctrl-->>fe_ctrl:13.2.6.1.1. Return statusCode 403
+        fe_ctrl-->>view:13.2.6.1.2. Return statusCode 403
+        view-->>act:13.2.6.1.3. Display error message
+        deactivate view
+else Account is active
+        sv->u_repo++:13.2.6.2. Call UpdateLastLoginAsync(accountId)
+        u_repo->ctx++:13.2.6.2.1. Update LastLoginDate
+        ctx-->>u_repo--:13.2.6.2.2. Return result
+        
+        u_repo->ctx++:13.2.6.2.3. Call SaveChangesAsync()
+        ctx->db++:13.2.6.2.4. Save changes to database
+        db-->>ctx--:13.2.6.2.5. Return numberOfRowsAffected
+        ctx-->>u_repo--:13.2.6.2.6. Return numberOfRowsAffected
+        u_repo-->>sv--:13.2.6.2.7. Return numberOfRowsAffected
+        
+        sv->u_repo++:13.2.6.2.8. Call GetRoleByAccountIdAsync(accountId)
+        u_repo->ctx++:13.2.6.2.9. Query Role
+        ctx->db++:13.2.6.2.10. Execute query
+        db-->>ctx--:13.2.6.2.11. Return result
+        ctx-->>u_repo--:13.2.6.2.12. Return role
+        u_repo-->>sv--:13.2.6.2.13. Return role
+        
+        sv->sv++:13.2.6.2.14. Generate JWT tokens
+        sv--
+        
+        sv->u_repo++:13.2.6.2.15. Call SaveRefreshTokenAsync(accountId, refreshToken)
+        u_repo->ctx++:13.2.6.2.16. Update RefreshToken
+        ctx-->>u_repo--:13.2.6.2.17. Return result
+        
+        u_repo->ctx++:13.2.6.2.18. Call SaveChangesAsync()
+        ctx->db++:13.2.6.2.19. Save changes to database
+        db-->>ctx--:13.2.6.2.20. Return numberOfRowsAffected
+        ctx-->>u_repo--:13.2.6.2.21. Return numberOfRowsAffected
+        u_repo-->>sv--:13.2.6.2.22. Return numberOfRowsAffected
+        
+        sv->res++:13.2.6.2.23. Call LoginResponseDTO()
+        res-->>sv--:13.2.6.2.24. Return LoginResponseDTO object
+        
+        sv-->>be_ctrl--:13.2.6.2.25. Return LoginResponseDTO object
+        
+        be_ctrl->be_ctrl++:13.2.6.2.26. Append HttpOnly cookies
+        be_ctrl--
+        
+        be_ctrl-->>fe_ctrl--:13.2.6.2.27. Return statusCode 200
+        
+        fe_ctrl->fe_ctrl++:13.2.6.2.28. Append HttpOnly cookies and user info cookies
+        fe_ctrl--
+        
+        deactivate view
+alt role == admin or staff
+            fe_ctrl -->> admin_view--:13.2.6.2.28.1. Redirect to Admin Notification page
+            activate admin_view
+            admin_view -->> act--:13.2.6.2.28.1.1. Display Admin Notification page
+else role == user or instructor
+            fe_ctrl -->> home_view--:13.2.6.2.28.2. Redirect to Home Index page
+            activate home_view
+            home_view -->> act--:13.2.6.2.28.2.1. Display Homepage
+end
+end
+end
+@enduml

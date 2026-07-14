@@ -1,0 +1,96 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Flag Course for Content Vio
+
+actor Admin as act
+participant "CourseModerationPage" as view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":CourseModerationService" as sv
+participant ":INotificationService" as notif_sv
+participant ":IRedisCacheService" as redis
+participant ":ICourseRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Click Flag Course
+view -> fe_ctrl++:2. POST /AdminModeration/Flag/{id}
+fe_ctrl -> be_ctrl++:3. POST /api/admin-moderation/courses/flag/{id}
+
+be_ctrl -> sv++:4. Call FlagCourseAsync(id, reason)
+
+sv -> repo++:5. Call GetByIdAsync(id)
+repo -> ctx++:6. Execute query
+ctx -> db++:7. Fetch course
+db -->> ctx--:8. Return query results
+ctx -->> repo--:9. Return course entity
+repo -->> sv--:10. Return course entity
+
+alt Course Not Found
+    sv -->> be_ctrl:10.1. Return false
+    be_ctrl -->> fe_ctrl:10.1.1. Return statusCode 404
+    fe_ctrl -->> view:10.1.2. Return JSON (success=false)
+    view -->> act:10.1.3. Display course not found message
+else Course Found
+alt FlagCount >= 3
+        sv -->> be_ctrl:10.2.1. Return false
+        be_ctrl -->> fe_ctrl:10.2.1.1. Return statusCode 404
+        fe_ctrl -->> view:10.2.1.2. Return JSON (success=false)
+        view -->> act:10.2.1.3. Display maximum flags reached message
+else Can Flag
+        sv -> sv++:10.2.2. Increment FlagCount and set ModerationFeedback
+        sv--
+        
+opt FlagCount == 3
+            sv -> sv++:10.2.2.1. Set course.CourseStatus = "archived"
+            sv--
+end
+        
+        sv -> repo++:10.2.3. Call Update(course)
+        repo -->> sv--:10.2.4. Return tracking state
+        
+        sv -> repo++:10.2.5. Call SaveChangesAsync()
+        repo -> ctx++:10.2.6. Save changes to database
+        ctx -> db++:10.2.7. Update FlagCount and Feedback
+        db -->> ctx--:10.2.8. Return returnCode
+        ctx -->> repo--:10.2.9. Return numberOfRowsAffected
+        repo -->> sv--:10.2.10. Return numberOfRowsAffected
+        
+        sv -> notif_sv++:10.2.11. Call SendNotificationAsync(instructorId, appropriate subject)
+        notif_sv -->> sv--:10.2.12. Return
+        
+        sv -> redis++:10.2.13. Call RemoveCacheAsync(cacheKey)
+        redis -->> sv--:10.2.14. Return
+        
+        sv -->> be_ctrl--:10.2.15. Return true
+        be_ctrl -->> fe_ctrl--:10.2.16. Return statusCode 200
+        fe_ctrl -->> view--:10.2.17. Return JSON (success=true)
+        view -->> act--:10.2.18. Display course flagged successfully
+end
+end

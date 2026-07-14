@@ -1,0 +1,192 @@
+@startuml RejectCourseSubmission
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Reject Course Submission
+actor Staff as act
+
+participant "AdminModerationCoursesView" as view
+participant "AdminModerationController" as be_ctrl
+participant ":CourseModerationService" as sv
+participant ":CourseRepository" as repo
+participant ":MaterialRepository" as mat_repo
+participant ":LessonRepository" as less_repo
+participant ":AppDbContext" as ctx
+participant ":NotificationService" as notif_sv
+participant ":RedisService" as redis_sv
+database Database as db
+
+act++
+act -> view++:1. Click "Reject" button on a course row
+view -> view++:2. Open Reject Modal
+view -> view++:3. Swal.showLoading()
+view--
+
+view -> be_ctrl++:4. Send GET request to /AdminModeration/GetCourseDetails?id={id}
+be_ctrl -> sv++:5. Call GetCourseDetails (from course retrieval)
+
+sv -->> be_ctrl--:6. Return Course details DTO
+be_ctrl -->> view--:7. Return JSON course metadata (lessons & materials)
+
+view -> view++:8. Build targets dropdown, display Modal inputs and hide loading
+view--
+view--
+
+act -> view++:9. Click "Add Rejection Item" and specify violating elements & reasons
+view -> view++:10. Add new rejection row in UI
+view--
+
+act -> view++:11. Click "Submit Rejection"
+view -> view++:12. Validate items (each row has target and reason)
+view--
+
+alt Invalid Items
+    view -->> act:12.1. Display warning (Swal warning)
+else Valid Items
+    view -> view++:12.2. Disable submit button & show processing spinner
+    view--
+    
+    view -> be_ctrl++:12.2.1. Send POST request to /AdminModeration/RejectCourseDetailed with body: { courseId, items }
+    
+    be_ctrl -> sv++:12.2.2. Call RejectCourseDetailedAsync(request)
+    
+    sv -> repo++:12.2.3. Call GetByIdAsync(courseId)
+    repo -> ctx++:12.2.4. Get course by ID
+    ctx -> db++:12.2.5. Select Course
+    db -->> ctx--:12.2.6. Return Course
+    ctx -->> repo--:12.2.7. Return Course
+    repo -->> sv--:12.2.8. Return Course
+    
+alt Course not found
+        sv -->> be_ctrl:12.2.8.1. Return false
+        be_ctrl -->> view:12.2.8.1.1. Return JSON { success = false }
+        view -->> act:12.2.8.1.2. Display error notification
+else Course found
+        sv -> mat_repo++:12.2.8.2. Call GetByCourseIdAsync(courseId)
+        mat_repo -> ctx++:12.2.8.2.1. Query materials for course
+        ctx -> db++:12.2.8.2.2. Select materials
+        db -->> ctx--:12.2.8.2.3. Return materials
+        ctx -->> mat_repo--:12.2.8.2.4. Return materials
+        mat_repo -->> sv--:12.2.8.2.5. Return materials
+        
+opt Materials exist
+loop Each material
+                sv -> mat_repo:12.2.8.2.5.1. Call Update(material) resetting status & feedback
+end
+end
+        
+        sv -> less_repo++:12.2.8.2.6. Call GetByCourseIdAsync(courseId)
+        less_repo -> ctx++:12.2.8.2.7. Query lessons for course
+        ctx -> db++:12.2.8.2.8. Select lessons
+        db -->> ctx--:12.2.8.2.9. Return lessons
+        ctx -->> less_repo--:12.2.8.2.10. Return lessons
+        less_repo -->> sv--:12.2.8.2.11. Return lessons
+        
+opt Lessons exist
+loop Each lesson
+                sv -> less_repo:12.2.8.2.11.2. Call Update(lesson) resetting status to active
+end
+end
+        
+loop Each item in request.Items
+alt item.Target == "file"
+                sv -> mat_repo++:12.2.8.2.11.1. Call GetByIdAsync(materialId)
+                mat_repo -> ctx++:12.2.8.2.11.1.1. Get material by ID
+                ctx -> db++:12.2.8.2.11.1.2. Select material
+                db -->> ctx--:12.2.8.2.11.1.3. Return material
+                ctx -->> mat_repo--:12.2.8.2.11.1.4. Return material
+                mat_repo -->> sv--:12.2.8.2.11.1.5. Return material
+                
+opt Material exists
+                    sv -> sv++:12.2.8.2.11.1.5.3. Set material status to "rejected" & assign feedback reason
+                    sv--
+                    sv -> mat_repo:12.2.8.2.11.1.5.3.1. Call Update(material)
+end
+else item.Target == "lesson.title"
+                sv -> sv++:12.2.8.2.11.2. Add lessonId to rejectedLessonIds set & format lesson feedback
+                sv--
+else item.Target starts with "course."
+                sv -> sv++:12.2.8.2.11.3. Format course field feedback (title, description, etc.)
+                sv--
+end
+end
+        
+loop Each lessonId in rejectedLessonIds
+            sv -> less_repo++:12.2.8.2.12. Call GetByIdAsync(lessonId)
+            less_repo -> ctx++:12.2.8.2.13. Get lesson by ID
+            ctx -> db++:12.2.8.2.14. Select lesson
+            db -->> ctx--:12.2.8.2.15. Return lesson
+            ctx -->> less_repo--:12.2.8.2.16. Return lesson
+            less_repo -->> sv--:12.2.8.2.17. Return lesson
+            
+opt Lesson exists
+                sv -> sv++:12.2.8.2.17.4. Set lesson status to "rejected"
+                sv--
+                sv -> less_repo:12.2.8.2.17.4.1. Call Update(lesson)
+end
+end
+        
+        sv -> sv++:12.2.8.2.18. Set course status to "rejected" & join feedback texts
+        sv--
+        sv -> repo:12.2.8.2.19. Call Update(course)
+        
+        sv -> repo++:12.2.8.2.20. Call SaveChangesAsync()
+        repo -> ctx++:12.2.8.2.21. Call SaveChangesAsync()
+        ctx -> db++:12.2.8.2.22. Save updates (Course, Materials, Lessons)
+        db -->> ctx--:12.2.8.2.23. Return rows affected (rowsRejectDetailed)
+        ctx -->> repo--:12.2.8.2.24. Return rows affected
+        repo -->> sv--:12.2.8.2.25. Return rows affected
+        
+alt rowsRejectDetailed <= 0
+            sv -->> be_ctrl:12.2.8.2.25.1. Throw InvalidOperationException
+            be_ctrl -->> view:12.2.8.2.25.1.1. Return JSON { success = false }
+            view -->> act:12.2.8.2.25.1.2. Display error notification
+else rowsRejectDetailed > 0
+opt course.InstructorId is present
+                sv -> notif_sv++:12.2.8.2.25.2.5. Call SendNotificationAsync(instructorId, title, content, link)
+                notif_sv--
+end
+            
+            sv -> redis_sv++:12.2.8.2.25.3. Call RemoveCacheAsync(courseDetailCacheKey)
+            redis_sv--
+            
+            sv -->> be_ctrl--:12.2.8.2.25.4. Return true
+            be_ctrl -->> view--:12.2.8.2.25.5. Return JSON { success = true }
+            
+            view -> view++:12.2.8.2.25.6. closeRejectModal()
+            view -> view++:12.2.8.2.25.7. dimCourseRowInDOM(id) (make row transparent)
+            view -> view++:12.2.8.2.25.8. triggerAjaxFetch() to update table & stats in background
+            view--
+            view--
+            
+            view -->> act--:12.2.8.2.25.9. Display success notification ("Rejection Submitted")
+end
+end
+end
+deactivate view
+
+@enduml

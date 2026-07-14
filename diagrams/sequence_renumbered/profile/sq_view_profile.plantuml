@@ -1,0 +1,79 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Profile
+actor User as act
+
+participant "ProfileView" as view
+participant "LoginView" as login_view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant "ProfileController" as be_ctrl <<backend controller>>
+participant ":UserProfileResponseDTO" as be_res
+participant ":IUserProfileService" as sv
+participant ":IUserRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Access profile page
+view->fe_ctrl++:2. GET /Account/Profile
+
+fe_ctrl->fe_ctrl++:3. Check AccessToken cookie
+fe_ctrl--
+
+fe_ctrl->be_ctrl++:4. GET /api/Profile
+
+be_ctrl->be_ctrl++:5. Validate login session & Parse userId
+be_ctrl--
+
+be_ctrl->sv++:6. Call GetUserProfileAsync(userId)
+
+sv->repo++:7. Call GetUserByIdAsync(userId)
+repo->ctx++:8. Query User joined with navigation details
+ctx->db++:9. Execute query
+db-->>ctx--:10. Return result
+ctx-->>repo--:11. Return User entity
+repo-->>sv--:12. Return User entity
+
+sv->sv++:13. Check user != null
+sv--
+
+sv->be_res++:14. Call UserProfileResponseDTO()
+be_res-->>sv--:15. Return UserProfileResponseDTO object
+
+sv-->>be_ctrl--:16. Return UserProfileResponseDTO object
+be_ctrl-->>fe_ctrl--:17. Return statusCode 200
+
+fe_ctrl->fe_ctrl++:18. Read response and check IsVerified
+fe_ctrl--
+fe_ctrl->fe_ctrl++:19. Append IsVerified cookie
+fe_ctrl--
+
+fe_ctrl-->>view--:20. Return statusCode 200
+view-->>act--:21. Display user profile information
+@enduml

@@ -1,0 +1,130 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Learning Progress
+actor User as act
+
+participant "Course/Learn.cshtml" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "EnrollmentController" as be_ctrl <<backend controller>>
+participant ":EnrollmentService" as sv
+participant ":EnrollmentRepository" as repo
+participant ":CourseRepository" as courseRepo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Access course learning page
+view->view++:2. loadProgress()
+view--
+
+view->fe_ctrl++:3. Send GET /Course/GetProgress/{courseId}
+fe_ctrl->be_ctrl++:4. Send GET /api/Enrollment/progress/{courseId} (with AccessToken)
+
+be_ctrl->be_ctrl++:5. Parse userId from token
+be_ctrl--
+
+group opt [userId == null]
+    be_ctrl-->>fe_ctrl:5.1. Return statusCode 401 (Unauthorized)
+    fe_ctrl-->>view:5.1.1. Return JSON (success = false)
+    view-->>act:5.1.2. Display unauthorized message
+end
+
+be_ctrl->sv++:6. Call GetProgressAsync(userId, courseId)
+
+sv->repo++:7. Call GetEnrollmentAsync(userId, courseId)
+repo->ctx++:8. Query enrollment details
+ctx->db++:9. Execute SELECT query
+db-->>ctx--:10. Return enrollment record
+ctx-->>repo--:11. Return Enrollment entity
+repo-->>sv--:12. Return Enrollment entity
+
+sv->sv++:13. Check enrollment == null
+sv--
+
+alt [enrollment == null]
+    sv->courseRepo++:13.1. Call GetByIdAsync(courseId)
+    courseRepo->ctx++:13.1.1. Query Course details
+    ctx->db++:13.1.2. Execute SELECT query
+    db-->>ctx--:13.1.3. Return Course record
+    ctx-->>courseRepo--:13.1.4. Return Course entity
+    courseRepo-->>sv--:13.1.5. Return Course entity
+    
+    sv->sv++:13.1.6. Check course and ownership
+    sv--
+    
+alt [course != null && course.InstructorId == userId (Instructor Bypass)]
+        sv->courseRepo++:13.1.6.1. Call GetCourseStatsAsync(courseId)
+        courseRepo->ctx++:13.1.6.1.1. Query CourseStats
+        ctx->db++:13.1.6.1.2. Execute SELECT query
+        db-->>ctx--:13.1.6.1.3. Return stats record
+        ctx-->>courseRepo--:13.1.6.1.4. Return stats
+        courseRepo-->>sv--:13.1.6.1.5. Return stats
+        
+        sv-->>be_ctrl:13.1.6.1.6. Return ProgressResponse
+        be_ctrl-->>fe_ctrl:13.1.6.1.7. Return statusCode 200 (Ok)
+        fe_ctrl-->>view:13.1.6.1.8. Return JSON (success = true)
+        view->view++:13.1.6.1.9. Update UI
+        view--
+        view-->>act:13.1.6.1.10. Display course progress
+else [course is null or not owner]
+        sv-->>be_ctrl:13.1.6.2. Return null
+        be_ctrl-->>fe_ctrl:13.1.6.2.1. Return statusCode 404 (NotFound)
+        fe_ctrl-->>view:13.1.6.2.2. Return JSON (success = false)
+        view-->>act:13.1.6.2.3. Display error message
+end
+else [enrollment != null]
+    sv->courseRepo++:13.2. Call GetCourseStatsAsync(courseId)
+    courseRepo->ctx++:13.2.1. Query CourseStats
+    ctx->db++:13.2.2. Execute SELECT query
+    db-->>ctx--:13.2.3. Return stats record
+    ctx-->>courseRepo--:13.2.4. Return stats
+    courseRepo-->>sv--:13.2.5. Return stats
+    
+    sv->repo++:13.2.6. Call GetCompletedMaterialCountAsync(enrollment.EnrollmentId)
+    repo->ctx++:13.2.7. Count completed materials
+    ctx->db++:13.2.8. Execute COUNT query
+    db-->>ctx--:13.2.9. Return count
+    ctx-->>repo--:13.2.10. Return count
+    repo-->>sv--:13.2.11. Return count
+    
+    sv->repo++:13.2.12. Call GetCompletedMaterialIdsAsync(enrollment.EnrollmentId)
+    repo->ctx++:13.2.13. Get completed material IDs
+    ctx->db++:13.2.14. Execute SELECT query
+    db-->>ctx--:13.2.15. Return completed material IDs list
+    ctx-->>repo--:13.2.16. Return Completed material IDs list
+    repo-->>sv--:13.2.17. Return Completed material IDs list
+    
+    sv-->>be_ctrl--:13.2.18. Return ProgressResponse
+    be_ctrl-->>fe_ctrl--:13.2.19. Return statusCode 200 (Ok)
+    fe_ctrl-->>view--:13.2.20. Return JSON (success = true)
+    view->view++:13.2.21. Update UI
+    view--
+    view-->>act--:13.2.22. Display course progress to User
+end
+@enduml

@@ -1,0 +1,105 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Update Account
+actor Admin as act
+
+participant "AdminAccountView" as view
+participant "AdminAccountController" as fe_ctrl <<frontend controller>>
+participant "AdminAccountController" as be_ctrl <<backend controller>>
+participant ":UpdateStaffFERequestDTO" as fe_req
+participant ":UpdateStaffRequestDTO" as be_req
+participant ":IAdminAccountService" as sv
+participant ":Lockout" as lockout_ett
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lockout_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Fill updated details and click "Save"
+view->fe_ctrl++:2. POST /AdminAccount/EditStaff/{id}
+
+fe_ctrl->fe_req++:3. Call UpdateStaffFERequestDTO()
+fe_req-->>fe_ctrl--:4. Return UpdateStaffFERequestDTO object
+
+fe_ctrl->fe_ctrl++:5. Validate required fields
+fe_ctrl--
+
+fe_ctrl->be_ctrl++:6. PUT /api/admin/accounts/staff/{id}
+
+be_ctrl->be_req++:7. Call UpdateStaffRequestDTO()
+be_req-->>be_ctrl--:8. Return UpdateStaffRequestDTO object
+
+be_ctrl->be_ctrl++:9. Validate ModelState & Request
+be_ctrl--
+
+be_ctrl->sv++:10. Call UpdateStaffAsync(id, request)
+
+sv->u_repo++:11. Call GetAccountByIdAsync(id)
+u_repo->ctx++:12. Query Account with Manager details
+ctx->db++:13. Execute query
+db-->>ctx--:14. Return result
+ctx-->>u_repo--:15. Return Account entity
+u_repo-->>sv--:16. Return Account entity
+
+sv->sv++:17. Update Account and Manager properties
+sv--
+
+opt Status changed to Banned
+    sv->lockout_ett++:17.1. Call Lockout()
+    lockout_ett-->>sv--:17.1.1. Return Lockout entity
+    
+    sv->lockout_repo++:17.1.2. Call AddAsync(lockout)
+    lockout_repo->ctx++:17.1.3. Add Lockout entity
+    ctx-->>lockout_repo--:17.1.4. Return tracking state
+    lockout_repo-->>sv--:17.1.5. Return success
+end
+
+opt Status changed from Banned to Active
+    sv->lockout_repo++:17.2. Call RemoveAccountLockoutsAsync(accountId)
+    lockout_repo->ctx++:17.2.1. Remove active Lockouts
+    ctx-->>lockout_repo--:17.2.2. Return tracking state
+    lockout_repo-->>sv--:17.2.3. Return success
+end
+
+sv->u_repo++:18. Call SaveChangesAsync()
+u_repo->ctx++:19. Commit tracked changes
+ctx->db++:20. Save changes to database
+db-->>ctx--:21. Return result
+ctx-->>u_repo--:22. Return numberOfRowsAffected
+u_repo-->>sv--:23. Return success
+
+sv-->>be_ctrl--:24. Return success result
+be_ctrl-->>fe_ctrl--:25. Return statusCode 200
+
+deactivate view
+fe_ctrl-->>view--:26. Return JSON with success = true
+activate view
+view-->>act--:27. Display success toast and reload table
+@enduml

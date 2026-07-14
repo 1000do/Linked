@@ -1,0 +1,119 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Notification Detail (User/Instructor)
+
+actor User as act
+participant "NotificationPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
+participant "NotificationController" as fe_ctrl <<frontend controller>>
+participant "NotificationController" as be_ctrl <<backend controller>>
+participant ":INotificationService" as sv
+participant ":INotificationRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant "NotificationHub" as hub
+
+act++
+act->view++:1. Click on a notification row
+view->view++:2. Populate and display notification modal
+view--
+view-->>act:3. Display Notification Detail Modal
+
+alt Notification is unread
+    view->fe_ctrl++:3.1. PUT /Notification/MarkAsRead/{id}
+    
+    fe_ctrl -> fe_ctrl++:3.1.1. Validate actor's authentication and authorization
+    fe_ctrl--
+    
+alt Session Invalid
+        fe_ctrl -->> login_view:3.1.1.1. Redirect to LoginPage
+        activate login_view
+        login_view -->> act--:3.1.1.1.1. Display login form
+else Unauthorized Access
+        fe_ctrl -->> error_page:3.1.1.2. Redirect to ErrorPage
+        activate error_page
+        error_page -->> act--:3.1.1.2.1. Display error message
+else Valid actor's authentication and authorization
+        fe_ctrl->be_ctrl++:3.1.1.3. PUT /api/Notification/mark-as-read/{id}
+        
+        be_ctrl->sv++:3.1.1.3.1. Call MarkAsReadAsync(id, userId)
+    sv->repo++:3.1.1.3.2. Call GetByIdAsync(id)
+    repo->ctx++:3.1.1.3.3. Call GetByIdAsync(id)
+    ctx->db++:3.1.1.3.4. Execute SELECT query
+    db-->>ctx--:3.1.1.3.5. Return notification entity
+    ctx-->>repo--:3.1.1.3.6. Return notification entity
+    repo-->>sv--:3.1.1.3.7. Return notification entity
+    
+alt notification == null || notification.ReceiverId != userId
+        sv-->>be_ctrl:3.1.1.3.7.1. throw KeyNotFoundException
+        be_ctrl-->>fe_ctrl:3.1.1.3.7.1.1. Return statusCode 404 (NotFound)
+        fe_ctrl-->>view:3.1.1.3.7.1.2. Return JSON error response
+        view-->>act:3.1.1.3.7.1.3. Display error message
+else [notification exists and belongs to user]
+        sv->repo++:3.1.1.3.7.2. Call Update(noti)
+        repo->ctx++:3.1.1.3.7.2.1. Update notification entity state
+        ctx-->>repo--:3.1.1.3.7.2.2. Return
+        repo-->>sv--:3.1.1.3.7.2.3. Return
+        
+        sv->repo++:3.1.1.3.7.2.4. Call SaveChangesAsync()
+        repo->ctx++:3.1.1.3.7.2.5. Call SaveChangesAsync()
+        ctx->db++:3.1.1.3.7.2.6. Execute UPDATE statement
+        
+alt Database Save Failure
+            db-->>ctx:3.1.1.3.7.2.6.1. Throw DbUpdateException
+            ctx-->>repo:3.1.1.3.7.2.6.1.1. Throw DbUpdateException
+            repo-->>sv:3.1.1.3.7.2.6.1.2. Throw NotificationException
+            sv-->>be_ctrl:3.1.1.3.7.2.6.1.3. Throw BadRequestException
+            be_ctrl-->>fe_ctrl:3.1.1.3.7.2.6.1.4. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:3.1.1.3.7.2.6.1.5. Return JSON error response
+            view-->>act:3.1.1.3.7.2.6.1.6. Display error message
+else Database Save Success
+            db-->>ctx--:3.1.1.3.7.2.6.2. Return result
+            ctx-->>repo--:3.1.1.3.7.2.6.2.1. Return result
+            repo-->>sv--:3.1.1.3.7.2.6.2.2. Return result
+            
+            sv->hub++:3.1.1.3.7.2.6.2.3. Call Clients.All.SendAsync("ReceiveNotification")
+            hub-->>sv:3.1.1.3.7.2.6.2.4. Broadcast notification via SignalR
+            hub--
+            
+            sv-->>be_ctrl--:3.1.1.3.7.2.6.2.5. Return true
+            be_ctrl-->>fe_ctrl--:3.1.1.3.7.2.6.2.6. Return statusCode 200 (Ok)
+            fe_ctrl-->>view--:3.1.1.3.7.2.6.2.7. Return JSON success response
+            view->view++:3.1.1.3.7.2.6.2.8. Update local notification state to read
+            view--
+            view-->>act:3.1.1.3.7.2.6.2.9. Update notification UI to show as read
+end
+end
+end
+else [Notification is already read]
+    view-->>act--:3.2. (No further action)
+end
+
+@enduml

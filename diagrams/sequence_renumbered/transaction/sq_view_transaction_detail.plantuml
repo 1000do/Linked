@@ -1,0 +1,111 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Transaction Detail
+
+actor User as act
+participant "PurchaseHistoryPage" as list_view
+participant "HistoryDetailPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant ":TransactionDetailVM" as vm
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":ITransactionService" as sv
+participant ":ITransactionRepository" as repo
+participant ":AppDbContext" as ctx
+participant ":TransactionDetailDto" as dto
+database Database as db
+
+act ++
+list_view ++
+
+act -> list_view:1. Click "View Detail" button next to a transaction record
+list_view -> fe_ctrl++:2. GET /Transaction/HistoryDetail/{id}
+
+fe_ctrl -> fe_ctrl++:3. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> be_ctrl++:3.3. GET /api/transactions/{id}
+    
+    be_ctrl -> sv++:3.3.1. GetTransactionDetailAsync(id)
+    
+    sv -> repo++:3.3.2. GetTransactionDetailAsync(id)
+    
+    repo -> ctx++:3.3.3. Query transaction details
+    ctx -> db++:3.3.4. Execute SELECT with JOINs (Courses, Users, OrderItems)
+    db -->> ctx--:3.3.5. Return record
+    
+    ctx -> dto++:3.3.6. Call TransactionDetailDto(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
+    dto -->> ctx--:3.3.7. Return TransactionDetailDto object
+    
+    ctx -->> repo--:3.3.8. Return TransactionDetailDto
+    repo -->> sv--:3.3.9. Return TransactionDetailDto
+    
+    sv -->> be_ctrl--:3.3.10. Return TransactionDetailDto
+    
+    be_ctrl -> be_ctrl++:3.3.11. Check if detail is null
+    be_ctrl--
+    
+alt Transaction Not Found
+        be_ctrl -->> fe_ctrl:3.3.11.1. Return 404 NotFound
+        fe_ctrl -->> list_view:3.3.11.1.1. Redirect to History list (TempData["Error"])
+        list_view -->> act--:3.3.11.1.2. Display "Transaction not found" message
+else Transaction Found (Normal Flow)
+        be_ctrl -->> fe_ctrl--:3.3.11.2. Return 200 OK (ApiResponse<TransactionDetailDto>)
+        
+        fe_ctrl -> vm++:3.3.11.2.1. Call TransactionDetailVM(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
+        vm -->> fe_ctrl--:3.3.11.2.2. Return TransactionDetailVM object
+        
+        fe_ctrl -->> view++:3.3.11.2.3. Return View(TransactionDetailVM)
+        deactivate fe_ctrl
+        deactivate list_view
+        
+        view -> view++:3.3.11.2.4. Render transaction receipt
+        view--
+        
+alt Refunded Transaction
+            view -->> act:3.3.11.2.4.1. Display refund notification banner (Reason, Admin Note)
+else Normal Transaction
+            view -->> act--:3.3.11.2.4.2. Display detailed financial breakdown, purchaser info, and course details
+end
+end
+end
+
+deactivate act
+
+@enduml

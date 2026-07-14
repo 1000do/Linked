@@ -1,0 +1,81 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Filter Payout History
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "LoginPage" as login_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "InstructorController" as be_inst_ctrl <<backend controller>>
+participant ":InstructorService" as inst_sv
+participant ":InstructorRepository" as inst_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view:1. Enter payout keyword, select status, month, year \n& click "Filter" (or "Reset")
+view -> fe_tx_ctrl++:2. GET /Transaction/Instructor?payoutKeyword={k}&payoutStatus={s}&year={y}&month={m}&page=1
+
+fe_tx_ctrl -> fe_tx_ctrl++:3. Validate inputs, set default UTC Year/Month (BR-188) \n& Check Cookies["InstructorApprovalStatus"]
+fe_tx_ctrl--
+
+alt Not Approved Instructor
+    fe_tx_ctrl -->> view:3.1. Return statusCode 302
+    view -->> act:3.1.1. Redirect to /Instructor/ApplicationStatus
+else Approved Instructor
+    fe_tx_ctrl -> be_inst_ctrl++:3.2. GET /api/instructor/payouts\n(paged, filtered by keyword, status, year, month)
+    
+alt Session Invalid / Unauthorized Access (EX-1)
+        be_inst_ctrl -->> fe_tx_ctrl:3.2.1. Return statusCode 401
+        fe_tx_ctrl -->> login_view:3.2.1.1. Redirect to /Account/Login
+        activate login_view
+        login_view -->> act:3.2.1.2. Display Login page
+        deactivate login_view
+else Authorized
+        be_inst_ctrl -> inst_sv++:3.2.2. GetPayoutsAsync(..., keyword, status, year, month)
+        inst_sv -> inst_repo++:3.2.2.1. GetPayoutsAsync(..., keyword, status, year, month)
+        inst_repo -> ctx++:3.2.2.2. Query InstructorPayouts with Where(keyword, status, year, month)
+        ctx -> db++:3.2.2.3. Execute SELECT
+        db -->> ctx--:3.2.2.4. Filtered Data
+        ctx -->> inst_repo--:3.2.2.5. Payouts List
+        inst_repo -->> inst_sv--:3.2.2.6. Return PagedResult
+        inst_sv -->> be_inst_ctrl--:3.2.2.7. Return PagedResult
+        be_inst_ctrl -->> fe_tx_ctrl--:3.2.2.8. Return statusCode 200 (InstructorPayoutPagedViewModel)
+        
+alt No matching results found (A.9)
+            fe_tx_ctrl -->> view:3.2.2.8.1. Return View with InstructorFinancePageVM
+            view -->> act:3.2.2.8.1.1. Display "No payouts were recorded for this period."
+else Has Matching Payouts
+            fe_tx_ctrl -->> view--:3.2.2.8.2. Return View with InstructorFinancePageVM
+            view -->> act--:3.2.2.8.2.1. Display filtered list of payouts
+end
+end
+
+@enduml

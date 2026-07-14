@@ -1,0 +1,81 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Filter Instructor's Transaction History
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "LoginPage" as login_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":TransactionService" as tx_sv
+participant ":TransactionRepository" as tx_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+view ++
+
+act -> view:1. Enter keyword, select status, month, year \n& click "Filter" (or "Reset")
+view -> fe_tx_ctrl++:2. GET /Transaction/Instructor?keyword={k}&status={s}&year={y}&month={m}
+
+fe_tx_ctrl -> fe_tx_ctrl++:3. Validate filter inputs & \nCheck Cookies["InstructorApprovalStatus"]
+fe_tx_ctrl--
+
+alt Not Approved Instructor
+    fe_tx_ctrl -->> view:3.1. Return statusCode 302
+    view -->> act:3.1.1. Redirect to /Instructor/ApplicationStatus
+else Approved Instructor
+    fe_tx_ctrl -> be_tx_ctrl++:3.2. GET /api/transactions/instructor\n(paged, filtered by keyword, status, year, month)
+    
+alt Session Invalid / Unauthorized Access (EX-1)
+        be_tx_ctrl -->> fe_tx_ctrl:3.2.1. Return statusCode 401
+        fe_tx_ctrl -->> login_view:3.2.1.1. Redirect to /Account/Login
+        activate login_view
+        login_view -->> act:3.2.1.2. Display Login page
+        deactivate login_view
+else Authorized
+        be_tx_ctrl -> tx_sv++:3.2.2. GetInstructorTransactionsAsync(..., keyword, status, year, month)
+        tx_sv -> tx_repo++:3.2.2.1. GetInstructorTransactionsAsync(..., keyword, status, year, month)
+        tx_repo -> ctx++:3.2.2.2. Query Transactions with Where(keyword, status, year, month)
+        ctx -> db++:3.2.2.3. Execute SELECT
+        db -->> ctx--:3.2.2.4. Filtered Data
+        ctx -->> tx_repo--:3.2.2.5. Transactions List
+        tx_repo -->> tx_sv--:3.2.2.6. Return PagedResult
+        tx_sv -->> be_tx_ctrl--:3.2.2.7. Return PagedResult
+        be_tx_ctrl -->> fe_tx_ctrl--:3.2.2.8. Return statusCode 200 (TransactionPagedVM)
+        
+alt No matching results found (A.9)
+            fe_tx_ctrl -->> view:3.2.2.8.1. Return View with InstructorFinancePageVM
+            view -->> act:3.2.2.8.1.1. Display "No purchases recorded for this period."
+else Has Matching Transactions
+            fe_tx_ctrl -->> view--:3.2.2.8.2. Return View with InstructorFinancePageVM
+            view -->> act--:3.2.2.8.2.1. Display filtered list of transactions
+end
+end
+
+@enduml
