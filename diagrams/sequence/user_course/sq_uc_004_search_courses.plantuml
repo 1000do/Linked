@@ -32,7 +32,7 @@ participant "CourseListPage" as view
 participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "CoursePublicController" as be_ctrl <<backend controller>>
 participant ":CourseQueryService" as sv
-participant ":PagedResult<CourseResponse>" as res
+participant ":CourseResponse" as res
 participant ":ICourseRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -51,22 +51,18 @@ ctx -->> repo--: Return entities and totalCount
 repo -->> sv--: Return (courses, totalCount)
 
 alt courses is empty
-    sv -> res++: Call PagedResult(emptyList, 0)
-    res -->> sv--: Return PagedResult object
-    sv -->> be_ctrl: Return PagedResult object
+    sv -->> be_ctrl: Return empty list
     be_ctrl -->> fe_ctrl: Return statusCode 200
-    fe_ctrl -->> view: Return View(PagedResult)
+    fe_ctrl -->> view: Return View(emptyList)
     view -->> act: Display empty course list message
 else courses found
     sv -> sv++: Fetch course stats, enrollment and wishlist status
     sv--
-    sv -> sv++: Map courses to CourseResponse DTOs
-    sv--
-    sv -> res++: Call PagedResult(courseResponses, totalCount)
-    res -->> sv--: Return PagedResult object
+    sv -> res++: Call CourseResponse() (via IMapper)
+    res -->> sv--: Return List<CourseResponse>
     
-    sv -->> be_ctrl--: Return PagedResult object
+    sv -->> be_ctrl--: Return List<CourseResponse>
     be_ctrl -->> fe_ctrl--: Return statusCode 200
-    fe_ctrl -->> view--: Return View(PagedResult)
+    fe_ctrl -->> view--: Return View(List<CourseResponse>)
     view -->> act--: Display course list
 end

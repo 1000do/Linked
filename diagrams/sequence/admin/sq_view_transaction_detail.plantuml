@@ -28,7 +28,6 @@ hide footbox
 mainframe View transaction detail (For System)
 
 actor Admin as act
-participant "AdminFinancePage" as list_view
 participant "TransactionDetailsPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
@@ -39,13 +38,11 @@ participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant ":TransactionDetailDto" as res
-participant ":ApiResponse" as api_resp
 participant ":TransactionDetailVM" as view_model
 
 act ++
-act -> list_view++: Click "Details" button
-list_view -> fe_ctrl++: GET /Transaction/Detail/{id}
-list_view--
+act -> view++: Access TransactionDetailsPage
+view -> fe_ctrl++: GET /Transaction/Detail/{id}
 
 fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
@@ -69,10 +66,10 @@ else Valid actor's authentication and authorization
     alt Invalid transactionId
         sv -->> be_ctrl: throw ArgumentException
         be_ctrl -->> fe_ctrl: Return statusCode 400
-        fe_ctrl -->> list_view: Redirect to AdminFinancePage
-        activate list_view
-        list_view -->> act: Display error message
-        deactivate list_view
+        fe_ctrl -->> error_view: Redirect to ErrorPage
+        activate error_view
+        error_view -->> act: Display error message
+        deactivate error_view
     else Valid transactionId
         sv -> repo++: GetTransactionDetailAsync(transactionId)
         repo -> ctx++: Transactions.Where(t => t.TransactionId == transactionId).Select(new TransactionDetailDto).FirstOrDefaultAsync()
@@ -84,10 +81,10 @@ else Valid actor's authentication and authorization
             repo -->> sv: Return null
             sv -->> be_ctrl: Return null
             be_ctrl -->> fe_ctrl: Return statusCode 404
-            fe_ctrl -->> list_view: Redirect to AdminFinancePage
-            activate list_view
-            list_view -->> act: Display error message
-            deactivate list_view
+            fe_ctrl -->> error_view: Redirect to ErrorPage
+            activate error_view
+            error_view -->> act: Display error message
+            deactivate error_view
         else Database Query Success
             ctx -> res++: Call TransactionDetailDto()
             res -->> ctx--: Return TransactionDetailDto object
@@ -95,16 +92,13 @@ else Valid actor's authentication and authorization
             repo -->> sv--: Return TransactionDetailDto object
             sv -->> be_ctrl--: Return TransactionDetailDto object
             
-            be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
-            api_resp -->> be_ctrl--: Return ApiResponse object
-            
-            be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
             
             fe_ctrl -> view_model++: Call TransactionDetailVM() (Deserialize JSON)
             view_model -->> fe_ctrl--: Return TransactionDetailVM object
             
             fe_ctrl -->> view--: Return statusCode 200
-            activate view
+            
             view -->> act--: Display transaction details
         end
     end

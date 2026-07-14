@@ -38,8 +38,7 @@ participant ":ITransactionRepository" as tx_repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant ":AdminFinanceUnifiedVM" as vm
-participant ":PagedResult<TransactionListDto>" as paged_dto
-participant ":ApiResponse" as api_resp
+participant ":TransactionListDto" as paged_dto
 
 act -> view++: Enter search keyword and click "Filter" or press Enter
 
@@ -69,17 +68,17 @@ else Valid actor's authentication and authorization
     db -->> ctx--: Return matched database records
     ctx -->> tx_repo--: Return List<TransactionListDto> and totalCount
     
+    tx_repo -> paged_dto++: Call TransactionListDto() (via Select)
+    paged_dto -->> tx_repo--: Return List<TransactionListDto>
+    
     tx_repo -->> tx_sv--: Return List<TransactionListDto> and totalCount
     
-    tx_sv -> paged_dto++: Call PagedResult<TransactionListDto>()
-    paged_dto -->> tx_sv--: Return PagedResult object
-
-    tx_sv -->> be_ctrl--: Return PagedResult object
+    tx_sv -> tx_sv++: Map to PagedResult<TransactionListDto>
+    tx_sv--
     
-    be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
-    api_resp -->> be_ctrl--: Return ApiResponse object
-
-    be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
+    tx_sv -->> be_ctrl--: Return PagedResult<TransactionListDto>
+    
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
     
     alt Empty List (No matching transactions found)
         fe_ctrl -->> view: Return View with empty Transactions list

@@ -33,7 +33,7 @@ participant "AdminModerationController" as fe_ctrl <<frontend controller>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":CourseModerationService" as sv
 participant ":ICourseRepository" as repo
-participant ":PagedResult<CourseModerationDto>" as res
+participant ":CourseModerationDto" as res
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -50,12 +50,12 @@ ctx -> db++: Fetch pending courses
 db -->> ctx--: Return query results
 ctx -->> repo--: Return entities and totalCount
 
-repo -> res++: Call PagedResult(courses, totalCount)
-res -->> repo--: Return PagedResult object
+repo -> res++: Call CourseModerationDto() (via Select)
+res -->> repo--: Return List<CourseModerationDto>
 
-repo -->> sv--: Return PagedResult object
-sv -->> be_ctrl--: Return PagedResult object
+repo -->> sv--: Return List<CourseModerationDto>
+sv -->> be_ctrl--: Return List<CourseModerationDto>
 
 be_ctrl -->> fe_ctrl--: Return statusCode 200
-fe_ctrl -->> view--: Return View(PagedResult)
+fe_ctrl -->> view--: Return View(List<CourseModerationDto>)
 view -->> act--: Display list of pending courses

@@ -40,9 +40,7 @@ participant ":IAdminFinanceRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant ":WithdrawalHistoryItem" as res
-participant ":PagedResult<WithdrawalHistoryItem>" as paged_item
-participant ":ApiResponse" as api_resp
-participant ":PagedResult<WithdrawalHistoryVM>" as paged_vm
+participant ":WithdrawalHistoryVM" as view_model
 
 act ++
 act -> view++: Click "Manager Bank Withdrawals" tab
@@ -97,21 +95,15 @@ else Valid actor's authentication and authorization
             repo -->> sv--: Return numberOfRowsAffected
         end
 
-        sv -> res++: Call WithdrawalHistoryItem()
-        res -->> sv--: Return WithdrawalHistoryItem object
+        sv -> res++: Call WithdrawalHistoryItem() (via IMapper)
+        res -->> sv--: Return List<WithdrawalHistoryItem>
 
-        sv -> paged_item++: Call PagedResult<WithdrawalHistoryItem>()
-        paged_item -->> sv--: Return PagedResult<WithdrawalHistoryItem> object
+        sv -->> be_ctrl--: Return List<WithdrawalHistoryItem>
 
-        sv -->> be_ctrl--: Return PagedResult<WithdrawalHistoryItem> object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
 
-        be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
-        api_resp -->> be_ctrl--: Return ApiResponse object
-
-        be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
-
-        fe_ctrl -> paged_vm++: Call PagedResult<WithdrawalHistoryVM>() (Deserialize JSON)
-        paged_vm -->> fe_ctrl--: Return PagedResult<WithdrawalHistoryVM> object
+        fe_ctrl -> view_model++: Call WithdrawalHistoryVM() (Deserialize JSON)
+        view_model -->> fe_ctrl--: Return List<WithdrawalHistoryVM>
 
         fe_ctrl -->> view--: Return statusCode 200
         view -->> act--: Display withdrawal history table

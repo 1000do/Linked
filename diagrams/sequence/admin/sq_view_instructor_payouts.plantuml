@@ -37,12 +37,10 @@ participant ":AdminFinanceUnifiedVM" as vm
 participant "AdminFinanceController" as be_ctrl <<backend controller>>
 participant ":IAdminFinanceService" as sv
 participant ":PayoutDetailResponse" as res
-participant ":PagedResult<PayoutDetailResponse>" as paged_res
 participant ":IAdminFinanceRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant ":ApiResponse" as api_resp
-participant ":PagedResult<PayoutDetailVM>" as paged_vm
+participant ":PayoutDetailVM" as view_model
 
 act ++
 act -> view++: Click "Instructor Payouts" tab
@@ -85,21 +83,15 @@ else Valid actor's authentication and authorization
         ctx -->> repo--: Return List of PayoutDetailProjection and totalCount
         repo -->> sv--: Return List of PayoutDetailProjection and totalCount
 
-        sv -> res++: Call PayoutDetailResponse()
-        res -->> sv--: Return PayoutDetailResponse object
+        sv -> res++: Call PayoutDetailResponse() (via IMapper)
+        res -->> sv--: Return List<PayoutDetailResponse>
 
-        sv -> paged_res++: Call PagedResult<PayoutDetailResponse>()
-        paged_res -->> sv--: Return PagedResult<PayoutDetailResponse> object
+        sv -->> be_ctrl--: Return List<PayoutDetailResponse>
 
-        sv -->> be_ctrl--: Return PagedResult<PayoutDetailResponse> object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
 
-        be_ctrl -> api_resp++: Call ApiResponse.SuccessResponse()
-        api_resp -->> be_ctrl--: Return ApiResponse object
-
-        be_ctrl -->> fe_ctrl--: Return statusCode 200 with ApiResponse
-
-        fe_ctrl -> paged_vm++: Call PagedResult<PayoutDetailVM>() (Deserialize JSON)
-        paged_vm -->> fe_ctrl--: Return PagedResult<PayoutDetailVM> object
+        fe_ctrl -> view_model++: Call PayoutDetailVM() (Deserialize JSON)
+        view_model -->> fe_ctrl--: Return List<PayoutDetailVM>
 
         fe_ctrl -->> view--: Return statusCode 200
         view -->> act--: Display instructor payouts table
