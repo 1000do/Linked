@@ -21,6 +21,15 @@ class RefundDecisionRequest {
     + AdminNote : string?
 }
 
+class RefundResultResponse {
+    <<dto>>
+    + StripeRefundId : string
+    + StripeReversalId : string?
+    + RefundedAmount : decimal
+    + EnrollmentRevoked : bool
+    + TransactionStatus : string
+}
+
 %% ==================== BACKEND - SERVICES ====================
 
 class IAdminFinanceService {
@@ -32,6 +41,7 @@ class AdminFinanceService {
     - _repo : IAdminFinanceRepository
     - _paymentGateway : IPaymentGatewayService
     - _notiService : INotificationService
+    - _giftRepo : IGiftRepository
     + ApproveRefundAsync(transactionId: int, adminNote: string) Task
     - RefundTransactionAsync(transactionId: int, reason: string?) Task~RefundResultResponse~
 }
@@ -42,7 +52,7 @@ class IPaymentGatewayService {
     + RefundAsync(paymentIntentId: string, amount: decimal, reason: string?) Task~string~ *
 }
 
-class StripePaymentGatewayService {
+class StripePaymentService {
     + ReverseTransferAsync(stripeTransferId: string) Task~string~
     + RefundAsync(paymentIntentId: string, amount: decimal, reason: string?) Task~string~
 }
@@ -72,10 +82,21 @@ class AdminFinanceRepository {
     + SaveChangesAsync() Task~int~
 }
 
+class IGiftRepository {
+    <<interface>>
+    + GetByOrderItemIdAsync(orderItemId: int) Task~Gift?~ *
+}
+
+class GiftRepository {
+    - _context : AppDbContext
+    + GetByOrderItemIdAsync(orderItemId: int) Task~Gift?~
+}
+
 %% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
     + Transactions : DbSet~Transaction~
+    + Gifts : DbSet~Gift~
 }
 
 %% ==================== BACKEND - ENTITIES ====================
@@ -95,6 +116,7 @@ class TransactionExt {
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + TransactionExt(transactionId: int, adminNote: string?)
 }
 
 class InstructorPayout {
@@ -105,6 +127,10 @@ class InstructorPayout {
     + PayoutAmount : decimal
 }
 
+class Gift {
+    + GiftId : int
+}
+
 %% ==================== RELATIONSHIPS ====================
 
 %% === REALIZATION ===
@@ -112,20 +138,49 @@ AdminFinanceService ..|> IAdminFinanceService
 StripePaymentGatewayService ..|> IPaymentGatewayService
 NotificationService ..|> INotificationService
 AdminFinanceRepository ..|> IAdminFinanceRepository
+GiftRepository ..|> IGiftRepository
 
 %% === ASSOCIATION ===
 AdminFinanceControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceService --> IPaymentGatewayService
 AdminFinanceService --> INotificationService
+AdminFinanceService --> IGiftRepository
 AdminFinanceRepository --> AppDbContext
+GiftRepository --> AppDbContext
 AppDbContext --> Transaction
+AppDbContext --> Gift
 Transaction --> TransactionExt : 1..1
 Transaction --> InstructorPayout : 1..N
 
 %% === DEPENDENCY ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE : API calls
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceControllerBE ..> RefundDecisionRequest
+AdminFinanceService ..> RefundResultResponse
+AdminFinanceService ..> TransactionExt
+AdminFinanceRepository ..> Transaction
+GiftRepository ..> Gift
+
+%% ==================== LINKS ====================
+click AdminFinanceControllerFE href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Controllers/AdminFinanceController.cs"
+click AdminFinanceControllerBE href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/AdminFinanceController.cs"
+click RefundDecisionRequest href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/RefundDecisionRequest.cs"
+click RefundResultResponse href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/AdminFinanceDTOs.cs"
+click IAdminFinanceService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IAdminFinanceService.cs"
+click AdminFinanceService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/AdminFinanceService.cs"
+click IPaymentGatewayService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IPaymentGatewayService.cs"
+click StripePaymentGatewayService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Services/StripePaymentService.cs"
+click INotificationService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/INotificationService.cs"
+click NotificationService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/NotificationService.cs"
+click IAdminFinanceRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/IAdminFinanceRepository.cs"
+click AdminFinanceRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/AdminFinanceRepository.cs"
+click IGiftRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/IGiftRepository.cs"
+click GiftRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/GiftRepository.cs"
+click AppDbContext href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Data/AppDbContext.cs"
+click Transaction href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Transaction.cs"
+click TransactionExt href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/TransactionExt.cs"
+click InstructorPayout href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/InstructorPayout.cs"
+click Gift href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Gift.cs"
 
 %% ==================== STYLES ====================
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

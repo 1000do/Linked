@@ -41,7 +41,7 @@ participant "Stripe API" as stripe_api <<external>>
 participant ":ICheckoutRepository" as repo
 participant ":CheckoutResponse" as dto
 participant ":CartSummaryResponse" as summary_dto
-participant ":UserProfile" as profile_dto
+participant ":UserProfileViewModel" as profile_dto
 participant ":CheckoutViewModel" as vm
 participant ":OrderInfo" as order_ent
 participant ":OrderItem" as orderitem_ent
@@ -81,7 +81,7 @@ else Valid actor's authentication and authorization
     fe_ctrl --
     
     alt Cart is empty
-        fe_ctrl -->> cart_view : Return JSON (success = false)
+        fe_ctrl -->> cart_view : Return     JSON (success = false)
         
         cart_view -->> act: Display empty cart error message
         

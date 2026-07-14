@@ -101,20 +101,20 @@ class StripeConnectService {
 class IAdminFinanceRepository {
     <<interface>>
     + GetTransactionsAsync() Task~List~Transaction~~ *
-    + GetPayoutsAsync() Task~List~Payout~~ *
+    + GetPayoutsAsync() Task~List~InstructorPayout~~ *
 }
 
 class AdminFinanceRepository {
     - _context : AppDbContext
     + GetTransactionsAsync() Task~List~Transaction~~
-    + GetPayoutsAsync() Task~List~Payout~~
+    + GetPayoutsAsync() Task~List~InstructorPayout~~
 }
 
 %% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
     + Transactions : DbSet~Transaction~
-    + Payouts : DbSet~Payout~
+    + InstructorPayouts : DbSet~InstructorPayout~
 }
 
 %% ==================== BACKEND - ENTITIES ====================
@@ -126,12 +126,18 @@ class Transaction {
     + CreatedAt : DateTime
 }
 
-class Payout {
+class InstructorPayout {
+    <<entity>>
     + PayoutId : int
-    + TotalAmount : decimal
-    + InstructorReceived : decimal
-    + PlatformReceived : decimal
+    + TransactionId : int?
+    + InstructorId : int?
+    + PayoutAmount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
     + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -147,7 +153,7 @@ AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceService --> IStripeConnectService
 AdminFinanceRepository --> AppDbContext
 AppDbContext --> Transaction
-AppDbContext --> Payout
+AppDbContext --> InstructorPayout
 
 %% === REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
@@ -162,9 +168,29 @@ AdminFinanceControllerBE ..> PlatformBalanceResponse
 IAdminFinanceService ..> FinancialSummaryResponse
 IAdminFinanceService ..> PlatformBalanceResponse
 IAdminFinanceRepository ..> Transaction
-IAdminFinanceRepository ..> Payout
+IAdminFinanceRepository ..> InstructorPayout
 AdminFinanceRepository ..> Transaction
-AdminFinanceRepository ..> Payout
+AdminFinanceRepository ..> InstructorPayout
 
 %% ==================== STYLES ====================
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+
+%% ==================== LINKS ====================
+click AdminFinanceControllerFE href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Controllers/AdminFinanceController.cs"
+click AdminFinanceUnifiedVM href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/AdminFinanceViewModels.cs"
+click FinanceDashboardVM href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/AdminFinanceViewModels.cs"
+click FinancialSummaryVM href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/AdminFinanceViewModels.cs"
+click WithdrawPageVM href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/AdminFinanceViewModels.cs"
+click PlatformBalanceVM href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/AdminFinanceViewModels.cs"
+click AdminFinanceControllerBE href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/AdminFinanceController.cs"
+click FinancialSummaryResponse href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/AdminFinanceDTOs.cs"
+click PlatformBalanceResponse href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/AdminFinanceDTOs.cs"
+click IAdminFinanceService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IAdminFinanceService.cs"
+click AdminFinanceService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/AdminFinanceService.cs"
+click IStripeConnectService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IStripeConnectService.cs"
+click StripeConnectService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Services/StripeConnectService.cs"
+click IAdminFinanceRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/IAdminFinanceRepository.cs"
+click AdminFinanceRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/AdminFinanceRepository.cs"
+click AppDbContext href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Data/AppDbContext.cs"
+click Transaction href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Transaction.cs"
+click InstructorPayout href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/InstructorPayout.cs"
