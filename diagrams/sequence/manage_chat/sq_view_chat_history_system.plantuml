@@ -102,7 +102,7 @@ alt hasAccess == false
     be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
     fe_ctrl-->>view: Return statusCode 403 (Forbidden)
     view-->>act: Display permission error message
-else [hasAccess == true]
+else hasAccess == true
     sv->sv++: Call MarkChatAsReadAsync(chatId, accountId)
     sv->repo++: Call MarkAsReadAsync(chatId, accountId)
     repo->ctx++: Call MarkAsReadAsync(chatId, accountId)

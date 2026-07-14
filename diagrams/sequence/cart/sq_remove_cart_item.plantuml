@@ -46,7 +46,7 @@ view--
 
 alt User cancels
     view-->>act: Do nothing
-else [User confirms]
+else User confirms
     view->fe_ctrl++: POST /Cart/RemoveFromCart
     
     fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
@@ -78,7 +78,7 @@ else [User confirms]
                 be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
                 fe_ctrl-->>view: Return statusCode 302 (Redirect)
                 view-->>act: Display error message
-            else [item != null]
+            else item != null
                 sv->repo++: Call RemoveCartItem(item)
                 
                 repo->ctx++: Call SaveChangesAsync()

@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white   
+            BackgroundColor white
         }
         groupHeader{
             BackgroundColor white
@@ -27,106 +27,95 @@
 hide footbox
 mainframe View Balance
 
-actor "Instructor" as act
-participant "EarningsDashboard" as view
+actor Instructor as act
+participant "EarningsInstructorPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
-participant "ApplicationStatusPage" as app_status_view
-participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "ApplicationStatusPage" as app_view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant "TransactionController" as be_tx_ctrl <<backend controller>>
 participant "InstructorController" as be_inst_ctrl <<backend controller>>
-participant ":TransactionService" as tx_sv
-participant ":InstructorService" as inst_sv
-participant ":AdminFinanceService" as fin_sv
-participant ":PagedResult<TransactionListDto>" as tx_dto
-participant ":PagedResult<InstructorPayoutDto>" as payout_dto
-participant ":InstructorCourseRevenueResponse" as rev_dto
-participant ":TransactionRepository" as tx_repo
-participant ":InstructorRepository" as inst_repo
-participant ":AdminFinanceRepository" as fin_repo
+participant ":ITransactionService" as tx_sv
+participant ":ITransactionRepository" as tx_repo
+participant ":TransactionListDto" as tx_dto
+participant ":IInstructorService" as inst_sv
+participant ":IInstructorRepository" as inst_repo
+participant ":InstructorPayoutDto" as po_dto
+participant ":InstructorFinancePageVM" as vm
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-view ++
+act -> view ++: View Earnings Dashboard (Balance metrics)
+view -> fe_ctrl ++: GET /Transaction/Instructor
 
-act -> view++: Click "Revenue & Payouts" (or Filter by Month/Year)
-view -> fe_tx_ctrl++: GET /Transaction/Instructor?year={y}&month={m}
-
-fe_tx_ctrl -> fe_tx_ctrl++: Validate actor's authentication and authorization
-fe_tx_ctrl--
+fe_ctrl -> fe_ctrl ++: Validate actor's authentication and authorization
+fe_ctrl --
 
 alt Session Invalid
-    fe_tx_ctrl -->> login_view++: Redirect to LoginPage
-    login_view -->> act--: Display login form
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act --: Display login form
 else Unauthorized Access
-    fe_tx_ctrl -->> error_view++: Redirect to ErrorPage
-    error_view -->> act--: Display error message
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --: Display error message
 else Valid actor's authentication and authorization
-    fe_tx_ctrl -> fe_tx_ctrl++: Check Request.Cookies["InstructorApprovalStatus"]
-    fe_tx_ctrl--
     
-    alt ApprovalStatus != "Approved"
-        fe_tx_ctrl -->> app_status_view++: Redirect to ApplicationStatus
-        app_status_view -->> act--: Display status
-    else ApprovalStatus == "Approved"
-        par Fetch Dashboard Data Concurrently
-            fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor\n(paged & all for {y}, {m})
-            be_tx_ctrl -> tx_sv++: GetInstructorTransactionsAsync(...)
-            tx_sv -> tx_repo++: GetInstructorTransactionsAsync(...)
-            tx_repo -> ctx++: Query Transactions
-            ctx -> db++: Execute SELECT
-            db -->> ctx--: Return database record
-            ctx -->> tx_repo--: Return list of Transaction entities
-            tx_repo -->> tx_sv--: Return List
-            
-            tx_sv -> tx_dto++: Map to PagedResult<TransactionListDto>
-            tx_dto -->> tx_sv--: Return PagedResult<TransactionListDto>
-            
-            tx_sv -->> be_tx_ctrl--: Return PagedResult<TransactionListDto>
-            be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (Transactions Data)
+    fe_ctrl -> fe_ctrl ++: Check Cookies["InstructorApprovalStatus"]
+    fe_ctrl --
+    
+    alt Status != "Approved"
+        fe_ctrl -->> app_view: Redirect to ApplicationStatusPage
+        activate app_view
+        app_view -->> act --: Display application status
+    else Status == "Approved"
         
-            fe_tx_ctrl -> be_inst_ctrl++: GET /api/instructor/payouts\n(paged & all for {y}, {m})
-            be_inst_ctrl -> inst_sv++: GetPayoutsAsync(...)
-            inst_sv -> inst_repo++: GetPayoutsAsync(...)
-            inst_repo -> ctx++: Query InstructorPayouts
-            ctx -> db++: Execute SELECT
-            db -->> ctx--: Return database record
-            ctx -->> inst_repo--: Return list of InstructorPayout entities
-            inst_repo -->> inst_sv--: Return List
+        par Fetch Balance Data Concurrently
+            fe_ctrl -> be_tx_ctrl ++: GET /api/transactions/instructor?page=1&pageSize=100000
+            be_tx_ctrl -> tx_sv ++: Call GetInstructorTransactionsAsync(...)
+            tx_sv -> tx_repo ++: Call GetInstructorTransactionsAsync(...)
+            tx_repo -> ctx ++: Query all Transactions
+            ctx -> db ++: Execute query
+            db -->> ctx --: Return database records
+            ctx -->> tx_repo --: Return data
             
-            inst_sv -> payout_dto++: Map to PagedResult<InstructorPayoutDto>
-            payout_dto -->> inst_sv--: Return PagedResult<InstructorPayoutDto>
+            tx_repo -> tx_dto ++: Call TransactionListDto()
+            tx_dto -->> tx_repo --: Return TransactionListDto object
             
-            inst_sv -->> be_inst_ctrl--: Return PagedResult<InstructorPayoutDto>
-            be_inst_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (Payouts Data)
-        
-            fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/instructor/course-revenues
-            be_tx_ctrl -> fin_sv++: GetInstructorCourseRevenuesByInstructorAsync(...)
-            fin_sv -> fin_repo++: GetInstructorCourseRevenuesByInstructorAsync(...)
-            fin_repo -> ctx++: Query Revenue Group By Course
-            ctx -> db++: Execute SELECT
-            db -->> ctx--: Return database record
-            ctx -->> fin_repo--: Return Revenue Projection entities
-            fin_repo -->> fin_sv--: Return List
+            tx_repo -->> tx_sv --: Return list
+            tx_sv -->> be_tx_ctrl --: Return PagedResult<TransactionListDto>
+            be_tx_ctrl -->> fe_ctrl --: Return statusCode 200 (All Transactions)
             
-            fin_sv -> rev_dto++: Map to List<InstructorCourseRevenueResponse>
-            rev_dto -->> fin_sv--: Return List<InstructorCourseRevenueResponse>
+            fe_ctrl -> be_inst_ctrl ++: GET /api/instructor/payouts?page=1&pageSize=100000
+            be_inst_ctrl -> inst_sv ++: Call GetPayoutsAsync(...)
+            inst_sv -> inst_repo ++: Call GetPayoutsAsync(...)
+            inst_repo -> ctx ++: Query all InstructorPayouts
+            ctx -> db ++: Execute query
+            db -->> ctx --: Return database records
+            ctx -->> inst_repo --: Return data
             
-            fin_sv -->> be_tx_ctrl--: Return List<InstructorCourseRevenueResponse>
-            be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (Revenue Data)
+            inst_repo -> po_dto ++: Call InstructorPayoutDto()
+            po_dto -->> inst_repo --: Return InstructorPayoutDto object
             
-            fe_tx_ctrl -> be_inst_ctrl++: GET /api/instructor/payout-days
-            be_inst_ctrl -> inst_sv++: GetPayoutDaysDelay()
-            inst_sv -->> be_inst_ctrl--: Return 14 (days)
-            be_inst_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (14 days)
+            inst_repo -->> inst_sv --: Return list
+            inst_sv -->> be_inst_ctrl --: Return PagedResult<InstructorPayoutDto>
+            be_inst_ctrl -->> fe_ctrl --: Return statusCode 200 (All Payouts)
+            
+            fe_ctrl -> be_inst_ctrl ++: GET /api/instructor/payout-days
+            be_inst_ctrl -> inst_sv ++: Call GetPayoutDaysDelay()
+            inst_sv -->> be_inst_ctrl --: Return days config (e.g. 14)
+            be_inst_ctrl -->> fe_ctrl --: Return statusCode 200 (Days delay)
         end
         
-        fe_tx_ctrl -> fe_tx_ctrl++: Compute Financial Metrics\n(Gross Revenue, Refunded, Net Earnings, Pending, Withdrawn)
-        fe_tx_ctrl--
+        fe_ctrl -> fe_ctrl ++: Compute Financial Metrics (Gross, Refunded, Net Earnings, Pending, Withdrawn)
+        fe_ctrl --
         
-        fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
-        view -->> act--: Display Earnings Dashboard (Cards & Transaction Revenue Chart)
+        fe_ctrl -> vm ++: Call InstructorFinancePageVM()
+        vm -->> fe_ctrl --: Return InstructorFinancePageVM object
+        
+        fe_ctrl -->> view --: Return View(vm)
+        view -->> act --: Display Balance Summary Cards
     end
 end
 @enduml

@@ -1,0 +1,264 @@
+<div style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+<h1 style="text-align: center;">Database Tables Description</h1>
+<table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+<thead>
+<tr>
+<th style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top; width: 5%;">No</th>
+<th style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top; width: 25%;">Table</th>
+<th style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top; width: 70%;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">01</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">accounts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: account_id: SERIAL<br>- Foreign keys: None<br>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>email: VARCHAR(255)</li><li>username: VARCHAR(255)</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>account_id: SERIAL (NOT NULL)</li><li>email: VARCHAR(255) (NOT NULL)</li><li>username: VARCHAR(255)</li><li>password_hash: TEXT</li><li>phone_number: VARCHAR(50)</li><li>account_status: VARCHAR(50)</li><li>account_flag_count: INT</li><li>auth_provider: VARCHAR(50)</li><li>avatar_url: TEXT</li><li>refresh_token: TEXT</li><li>refresh_token_expiry_time: TIMESTAMP</li><li>is_verified: BOOLEAN (NOT NULL)</li><li>account_created_at: TIMESTAMP</li><li>account_updated_at: TIMESTAMP</li><li>account_last_login_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">02</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">lockouts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: lockout_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>account_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>lockout_id: SERIAL (NOT NULL)</li><li>account_id: INT</li><li>lockout_type: VARCHAR(50)</li><li>lockout_level: VARCHAR(50)</li><li>lockout_start: TIMESTAMP</li><li>lockout_end: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">03</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">users</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: user_id: INT<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>user_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>user_id: INT (NOT NULL)</li><li>full_name: VARCHAR(255) (NOT NULL)</li><li>bio: TEXT</li><li>date_of_birth: DATE</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">04</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">managers</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: manager_id: INT<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>manager_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>manager_id: INT (NOT NULL)</li><li>role: VARCHAR(50)</li><li>display_name: VARCHAR(255) (NOT NULL)</li><li>full_name: VARCHAR(255)</li><li>phone_number: VARCHAR(50)</li><li>avatar_url: TEXT</li><li>bio: TEXT</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">05</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">instructors</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: instructor_id: INT<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>instructor_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>instructor_id: INT (NOT NULL)</li><li>stripe_account_id: VARCHAR(255)</li><li>stripe_onboarding_status: VARCHAR(50)</li><li>payouts_enabled: BOOLEAN</li><li>charges_enabled: BOOLEAN</li><li>professional_title: VARCHAR(255)</li><li>expertise_categories: VARCHAR(255)</li><li>linkedin_url: TEXT</li><li>youtube_url: TEXT</li><li>facebook_url: TEXT</li><li>document_url: TEXT</li><li>approval_status: VARCHAR(50)</li><li>stripe_country: VARCHAR(2)</li><li>rejection_reason: TEXT</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">06</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">categories</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: category_id: SERIAL<br>- Foreign keys: None<br>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>category_id: SERIAL (NOT NULL)</li><li>categories_name: VARCHAR(255) (NOT NULL)</li><li>description: TEXT</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li><li>category_status: VARCHAR(50)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">07</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">coupons</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: coupon_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>manager_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>coupon_code: VARCHAR(50)</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>coupon_id: SERIAL (NOT NULL)</li><li>manager_id: INT</li><li>coupon_code: VARCHAR(50) (NOT NULL)</li><li>coupon_type: VARCHAR(50)</li><li>discount_value: NUMERIC(10, 2) (NOT NULL)</li><li>min_order_value: NUMERIC(10, 2) (NOT NULL)</li><li>start_date: TIMESTAMP</li><li>end_date: TIMESTAMP</li><li>usage_limit: INT</li><li>used_count: INT</li><li>is_active: BOOLEAN</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">08</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">courses</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: course_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>instructor_id: INT</li><li>category_id: INT</li><li>coupon_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>course_id: SERIAL (NOT NULL)</li><li>instructor_id: INT</li><li>category_id: INT</li><li>coupon_id: INT</li><li>title: VARCHAR(255) (NOT NULL)</li><li>description: TEXT</li><li>price: NUMERIC(10, 2) (NOT NULL)</li><li>course_thumbnail_url: TEXT</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li><li>course_status: VARCHAR(50)</li><li>course_flag_count: INT</li><li>what_you_will_learn: TEXT</li><li>requirements: TEXT</li><li>moderation_feedback: TEXT</li><li>last_approved_at: TIMESTAMP</li><li>is_removed: BOOLEAN</li><li>threat_level: INT</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">09</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">lessons</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: lesson_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>lesson_id: SERIAL (NOT NULL)</li><li>course_id: INT</li><li>title: VARCHAR(255) (NOT NULL)</li><li>description: TEXT</li><li>thumbnail_url: TEXT</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li><li>lesson_status: VARCHAR(50)</li><li>moderation_feedback: TEXT</li><li>is_removed: BOOLEAN</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">10</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">learning_materials</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: material_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>lesson_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>material_id: SERIAL (NOT NULL)</li><li>lesson_id: INT</li><li>title: VARCHAR(255) (NOT NULL)</li><li>description: TEXT</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li><li>learning_status: VARCHAR(50)</li><li>moderation_feedback: TEXT</li><li>material_url: TEXT</li><li>material_metadata: JSONB</li><li>cloud_public_id: TEXT</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">11</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_exts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: course_id: INT<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>course_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>title_hash: CHAR(32)</li><li>description_hash: CHAR(32)</li><li>what_you_will_learn_hash: CHAR(32)</li><li>requirements_hash: CHAR(32)</li><li>thumbnail_hash: CHAR(32)</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>course_id: INT (NOT NULL)</li><li>title_hash: CHAR(32)</li><li>description_hash: CHAR(32)</li><li>what_you_will_learn_hash: CHAR(32)</li><li>requirements_hash: CHAR(32)</li><li>thumbnail_hash: CHAR(32)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">12</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">text_embeddings</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: text_embedding_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>material_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>text_embedding_id: SERIAL (NOT NULL)</li><li>material_id: INT</li><li>text_embedding: vector(384)</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">13</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">media_embeddings</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: media_embedding_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>material_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>media_embedding_id: SERIAL (NOT NULL)</li><li>material_id: INT</li><li>media_embedding: vector(512)</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">14</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">enrollments</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: enrollment_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>user_id: INT</li><li>course_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) user_id: INT, course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>enrollment_id: SERIAL (NOT NULL)</li><li>user_id: INT</li><li>course_id: INT</li><li>title: VARCHAR(255)</li><li>description: TEXT</li><li>completed_date: DATE</li><li>is_completed: BOOLEAN</li><li>enroll_date: DATE</li><li>last_accessed_at: TIMESTAMP</li><li>enrollment_status: VARCHAR(50)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">15</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">material_completions</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>enrollment_id: INT</li><li>material_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) enrollment_id: INT, material_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>id: SERIAL (NOT NULL)</li><li>enrollment_id: INT (NOT NULL)</li><li>material_id: INT (NOT NULL)</li><li>completed_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">16</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">wishlist_items</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>user_id: INT</li><li>course_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) user_id: INT, course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>id: SERIAL (NOT NULL)</li><li>user_id: INT</li><li>course_id: INT</li><li>added_date: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">17</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_reviews</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: course_review_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>enrollment_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>course_review_id: SERIAL (NOT NULL)</li><li>enrollment_id: INT (NOT NULL)</li><li>rating: NUMERIC(3,2)</li><li>comment: TEXT</li><li>course_review_status: TEXT (NOT NULL)</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li><li>is_removed: BOOLEAN</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">18</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">lesson_reviews</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: lesson_review_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>enrollment_id: INT</li><li>lesson_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>lesson_review_id: SERIAL (NOT NULL)</li><li>enrollment_id: INT (NOT NULL)</li><li>lesson_id: INT</li><li>rating: NUMERIC(3,2)</li><li>comment: TEXT</li><li>lesson_review_status: TEXT (NOT NULL)</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li><li>is_removed: BOOLEAN</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">19</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quizzes</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: quiz_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>instructor_id: INT</li><li>course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>quiz_id: SERIAL (NOT NULL)</li><li>instructor_id: INT (NOT NULL)</li><li>course_id: INT</li><li>title: VARCHAR(255) (NOT NULL)</li><li>description: TEXT</li><li>time_limit_minutes: INT</li><li>passing_score: INT (NOT NULL)</li><li>total_questions: INT (NOT NULL)</li><li>is_hidden: BOOLEAN (NOT NULL)</li><li>is_removed: BOOLEAN (NOT NULL)</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">20</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quiz_lesson_distributions</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: distribution_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>quiz_id: INT</li><li>lesson_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) quiz_id: INT, lesson_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>distribution_id: SERIAL (NOT NULL)</li><li>quiz_id: INT (NOT NULL)</li><li>lesson_id: INT (NOT NULL)</li><li>question_count: INT (NOT NULL)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">21</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quiz_questions</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: question_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>course_id: INT</li><li>lesson_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>question_id: SERIAL (NOT NULL)</li><li>course_id: INT (NOT NULL)</li><li>lesson_id: INT</li><li>question_text: TEXT (NOT NULL)</li><li>explanation: TEXT</li><li>question_type: VARCHAR(20) (NOT NULL)</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">22</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quiz_options</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: option_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>question_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>option_id: SERIAL (NOT NULL)</li><li>question_id: INT (NOT NULL)</li><li>option_text: TEXT (NOT NULL)</li><li>is_correct: BOOLEAN (NOT NULL)</li><li>order_index: INT (NOT NULL)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">23</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_quizzes</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: course_quiz_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>course_id: INT</li><li>quiz_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) course_id: INT, quiz_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>course_quiz_id: SERIAL (NOT NULL)</li><li>course_id: INT (NOT NULL)</li><li>quiz_id: INT (NOT NULL)</li><li>order_index: INT (NOT NULL)</li><li>is_hidden: BOOLEAN (NOT NULL)</li><li>added_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">24</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quiz_attempts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: attempt_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>quiz_id: INT</li><li>user_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>attempt_id: SERIAL (NOT NULL)</li><li>quiz_id: INT (NOT NULL)</li><li>user_id: INT (NOT NULL)</li><li>score: INT</li><li>is_passed: BOOLEAN</li><li>started_at: TIMESTAMP</li><li>submitted_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">25</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quiz_attempt_questions</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: attempt_question_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>attempt_id: INT</li><li>question_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) attempt_id: INT, question_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>attempt_question_id: SERIAL (NOT NULL)</li><li>attempt_id: INT (NOT NULL)</li><li>question_id: INT (NOT NULL)</li><li>order_index: INT (NOT NULL)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">26</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">quiz_attempt_answers</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: answer_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>attempt_id: INT</li><li>question_id: INT</li><li>selected_option_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>answer_id: SERIAL (NOT NULL)</li><li>attempt_id: INT (NOT NULL)</li><li>question_id: INT (NOT NULL)</li><li>selected_option_id: INT</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">27</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">cart_items</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>user_id: INT</li><li>course_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) user_id: INT, course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>id: SERIAL (NOT NULL)</li><li>user_id: INT</li><li>course_id: INT</li><li>added_date: TIMESTAMP</li><li>price: NUMERIC(10, 2)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">28</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">order_info</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: order_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>user_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>order_id: SERIAL (NOT NULL)</li><li>user_id: INT</li><li>order_date: TIMESTAMP</li><li>order_status: VARCHAR(50)</li><li>payment_method: VARCHAR(50)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">29</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">order_items</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>order_id: INT</li><li>course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>id: SERIAL (NOT NULL)</li><li>order_id: INT</li><li>course_id: INT</li><li>purchase_price: NUMERIC(10, 2) (NOT NULL)</li><li>coupon_used: BOOLEAN</li><li>original_price: NUMERIC(10, 2)</li><li>coupon_code: VARCHAR(50)</li><li>coupon_type: VARCHAR(50)</li><li>discount_amount: NUMERIC(10, 2)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">30</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">transactions</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: transaction_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>order_item_id: INT</li><li>account_from: INT</li><li>account_to: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>transaction_id: SERIAL (NOT NULL)</li><li>order_item_id: INT</li><li>account_from: INT</li><li>account_to: INT</li><li>amount: NUMERIC(10, 2) (NOT NULL)</li><li>transfer_rate: NUMERIC(5,2) (NOT NULL)</li><li>stripe_session_id: VARCHAR(255)</li><li>stripe_paymentintent_id: VARCHAR(255)</li><li>currency: VARCHAR(10)</li><li>transactions_status: VARCHAR(50)</li><li>transaction_type: VARCHAR(50)</li><li>transaction_created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">31</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">transaction_exts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: transaction_id: INT<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>transaction_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>transaction_id: INT (NOT NULL)</li><li>refund_reason: TEXT</li><li>refund_admin_note: TEXT</li><li>refund_requested_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">32</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">gifts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: gift_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>order_item_id: INT</li><li>sender_id: INT</li><li>claimed_by_user_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>redemption_token: VARCHAR(255)</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>gift_id: SERIAL (NOT NULL)</li><li>order_item_id: INT (NOT NULL)</li><li>sender_id: INT</li><li>recipient_email: VARCHAR(255) (NOT NULL)</li><li>recipient_name: VARCHAR(255)</li><li>gift_message: TEXT</li><li>card_theme: VARCHAR(50)</li><li>redemption_token: VARCHAR(255) (NOT NULL)</li><li>is_claimed: BOOLEAN</li><li>claimed_by_user_id: INT</li><li>claimed_at: TIMESTAMP</li><li>delivery_status: VARCHAR(50)</li><li>created_at: TIMESTAMP</li><li>updated_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">33</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">instructor_payouts</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: payout_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>transaction_id: INT</li><li>instructor_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>payout_id: SERIAL (NOT NULL)</li><li>transaction_id: INT</li><li>instructor_id: INT</li><li>payout_amount: NUMERIC(10,2) (NOT NULL)</li><li>payout_date: TIMESTAMP (NOT NULL)</li><li>is_paid: BOOLEAN (NOT NULL)</li><li>payout_status: VARCHAR(20) (NOT NULL)</li><li>stripe_transfer_id: VARCHAR(255)</li><li>stripe_payout_id: VARCHAR(255)</li><li>paid_to_bank_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">34</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">platform_withdrawals</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: withdrawal_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>manager_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>withdrawal_id: SERIAL (NOT NULL)</li><li>manager_id: INT</li><li>amount: NUMERIC(10,2) (NOT NULL)</li><li>currency: VARCHAR(10)</li><li>stripe_payout_id: VARCHAR(255)</li><li>status: VARCHAR(20) (NOT NULL)</li><li>description: TEXT</li><li>created_at: TIMESTAMP</li><li>arrived_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">35</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">chats</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: chat_id: SERIAL<br>- Foreign keys: None<br>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>chat_id: SERIAL (NOT NULL)</li><li>chat_name: VARCHAR(255)</li><li>chat_type: VARCHAR(50)</li><li>context_type: VARCHAR(50)</li><li>context_id: INT</li><li>created_at: TIMESTAMP</li><li>last_message_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">36</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">chat_participants</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key (Composite): chat_id: INT, account_id: INT<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>chat_id: INT</li><li>account_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>chat_id: INT</li><li>account_id: INT</li><li>role: VARCHAR(50)</li><li>unread_count: INT</li><li>last_read_at: TIMESTAMP</li><li>joined_at: TIMESTAMP</li><li>cleared_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">37</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">messages</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: message_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>chat_id: INT</li><li>sender_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>message_id: SERIAL (NOT NULL)</li><li>chat_id: INT</li><li>sender_id: INT</li><li>content: TEXT (NOT NULL)</li><li>is_seen: BOOLEAN</li><li>message_status: VARCHAR(50)</li><li>sent_at: TIMESTAMP</li><li>received_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">38</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">message_attachments</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: attachment_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>message_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>attachment_id: SERIAL (NOT NULL)</li><li>message_id: INT</li><li>file_url: TEXT (NOT NULL)</li><li>file_name: VARCHAR(255)</li><li>file_type: VARCHAR(50)</li><li>file_size: BIGINT</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">39</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">notifications</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: notification_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>sender_id: INT</li><li>receiver_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>notification_id: SERIAL (NOT NULL)</li><li>sender_id: INT</li><li>receiver_id: INT</li><li>title: VARCHAR(255)</li><li>content: TEXT</li><li>link_action: TEXT</li><li>is_read: BOOLEAN</li><li>is_removed: BOOLEAN</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">40</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_reports</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: course_report_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>reporter_id: INT</li><li>course_id: INT</li><li>resolver_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>course_report_id: SERIAL (NOT NULL)</li><li>reporter_id: INT</li><li>course_id: INT</li><li>resolver_id: INT</li><li>reason: VARCHAR(255)</li><li>description: TEXT</li><li>course_reports_status: VARCHAR(50)</li><li>resolution_note: TEXT</li><li>resolved_at: TIMESTAMP</li><li>access_granted_until: TIMESTAMP</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">41</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_review_reports</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: course_review_report_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>reporter_id: INT</li><li>course_review_id: INT</li><li>resolver_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>course_review_report_id: SERIAL (NOT NULL)</li><li>reporter_id: INT</li><li>course_review_id: INT</li><li>resolver_id: INT</li><li>reason: VARCHAR(255)</li><li>description: TEXT</li><li>user_reports_status: VARCHAR(50)</li><li>resolution_note: TEXT</li><li>resolved_at: TIMESTAMP</li><li>access_granted_until: TIMESTAMP</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">42</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">lesson_review_reports</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: lesson_review_report_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>reporter_id: INT</li><li>lesson_review_id: INT</li><li>resolver_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>lesson_review_report_id: SERIAL (NOT NULL)</li><li>reporter_id: INT</li><li>lesson_review_id: INT</li><li>resolver_id: INT</li><li>reason: VARCHAR(255)</li><li>description: TEXT</li><li>user_reports_status: VARCHAR(50)</li><li>resolution_note: TEXT</li><li>resolved_at: TIMESTAMP</li><li>access_granted_until: TIMESTAMP</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">43</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">audit_logs</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: log_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>actor_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>log_id: SERIAL (NOT NULL)</li><li>actor_id: INT</li><li>action_type: VARCHAR(100) (NOT NULL)</li><li>target_type: VARCHAR(100)</li><li>target_id: INT</li><li>details: TEXT</li><li>ip_address: VARCHAR(45)</li><li>created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">44</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">system_configs</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: config_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>manager_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>config_key: VARCHAR(255)</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>config_id: SERIAL (NOT NULL)</li><li>manager_id: INT</li><li>config_key: VARCHAR(255) (NOT NULL)</li><li>config_value: TEXT</li><li>description: TEXT</li><li>updated_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">45</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">ai_models</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: model_id: SERIAL<br>- Foreign keys: None<br>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>model_id: SERIAL (NOT NULL)</li><li>model_name: VARCHAR(255) (NOT NULL)</li><li>model_type: VARCHAR(50)</li><li>model_provider: VARCHAR(50)</li><li>model_version: VARCHAR(50)</li><li>model_status: VARCHAR(50)</li><li>description: TEXT</li><li>model_created_at: TIMESTAMP</li><li>model_updated_at: TIMESTAMP</li><li>model_path: VARCHAR(255)</li><li>process_type: VARCHAR(255)</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">46</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">courses_ai_integrations</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>model_id: INT</li><li>course_id: INT</li></ul>- Unique constraints:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>(Composite) model_id: INT, course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>id: SERIAL (NOT NULL)</li><li>model_id: INT</li><li>course_id: INT</li><li>role: VARCHAR(50)</li><li>is_enabled: BOOLEAN (NOT NULL)</li><li>config_json: JSONB</li><li>assigned_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">47</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_ai_usage_logs</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: log_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>integration_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>log_id: SERIAL (NOT NULL)</li><li>integration_id: INT</li><li>interaction_type: VARCHAR(50)</li><li>input_json: JSONB</li><li>output_json: JSONB</li><li>latency_ms: REAL</li><li>token_usage: REAL</li><li>error_message: TEXT</li><li>log_created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">48</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_review_moderation_logs</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: log_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>model_id: INT</li><li>course_review_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>log_id: SERIAL (NOT NULL)</li><li>model_id: INT</li><li>course_review_id: INT</li><li>input_json: JSONB</li><li>output_json: JSONB</li><li>latency_ms: REAL</li><li>error_message: TEXT</li><li>log_created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">49</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">lesson_review_moderation_logs</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: log_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>model_id: INT</li><li>lesson_review_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>log_id: SERIAL (NOT NULL)</li><li>model_id: INT</li><li>lesson_review_id: INT</li><li>input_json: JSONB</li><li>output_json: JSONB</li><li>latency_ms: REAL</li><li>error_message: TEXT</li><li>log_created_at: TIMESTAMP</li></ul></p></td>
+</tr>
+<tr>
+<td style="border: 1px solid black; padding: 5px; text-align: center; vertical-align: top;">50</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">course_field_moderation_feedbacks</td>
+<td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;"><p style="margin: 0 0 5px 0;">- Primary key: feedback_id: SERIAL<br>- Foreign keys:<br><ul style="margin: 0 0 5px 0; padding-left: 20px;"><li>course_id: INT</li></ul>- Attributes:<br><ul style="margin: 0; padding-left: 20px;"><li>feedback_id: SERIAL (NOT NULL)</li><li>course_id: INT (NOT NULL)</li><li>field_name: VARCHAR(100) (NOT NULL)</li><li>feedback_text: TEXT (NOT NULL)</li><li>date_added: TIMESTAMP</li></ul></p></td>
+</tr>
+</tbody>
+</table>
+</div>

@@ -33,6 +33,13 @@
                         <span class="text-[11px] font-bold">Contact Admin</span>
                     </button>
                 }
+                else if (roleCheck != "admin" && roleCheck != "staff")
+                {
+                    <button onclick="contactStaff()" class="bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-2 py-1.5 rounded-lg flex items-center gap-1 transition-colors" title="Contact Support Staff">
+                        <span class="material-symbols-outlined text-[16px]">support_agent</span>
+                        <span class="text-[11px] font-bold">Contact Staff</span>
+                    </button>
+                }
             </div>
             
             <div class="search-box">
@@ -178,6 +185,7 @@
         }
 
         let activeChatId = null;
+        let isWaitingForSupportStaff = false;
         let chatPageConnection = null;
         let selectedFiles = []; // Danh sách file đang chờ gửi
 
@@ -210,6 +218,16 @@
                 if (activeChatId === data.chatId && data.accountId !== chatMyAccountId) {
                     typingBox.innerText = `${data.name} is typing...`;
                     typingBox.style.display = data.isTyping ? 'block' : 'none';
+                }
+            });
+
+            chatPageConnection.on("SupportRequestAccepted", async (data) => {
+                if (activeChatId === 'support_ticket') {
+                    isWaitingForSupportStaff = false;
+                    await loadChats();
+                    selectChat(data.chatId || data.ChatId, 'Support Team', '/img/default-avatar.png', true);
+                } else {
+                    await loadChats();
                 }
             });
 
@@ -449,6 +467,88 @@
                 console.error("Contact admin error:", err);
             }
         }
+
+        async function contactStaff() {
+            // 1. Kiểm tra xem có ticket nào đang chờ không
+            try {
+                const pendingRes = await fetch("/Chat/GetPendingRequests");
+                if (pendingRes.ok) {
+                    const pendings = await pendingRes.json();
+                    if (pendings && pendings.length > 0) {
+                        showPendingSupportUI(pendings[0].initialMessage);
+                        return;
+                    }
+                }
+            } catch(e) {}
+
+            // 2. Không có ticket chờ -> Hiển thị màn hình Welcome
+            activeChatId = 'support_ticket';
+            isWaitingForSupportStaff = false;
+            
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'flex';
+            document.getElementById('header-name').innerText = 'Support Team';
+            document.getElementById('header-status').innerText = 'Online';
+            document.getElementById('header-status').className = 'text-[10px] font-bold uppercase tracking-wider text-emerald-500';
+            document.getElementById('header-avatar').src = '/img/default-avatar.png';
+            
+            const list = document.getElementById('message-list');
+            list.innerHTML = `
+                <div class="msg-row them">
+                    <div class="avatar-container frame-staff">
+                        <img src="/img/default-avatar.png" class="bubble-avatar shadow-sm">
+                    </div>
+                    <div class="bubble-container">
+                        <div class="sender-name">Support Team</div>
+                        <div class="bubble shadow-sm">
+                            <div class="bubble-text">Hello! 👋 Thanks for reaching out. Please send us your issue and someone will be with you shortly.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Xoá trạng thái active của các chat khác
+            document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+            scrollToBottom();
+        }
+
+        function showPendingSupportUI(initialMessage) {
+            activeChatId = 'support_ticket';
+            isWaitingForSupportStaff = true;
+            
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('chat-content').style.display = 'flex';
+            document.getElementById('header-name').innerText = 'Support Team';
+            document.getElementById('header-status').innerText = 'Pending';
+            document.getElementById('header-status').className = 'text-[10px] font-bold uppercase tracking-wider text-amber-500';
+            document.getElementById('header-avatar').src = '/img/default-avatar.png';
+            
+            const list = document.getElementById('message-list');
+            list.innerHTML = `
+                <div class="msg-row me">
+                    <div class="avatar-container frame-learner">
+                        <img src="/img/default-avatar.png" class="bubble-avatar shadow-sm">
+                    </div>
+                    <div class="bubble-container">
+                        <div class="sender-name">You</div>
+                        <div class="bubble shadow-sm">
+                            <div class="bubble-text">${initialMessage}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center py-6 w-full relative z-10 mt-4">
+                    <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
+                        <span class="material-symbols-outlined">support_agent</span>
+                    </div>
+                    <p class="text-xs font-medium text-slate-500">Your request has been sent.</p>
+                    <p class="text-[10px] text-slate-400">Waiting for support staff...</p>
+                </div>
+            `;
+            
+            document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+            scrollToBottom();
+        }
         // ------------------------------ //
 
         function handleSearchInput() {
@@ -656,6 +756,50 @@
         async function sendMsg() {
             const input = document.getElementById('msg-input');
             const content = input.value.trim();
+            
+            if (activeChatId === 'support_ticket') {
+                if (!content) return;
+                
+                if (isWaitingForSupportStaff) {
+                    Swal.fire({
+                        title: 'Please wait',
+                        text: 'Your request is in the queue. A staff member will connect with you shortly.',
+                        icon: 'info',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
+                
+                // Disable button
+                const sendBtn = document.getElementById('btn-send');
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span>';
+                
+                try {
+                    const res = await fetch("/Chat/RequestSupport", {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: content, targetRole: 'staff' })
+                    });
+                    
+                    if (res.ok) {
+                        input.value = "";
+                        showPendingSupportUI(content);
+                    } else {
+                        Swal.fire('Error', 'Failed to send request.', 'error');
+                    }
+                } catch (err) {
+                    console.error(err);
+                } finally {
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '<span class="material-symbols-outlined">send</span>';
+                }
+                return;
+            }
+
             if (!activeChatId) {
                 Swal.fire('Error', 'Please select a valid chat first.', 'error');
                 return;

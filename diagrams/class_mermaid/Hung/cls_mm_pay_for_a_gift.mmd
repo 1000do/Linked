@@ -1,0 +1,151 @@
+```mermaid
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class GiftControllerFE["GiftController"] {
+    <<frontend controller>>
+    + CreateGiftPaymentIntentAjax(request) Task~IActionResult~
+    + CheckoutSuccess(payment_intent_id: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class CheckoutControllerBE["CheckoutController"] {
+    <<backend controller>>
+    - _giftCheckoutService : IGiftCheckoutService
+    + GiftCreateIntent(request: GiftCheckoutRequest) Task~IActionResult~
+    + GiftSuccessIntent(payment_intent_id: string) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class GiftCheckoutRequest {
+    <<dto>>
+    + CourseId : int
+    + RecipientEmail : string
+    + DeliveryDate : DateTime?
+    + Message : string?
+    + CouponCode : string?
+}
+
+class CheckoutResponse {
+    <<dto>>
+    + SessionUrl : string
+    + SessionId : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class OrderInfo {
+    <<entity>>
+    + OrderId : int
+    + UserId : int
+    + OrderDate : DateTime
+    + OrderStatus : string
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int
+    + CourseId : int
+    + PurchasePrice : decimal
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + AccountFrom : int
+    + AccountTo : int
+    + Amount : decimal
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IGiftCheckoutService {
+    <<interface>>
+    + InitiateGiftPaymentIntentAsync(userId: int, request: GiftCheckoutRequest) Task~CheckoutResponse~ *
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task *
+}
+
+class ICheckoutRepository {
+    <<interface>>
+    + BeginTransactionAsync() Task~IDbContextTransaction~ *
+    + AddOrderAsync(order: OrderInfo) Task *
+    + AddOrderItemAsync(item: OrderItem) Task *
+    + AddTransactionAsync(transaction: Transaction) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IPaymentGatewayService {
+    <<interface>>
+    + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~ *
+    + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~ *
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
+
+class GiftCheckoutService {
+    - _repo : ICheckoutRepository
+    - _paymentGateway : IPaymentGatewayService
+    + InitiateGiftPaymentIntentAsync(userId: int, request: GiftCheckoutRequest) Task~CheckoutResponse~
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
+}
+
+class CheckoutRepository {
+    - _context : AppDbContext
+    + BeginTransactionAsync() Task~IDbContextTransaction~
+    + AddOrderAsync(order: OrderInfo) Task
+    + AddOrderItemAsync(item: OrderItem) Task
+    + AddTransactionAsync(transaction: Transaction) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class StripePaymentService {
+    + CreatePaymentIntentAsync(...) Task~Tuple~
+    + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
+}
+
+class AppDbContext {
+    + Orders : DbSet~OrderInfo~
+    + OrderItems : DbSet~OrderItem~
+    + Transactions : DbSet~Transaction~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CheckoutControllerBE --> IGiftCheckoutService
+GiftCheckoutService --> ICheckoutRepository
+GiftCheckoutService --> IPaymentGatewayService
+CheckoutRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+GiftCheckoutService ..|> IGiftCheckoutService
+CheckoutRepository ..|> ICheckoutRepository
+PaymentGatewayService ..|> IPaymentGatewayService
+
+%% === DEPENDENCY (dashed arrows) ===
+GiftControllerFE ..> CheckoutControllerBE
+
+CheckoutControllerBE ..> GiftCheckoutRequest
+GiftCheckoutService ..> GiftCheckoutRequest
+
+CheckoutControllerBE ..> CheckoutResponse
+GiftCheckoutService ..> CheckoutResponse
+
+CheckoutRepository ..> OrderInfo
+GiftCheckoutService ..> OrderInfo
+
+CheckoutRepository ..> OrderItem
+GiftCheckoutService ..> OrderItem
+
+CheckoutRepository ..> Transaction
+GiftCheckoutService ..> Transaction
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+```

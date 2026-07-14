@@ -27,55 +27,78 @@
 hide footbox
 mainframe Sort Payout History
 
-actor "Instructor" as act
-participant "EarningsDashboard" as view
+actor Instructor as act
+participant "EaringInstructorPage" as view
 participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as app_view
 participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
 participant "InstructorController" as be_inst_ctrl <<backend controller>>
-participant ":InstructorService" as inst_sv
-participant ":InstructorRepository" as inst_repo
+participant ":IInstructorService" as inst_sv
+participant ":IInstructorRepository" as inst_repo
+participant ":InstructorPayoutDto" as dto
+participant ":InstructorPayoutPagedViewModel" as view_model
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-view ++
 
-act -> view: Select sorting option (or "Reset") \n& click "Filter"
-view -> fe_tx_ctrl++: GET /Transaction/Instructor?payoutSortBy={sort}&page=1&...
+act -> view++: Select sorting option & click "Filter"
+view -> fe_tx_ctrl++: GET /Transaction/Instructor?payoutSortBy={sort}
+view--
 
-fe_tx_ctrl -> fe_tx_ctrl++: Validate inputs, set default sortBy="date_desc" (BR-190)\n& Check Cookies["InstructorApprovalStatus"]
+fe_tx_ctrl -> fe_tx_ctrl++: Validate actor's authentication and authorization
 fe_tx_ctrl--
 
-alt Not Approved Instructor
-    fe_tx_ctrl -->> view: Return statusCode 302
-    view -->> act: Redirect to /Instructor/ApplicationStatus
-else Approved Instructor
-    fe_tx_ctrl -> be_inst_ctrl++: GET /api/instructor/payouts\n(paged, with sortBy)
+alt Session Invalid
+    fe_tx_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_tx_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_tx_ctrl -> fe_tx_ctrl++: Validate Cookies["InstructorApprovalStatus"] == "Approved"
+    fe_tx_ctrl--
     
-    alt Session Invalid / Unauthorized Access (EX-1)
-        be_inst_ctrl -->> fe_tx_ctrl: Return statusCode 401
-        fe_tx_ctrl -->> login_view: Redirect to /Account/Login
-        activate login_view
-        login_view -->> act: Display Login page
-        deactivate login_view
-    else Authorized
-        be_inst_ctrl -> inst_sv++: GetPayoutsAsync(..., sortBy, ...)
-        inst_sv -> inst_repo++: GetPayoutsAsync(..., sortBy, ...)
-        inst_repo -> ctx++: Query InstructorPayouts with OrderBy(sortBy)
-        ctx -> db++: Execute SELECT
-        db -->> ctx--: Sorted Data
-        ctx -->> inst_repo--: Payouts List
-        inst_repo -->> inst_sv--: Return PagedResult
-        inst_sv -->> be_inst_ctrl--: Return PagedResult
-        be_inst_ctrl -->> fe_tx_ctrl--: Return statusCode 200 (InstructorPayoutPagedViewModel)
+    alt Not Approved Instructor
+        fe_tx_ctrl -->> app_view: Redirect to ApplicationStatusPage
+        activate app_view
+        app_view -->> act: Display application status
+        deactivate app_view
+    else Approved Instructor
+        fe_tx_ctrl -> be_inst_ctrl++: GET /api/instructor/payouts
+        be_inst_ctrl -> inst_sv++: GetPayoutsAsync(userId, sortBy, ...)
+        inst_sv -> inst_repo++: GetPayoutsAsync(userId, sortBy, ...)
         
-        alt Empty History
-            fe_tx_ctrl -->> view: Return View with InstructorFinancePageVM
-            view -->> act: Display empty state "No payouts were recorded for this period."
-        else Has Payouts
-            fe_tx_ctrl -->> view--: Return View with InstructorFinancePageVM
-            view -->> act--: Display sorted list of payouts\n(No., Course Title, Net Payout, Status)
+        inst_repo -> ctx++: Query InstructorPayouts
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Return data
+        ctx -->> inst_repo--: Return mapped data
+        
+        inst_repo -> dto++: Call InstructorPayoutDto()
+        dto -->> inst_repo--: Return InstructorPayoutDto object
+        
+        inst_repo -->> inst_sv--: Return PagedResult<InstructorPayoutDto>
+        inst_sv -->> be_inst_ctrl--: Return PagedResult<InstructorPayoutDto>
+        
+        be_inst_ctrl -->> fe_tx_ctrl--: Return statusCode 200
+        
+        fe_tx_ctrl -> fe_tx_ctrl++: Deserialize JSON to InstructorPayoutPagedViewModel
+        fe_tx_ctrl--
+        
+        fe_tx_ctrl -> view_model++: Call InstructorPayoutPagedViewModel()
+        view_model -->> fe_tx_ctrl--: Return InstructorPayoutPagedViewModel object
+        
+        fe_tx_ctrl -->> view --: Return View(vm)
+        
+        alt vm.Items.Count == 0
+            view -->> act: Display empty message "No payouts found"
+        else vm.Items.Count > 0
+            view -->> act --: Display sorted list of payouts
         end
     end
+end
 
 @enduml
