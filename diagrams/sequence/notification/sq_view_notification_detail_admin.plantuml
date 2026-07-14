@@ -76,7 +76,7 @@ alt User role is staff AND notification belongs to user AND notification is unre
         be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
         fe_ctrl-->>view: Return JSON error response
         view-->>act: Display error message
-    else [notification exists and belongs to user]
+    else notification exists and belongs to user
         sv->repo++: Call Update(noti)
         repo->ctx++: Update notification entity state
         ctx-->>repo--: Return
@@ -112,7 +112,7 @@ alt User role is staff AND notification belongs to user AND notification is unre
         end
     end
 end
-else [User is Admin OR notification does not belong to user OR is already read]
+else User is Admin OR notification does not belong to user OR is already read
     view-->>act--: (No further action)
 end
 

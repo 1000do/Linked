@@ -133,6 +133,16 @@ public class ChatController : Controller
         return NotFound();
     }
 
+    [HttpGet]
+    [Authorize(Roles = "user,instructor")]
+    public async Task<IActionResult> GetSupportAccount()
+    {
+        var response = await _api.GetAsync("chat/support-account");
+        if (response.IsSuccessStatusCode)
+            return Content(await response.Content.ReadAsStringAsync(), "application/json");
+        return NotFound();
+    }
+
     [HttpPost]
     [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> RequestSupport([FromBody] dynamic dto)
