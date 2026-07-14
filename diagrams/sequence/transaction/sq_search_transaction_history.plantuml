@@ -35,7 +35,7 @@ participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant ":TransactionPagedVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":ITransactionService" as sv
-participant ":PagedResult" as paged_dto
+participant ":TransactionListDto" as paged_dto
 participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -76,10 +76,7 @@ else Valid actor's authentication and authorization
 
     repo -->> sv--: 15. Return items and totalCount
 
-    sv -> paged_dto++: 16. Call PagedResult(items, totalCount, page, pageSize)
-    paged_dto -->> sv--: 17. Return PagedResult object
-    
-    sv -->> be_ctrl: 18. Return PagedResult object
+    sv -->> be_ctrl: 18. Return List<TransactionListDto>
     deactivate sv
     be_ctrl -->> fe_ctrl: 19. Return statusCode 200
     deactivate be_ctrl
