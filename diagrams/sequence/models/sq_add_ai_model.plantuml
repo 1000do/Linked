@@ -85,9 +85,8 @@ else Valid actor's authentication and authorization
     ett -->> sv--: Return AiModel object
     
     sv -> repo++: Call Add(model)
-    repo -> ctx++: Call Add(model)
-    ctx -->> repo--: Return result
-    repo -->> sv--: Return AiModel
+    
+    repo -->> sv--: Return added AiModel
     
     sv -> repo++: Call SaveChangesAsync()
     repo -> ctx++: Call SaveChangesAsync()

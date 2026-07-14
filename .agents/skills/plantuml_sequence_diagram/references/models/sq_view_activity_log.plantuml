@@ -35,8 +35,8 @@ participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
 participant ":AdminAiServicePageViewModel" as view_model
 participant "AdminAiServiceController" as be_ctrl <<backend controller>>
 participant ":IAiModerationLogService" as sv
-participant ":PagedResult<CourseModerationLogAdminDto>" as c_dto
-participant ":PagedResult<ReviewModerationLogAdminDto>" as r_dto
+participant ":CourseModerationLogAdminDto" as c_dto
+participant ":ReviewModerationLogAdminDto" as r_dto
 participant ":ICourseAiUsageLogRepository" as course_repo
 participant ":ICourseReviewModerationLogRepository" as course_rev_repo
 participant ":ILessonReviewModerationLogRepository" as lesson_rev_repo

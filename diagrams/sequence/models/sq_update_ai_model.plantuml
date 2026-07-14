@@ -81,7 +81,7 @@ else Valid actor's authentication and authorization
     be_ctrl -> sv++: Call UpdateModelAsync(id, req)
     
     sv -> repo++: Call GetByIdAsync(id)
-    repo -> ctx++: Call FindAsync()
+    repo -> ctx++: Find model by ID via DbSet
     ctx -> db++: Query AI Model
     db -->> ctx--: Return model or null
     ctx -->> repo--: Return model or null

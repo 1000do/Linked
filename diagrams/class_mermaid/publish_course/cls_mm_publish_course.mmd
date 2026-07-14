@@ -73,35 +73,35 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseAiModerationService {
-    <<interface>>
+    <<service interface>>
     + StartCourseModerationAsync(request: CourseModerationRequest, instructorId: int) Task~bool~ *
     + HandleCourseModerationWithAIAsync(request: CourseModerationRequest) Task~CourseModerationResult~ *
 }
 
 class IAiModerationService {
-    <<interface>>
+    <<service interface>>
     + HealthCheckAsync() Task~bool~ *
     + ModerateCourseFullPipelineAsync(semanticReq: SemanticDuplicationRequest, harmfulReq: CourseHarmfulRequest) Task~CourseModerationResult~ *
 }
 
 class ICourseCommandService {
-    <<interface>>
+    <<service interface>>
     + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) Task *
     + UpdateCourseStatusAndFeedbackAsync(courseId: int, status: string?, feedback: string?, threatLevel: AiThreatLevel?) Task *
 }
 
 class IRedisService {
-    <<interface>>
+    <<service interface>>
     + RemoveCacheAsync(key: string) void *
 }
 
 class IBackgroundTaskQueue {
-    <<interface>>
+    <<service interface>>
     + QueueBackgroundWorkItemAsync~ICourseAiModerationService~(workItem: Func) ValueTask *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
     + Update(course: Course) void *
     + SaveChangesAsync() Task~int~ *
@@ -110,6 +110,7 @@ class ICourseRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseAiModerationService {
+    <<service>>
     - _aiModerationService : IAiModerationService
     - _courseCommandService : ICourseCommandService
     - _redisService : IRedisService
@@ -127,19 +128,23 @@ class CourseAiModerationService {
 }
 
 class AiModerationService {
+    <<service>>
     + HealthCheckAsync() Task~bool~
     + ModerateCourseFullPipelineAsync(semanticReq: SemanticDuplicationRequest, harmfulReq: CourseHarmfulRequest) Task~CourseModerationResult~
 }
 
 class RedisService {
+    <<service>>
     + RemoveCacheAsync(key: string) void
 }
 
 class BackgroundTaskQueue {
+    <<service>>
     + QueueBackgroundWorkItemAsync~ICourseAiModerationService~(workItem: Func) ValueTask
 }
 
 class CourseCommandService {
+    <<service>>
     - _courseRepository : ICourseRepository
     - _redisService : IRedisService
     
@@ -154,6 +159,7 @@ class CourseCommandService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int) Task~Course?~
@@ -164,6 +170,7 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
     + Instructors : DbSet~Instructor~
     + Lessons : DbSet~Lesson~

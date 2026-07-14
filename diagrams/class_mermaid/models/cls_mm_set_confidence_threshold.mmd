@@ -47,12 +47,12 @@ class SystemConfig {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAiConfigurationService {
-    <<interface>>
+    <<service interface>>
     + UpdateThresholdsAsync(req: UpdateThresholdsRequest) Task~bool~ *
 }
 
 class ISystemConfigRepository {
-    <<interface>>
+    <<repository interface>>
     + GetValueAsync(key: string) Task~string?~ *
     + GetAllConfigAsync() Task~List~Dictionary~string, object~~~ *
     + SetConfigByKeyAsync(key: string, value: Dictionary~string, object~) Task *
@@ -62,6 +62,7 @@ class ISystemConfigRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AiConfigurationService {
+    <<service>>
     - _configRepo : ISystemConfigRepository
     
     + UpdateThresholdsAsync(req: UpdateThresholdsRequest) Task~bool~
@@ -70,6 +71,7 @@ class AiConfigurationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class SystemConfigRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetValueAsync(key: string) Task~string?~
@@ -81,6 +83,7 @@ class SystemConfigRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + SystemConfigs : DbSet~SystemConfig~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void

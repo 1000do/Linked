@@ -8,6 +8,7 @@ class AdminAiServiceControllerFE["AdminAiServiceController"] {
     + AddModel(req: CreateAiModelRequest) Task~IActionResult~
 }
 
+
 class CreateAiModelRequestVM["CreateAiModelRequest"] {
     <<view model>>
     + ModelName : string
@@ -28,6 +29,7 @@ class AdminAiServiceControllerBE["AdminAiServiceController"] {
     
     + AddModel(req: CreateAiModelRequest) Task~IActionResult~
 }
+
 
 %% ==================== BACKEND - DTOs ====================
 
@@ -79,12 +81,12 @@ class AiModel {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAiModelManagementService {
-    <<interface>>
+    <<service interface>>
     + AddModelAsync(req: CreateAiModelRequest) Task~AiModelAdminDto~ *
 }
 
 class IAiModelRepository {
-    <<interface>>
+    <<repository interface>>
     + Add(model: AiModel) AiModel *
     + SaveChangesAsync() Task~int~ *
 }
@@ -92,6 +94,7 @@ class IAiModelRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AiModelManagementService {
+    <<service>>
     - _aiModelRepo : IAiModelRepository
     
     + AddModelAsync(req: CreateAiModelRequest) Task~AiModelAdminDto~
@@ -100,6 +103,7 @@ class AiModelManagementService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class AiModelRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + Add(model: AiModel) AiModel
@@ -109,6 +113,7 @@ class AiModelRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + AiModels : DbSet~AiModel~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void

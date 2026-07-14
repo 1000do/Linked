@@ -82,14 +82,14 @@ class LessonReviewReport {
 }
 
 class IReportModerationService {
-    <<interface>>
+    <<service interface>>
     + ResolveCourseReportAsync(reportId: int, resolverId: int, request: ResolveReportRequest) Task~bool~ *
     + ResolveCourseReviewReportAsync(reportId: int, resolverId: int, request: ResolveReportRequest) Task~bool~ *
     + ResolveLessonReviewReportAsync(reportId: int, resolverId: int, request: ResolveReportRequest) Task~bool~ *
 }
 
 class IReportRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCourseReportByIdAsync(reportId: int) Task~CourseReport?~ *
     + GetCourseReviewReportByIdAsync(reportId: int) Task~CourseReviewReport?~ *
     + GetLessonReviewReportByIdAsync(reportId: int) Task~LessonReviewReport?~ *
@@ -100,11 +100,12 @@ class IReportRepository {
 }
 
 class IRedisService {
-    <<interface>>
+    <<service interface>>
     + RemoveCacheAsync(key: string) Task *
 }
 
 class ReportModerationService {
+    <<service>>
     - _reportRepo : IReportRepository
     - _redisService : IRedisService
     + ResolveCourseReportAsync(reportId: int, resolverId: int, request: ResolveReportRequest) Task~bool~
@@ -125,6 +126,7 @@ class ReportModerationService {
 }
 
 class ReportRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetCourseReportByIdAsync(reportId: int) Task~CourseReport?~
     + GetCourseReviewReportByIdAsync(reportId: int) Task~CourseReviewReport?~
@@ -136,12 +138,14 @@ class ReportRepository {
 }
 
 class RedisService {
+    <<service>>
     - _redis : IConnectionMultiplexer
     - _db : IDatabase
     + RemoveCacheAsync(key: string) Task
 }
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReports : DbSet~CourseReport~
     + CourseReviewReports : DbSet~CourseReviewReport~
     + LessonReviewReports : DbSet~LessonReviewReport~
