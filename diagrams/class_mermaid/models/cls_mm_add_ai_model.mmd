@@ -8,6 +8,7 @@ class AdminAiServiceControllerFE["AdminAiServiceController"] {
     + AddModel(req: CreateAiModelRequest) Task~IActionResult~
 }
 
+
 class CreateAiModelRequestVM["CreateAiModelRequest"] {
     <<view model>>
     + ModelName : string
@@ -28,6 +29,7 @@ class AdminAiServiceControllerBE["AdminAiServiceController"] {
     
     + AddModel(req: CreateAiModelRequest) Task~IActionResult~
 }
+
 
 %% ==================== BACKEND - DTOs ====================
 
