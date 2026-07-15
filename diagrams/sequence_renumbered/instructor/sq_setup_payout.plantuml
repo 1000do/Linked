@@ -10,7 +10,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white   
+            BackgroundColor white
         }
         groupHeader{
             BackgroundColor white
@@ -27,162 +27,172 @@
 hide footbox
 mainframe Setup Payout
 
-actor "Instructor" as act
+actor Instructor as act
 participant "ApplicationStatusPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
 participant "InstructorController" as fe_ctrl <<frontend controller>>
 participant "InstructorController" as be_ctrl <<backend controller>>
-participant ":InstructorService" as sv
-participant ":StripeConnectService" as stripe
+participant ":IInstructorService" as sv
+participant ":IStripeConnectService" as stripe
 participant ":StripeSetupResponse" as dto
-participant ":InstructorRepository" as repo
+participant ":IInstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant "Stripe API" as stripe_api <<external>>
 
 act ++
+act -> view ++:1. Click "Setup Payout" button
+view -> fe_ctrl ++:2. POST /Instructor/SetupPayout
 
-act -> view++:1. Click "Setup Payout" button
-view -> fe_ctrl++:2. POST /Instructor/SetupPayout
-
-fe_ctrl -> fe_ctrl++:3. Validate actor's authentication and authorization
-fe_ctrl--
+fe_ctrl -> fe_ctrl ++:3. Validate actor's authentication and authorization
+fe_ctrl --
 
 alt Session Invalid
-    fe_ctrl -->> login_view++:3.1. Redirect to LoginPage
-    login_view -->> act--:3.1.1. Display login form
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act --:3.1.1. Display login form
 else Unauthorized Access
-    fe_ctrl -->> error_view++:3.2. Redirect to ErrorPage
-    error_view -->> act--:3.2.1. Display error message
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --:3.2.1. Display error message
 else Valid actor's authentication and authorization
-    fe_ctrl -> be_ctrl++:3.3. POST /api/instructor/setup-payout
     
-    be_ctrl -> be_ctrl++:3.3.1. Validate login session & Parse userId
-    be_ctrl--
+    fe_ctrl -> be_ctrl ++:3.3. POST /api/instructor/setup-payout
     
-alt Invalid login session
+    be_ctrl -> be_ctrl ++:3.3.1. Validate request and check Authorization
+    be_ctrl --
+    
+alt Unauthorized
         be_ctrl -->> fe_ctrl:3.3.1.1. Return statusCode 401
-        fe_ctrl -->> view:3.3.1.1.1. Redirect to ApplicationStatus (with error)
-        view -->> act:3.3.1.1.2. Display error message
+        fe_ctrl -->> login_view:3.3.1.1.1. Redirect to LoginPage
+        activate login_view
+        login_view -->> act:3.3.1.1.2. Display login form
+        deactivate login_view
 else Valid Request
-        be_ctrl -> sv++:3.3.1.2. SetupStripePayoutAsync(userId)
         
-        sv -> repo++:3.3.1.2.1. GetByIdWithNavigationAsync(userId)
-        repo -> ctx++:3.3.1.2.2. Query instructor
-        ctx -> db++:3.3.1.2.3. Execute SELECT
-        db -->> ctx--:3.3.1.2.4. Return database record
-        ctx -->> repo--:3.3.1.2.5. Return Instructor entity
-        repo -->> sv--:3.3.1.2.6. Return Instructor entity
+        be_ctrl -> sv ++:3.3.1.2. Call SetupStripePayoutAsync(userId)
         
-        sv -> sv++:3.3.1.2.7. Validate Instructor State (ApprovalStatus == "Approved")
-        sv--
+        sv -> repo ++:3.3.1.2.1. Call GetByIdWithNavigationAsync(userId)
+        repo -> ctx ++:3.3.1.2.2. Query Instructor
+        ctx -> db ++:3.3.1.2.3. Execute query
+        db -->> ctx --:3.3.1.2.4. Return database record
+        ctx -->> repo --:3.3.1.2.5. Return data
+        repo -->> sv --:3.3.1.2.6. Return Instructor entity
         
-alt Invalid State (Not Approved)
+        sv -> sv ++:3.3.1.2.7. Check if ApprovalStatus == "Approved"
+        sv --
+        
+alt Not Approved
             sv -->> be_ctrl:3.3.1.2.7.1. throw InvalidOperationException
             be_ctrl -->> fe_ctrl:3.3.1.2.7.1.1. Return statusCode 400
-            fe_ctrl -->> view:3.3.1.2.7.1.2. Redirect to ApplicationStatus (with error)
+            fe_ctrl -->> view:3.3.1.2.7.1.2. Redirect to ApplicationStatus (with Error)
             view -->> act:3.3.1.2.7.1.3. Display error message
-else Valid State
-            sv -> stripe++:3.3.1.2.7.2. SetupExpressAccountAsync(email, country, title, categories, stripeAccountId)
-            stripe -> stripe_api++:3.3.1.2.7.2.1. POST /v1/account_links (Create Express Onboarding)
-            stripe_api -->> stripe--:3.3.1.2.7.2.2. Return Onboarding URL & Account ID
-            stripe -->> sv--:3.3.1.2.7.2.3. Return StripeSetupResult
+else Approved
+            sv -> stripe ++:3.3.1.2.7.2. Call SetupExpressAccountAsync(...)
+            stripe -->> sv --:3.3.1.2.7.2.1. Return StripeSetupResult (with URL & Account ID)
             
-            sv -> sv++:3.3.1.2.7.2.4. Update StripeAccountId & StripeOnboardingStatus = "Pending"
-            sv--
+            sv -> sv ++:3.3.1.2.7.2.2. Update StripeAccountId & StripeOnboardingStatus = "Pending"
+            sv --
             
-            sv -> repo++:3.3.1.2.7.2.5. SaveChangesAsync()
-            repo -> ctx++:3.3.1.2.7.2.6. Save changes to database
-            ctx -> db++:3.3.1.2.7.2.7. Execute UPDATE
-            db -->> ctx--:3.3.1.2.7.2.8. Return numberOfRowsAffected
-            ctx -->> repo--:3.3.1.2.7.2.9. Return numberOfRowsAffected
-            repo -->> sv--:3.3.1.2.7.2.10. Return result
+            sv -> repo ++:3.3.1.2.7.2.3. Call SaveChangesAsync()
+            repo -> ctx ++:3.3.1.2.7.2.4. Save changes to database
+            ctx -> db ++:3.3.1.2.7.2.5. Execute UPDATE
+            db -->> ctx --:3.3.1.2.7.2.6. Return numberOfRowsAffected
+            ctx -->> repo --:3.3.1.2.7.2.7. Return numberOfRowsAffected
+            repo -->> sv --:3.3.1.2.7.2.8. Return result
             
-alt Database Save Failure (result = false)
-                sv -->> be_ctrl:3.3.1.2.7.2.10.1. throw Exception
-                be_ctrl -->> fe_ctrl:3.3.1.2.7.2.10.1.1. Return statusCode 500
-                fe_ctrl -->> view:3.3.1.2.7.2.10.1.2. Redirect to ApplicationStatus (with error)
-                view -->> act:3.3.1.2.7.2.10.1.3. Display error message
-else Database Save Success (result = true)
-                sv -> dto++:3.3.1.2.7.2.10.2. Call StripeSetupResponse()
-                dto -->> sv--:3.3.1.2.7.2.10.2.1. Return StripeSetupResponse object
-                sv -->> be_ctrl--:3.3.1.2.7.2.10.2.2. Return StripeSetupResponse DTO
-                be_ctrl -->> fe_ctrl--:3.3.1.2.7.2.10.2.3. Return statusCode 200 (with URL & stripeAccountId)
-                
-                fe_ctrl -->> act:3.3.1.2.7.2.10.2.4. Redirect to Stripe Onboarding URL
-end
+            sv -> dto ++:3.3.1.2.7.2.9. Call StripeSetupResponse()
+            dto -->> sv --:3.3.1.2.7.2.10. Return StripeSetupResponse object
+            
+            sv -->> be_ctrl --:3.3.1.2.7.2.11. Return StripeSetupResponse DTO
+            be_ctrl -->> fe_ctrl --:3.3.1.2.7.2.12. Return statusCode 200 (with URL)
+            
+            fe_ctrl -->> act:3.3.1.2.7.2.13. Redirect to Stripe Onboarding URL
 end
 end
 end
 deactivate fe_ctrl
 deactivate view
 
-act -> stripe_api++:4. Complete verification & banking setup (Enter OTP, personal info, bank details)
-stripe_api -->> act--:5. Redirect back to Platform (GET /Instructor/StripeReturn)
+act -> act:4. Complete verification & banking setup on Stripe website\n(Enter OTP, personal info, bank details)
+act -> fe_ctrl ++:5. Stripe automatically redirects back to Platform: GET /Instructor/StripeReturn?instructorId={id}
 
-act -> fe_ctrl++:6. GET /Instructor/StripeReturn?instructorId={id}
-fe_ctrl -> be_ctrl++:7. GET /api/instructor/stripe-return?instructorId={id}
+fe_ctrl -> fe_ctrl ++:6. Validate actor's authentication and authorization
+fe_ctrl --
 
-be_ctrl -> be_ctrl++:8. Validate login session
-be_ctrl--
-
-alt Invalid login session
-    be_ctrl -->> fe_ctrl:8.1. Return statusCode 401
-    fe_ctrl -->> view++:8.1.1. Redirect to ApplicationStatus (with error)
-    view -->> act:8.1.2. Display error message
+alt Session Invalid
+    fe_ctrl -->> login_view:6.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act:6.1.1. Display login form
+    deactivate login_view
+else Unauthorized Access
+    fe_ctrl -->> error_view:6.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act:6.2.1. Display error message
+    deactivate error_view
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> be_ctrl ++:6.3. GET /api/instructor/stripe-return?instructorId={id}
+    
+    be_ctrl -> be_ctrl ++:6.3.1. Validate request and check Authorization
+    be_ctrl --
+    
+alt Unauthorized
+        be_ctrl -->> fe_ctrl:6.3.1.1. Return statusCode 401
+        fe_ctrl -->> login_view:6.3.1.1.1. Redirect to LoginPage
+        activate login_view
+        login_view -->> act:6.3.1.1.2. Display login form
+        deactivate login_view
 else Valid Request
-    be_ctrl -> sv++:8.2. VerifyStripeOnboardingAsync(instructorId)
-    
-    sv -> repo++:8.2.1. GetByIdAsync(instructorId)
-    repo -> ctx++:8.2.2. Query instructor
-    ctx -> db++:8.2.3. Execute SELECT
-    db -->> ctx--:8.2.4. Return database record
-    ctx -->> repo--:8.2.5. Return Instructor entity
-    repo -->> sv--:8.2.6. Return Instructor entity
-    
-    sv -> stripe++:8.2.7. GetAccountStatusAsync(StripeAccountId)
-    stripe -> stripe_api++:8.2.8. GET /v1/accounts/{id}
-    stripe_api -->> stripe--:8.2.9. Return Account Details (DetailsSubmitted, PayoutsEnabled, ChargesEnabled)
-    stripe -->> sv--:8.2.10. Return AccountStatus
-    
-alt DetailsSubmitted == true (Normal Flow: Success)
-        sv -> sv++:8.2.10.1. Update Instructor (PayoutsEnabled=true, ChargesEnabled=true, StripeOnboardingStatus="Active")
-        sv--
         
-        sv -> repo++:8.2.10.1.1. SaveChangesAsync()
-        repo -> ctx++:8.2.10.1.2. Save changes to database
-        ctx -> db++:8.2.10.1.3. Execute UPDATE
-        db -->> ctx--:8.2.10.1.4. Return numberOfRowsAffected
-        ctx -->> repo--:8.2.10.1.5. Return numberOfRowsAffected
-        repo -->> sv--:8.2.10.1.6. Return result
+        be_ctrl -> sv ++:6.3.1.2. Call VerifyStripeOnboardingAsync(instructorId)
         
-        sv -->> be_ctrl:8.2.10.1.7. Return "Active"
-        be_ctrl -->> fe_ctrl:8.2.10.1.8. Return statusCode 200 (stripeStatus = "Active")
+        sv -> repo ++:6.3.1.2.1. Call GetByIdAsync(instructorId)
+        repo -> ctx ++:6.3.1.2.2. Query Instructor
+        ctx -> db ++:6.3.1.2.3. Execute query
+        db -->> ctx --:6.3.1.2.4. Return database record
+        ctx -->> repo --:6.3.1.2.5. Return data
+        repo -->> sv --:6.3.1.2.6. Return Instructor entity
         
-        fe_ctrl -> fe_ctrl++:8.2.10.1.9. Set Cookie "UserRole" = "instructor"
-        fe_ctrl--
+        sv -> stripe ++:6.3.1.2.7. Call GetAccountStatusAsync(StripeAccountId)
+        stripe -->> sv --:6.3.1.2.8. Return AccountStatus (with DetailsSubmitted status)
         
-        fe_ctrl -->> view:8.2.10.1.10. Redirect to ApplicationStatus (with SuccessMessage)
-        view -->> act:8.2.10.1.11. Display "Stripe setup is completed" & "Access Stripe Dashboard" button
-        
-else User Cancels Onboarding Mid-process (DetailsSubmitted == false)
-        sv -> sv++:8.2.10.2. Update Instructor (PayoutsEnabled=false, ChargesEnabled=false, StripeOnboardingStatus="Pending")
-        sv--
-        
-        sv -> repo++:8.2.10.2.1. SaveChangesAsync()
-        repo -> ctx++:8.2.10.2.2. Save changes to database
-        ctx -> db++:8.2.10.2.3. Execute UPDATE
-        db -->> ctx--:8.2.10.2.4. Return numberOfRowsAffected
-        ctx -->> repo--:8.2.10.2.5. Return numberOfRowsAffected
-        repo -->> sv--:8.2.10.2.6. Return result
-        
-        sv -->> be_ctrl--:8.2.10.2.7. Return "Pending"
-        be_ctrl -->> fe_ctrl--:8.2.10.2.8. Return statusCode 200 (stripeStatus = "Pending")
-        
-        fe_ctrl -->> view--:8.2.10.2.9. Redirect to ApplicationStatus (with ErrorMessage: "Stripe setup is not completed")
-        view -->> act--:8.2.10.2.10. Display "Stripe setup is not completed" & "Setup Payout" button
+alt DetailsSubmitted == true (Success)
+            sv -> sv ++:6.3.1.2.8.1. Update Instructor (PayoutsEnabled=true, ChargesEnabled=true, StripeOnboardingStatus="Active")
+            sv --
+            
+            sv -> repo ++:6.3.1.2.8.1.1. Call SaveChangesAsync()
+            repo -> ctx ++:6.3.1.2.8.1.2. Save changes to database
+            ctx -> db ++:6.3.1.2.8.1.3. Execute UPDATE
+            db -->> ctx --:6.3.1.2.8.1.4. Return numberOfRowsAffected
+            ctx -->> repo --:6.3.1.2.8.1.5. Return numberOfRowsAffected
+            repo -->> sv --:6.3.1.2.8.1.6. Return result
+            
+            sv -->> be_ctrl:6.3.1.2.8.1.7. Return "Active"
+            be_ctrl -->> fe_ctrl:6.3.1.2.8.1.8. Return statusCode 200 (stripeStatus = "Active")
+            
+            fe_ctrl -> fe_ctrl ++:6.3.1.2.8.1.9. Set Cookie "UserRole" = "instructor"
+            fe_ctrl --
+            
+            fe_ctrl -->> view ++:6.3.1.2.8.1.10. Redirect to ApplicationStatus (with SuccessMessage)
+            view -->> act --:6.3.1.2.8.1.11. Display "Stripe setup is completed"
+else User Cancels (DetailsSubmitted == false)
+            sv -> sv ++:6.3.1.2.8.2. Update Instructor (PayoutsEnabled=false, ChargesEnabled=false, StripeOnboardingStatus="Pending")
+            sv --
+            
+            sv -> repo ++:6.3.1.2.8.2.1. Call SaveChangesAsync()
+            repo -> ctx ++:6.3.1.2.8.2.2. Save changes to database
+            ctx -> db ++:6.3.1.2.8.2.3. Execute UPDATE
+            db -->> ctx --:6.3.1.2.8.2.4. Return numberOfRowsAffected
+            ctx -->> repo --:6.3.1.2.8.2.5. Return numberOfRowsAffected
+            repo -->> sv --:6.3.1.2.8.2.6. Return result
+            
+            sv -->> be_ctrl --:6.3.1.2.8.2.7. Return "Pending"
+            be_ctrl -->> fe_ctrl --:6.3.1.2.8.2.8. Return statusCode 200 (stripeStatus = "Pending")
+            
+            fe_ctrl -->> view ++:6.3.1.2.8.2.9. Redirect to ApplicationStatus (with ErrorMessage)
+            view -->> act --:6.3.1.2.8.2.10. Display "Stripe setup is not completed"
 end
 end
-
+end
 @enduml

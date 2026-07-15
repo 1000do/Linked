@@ -25,51 +25,80 @@
 </style>
 
 hide footbox
-
 mainframe Filter Payout History
-actor Instructor as act
 
-participant "Transaction/Instructor.cshtml" as view
+actor Instructor as act
+participant "EaringInstructorPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as app_view
 participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant "InstructorController" as be_ctrl <<backend controller>>
-participant ":InstructorService" as sv
-participant ":InstructorRepository" as repo
+participant ":IInstructorService" as sv
+participant ":IInstructorRepository" as repo
+participant ":InstructorPayoutDto" as dto
+participant ":InstructorPayoutPagedViewModel" as vm
 participant ":AppDbContext" as ctx
 database Database as db
 
-act++
-act->view++:1. Enter payout keyword, select status, and click "Filter"
-view->fe_ctrl++:2. Send GET /Transaction/Instructor?tab=po&payoutKeyword=Stripe&payoutStatus=succeeded&payoutPage=1
+act ++
+act -> view ++:1. Enter keyword, select status and click "Filter"
+view -> fe_ctrl ++:2. GET /Transaction/Instructor?tab=po&payoutKeyword=...&payoutStatus=...
 
-fe_ctrl->be_ctrl++:3. Send GET /api/instructor/payouts?page=1&pageSize=20&keyword=Stripe&status=succeeded&year=... (with Bearer Token)
+fe_ctrl -> fe_ctrl ++:3. Validate actor's authentication and authorization
+fe_ctrl --
 
-be_ctrl->sv++:4. Call GetPayoutsAsync(..., keyword: "Stripe", status: "succeeded", ...)
-sv->repo++:5. Call GetPayoutsAsync(..., keyword: "Stripe", status: "succeeded", ...)
-
-repo->repo++:6. Construct EF Core IQueryable for InstructorPayouts
-repo--
-
-alt [keyword is not null or empty]
-    repo->repo++:6.1. Apply .Where(p => p.CourseTitle.Contains(keyword) || p.StripeTransferId.Contains(keyword))
-    repo--
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act --:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> be_ctrl ++:3.3. GET /api/instructor/application-status
+    be_ctrl -->> fe_ctrl --:3.3.1. Return statusCode 200
+    
+    fe_ctrl -> fe_ctrl ++:3.3.2. Check if status is Approved
+    fe_ctrl --
+    
+alt Status != "Approved"
+        fe_ctrl -->> app_view:3.3.2.1. Redirect to ApplicationStatusPage
+        activate app_view
+        app_view -->> act --:3.3.2.1.1. Display application status
+else Status == "Approved"
+        
+        fe_ctrl -> be_ctrl ++:3.3.2.2. GET /api/instructor/payouts?page=1&pageSize=20&keyword=...&status=...
+        be_ctrl -> sv ++:3.3.2.2.1. Call GetPayoutsAsync(...)
+        sv -> repo ++:3.3.2.2.2. Call GetPayoutsAsync(...)
+        
+        repo -> repo ++:3.3.2.2.3. Apply filtering conditions (.Where) based on keyword and status
+        repo --
+        
+        repo -> ctx ++:3.3.2.2.4. Query InstructorPayouts
+        ctx -> db ++:3.3.2.2.5. Execute filtered query with Skip() and Take()
+        db -->> ctx --:3.3.2.2.6. Return filtered payouts list and total count
+        ctx -->> repo --:3.3.2.2.7. Return payouts list and count
+        
+        repo -> dto ++:3.3.2.2.8. Call InstructorPayoutDto()
+        dto -->> repo --:3.3.2.2.9. Return InstructorPayoutDto object
+        
+        repo -->> sv --:3.3.2.2.10. Return PagedResult<InstructorPayoutDto>
+        sv -->> be_ctrl --:3.3.2.2.11. Return PagedResult<InstructorPayoutDto>
+        be_ctrl -->> fe_ctrl --:3.3.2.2.12. Return statusCode 200
+        
+        fe_ctrl -> vm ++:3.3.2.2.13. Call InstructorPayoutPagedViewModel()
+        vm -->> fe_ctrl --:3.3.2.2.14. Return InstructorPayoutPagedViewModel object
+        
+        fe_ctrl -->> view --:3.3.2.2.15. Return View(vm)
+        
+alt vm.Items.Count == 0
+            view -->> act:3.3.2.2.15.1. Display empty message "No payouts found"
+else vm.Items.Count > 0
+            view -->> act --:3.3.2.2.15.2. Display filtered payout list
 end
-
-alt [status is not null or empty]
-    repo->repo++:7.1. Apply .Where(p => p.PayoutStatus == status)
-    repo--
 end
-
-repo->ctx++:8. Query InstructorPayouts
-ctx->db++:9. Execute filtered query with Skip() and Take()
-db-->>ctx--:10. Return filtered payouts list and total count
-ctx-->>repo--:11. Return payouts list and count
-
-repo-->>sv--:12. Return PagedResult<InstructorPayoutDto>
-sv-->>be_ctrl--:13. Return PagedResult<InstructorPayoutDto>
-be_ctrl-->>fe_ctrl--:14. Return statusCode 200 (Ok) with filtered Payouts JSON
-
-fe_ctrl-->>view--:15. Return View(vm)
-view->view++:16. Re-render Payout History table
-view--
-view-->>act--:17. Display payout list matching criteria
+end
 @enduml

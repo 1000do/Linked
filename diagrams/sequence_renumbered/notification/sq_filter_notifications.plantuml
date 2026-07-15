@@ -108,7 +108,7 @@ alt Click role tab
         act->view++:7.3.21.1. Click a role tab (all / student / instructor / staff-admin)
         view->view++:7.3.21.1.1. switchRoleTab(role) (updates activeRoleTab & styles active button)
         view--
-else [Change status select]
+else Change status select
         act->view++:7.3.21.2. Select option in status dropdown (all / unread / read)
 end
     

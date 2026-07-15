@@ -33,6 +33,7 @@ participant "ChatIndexPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
 participant "ChatAttachmentController" as be_att_ctrl <<backend controller>>
 participant ":ICloudinaryUploadService" as upload_sv
 participant "ChatHub" as hub
@@ -47,142 +48,116 @@ participant ":AppDbContext" as ctx
 database Database as db
 
 act++
-act->view++:1. Enter message text
-act->view:2. Select files (Optional)
-act->view:3. Click "Send" button (or press Enter)
 
+alt Send Message in Existing Chat
+    act->view++:0.1. Enter message text
+    act->view:0.1.1. Select files (Optional)
+    act->view:0.1.2. Click "Send" button (or press Enter)
+    
 opt With Attachments
 loop for each selected file f
-        view->fe_ctrl++:3.1. POST /Chat/UploadAttachment
+        view->fe_ctrl++:0.1.2.1. POST /Chat/UploadAttachment
         
-        fe_ctrl -> fe_ctrl++:3.1.1. Validate actor's authentication and authorization
+        fe_ctrl -> fe_ctrl++:0.1.2.1.1. Validate attachment upload
         fe_ctrl--
         
 alt Session Invalid
-            fe_ctrl -->> login_view:3.1.1.1. Redirect to LoginPage
+            fe_ctrl -->> login_view:0.1.2.1.1.1. Redirect to LoginPage
             activate login_view
-            login_view -->> act--:3.1.1.1.1. Display login form
+            login_view -->> act--:0.1.2.1.1.1.1. Display login form
 else Unauthorized Access
-            fe_ctrl -->> error_page:3.1.1.2. Redirect to ErrorPage
+            fe_ctrl -->> error_page:0.1.2.1.1.2. Redirect to ErrorPage
             activate error_page
-            error_page -->> act--:3.1.1.2.1. Display error message
-else Valid actor's authentication and authorization
-            fe_ctrl->be_att_ctrl++:3.1.1.3. POST /api/ChatAttachment/upload
+            error_page -->> act--:0.1.2.1.1.2.1. Display error message
+else File size > 10MB
+            fe_ctrl->be_att_ctrl++:0.1.2.1.1.3. POST /api/ChatAttachment/upload
+            be_att_ctrl-->>fe_ctrl--:0.1.2.1.1.3.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:0.1.2.1.1.3.2. Return BadRequest
+            view-->>act:0.1.2.1.1.3.3. Display file size validation error
+else File size <= 10MB
+            fe_ctrl->be_att_ctrl++:0.1.2.1.1.4. POST /api/ChatAttachment/upload
             
-            be_att_ctrl->be_att_ctrl++:3.1.1.3.1. Check ChatSettings:EnableAttachments
-            be_att_ctrl--
-        
-alt EnableAttachments = false
-            be_att_ctrl-->>fe_ctrl:3.1.1.3.1.1. Return statusCode 400 (BadRequest)
-            fe_ctrl-->>view:3.1.1.3.1.1.1. Return BadRequest
-            view-->>act:3.1.1.3.1.1.2. Display feature disabled warning
-else EnableAttachments = true
-alt file size > 10MB
-                be_att_ctrl-->>fe_ctrl:3.1.1.3.1.2.1. Return statusCode 400 (BadRequest)
-                fe_ctrl-->>view:3.1.1.3.1.2.1.1. Return BadRequest
-                view-->>act:3.1.1.3.1.2.1.2. Display file size validation error
-else file size <= 10MB
-                be_att_ctrl->upload_sv++:3.1.1.3.1.2.2. Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
-                upload_sv->upload_sv++:3.1.1.3.1.2.2.1. Upload to Cloudinary
-                upload_sv--
-                upload_sv-->>be_att_ctrl--:3.1.1.3.1.2.2.2. Return SecureUrl
-                
-                be_att_ctrl-->>fe_ctrl--:3.1.1.3.1.2.2.3. Return statusCode 200 (Ok) with metadata
-                fe_ctrl-->>view--:3.1.1.3.1.2.2.4. Return JSON with attachment metadata
-                view-->>act:3.1.1.3.1.2.2.5. Display uploaded file in UI
-end
-end
+            be_att_ctrl->upload_sv++:0.1.2.1.1.4.1. Call UploadImageAsync() / UploadVideoAsync() / UploadFileAsync()
+            upload_sv->upload_sv++:0.1.2.1.1.4.2. Upload to Cloudinary
+            upload_sv--
+            upload_sv-->>be_att_ctrl--:0.1.2.1.1.4.3. Return SecureUrl
+            
+            be_att_ctrl-->>fe_ctrl--:0.1.2.1.1.4.4. Return statusCode 200 (Ok) with metadata
+            fe_ctrl-->>view--:0.1.2.1.1.4.5. Return JSON with attachment metadata
+            view-->>act:0.1.2.1.1.4.6. Display uploaded file in UI
 end
 end
 end
 
-view->view++:4. sendMsg()
+view->view++:0.1.3. sendMsg()
 view--
 
-view->hub++:5. Invoke SendMessage(dto) via SignalR
-hub->hub++:6. GetAccountId()
+view->hub++:0.1.4. Invoke SendMessage(dto) via SignalR
+hub->hub++:0.1.5. GetAccountId()
 hub--
 
-hub->sv++:7. Call SaveMessageAsync(senderId, dto)
-sv->repo++:8. Call IsParticipantAsync(dto.ChatId, senderId)
-repo->ctx++:9. Call IsParticipantAsync(chatId, senderId)
-ctx->db++:10. Execute SELECT query
-
-db-->>ctx--:11. Return isParticipant
-ctx-->>repo--:12. Return isParticipant
-repo-->>sv--:13. Return isParticipant
+hub->sv++:0.1.6. Call SaveMessageAsync(senderId, dto)
+    sv->sv++:0.1.7. Call ValidateMessageSendingAccessAsync(senderId, dto.ChatId)
+    sv--
 
 alt isParticipant == false
-    sv->repo++:13.1. Call HasActiveReportForChatAsync(dto.ChatId)
-    repo->ctx++:13.1.1. Call HasActiveReportForChatAsync(chatId)
-    ctx->db++:13.1.2. Execute SELECT query
-    db-->>ctx--:13.1.3. Return hasActiveReport
-    ctx-->>repo--:13.1.4. Return hasActiveReport
-    repo-->>sv--:13.1.5. Return hasActiveReport
-end
-
-alt isParticipant == false && hasActiveReport == false
-    sv-->>hub:14.1. Throw UnauthorizedAccessException
-    hub->hub++:14.1.1. Send error message to Caller
+    sv-->>hub:0.1.7.1. Throw UnauthorizedAccessException
+    hub->hub++:0.1.7.1.1. Send error message to Caller
     hub--
-    hub-->>view:14.1.2. Send error event via SignalR
-    view-->>act:14.1.3. Display permission error message
+    hub-->>view:0.1.7.1.2. Send error event via SignalR
+    view-->>act:0.1.7.1.3. Display permission error message
 else Valid Permissions
-    sv->msg_ett++:14.2. Call Message(dto)
-    msg_ett-->>sv--:14.2.1. Return Message object
+    sv->msg_ett++:0.1.7.2. Call Message(dto)
+    msg_ett-->>sv--:0.1.7.2.1. Return Message object
     
 opt EnableAttachments == true && dto.Attachments is not empty
-        sv->msg_att_ett++:14.2.1.2. Call MessageAttachment()
-        msg_att_ett-->>sv--:14.2.1.2.1. Return MessageAttachments list
+        sv->msg_att_ett++:0.1.7.2.1.2. Call MessageAttachment()
+        msg_att_ett-->>sv--:0.1.7.2.1.2.1. Return MessageAttachments list
 end
     
-    sv->repo++:14.2.2. Call AddMessageAsync(message)
-    repo->ctx++:14.2.3. Call AddAsync(message)
-    ctx-->>repo--:14.2.4. Return success
-    repo-->>sv--:14.2.5. Return success
+    sv->repo++:0.1.7.2.2. Call AddMessageAsync(message)
+    repo->ctx++:0.1.7.2.3. Call AddAsync(message)
+    ctx-->>repo--:0.1.7.2.4. Return success
+    repo-->>sv--:0.1.7.2.5. Return success
     
-    sv->sv++:14.2.6. Update chat.LastMessageAt
+    sv->sv++:0.1.7.2.6. Call UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt)
     sv--
     
-    sv->sv++:14.2.7. Increment unread counts for participants in Redis
-    sv--
-    
-    sv->repo++:14.2.8. Call SaveChangesAsync()
-    repo->ctx++:14.2.9. Call SaveChangesAsync()
-    ctx->db++:14.2.10. Save changes (Execute INSERT & UPDATE statements)
+    sv->repo++:0.1.7.2.7. Call SaveChangesAsync()
+    repo->ctx++:0.1.7.2.8. Call SaveChangesAsync()
+    ctx->db++:0.1.7.2.9. Save changes (Execute INSERT & UPDATE statements)
     
 alt Database Save Failure
-        db-->>ctx:14.2.10.1. Throw DbUpdateException
-        ctx-->>repo:14.2.10.1.1. Throw DbUpdateException
-        repo-->>sv:14.2.10.1.2. Throw DbUpdateException
-        sv-->>hub:14.2.10.1.3. Throw DbUpdateException
-        hub->hub++:14.2.10.1.4. Send error message to Caller
+        db-->>ctx:0.1.7.2.9.1. Throw DbUpdateException
+        ctx-->>repo:0.1.7.2.9.1.1. Throw DbUpdateException
+        repo-->>sv:0.1.7.2.9.1.2. Throw DbUpdateException
+        sv-->>hub:0.1.7.2.9.1.3. Throw DbUpdateException
+        hub->hub++:0.1.7.2.9.1.4. Send error message to Caller
         hub--
-        hub-->>view:14.2.10.1.5. Send error event via SignalR
-        view-->>act:14.2.10.1.6. Display database error message
+        hub-->>view:0.1.7.2.9.1.5. Send error event via SignalR
+        view-->>act:0.1.7.2.9.1.6. Display database error message
 else Database Save Success
-        db-->>ctx--:14.2.10.2. Return result
-        ctx-->>repo--:14.2.10.2.1. Return result
-        repo-->>sv--:14.2.10.2.2. Return result
+        db-->>ctx--:0.1.7.2.9.2. Return result
+        ctx-->>repo--:0.1.7.2.9.2.1. Return result
+        repo-->>sv--:0.1.7.2.9.2.2. Return result
         
-        sv->sv++:14.2.10.2.3. Fetch sender details
+        sv->sv++:0.1.7.2.9.2.3. Fetch sender details
         sv--
         
-        sv->msg_dto++:14.2.10.2.4. Call MessageDto()
-        msg_dto-->>sv--:14.2.10.2.5. Return MessageDto object
+        sv->msg_dto++:0.1.7.2.9.2.4. Call MessageDto()
+        msg_dto-->>sv--:0.1.7.2.9.2.5. Return MessageDto object
         
-        sv-->>hub--:14.2.10.2.6. Return MessageDto
+        sv-->>hub--:0.1.7.2.9.2.6. Return MessageDto
         
-        hub->hub++:14.2.10.2.7. Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
+        hub->hub++:0.1.7.2.9.2.7. Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
         hub--
-        hub-->>view--:14.2.10.2.8. Broadcast message via SignalR Group
+        hub-->>view--:0.1.7.2.9.2.8. Broadcast message via SignalR Group
         
-        view->view++:14.2.10.2.9. appendMessage(msg)
+        view->view++:0.1.7.2.9.2.9. appendMessage(msg)
         view--
-        view->view++:14.2.10.2.10. scrollToBottom()
+        view->view++:0.1.7.2.9.2.10. scrollToBottom()
         view--
-        view-->>act--:14.2.10.2.11. Display sent message on UI
-end
+        view-->>act--:0.1.7.2.9.2.11. Display sent message on UI
 end
 
 @enduml

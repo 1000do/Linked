@@ -79,7 +79,7 @@ alt hasAccess == false
     be_ctrl-->>fe_ctrl:4.3.9.1.1. Return statusCode 403 (Forbidden)
     fe_ctrl-->>view:4.3.9.1.2. Return Forbidden
     view-->>act:4.3.9.1.3. Display unauthorized error message
-else [hasAccess == true]
+else hasAccess == true
     sv->sv++:4.3.9.2. Call MarkChatAsReadAsync(chatId, accountId)
     
     sv->repo++:4.3.9.2.1. Call MarkAsReadAsync(chatId, accountId)

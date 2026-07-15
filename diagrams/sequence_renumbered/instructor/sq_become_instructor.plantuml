@@ -156,13 +156,18 @@ end
         
 alt Database Save Failure (numberOfRowsAffected = 0)
             sv -->> be_ctrl:7.2.4.2.11.1. throw InvalidOperationException
+            sv--
             be_ctrl -->> fe_ctrl:7.2.4.2.11.1.1. Return statusCode 500
+            be_ctrl--
             fe_ctrl -->> view:7.2.4.2.11.1.2. Return statusCode 500
+            fe_ctrl--
             view -->> act:7.2.4.2.11.1.3. Display error message
+            view--
 else Database Save Success (numberOfRowsAffected > 0)
             sv -->> be_ctrl--:7.2.4.2.11.2. Return success message
             be_ctrl -->> fe_ctrl--:7.2.4.2.11.2.1. Return statusCode 200
             fe_ctrl -->> status_view++:7.2.4.2.11.2.2. Return statusCode 302
+            fe_ctrl--
             deactivate view
             status_view -->> act--:7.2.4.2.11.2.3. Display "Your application has been submitted successfully!"
 end

@@ -39,7 +39,6 @@ participant ":AppDbContext" as ctx
 database Database as db
 participant ":TransactionExt" as tx_ext_ett
 participant ":INotificationService" as noti_sv
-
 act ++
 act -> view++:1. Click "Reject" button on a pending refund request row
 view -->> act:2. Display "Reject Refund" confirmation dialog

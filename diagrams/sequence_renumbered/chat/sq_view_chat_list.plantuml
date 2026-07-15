@@ -50,7 +50,7 @@ alt AccessToken cookie is missing
     view->login_view++:2.1.1. Redirect to Login page
     deactivate view
     login_view-->>act--:2.1.2. Display Login page
-else [AccessToken cookie exists]
+else AccessToken cookie exists
     fe_ctrl-->>view--:2.2. Return View
     activate view
     
