@@ -60,7 +60,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
                     "Course Violation Warning",
-                    $"Your course '{course.Title}' has received a policy violation warning. This is Strike {currentFlags}. Reason: {resolutionNote}. Please review and correct the content.",
+                    $"Your course '{course.Title}' has received a policy violation warning.\nThis is Strike {currentFlags}.\nReason: {resolutionNote}.\nPlease review and correct the content.",
                     $"/InstructorCourse/Editor/{course.CourseId}"
                 );
             }
@@ -87,7 +87,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
                     "Permanent Course Discontinuation Notice",
-                    $"Your course '{course.Title}' has violated our policies. It has been permanently discontinued and archived (Strike {currentFlags}). New enrollments are disabled. Furthermore, your instructor rights are locked for 30 days (you cannot create, update, or delete courses, lessons, and materials).",
+                    $"Your course '{course.Title}' has violated our policies.\nIt has been permanently discontinued and archived (Strike {currentFlags}).\nNew enrollments are disabled.\nFurthermore, your instructor rights are locked for 30 days (you cannot create, update, or delete courses, lessons, and materials).",
                     $"/Course/Details/{course.CourseId}"
                 );
             }
@@ -110,7 +110,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
 
         if (account.AccountFlagCount == 1)
         {
-            await _notificationService.SendNotificationAsync(userId, "Community Standards Violation (1st Warning)", "Your comment has been removed for violating community standards. This is your first warning.", linkAction!);
+            await _notificationService.SendNotificationAsync(userId, "Community Standards Violation (1st Warning)", "Your comment has been removed for violating community standards.\nThis is your first warning.", linkAction!);
         }
         else if (account.AccountFlagCount == 2)
         {
@@ -166,7 +166,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                     await _notificationService.SendNotificationAsync(
                         sId,
                         "Instructor Temporarily Suspended",
-                        "This instructor has been temporarily suspended for 30 days. During this period, their courses will not receive new updates and you will not be able to contact them. We apologize for any inconvenience.",
+                        "This instructor has been temporarily suspended for 30 days.\nDuring this period, their courses will not receive new updates and you will not be able to contact them.\nWe apologize for any inconvenience.",
                         null!
                     );
                     sentAny = true;

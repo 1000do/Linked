@@ -36,6 +36,7 @@ class UpdateAiModelRequestDTO["UpdateAiModelRequest"] {
 }
 
 class AiModelAdminDto {
+    <<dto>>
     + ModelId : int
     + ModelName : string
     + ModelVersion : string
@@ -51,6 +52,7 @@ class AiModelAdminDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class AiModel {
+    <<entity>>
     + ModelId : int
     + ModelName : string
     + ModelType : string?

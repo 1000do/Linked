@@ -239,7 +239,7 @@ public class ReportModerationService : IReportModerationService
             await _notificationService.SendNotificationAsync(
                 course.InstructorId.Value,
                 "Course Policy Warning",
-                $"Your course '{course.Title}' received a report regarding a policy violation. Please review and ensure your content complies with our guidelines.",
+                $"Your course '{course.Title}' received a report regarding a policy violation.\nReason: {resolutionNote}.\nPlease review and ensure your content complies with our guidelines.",
                 $"/InstructorCourse/Editor/{course.CourseId}"
             );
         }
@@ -310,7 +310,7 @@ public class ReportModerationService : IReportModerationService
             await _notificationService.SendNotificationAsync(
                 userId.Value,
                 "Review Policy Warning",
-                $"Your {reviewType} has received a policy violation warning. Reason: {resolutionNote}. Please ensure your content complies with our guidelines.",
+                $"Your {reviewType} has received a policy violation warning.\nReason: {resolutionNote}.\nPlease ensure your content complies with our guidelines.",
                 link
             );
         }
@@ -338,7 +338,7 @@ public class ReportModerationService : IReportModerationService
             var adminId = await _userRepo.GetAdminIdAsync();
             if (adminId.HasValue)
             {
-                await _notificationService.SendNotificationAsync(adminId.Value, "Report Escalated", $"A {reportType} report has been escalated to you. Report ID: {reportId}", $"/AdminModeration/Reports");
+                await _notificationService.SendNotificationAsync(adminId.Value, "Report Escalated", $"A {reportType} report has been escalated to you.\nReport ID: {reportId}", $"/AdminModeration/Reports");
             }
         }
     }
@@ -400,7 +400,7 @@ public class ReportModerationService : IReportModerationService
 
         string message = $"Your report about the {reportType} has been updated.";
         if (status == ReportStatus.Resolved.ToValue()) message = $"Your report about the {reportType} has been accepted.";
-        else if (status == ReportStatus.Rejected.ToValue()) message = $"No issues found on {reportType}, your report has been dismissed.";
+        else if (status == ReportStatus.Rejected.ToValue()) message = $"No issues found on {reportType}.\nYour report has been dismissed.";
         else if (status == ReportStatus.UnderReview.ToValue()) message = $"Your report about the {reportType} is currently under review.";
         else if (status == ReportStatus.Escalated.ToValue()) message = $"Your report about the {reportType} has been escalated to senior administrators.";
 

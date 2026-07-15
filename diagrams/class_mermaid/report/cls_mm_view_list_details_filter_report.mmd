@@ -235,6 +235,7 @@ class ReportRepository {
     + GetAllLessonReviewReportsAsync(status: string?, page: int, pageSize: int) Task~Tuple~List~LessonReviewReport~, int~~
 }
 
+
 class AppDbContext {
     <<dbcontext>>
     + CourseReports : DbSet~CourseReport~

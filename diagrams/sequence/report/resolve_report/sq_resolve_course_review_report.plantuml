@@ -42,8 +42,15 @@ act ++
 act -> view++: Click "Moderate" on a course review report row
 view -->> act: Display Moderate Report popup
 
-act -> view: Select resolution status
+act -> view: Enter moderation details
 act -> view: Click "Submit Decision"
+
+view -> view++: Validate form input
+view--
+
+opt Invalid form input
+    view -->> act: Display error message
+end
 
 view -> fe_ctrl++: POST /AdminModeration/ResolveCourseReviewReport?reportId={id}
 

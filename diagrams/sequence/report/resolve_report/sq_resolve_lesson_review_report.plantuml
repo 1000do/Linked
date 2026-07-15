@@ -25,7 +25,7 @@
 </style>
 
 hide footbox
-mainframe Resolve Course Report
+mainframe Resolve Lesson Review Report
 
 actor "Staff / Admin" as act
 participant "ReportCenterPage" as view
@@ -35,17 +35,24 @@ participant "AdminModerationController" as fe_ctrl <<frontend controller>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":IReportModerationService" as sv
 participant ":IReportRepository" as repo
-participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-act -> view++: Click "Moderate" on a course report row
+act -> view++: Click "Moderate" on a lesson review report row
 view -->> act: Display Moderate Report popup
-act -> view: Select resolution status
+
+act -> view: Enter moderation details
 act -> view: Click "Submit Decision"
 
-view -> fe_ctrl++: POST /AdminModeration/ResolveCourseReport?reportId={id}
+view -> view++: Validate form input
+view--
+
+opt Invalid form input
+    view -->> act: Display error message
+end
+
+view -> fe_ctrl++: POST /AdminModeration/ResolveLessonReviewReport?reportId={id}
 
 fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
@@ -67,10 +74,10 @@ else Valid actor's authentication and authorization
         view -->> act: Display error message
     end
 
-    fe_ctrl -> be_ctrl++: PATCH /api/admin/moderation/reports/courses/{reportId}
-
-    be_ctrl -> sv++: Call ResolveCourseReportAsync()
-
+    fe_ctrl -> be_ctrl++: PATCH /api/admin/moderation/reports/lesson-reviews/{reportId}
+    
+    be_ctrl -> sv++: Call ResolveLessonReviewReportAsync()
+    
     sv -> sv++: Validate report resolution request
     sv--
 
@@ -85,15 +92,15 @@ else Valid actor's authentication and authorization
         fe_ctrl -->> view: Return Forbid()
         view -->> act: Display error message
     else Valid report resolution request
-        sv -> sv++: Update course report fields
+        sv -> sv++: Update lesson review report fields
         sv--
 
     opt Report is accepted
-        sv -> sv++: Call ApplyCoursePenaltyAsync()
+        sv -> sv++: Call ApplyLessonReviewPenaltyAsync()
         sv--
     end
 
-    sv -> repo++: UpdateCourseReport(report)
+    sv -> repo++: UpdateLessonReviewReport(report)
     repo -->> sv--: Return result
 
     sv -> sv++: SaveReportChangesAsync()
@@ -115,18 +122,13 @@ else Valid actor's authentication and authorization
         repo -->> sv--: Return numberOfRowsAffected
         sv--
 
-        opt Report is accepted and Course is Flagged
-            sv -> redis++: RemoveCacheAsync(cacheKey)
-            redis -->> sv--: Return result
-        end
-
         sv -> sv++: Call SendResolutionNotificationsAsync()
         sv--
-
+        
         sv -->> be_ctrl--: Return true
         be_ctrl -->> fe_ctrl--: Return statusCode 200
         fe_ctrl -->> view--: Return Ok()
-
+        
         view -->> act--: Display success message
         end
     end
