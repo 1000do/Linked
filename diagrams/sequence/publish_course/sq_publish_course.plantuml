@@ -38,6 +38,7 @@ participant ":ICourseCommandService" as cmd_sv
 participant ":ICourseRepository" as repo
 participant ":IRedisService" as redis
 participant ":IBackgroundTaskQueue" as queue
+participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
@@ -83,14 +84,14 @@ else Invalid course content
     fe_ctrl -->> view: Return BadRequest()
     view -->> act: Display validation error message
 else Valid course update request
-    cmd_sv -> cmd_sv++: ReactivateCourseContentAsync(courseId)
-    cmd_sv--
     cmd_sv -> repo++: Update(course)
     repo -->> cmd_sv--: Return result
     cmd_sv -> repo++: SaveChangesAsync()
-    repo -> db++: Save changes to database
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to database
     alt Database Save Failure
-        db -->> repo: throw DbUpdateException
+        db -->> ctx: throw DbUpdateException
+        ctx -->> repo: throw DbUpdateException
         repo -->> cmd_sv: throw DbUpdateException
         cmd_sv -->> sv: throw DbUpdateException
         sv -->> be_ctrl: throw DbUpdateException
@@ -98,10 +99,9 @@ else Valid course update request
         fe_ctrl -->> view: Return StatusCode(500)
         view -->> act: Display database transaction failure message
     else Database Save Success
-        db -->> repo--: Return numberOfRowsAffected
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
         repo -->> cmd_sv--: Return numberOfRowsAffected
-        cmd_sv -> redis++: RemoveCacheAsync(key)
-        redis -->> cmd_sv--: Return result
         cmd_sv -->> sv--: Return result
         
         sv -> redis++: RemoveCacheAsync(key)

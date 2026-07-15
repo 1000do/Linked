@@ -32,7 +32,7 @@ participant "QuizHistoryPage" as view
 participant "QuizAttemptController" as fe_ctrl <<frontend controller>>
 participant "QuizAttemptController" as be_ctrl <<backend controller>>
 participant ":QuizService" as sv
-participant ":PagedResult<QuizAttemptResultResponse>" as res
+participant ":QuizAttemptResultResponse" as res
 participant ":IQuizRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -51,13 +51,10 @@ db -->> ctx--: Return query results
 ctx -->> repo--: Return attempts and totalCount
 repo -->> sv--: Return (attempts, totalCount)
 
-sv -> sv++: Map attempts to QuizAttemptResultResponse DTOs
-sv--
+sv -> res++: Call QuizAttemptResultResponse() (via IMapper)
+res -->> sv--: Return List<QuizAttemptResultResponse>
 
-sv -> res++: Call PagedResult(responses, totalCount)
-res -->> sv--: Return PagedResult object
-
-sv -->> be_ctrl--: Return PagedResult object
+sv -->> be_ctrl--: Return List<QuizAttemptResultResponse>
 be_ctrl -->> fe_ctrl--: Return statusCode 200
-fe_ctrl -->> view--: Return View(PagedResult)
+fe_ctrl -->> view--: Return View(List<QuizAttemptResultResponse>)
 view -->> act--: Display quiz history list

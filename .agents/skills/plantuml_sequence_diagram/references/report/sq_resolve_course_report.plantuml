@@ -36,6 +36,7 @@ participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":IReportModerationService" as sv
 participant ":IReportRepository" as repo
 participant ":IRedisService" as redis
+participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
@@ -97,17 +98,20 @@ else Valid actor's authentication and authorization
 
     sv -> sv++: SaveReportChangesAsync()
     sv -> repo++: SaveChangesAsync()
-    repo -> db++: Save changes to database
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to database
 
     alt Database Save Failure
-        db -->> repo: Throw DbUpdateException
+        db -->> ctx: Throw DbUpdateException
+        ctx -->> repo: Throw DbUpdateException
         repo -->> sv: Throw ReportException
         sv -->> be_ctrl: Throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return BadRequest()
         view -->> act: Display error popup
     else Database Save Success
-        db -->> repo--: Return numberOfRowsAffected
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
         repo -->> sv--: Return numberOfRowsAffected
         sv--
 
