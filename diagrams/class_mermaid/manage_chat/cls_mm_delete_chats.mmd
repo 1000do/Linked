@@ -19,6 +19,7 @@ class BackendController["ChatController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Chat {
+    <<entity>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string
@@ -29,6 +30,7 @@ class Chat {
 }
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + Role : string
@@ -41,14 +43,19 @@ class ChatParticipant {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~ *
+}
+
+class IRedisService {
+    <<service interface>>
+    + ClearUnreadCountAsync(accountId: int, chatId: int) Task *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~ *
     + UpdateParticipantAsync(participant: ChatParticipant) Task *
     + SaveChangesAsync() Task~int~ *
@@ -57,13 +64,16 @@ class IChatRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _repo : IChatRepository
+    - _redisService : IRedisService
     + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~
     + UpdateParticipantAsync(participant: ChatParticipant) Task
@@ -73,6 +83,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Chats : DbSet~Chat~
     + ChatParticipants : DbSet~ChatParticipant~
 }
@@ -85,6 +96,7 @@ Chat *-- ChatParticipant
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendController --> IChatService
 ChatService --> IChatRepository
+ChatService --> IRedisService
 ChatRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===

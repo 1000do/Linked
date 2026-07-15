@@ -37,13 +37,14 @@ class BackendController["NotificationController"] {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
+    <<service>>
     - _repo : INotificationRepository
     - _hubContext : IHubContext~NotificationHub~
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~
@@ -52,13 +53,14 @@ class NotificationService {
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~ *
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
+    <<repository>>
     - _context : AppDbContext
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~
 }
@@ -66,12 +68,14 @@ class NotificationRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Notifications : DbSet~Notification~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification {
+    <<entity>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -86,6 +90,7 @@ class Notification {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -107,10 +112,17 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
     + DateOfBirth : DateOnly?
+}
+
+%% ==================== BACKEND - HUBS ====================
+
+class NotificationHub {
+    <<hub>>
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -123,6 +135,7 @@ Account *-- Notification
 BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
+NotificationService --> NotificationHub
 
 %% === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService

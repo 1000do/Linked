@@ -12,6 +12,7 @@ class ChatControllerBE["ChatController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + ClearedAt : DateTime?
@@ -20,14 +21,19 @@ class ChatParticipant {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~ *
+}
+
+class IRedisService {
+    <<service interface>>
+    + ClearUnreadCountAsync(accountId: int, chatId: int) Task *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~ *
     + UpdateParticipantAsync(participant: ChatParticipant) Task *
     + SaveChangesAsync() Task~int~ *
@@ -36,13 +42,16 @@ class IChatRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _chatRepository : IChatRepository
+    - _redisService : IRedisService
     + ClearChatHistoryAsync(chatId: int, accountId: int) Task~bool~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~
     + UpdateParticipantAsync(participant: ChatParticipant) Task
@@ -52,6 +61,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + ChatParticipants : DbSet~ChatParticipant~
 }
 
@@ -60,6 +70,7 @@ class AppDbContext {
 %% === UNIDIRECTIONAL ASSOCIATION ===
 ChatControllerBE --> IChatService
 ChatService --> IChatRepository
+ChatService --> IRedisService
 ChatRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===

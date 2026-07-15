@@ -38,6 +38,7 @@ class BackendController["NotificationController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification {
+    <<entity>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -52,14 +53,14 @@ class Notification {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + DeleteNotificationAsync(notiId: int, userId: int) Task~bool~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Notification?~ *
     + Delete(notification: Notification) void *
     + SaveChangesAsync() Task~int~ *
@@ -68,6 +69,7 @@ class INotificationRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
+    <<service>>
     - _repo : INotificationRepository
     - _hubContext : IHubContext~NotificationHub~
     + DeleteNotificationAsync(notiId: int, userId: int) Task~bool~
@@ -76,6 +78,7 @@ class NotificationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetByIdAsync(id: int) Task~Notification?~
     + Delete(notification: Notification) void
@@ -85,8 +88,15 @@ class NotificationRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Notifications : DbSet~Notification~
     + SaveChangesAsync(cancellationToken: CancellationToken) Task~int~
+}
+
+%% ==================== BACKEND - HUBS ====================
+
+class NotificationHub {
+    <<hub>>
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -95,6 +105,7 @@ class AppDbContext {
 BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
+NotificationService --> NotificationHub
 
 %% === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService

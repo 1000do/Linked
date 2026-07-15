@@ -40,8 +40,6 @@ participant ":IUserRepository" as user_repo
 participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant "NotificationHub" as hub
-
 act++
 act->view++: Click "Create Notification" button
 view->view++: Open Compose Notification Modal

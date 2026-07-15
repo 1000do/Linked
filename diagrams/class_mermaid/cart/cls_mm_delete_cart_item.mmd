@@ -19,6 +19,7 @@ class CartControllerBE["CartController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CartItem {
+    <<entity>>
     + Id : int
     + UserId : int?
     + CourseId : int?
@@ -31,14 +32,14 @@ class CartItem {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICartService {
-    <<interface>>
+    <<service interface>>
     + RemoveFromCartAsync(userId: int, courseId: int) Task *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class ICartRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCartItemAsync(userId: int, courseId: int) Task~CartItem?~ *
     + RemoveCartItem(item: CartItem) void *
     + SaveChangesAsync() Task~int~ *
@@ -47,6 +48,7 @@ class ICartRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CartService {
+    <<service>>
     - _repo : ICartRepository
     + RemoveFromCartAsync(userId: int, courseId: int) Task
 }
@@ -54,6 +56,7 @@ class CartService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CartRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetCartItemAsync(userId: int, courseId: int) Task~CartItem?~
     + RemoveCartItem(item: CartItem) void
@@ -63,6 +66,7 @@ class CartRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CartItems : DbSet~CartItem~
     + SaveChangesAsync(cancellationToken: CancellationToken) Task~int~
 }
