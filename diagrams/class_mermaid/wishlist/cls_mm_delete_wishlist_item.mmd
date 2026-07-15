@@ -29,12 +29,12 @@ class WishlistItem {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IWishlistService {
-    <<interface>>
+    <<service interface>>
     + RemoveFromWishlistAsync(userId: int, courseId: int) Task~bool~ *
 }
 
 class IWishlistRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByUserAndCourseAsync(userId: int, courseId: int) Task~WishlistItem?~ *
     + RemoveAsync(item: WishlistItem) void *
     + SaveChangesAsync() Task~int~ *
@@ -43,6 +43,7 @@ class IWishlistRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class WishlistService {
+    <<service>>
     - _wishlistRepository : IWishlistRepository
     
     + RemoveFromWishlistAsync(userId: int, courseId: int) Task~bool~
@@ -51,6 +52,7 @@ class WishlistService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class WishlistRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByUserAndCourseAsync(userId: int, courseId: int) Task~WishlistItem?~
@@ -61,6 +63,7 @@ class WishlistRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + WishlistItems : DbSet~WishlistItem~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void

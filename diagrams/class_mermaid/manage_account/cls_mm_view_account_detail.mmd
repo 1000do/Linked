@@ -9,6 +9,7 @@ class AdminAccountControllerFE["AdminAccountController"] {
 }
 
 class AccountDetailViewModel {
+    <<view model>>
     + AccountDetail : AdminAccountDetail
     + Transactions : AccountTransactionSummary
 }
@@ -26,12 +27,14 @@ class AdminAccountControllerBE["AdminAccountController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class AdminAccountDetail {
+    <<dto>>
     + AccountId : int
     + Email : string
     + Role : string
 }
 
 class AccountTransactionSummary {
+    <<dto>>
     + TotalSpent : decimal
     + TotalRevenue : decimal
     + TotalWithdrawn : decimal
@@ -40,38 +43,38 @@ class AccountTransactionSummary {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminAccountService {
-    <<interface>>
+    <<service interface>>
     + GetAccountDetailAsync(id: int) Task~AdminAccountDetail~ *
     + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummary~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByIdAsync(id: int) Task~Account?~ *
 }
 
 class ILockoutRepository {
-    <<interface>>
+    <<repository interface>>
     + GetActiveLockoutAsync(id: int, type: string) Task~Lockout?~ *
 }
 
 class IReportRepository {
-    <<interface>>
+    <<repository interface>>
     + GetResolvedReportsCountAsync(id: int) Task~int~ *
 }
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + GetSentNotificationsCountAsync(id: int) Task~int~ *
 }
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + GetActiveChatsCountAsync(id: int) Task~int~ *
 }
 
 class ITransactionRepository {
-    <<interface>>
+    <<repository interface>>
     + GetTotalSpentAsync(id: int) Task~decimal~ *
     + GetInstructorTotalRevenueAsync(id: int) Task~decimal~ *
     + GetInstructorTotalWithdrawnAsync(id: int) Task~decimal~ *
@@ -79,13 +82,14 @@ class ITransactionRepository {
 }
 
 class IEnrollmentRepository {
-    <<interface>>
+    <<repository interface>>
     + GetMyEnrolledCoursesAsync(id: int) Task~List~Enrollment~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AdminAccountService {
+    <<service>>
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     - _reportRepository : IReportRepository
@@ -101,26 +105,32 @@ class AdminAccountService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     + GetAccountByIdAsync(id: int) Task~Account?~
 }
 
 class LockoutRepository {
+    <<repository>>
     + GetActiveLockoutAsync(id: int, type: string) Task~Lockout?~
 }
 
 class ReportRepository {
+    <<repository>>
     + GetResolvedReportsCountAsync(id: int) Task~int~
 }
 
 class NotificationRepository {
+    <<repository>>
     + GetSentNotificationsCountAsync(id: int) Task~int~
 }
 
 class ChatRepository {
+    <<repository>>
     + GetActiveChatsCountAsync(id: int) Task~int~
 }
 
 class TransactionRepository {
+    <<repository>>
     + GetTotalSpentAsync(id: int) Task~decimal~
     + GetInstructorTotalRevenueAsync(id: int) Task~decimal~
     + GetInstructorTotalWithdrawnAsync(id: int) Task~decimal~
@@ -128,6 +138,7 @@ class TransactionRepository {
 }
 
 class EnrollmentRepository {
+    <<repository>>
     + GetMyEnrolledCoursesAsync(id: int) Task~List~Enrollment~~
 }
 

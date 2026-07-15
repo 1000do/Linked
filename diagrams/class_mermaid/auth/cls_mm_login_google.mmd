@@ -9,6 +9,7 @@ class AccountController {
 }
 
 class GoogleLoginViewModel {
+    <<view model>>
     + IdToken : string
 }
 
@@ -24,10 +25,12 @@ class AuthController {
 %% ==================== BACKEND - DTOs ====================
 
 class GoogleLoginRequest {
+    <<dto>>
     + IdToken : string
 }
 
 class LoginResponse {
+    <<dto>>
     + AccessToken : string
     + RefreshToken : string
     + UserName : string
@@ -40,6 +43,7 @@ class LoginResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + PasswordHash : string?
@@ -52,6 +56,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + AccountId : int
     + Username : string
@@ -61,6 +66,7 @@ class User {
 }
 
 class Lockout {
+    <<entity>>
     + LockoutId : int
     + AccountId : int
     + LockoutType : string
@@ -73,12 +79,12 @@ class Lockout {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAuthService {
-    <<interface>>
+    <<service interface>>
     + GoogleLoginAsync(request: GoogleLoginRequest) Task~LoginResponse?~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByEmailAsync(email: string) Task~Account?~ *
     + RegisterUserAsync(account: Account, user: User) Task~bool~ *
     + UpdateLastLoginAsync(accountId: int) Task~void~ *
@@ -88,13 +94,14 @@ class IUserRepository {
 }
 
 class ILockoutRepository {
-    <<interface>>
+    <<repository interface>>
     + GetActiveLockoutAsync(accountId: int, lockoutType: string) Task~Lockout?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AuthService {
+    <<service>>
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     
@@ -104,6 +111,7 @@ class AuthService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAccountByEmailAsync(email: string) Task~Account?~
@@ -115,6 +123,7 @@ class UserRepository {
 }
 
 class LockoutRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetActiveLockoutAsync(accountId: int, lockoutType: string) Task~Lockout?~
@@ -123,6 +132,7 @@ class LockoutRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Lockouts : DbSet~Lockout~
     

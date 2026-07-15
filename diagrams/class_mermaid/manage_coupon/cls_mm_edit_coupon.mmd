@@ -13,6 +13,7 @@ class CouponController {
 %% ==================== BACKEND - DTOs ====================
 
 class UpdateCouponRequest {
+    <<dto>>
     + EndDate : DateTime?
     + UsageLimit : int?
     + IsActive : bool?
@@ -21,6 +22,7 @@ class UpdateCouponRequest {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -37,12 +39,12 @@ class Coupon {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICouponService {
-    <<interface>>
+    <<service interface>>
     + UpdateAsync(id: int, req: UpdateCouponRequest, userId: int, isAdmin: bool) Task~bool~ *
 }
 
 class ICouponRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int, filterId: int?) Task~Coupon?~ *
     + Update(coupon: Coupon) void *
     + SaveChangesAsync() Task~int~ *
@@ -51,6 +53,7 @@ class ICouponRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CouponService {
+    <<service>>
     - _couponRepository : ICouponRepository
     
     + UpdateAsync(id: int, req: UpdateCouponRequest, userId: int, isAdmin: bool) Task~bool~
@@ -59,6 +62,7 @@ class CouponService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CouponRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int, filterId: int?) Task~Coupon?~
@@ -69,6 +73,7 @@ class CouponRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Coupons : DbSet~Coupon~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void

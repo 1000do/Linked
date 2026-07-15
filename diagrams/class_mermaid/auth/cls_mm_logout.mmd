@@ -20,6 +20,7 @@ class AuthController {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + PasswordHash : string?
@@ -32,12 +33,12 @@ class Account {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAuthService {
-    <<interface>>
+    <<service interface>>
     + LogoutAsync(accountId: int) Task~void~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + RevokeRefreshTokenAsync(accountId: int) Task~void~ *
     + SaveChangesAsync() Task~int~ *
 }
@@ -45,6 +46,7 @@ class IUserRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AuthService {
+    <<service>>
     - _userRepository : IUserRepository
     
     + LogoutAsync(accountId: int) Task~void~
@@ -53,6 +55,7 @@ class AuthService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + RevokeRefreshTokenAsync(accountId: int) Task~void~
@@ -62,6 +65,7 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void

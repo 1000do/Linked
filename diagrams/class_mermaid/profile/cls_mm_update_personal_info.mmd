@@ -21,6 +21,7 @@ class ProfileControllerBE["ProfileController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class UpdateProfileRequest {
+    <<dto>>
     + FullName : string
     + Email : string
     + PhoneNumber : string?
@@ -30,6 +31,7 @@ class UpdateProfileRequest {
 }
 
 class UserProfileResponse {
+    <<dto>>
     + FullName : string?
     + Username : string
     + Email : string
@@ -43,6 +45,7 @@ class UserProfileResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string?
     + Username : string
@@ -55,6 +58,7 @@ class User {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
 }
@@ -68,18 +72,18 @@ class Instructor {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IUserProfileService {
-    <<interface>>
+    <<service interface>>
     + UpdateProfileAsync(userId: int, request: UpdateProfileRequest) Task~bool~ *
     + GetUserProfileAsync(userId: int) Task~UserProfileResponse?~ *
 }
 
 class IFileUploadService {
-    <<interface>>
+    <<service interface>>
     + UploadImageAsync(avatarFile: IFormFile) Task~string~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetUserByIdAsync(userId: int) Task~User?~ *
     + UpdateUserProfileAsync(userId: int, fullName: string, bio: string, dob: DateTime?, avatarUrl: string?, phoneNumber: string?, email: string) Task~bool~ *
 }
@@ -87,6 +91,7 @@ class IUserRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class UserProfileService {
+    <<service>>
     - _userRepository : IUserRepository
     - _fileUploadService : IFileUploadService
     
@@ -95,12 +100,14 @@ class UserProfileService {
 }
 
 class FileUploadService {
+    <<service>>
     + UploadImageAsync(avatarFile: IFormFile) Task~string~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetUserByIdAsync(userId: int) Task~User?~
@@ -110,6 +117,7 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Users : DbSet~User~
     + Accounts : DbSet~Account~
     + Instructors : DbSet~Instructor~

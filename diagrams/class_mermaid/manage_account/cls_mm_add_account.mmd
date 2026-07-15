@@ -9,6 +9,7 @@ class AdminAccountControllerFE["AdminAccountController"] {
 }
 
 class CreateStaffViewModel {
+    <<view model>>
     + Email : string
     + Username : string
     + DisplayName : string
@@ -28,6 +29,7 @@ class AdminAccountControllerBE["AdminAccountController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class CreateStaffRequest {
+    <<dto>>
     + Email : string
     + Username : string
     + DisplayName : string
@@ -38,6 +40,7 @@ class CreateStaffRequest {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string
@@ -56,13 +59,13 @@ class Manager {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminAccountService {
-    <<interface>>
+    <<service interface>>
     + IsUsernameExistsAsync(username: string) Task~bool~ *
     + CreateStaffAsync(request: CreateStaffRequest) Task~bool~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + IsUsernameExistsAsync(username: string) Task~bool~ *
     + RegisterManagerAsync(account: Account, manager: Manager) Task~void~ *
     + SaveChangesAsync() Task~int~ *
@@ -71,6 +74,7 @@ class IUserRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AdminAccountService {
+    <<service>>
     - _userRepository : IUserRepository
     
     + IsUsernameExistsAsync(username: string) Task~bool~
@@ -80,6 +84,7 @@ class AdminAccountService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + IsUsernameExistsAsync(username: string) Task~bool~
@@ -90,6 +95,7 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Managers : DbSet~Manager~
     

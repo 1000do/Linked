@@ -20,6 +20,7 @@ class AdminAccountControllerBE["AdminAccountController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string
@@ -37,6 +38,7 @@ class Manager {
 }
 
 class Lockout {
+    <<entity>>
     + LockoutId : int
     + AccountId : int
     + Reason : string
@@ -47,18 +49,18 @@ class Lockout {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminAccountService {
-    <<interface>>
+    <<service interface>>
     + ToggleBanAsync(id: int, adminId: int) Task~string~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByIdAsync(id: int) Task~Account?~ *
     + SaveChangesAsync() Task~int~ *
 }
 
 class ILockoutRepository {
-    <<interface>>
+    <<repository interface>>
     + RemoveAccountLockoutsAsync(accountId: int) Task~void~ *
     + AddAsync(lockout: Lockout) Task~void~ *
 }
@@ -66,6 +68,7 @@ class ILockoutRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AdminAccountService {
+    <<service>>
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     
@@ -75,6 +78,7 @@ class AdminAccountService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAccountByIdAsync(id: int) Task~Account?~
@@ -82,6 +86,7 @@ class UserRepository {
 }
 
 class LockoutRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + RemoveAccountLockoutsAsync(accountId: int) Task~void~
@@ -91,6 +96,7 @@ class LockoutRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Managers : DbSet~Manager~
     + Lockouts : DbSet~Lockout~

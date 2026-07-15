@@ -20,6 +20,7 @@ class WishlistControllerBE["WishlistController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class WishlistCourseResponse {
+    <<dto>>
     + CourseId : int
     + Title : string
     + ThumbnailUrl : string?
@@ -42,18 +43,19 @@ class WishlistItem {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IWishlistService {
-    <<interface>>
+    <<service interface>>
     + GetWishlistAsync(userId: int) Task~List~WishlistCourseResponse~~ *
 }
 
 class IWishlistRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByUserIdAsync(userId: int) Task~List~WishlistItem~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class WishlistService {
+    <<service>>
     - _wishlistRepository : IWishlistRepository
     
     + GetWishlistAsync(userId: int) Task~List~WishlistCourseResponse~~
@@ -62,6 +64,7 @@ class WishlistService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class WishlistRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByUserIdAsync(userId: int) Task~List~WishlistItem~~
@@ -70,6 +73,7 @@ class WishlistRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + WishlistItems : DbSet~WishlistItem~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
