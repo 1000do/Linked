@@ -3,14 +3,14 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class AccountControllerFE["AccountController"] {
+class AccountController {
     <<frontend controller>>
-    + VerifyOtp(request: VerifyOtpRequest) Task~IActionResult~
+    + VerifyOtp(request: VerifyOtpRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class AuthControllerBE["AuthController"] {
+class AuthController {
     <<backend controller>>
     - _authService : IAuthService
     
@@ -19,7 +19,7 @@ class AuthControllerBE["AuthController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class VerifyOtpRequest {
+class VerifyOtpRequestDTO {
     <<dto>>
     + Otp : string
 }
@@ -91,12 +91,13 @@ class AppDbContext {
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-AuthControllerBE --> IAuthService
+AuthController --> IAuthService
 AuthService --> IUserRepository
 AuthService --> IOtpService
 UserRepository --> AppDbContext
@@ -107,9 +108,9 @@ OtpService ..|> IOtpService
 UserRepository ..|> IUserRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-AccountControllerFE ..> VerifyOtpRequest
-AccountControllerFE ..> VerifyEmailRequest
-AuthControllerBE ..> VerifyEmailRequest
+AccountController ..> VerifyOtpRequestDTO
+AccountController ..> VerifyEmailRequest
+AuthController ..> VerifyEmailRequest
 UserRepository ..> Account
 
 %% ==================== STYLES ====================

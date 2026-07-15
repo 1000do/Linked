@@ -66,6 +66,7 @@ class AppDbContext {
     <<dbcontext>>
     + WishlistItems : DbSet~WishlistItem~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }

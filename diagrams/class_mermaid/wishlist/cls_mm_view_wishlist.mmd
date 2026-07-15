@@ -19,7 +19,7 @@ class WishlistControllerBE["WishlistController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class WishlistCourseResponse {
+class WishlistResponseDTO {
     <<dto>>
     + CourseId : int
     + Title : string
@@ -44,7 +44,7 @@ class WishlistItem {
 
 class IWishlistService {
     <<service interface>>
-    + GetWishlistAsync(userId: int) Task~List~WishlistCourseResponse~~ *
+    + GetWishlistAsync(userId: int) Task~List~WishlistResponseDTO~~ *
 }
 
 class IWishlistRepository {
@@ -58,7 +58,7 @@ class WishlistService {
     <<service>>
     - _wishlistRepository : IWishlistRepository
     
-    + GetWishlistAsync(userId: int) Task~List~WishlistCourseResponse~~
+    + GetWishlistAsync(userId: int) Task~List~WishlistResponseDTO~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -92,9 +92,10 @@ WishlistService ..|> IWishlistService
 WishlistRepository ..|> IWishlistRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-WishlistControllerFE ..> WishlistCourseResponse
-WishlistControllerBE ..> WishlistCourseResponse
-WishlistService ..> WishlistCourseResponse
+WishlistControllerFE ..> WishlistResponseDTO
+WishlistControllerBE ..> WishlistResponseDTO
+WishlistService ..> WishlistResponseDTO
+WishlistService ..> WishlistItem
 WishlistRepository ..> WishlistItem
 
 %% ==================== STYLES ====================

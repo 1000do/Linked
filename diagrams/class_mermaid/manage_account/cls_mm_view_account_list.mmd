@@ -8,7 +8,7 @@ class AdminAccountControllerFE["AdminAccountController"] {
     + Index(keyword: string?, role: string?, page: int) Task~IActionResult~
 }
 
-class AccountListViewModel {
+class AdminAccountListViewModel {
     <<view model>>
     + Keyword : string?
     + Role : string?
@@ -37,18 +37,6 @@ class AdminAccountListDto {
     + Username : string
     + AccountStatus : string
     + Role : string
-}
-
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Account {
-    <<entity>>
-    + AccountId : int
-    + Email : string
-    + Username : string
-    + PasswordHash : string?
-    + AccountStatus : string
-    + IsVerified : bool
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -94,7 +82,7 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION (hollow diamond) ===
-AccountListViewModel o-- AdminAccountListDto
+AdminAccountListViewModel o-- AdminAccountListDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AdminAccountControllerBE --> IAdminAccountService
@@ -107,10 +95,9 @@ UserRepository ..|> IUserRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 AdminAccountControllerFE ..> AdminAccountControllerBE
-AdminAccountControllerFE ..> AccountListViewModel
+AdminAccountControllerFE ..> AdminAccountListViewModel
 AdminAccountControllerBE ..> AdminAccountListDto
 AdminAccountService ..> AdminAccountListDto
-UserRepository ..> Account
 
 %% ==================== STYLES ====================
 

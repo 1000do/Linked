@@ -7,12 +7,12 @@ class CouponController {
     <<backend controller>>
     - _couponService : ICouponService
     
-    + CreateCoupon(request: CreateCouponRequest) Task~IActionResult~
+    + CreateCoupon(request: CreateCouponRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class CreateCouponRequest {
+class CreateCouponRequestDTO {
     <<dto>>
     + CouponCode : string
     + CouponType : string
@@ -44,7 +44,7 @@ class Coupon {
 
 class ICouponService {
     <<service interface>>
-    + CreateAsync(req: CreateCouponRequest, managerId: int) Task~bool~ *
+    + CreateAsync(req: CreateCouponRequestDTO, managerId: int) Task~bool~ *
 }
 
 class ICouponRepository {
@@ -60,9 +60,9 @@ class CouponService {
     <<service>>
     - _couponRepository : ICouponRepository
     
-    + CreateAsync(req: CreateCouponRequest, managerId: int) Task~bool~
+    + CreateAsync(req: CreateCouponRequestDTO, managerId: int) Task~bool~
     - NormalizeType(type: string) string
-    - ValidateCreate(req: CreateCouponRequest) void
+    - ValidateCreate(req: CreateCouponRequestDTO) void
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -82,6 +82,7 @@ class AppDbContext {
     <<dbcontext>>
     + Coupons : DbSet~Coupon~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
@@ -98,8 +99,8 @@ CouponService ..|> ICouponService
 CouponRepository ..|> ICouponRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-CouponController ..> CreateCouponRequest
-CouponService ..> CreateCouponRequest
+CouponController ..> CreateCouponRequestDTO
+CouponService ..> CreateCouponRequestDTO
 CouponService ..> Coupon
 CouponRepository ..> Coupon
 

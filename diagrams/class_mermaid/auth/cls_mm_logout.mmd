@@ -39,8 +39,7 @@ class IAuthService {
 
 class IUserRepository {
     <<repository interface>>
-    + RevokeRefreshTokenAsync(accountId: int) Task~void~ *
-    + SaveChangesAsync() Task~int~ *
+    + RevokeRefreshTokenAsync(accountId: int) Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
@@ -58,8 +57,7 @@ class UserRepository {
     <<repository>>
     - _context : AppDbContext
     
-    + RevokeRefreshTokenAsync(accountId: int) Task~void~
-    + SaveChangesAsync() Task~int~
+    + RevokeRefreshTokenAsync(accountId: int) Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
@@ -70,6 +68,7 @@ class AppDbContext {
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================

@@ -12,7 +12,7 @@ class CouponController {
 
 %% ==================== BACKEND - DTOs ====================
 
-class CouponResponse {
+class CouponResponseDTO {
     <<dto>>
     + CouponId : int
     + ManagerId : int?
@@ -48,7 +48,7 @@ class Coupon {
 
 class ICouponService {
     <<service interface>>
-    + GetAllAsync(managerId: int?, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponse~~ *
+    + GetAllAsync(managerId: int?, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponseDTO~~ *
 }
 
 class ICouponRepository {
@@ -62,7 +62,7 @@ class CouponService {
     <<service>>
     - _couponRepository : ICouponRepository
     
-    + GetAllAsync(managerId: int?, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponse~~
+    + GetAllAsync(managerId: int?, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponseDTO~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -96,8 +96,9 @@ CouponService ..|> ICouponService
 CouponRepository ..|> ICouponRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-CouponController ..> CouponResponse
-CouponService ..> CouponResponse
+CouponController ..> CouponResponseDTO
+CouponService ..> CouponResponseDTO
+CouponService ..> Coupon
 CouponRepository ..> Coupon
 
 %% ==================== STYLES ====================

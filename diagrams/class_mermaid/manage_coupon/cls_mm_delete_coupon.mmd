@@ -67,6 +67,7 @@ class AppDbContext {
     <<dbcontext>>
     + Coupons : DbSet~Coupon~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
@@ -83,6 +84,7 @@ CouponService ..|> ICouponService
 CouponRepository ..|> ICouponRepository
 
 %% === DEPENDENCY (dashed arrows) ===
+CouponService ..> Coupon
 CouponRepository ..> Coupon
 
 %% ==================== STYLES ====================

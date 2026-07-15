@@ -5,10 +5,10 @@ direction LR
 
 class AdminAccountControllerFE["AdminAccountController"] {
     <<frontend controller>>
-    + EditStaff(id: int, model: EditStaffViewModel) Task~IActionResult~
+    + EditStaff(id: int, model: UpdateStaffFERequestDTO) Task~IActionResult~
 }
 
-class EditStaffViewModel {
+class UpdateStaffFERequestDTO {
     <<view model>>
     + DisplayName : string
     + Password : string?
@@ -22,12 +22,12 @@ class AdminAccountControllerBE["AdminAccountController"] {
     <<backend controller>>
     - _adminAccountService : IAdminAccountService
     
-    + UpdateStaff(id: int, request: UpdateStaffRequest) Task~IActionResult~
+    + UpdateStaff(id: int, request: UpdateStaffRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class UpdateStaffRequest {
+class UpdateStaffRequestDTO {
     <<dto>>
     + DisplayName : string
     + Password : string?
@@ -68,7 +68,7 @@ class Lockout {
 
 class IAdminAccountService {
     <<service interface>>
-    + UpdateStaffAsync(id: int, request: UpdateStaffRequest) Task~bool~ *
+    + UpdateStaffAsync(id: int, request: UpdateStaffRequestDTO) Task~bool~ *
 }
 
 class IUserRepository {
@@ -90,7 +90,7 @@ class AdminAccountService {
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     
-    + UpdateStaffAsync(id: int, request: UpdateStaffRequest) Task~bool~
+    + UpdateStaffAsync(id: int, request: UpdateStaffRequestDTO) Task~bool~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -121,6 +121,7 @@ class AppDbContext {
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -143,9 +144,9 @@ LockoutRepository ..|> ILockoutRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 AdminAccountControllerFE ..> AdminAccountControllerBE
-AdminAccountControllerFE ..> EditStaffViewModel
-AdminAccountControllerBE ..> UpdateStaffRequest
-AdminAccountService ..> UpdateStaffRequest
+AdminAccountControllerFE ..> UpdateStaffFERequestDTO
+AdminAccountControllerBE ..> UpdateStaffRequestDTO
+AdminAccountService ..> UpdateStaffRequestDTO
 AdminAccountService ..> Lockout
 UserRepository ..> Account
 UserRepository ..> Manager

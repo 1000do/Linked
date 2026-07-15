@@ -16,6 +16,7 @@ class WishlistControllerBE["WishlistController"] {
     
     + CheckWishlist(courseId: int) Task~IActionResult~
     + AddToWishlist(courseId: int) Task~IActionResult~
+    + RemoveFromWishlist(courseId: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -90,6 +91,7 @@ class AppDbContext {
     + WishlistItems : DbSet~WishlistItem~
     + Courses : DbSet~Course~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }

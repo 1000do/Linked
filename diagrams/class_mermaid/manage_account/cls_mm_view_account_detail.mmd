@@ -8,10 +8,18 @@ class AdminAccountControllerFE["AdminAccountController"] {
     + Detail(id: int) Task~IActionResult~
 }
 
-class AccountDetailViewModel {
+class AdminAccountDetailPageViewModel {
     <<view model>>
-    + AccountDetail : AdminAccountDetail
-    + Transactions : AccountTransactionSummary
+    + AccountDetail : AdminAccountDetailViewModel
+    + Transactions : AccountTransactionSummaryViewModel
+}
+
+class AdminAccountDetailViewModel {
+    <<view model>>
+}
+
+class AccountTransactionSummaryViewModel {
+    <<view model>>
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -26,14 +34,14 @@ class AdminAccountControllerBE["AdminAccountController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class AdminAccountDetail {
+class AdminAccountDetailDto {
     <<dto>>
     + AccountId : int
     + Email : string
     + Role : string
 }
 
-class AccountTransactionSummary {
+class AccountTransactionSummaryDto {
     <<dto>>
     + TotalSpent : decimal
     + TotalRevenue : decimal
@@ -44,8 +52,8 @@ class AccountTransactionSummary {
 
 class IAdminAccountService {
     <<service interface>>
-    + GetAccountDetailAsync(id: int) Task~AdminAccountDetail~ *
-    + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummary~ *
+    + GetAccountDetailAsync(id: int) Task~AdminAccountDetailDto~ *
+    + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummaryDto~ *
 }
 
 class IUserRepository {
@@ -78,7 +86,7 @@ class ITransactionRepository {
     + GetTotalSpentAsync(id: int) Task~decimal~ *
     + GetInstructorTotalRevenueAsync(id: int) Task~decimal~ *
     + GetInstructorTotalWithdrawnAsync(id: int) Task~decimal~ *
-    + GetAccountTransactionsSummaryAsync(id: int) Task~AccountTransactionSummary~ *
+    + GetAccountTransactionsSummaryAsync(id: int) Task~AccountTransactionSummaryDto~ *
 }
 
 class IEnrollmentRepository {
@@ -98,8 +106,8 @@ class AdminAccountService {
     - _transactionRepository : ITransactionRepository
     - _enrollmentRepository : IEnrollmentRepository
     
-    + GetAccountDetailAsync(id: int) Task~AdminAccountDetail~
-    + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummary~
+    + GetAccountDetailAsync(id: int) Task~AdminAccountDetailDto~
+    + GetAccountTransactionsAsync(id: int) Task~AccountTransactionSummaryDto~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -134,7 +142,7 @@ class TransactionRepository {
     + GetTotalSpentAsync(id: int) Task~decimal~
     + GetInstructorTotalRevenueAsync(id: int) Task~decimal~
     + GetInstructorTotalWithdrawnAsync(id: int) Task~decimal~
-    + GetAccountTransactionsSummaryAsync(id: int) Task~AccountTransactionSummary~
+    + GetAccountTransactionsSummaryAsync(id: int) Task~AccountTransactionSummaryDto~
 }
 
 class EnrollmentRepository {
@@ -142,11 +150,28 @@ class EnrollmentRepository {
     + GetMyEnrolledCoursesAsync(id: int) Task~List~Enrollment~~
 }
 
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + Accounts : DbSet~Account~
+    + Managers : DbSet~Manager~
+    + Lockouts : DbSet~Lockout~
+    + Reports : DbSet~Report~
+    + Notifications : DbSet~Notification~
+    + Chats : DbSet~Chat~
+    + Transactions : DbSet~Transaction~
+    + Enrollments : DbSet~Enrollment~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION (hollow diamond) ===
-AccountDetailViewModel o-- AdminAccountDetail
-AccountDetailViewModel o-- AccountTransactionSummary
+AdminAccountDetailPageViewModel o-- AdminAccountDetailViewModel
+AdminAccountDetailPageViewModel o-- AccountTransactionSummaryViewModel
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AdminAccountControllerBE --> IAdminAccountService
@@ -157,6 +182,13 @@ AdminAccountService --> INotificationRepository
 AdminAccountService --> IChatRepository
 AdminAccountService --> ITransactionRepository
 AdminAccountService --> IEnrollmentRepository
+UserRepository --> AppDbContext
+LockoutRepository --> AppDbContext
+ReportRepository --> AppDbContext
+NotificationRepository --> AppDbContext
+ChatRepository --> AppDbContext
+TransactionRepository --> AppDbContext
+EnrollmentRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 AdminAccountService ..|> IAdminAccountService
@@ -170,12 +202,14 @@ EnrollmentRepository ..|> IEnrollmentRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 AdminAccountControllerFE ..> AdminAccountControllerBE
-AdminAccountControllerFE ..> AccountDetailViewModel
-AdminAccountControllerBE ..> AdminAccountDetail
-AdminAccountControllerBE ..> AccountTransactionSummary
+AdminAccountControllerFE ..> AdminAccountDetailPageViewModel
+AdminAccountControllerFE ..> AdminAccountDetailViewModel
+AdminAccountControllerFE ..> AccountTransactionSummaryViewModel
+AdminAccountControllerBE ..> AdminAccountDetailDto
+AdminAccountControllerBE ..> AccountTransactionSummaryDto
 
-AdminAccountService ..> AdminAccountDetail
-AdminAccountService ..> AccountTransactionSummary
+AdminAccountService ..> AdminAccountDetailDto
+AdminAccountService ..> AccountTransactionSummaryDto
 
 %% ==================== STYLES ====================
 

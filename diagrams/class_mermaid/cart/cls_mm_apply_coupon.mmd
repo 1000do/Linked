@@ -25,7 +25,7 @@ class CartControllerBE["CartController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class CartSummaryResponse {
+class CartSummaryResponseDTO {
     <<dto>>
     + Subtotal : decimal
     + DiscountAmount : decimal
@@ -85,7 +85,7 @@ class Coupon {
 
 class ICartService {
     <<service interface>>
-    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponse~ *
+    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponseDTO~ *
 }
 
 class ICartRepository {
@@ -106,7 +106,7 @@ class CartService {
     - _cartRepository : ICartRepository
     - _couponRepository : ICouponRepository
     
-    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponse~
+    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponseDTO~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -144,8 +144,8 @@ class AppDbContext {
 CartItem -- Course
 
 %% === AGGREGATION (hollow diamond) ===
-CartSummaryResponse o-- CartItemDto
-CartSummaryResponse o-- CouponDto
+CartSummaryResponseDTO o-- CartItemDto
+CartSummaryResponseDTO o-- CouponDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 CartControllerBE --> ICartService
@@ -162,8 +162,8 @@ CouponRepository ..|> ICouponRepository
 %% === DEPENDENCY (dashed arrows) ===
 CartControllerFE ..> CartControllerBE
 CartControllerFE ..> ApplyCouponViewModel
-CartControllerBE ..> CartSummaryResponse
-CartService ..> CartSummaryResponse
+CartControllerBE ..> CartSummaryResponseDTO
+CartService ..> CartSummaryResponseDTO
 CartRepository ..> CartItem
 CouponRepository ..> Coupon
 

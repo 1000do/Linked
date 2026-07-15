@@ -5,10 +5,10 @@ direction LR
 
 class AdminAccountControllerFE["AdminAccountController"] {
     <<frontend controller>>
-    + FlagAccount(id: int, model: FlagAccountViewModel) Task~IActionResult~
+    + FlagAccount(id: int, model: FlagAccountFERequestDTO) Task~IActionResult~
 }
 
-class FlagAccountViewModel {
+class FlagAccountFERequestDTO {
     <<view model>>
     + Reason : string
 }
@@ -19,12 +19,12 @@ class AdminAccountControllerBE["AdminAccountController"] {
     <<backend controller>>
     - _adminAccountService : IAdminAccountService
     
-    + FlagAccount(id: int, request: FlagAccountRequest) Task~IActionResult~
+    + FlagAccount(id: int, request: FlagAccountRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class FlagAccountRequest {
+class FlagAccountRequestDTO {
     <<dto>>
     + Reason : string
 }
@@ -116,6 +116,7 @@ class AppDbContext {
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -139,8 +140,8 @@ LockoutRepository ..|> ILockoutRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 AdminAccountControllerFE ..> AdminAccountControllerBE
-AdminAccountControllerFE ..> FlagAccountViewModel
-AdminAccountControllerBE ..> FlagAccountRequest
+AdminAccountControllerFE ..> FlagAccountFERequestDTO
+AdminAccountControllerBE ..> FlagAccountRequestDTO
 AdminAccountService ..> Lockout
 UserRepository ..> Account
 LockoutRepository ..> Lockout
