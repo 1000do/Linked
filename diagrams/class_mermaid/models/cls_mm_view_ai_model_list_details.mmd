@@ -50,15 +50,6 @@ class PagedRequestDto {
     + PageSize : int
 }
 
-class PagedResult~AiModelAdminDto~ {
-    <<dto>>
-    + Items : IEnumerable~AiModelAdminDto~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
-}
-
 class AiModelAdminDto {
     <<dto>>
     + ModelId : int
@@ -96,13 +87,13 @@ class AiModel {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAiModelManagementService {
-    <<interface>>
+    <<service interface>>
     + GetAllModelsAsync() Task~List~AiModelAdminDto~~ *
     + GetPagedModelsAsync(req: PagedRequestDto) Task~PagedResult~AiModelAdminDto~~ *
 }
 
 class IAiModelRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAllAdminAsync() Task~List~AiModel~~ *
     + GetPagedAdminAsync(page: int, pageSize: int) Task~(List~AiModel~, int)~ *
 }
@@ -110,6 +101,7 @@ class IAiModelRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AiModelManagementService {
+    <<service>>
     - _aiModelRepo : IAiModelRepository
     
     + GetAllModelsAsync() Task~List~AiModelAdminDto~~
@@ -119,6 +111,7 @@ class AiModelManagementService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class AiModelRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAllAdminAsync() Task~List~AiModel~~
@@ -128,6 +121,7 @@ class AiModelRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + AiModels : DbSet~AiModel~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
@@ -143,7 +137,6 @@ AiModelRepository --> AppDbContext
 
 %% === AGGREGATION ===
 AdminAiServicePageViewModel o-- AiModelViewModel
-PagedResult~AiModelAdminDto~ o-- AiModelAdminDto
 
 %% === INTERFACE REALIZATION ===
 AiModelManagementService ..|> IAiModelManagementService
@@ -153,9 +146,8 @@ AiModelRepository ..|> IAiModelRepository
 AdminAiServiceControllerFE ..> AdminAiServiceControllerBE
 AdminAiServiceControllerFE ..> AdminAiServicePageViewModel
 AdminAiServiceControllerBE ..> PagedRequestDto
-AdminAiServiceControllerBE ..> PagedResult~AiModelAdminDto~
+AdminAiServiceControllerBE ..> AiModelAdminDto
 AiModelManagementService ..> PagedRequestDto
-AiModelManagementService ..> PagedResult~AiModelAdminDto~
 AiModelManagementService ..> AiModelAdminDto
 AiModelRepository ..> AiModel
 

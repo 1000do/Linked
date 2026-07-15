@@ -3,18 +3,37 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class AdminCourseController {
+class AdminModerationControllerFE["AdminModerationController"] {
     <<frontend controller>>
-    + Index(page: int, search: string, status: string, sort: string) Task~IActionResult~
+    + Courses(search: string?, category: string?, status: string?, sortBy: string?, page: int, pageSize: int) Task~IActionResult~
+}
+
+
+
+class CourseModerationViewModel {
+    <<view model>>
+    + CourseId : int
+    + Title : string
+    + InstructorName : string
+    + CategoryName : string?
+    + Price : decimal
+    + CreatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseThumbnailUrl : string?
+    + UrgencyLevel : string
+    + UrgencyColor : string
+    + FlagCount : int
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class AdminModerationController {
+class AdminModerationControllerBE["AdminModerationController"] {
     <<backend controller>>
     - _courseModerationService : ICourseModerationService
     
-    + GetCourseModerationList(filter: ModerationFilterDto) Task~IActionResult~
+    + GetPendingCourses(filter: ModerationFilterDto) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -23,29 +42,28 @@ class ModerationFilterDto {
     <<dto>>
     + Page : int
     + PageSize : int
-    + Keyword : string?
+    + Search : string?
+    + Category : string?
     + Status : string?
     + SortBy : string?
 }
 
-class PagedResultCourseModerationDto["PagedResult~CourseModerationDto~"] {
-    <<dto>>
-    + Items : List~CourseModerationDto~
-    + TotalCount : int
-}
+
 
 class CourseModerationDto {
     <<dto>>
     + CourseId : int
     + Title : string
     + InstructorName : string
-    + InstructorEmail : string
-    + CategoryName : string
+    + CategoryName : string?
     + Price : decimal
     + CreatedAt : DateTime?
-    + Status : string
-    + LessonsCount : int
+    + CourseStatus : string?
+    + CourseThumbnailUrl : string?
+    + UrgencyLevel : string
+    + UrgencyColor : string
     + FlagCount : int
+    + IsRemoved : bool
     + ThreatLevel : AiThreatLevel
 }
 
@@ -65,6 +83,18 @@ class Course {
     + UpdatedAt : DateTime?
     + CourseStatus : string?
     + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + CourseQuizzes : ICollection~CourseQuiz~
+    + FieldModerationFeedbacks : ICollection~CourseFieldModerationFeedback~
     + WhatYouWillLearn : string?
     + Requirements : string?
     + ModerationFeedback : string?
@@ -77,25 +107,40 @@ class Instructor {
     <<entity>>
     + InstructorId : int
     + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
     + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
+    + Quizzes : ICollection~Quiz~
     + InstructorNavigation : User
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseModerationService {
-    <<interface>>
+    <<service interface>>
     + GetPendingCoursesAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPendingCoursesModerationAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseModerationService {
+    <<service>>
     - _courseRepository : ICourseRepository
     
     + GetPendingCoursesAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~
@@ -104,6 +149,7 @@ class CourseModerationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetPendingCoursesModerationAsync(filter: ModerationFilterDto) Task~PagedResult~CourseModerationDto~~
@@ -112,18 +158,20 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
     + Instructors : DbSet~Instructor~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION & COMPOSITION ===
-PagedResultCourseModerationDto *-- CourseModerationDto
+%% === COMPOSITION (filled diamond) ===
+
+%% === AGGREGATION (hollow diamond) ===
 Course -- Instructor
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
-AdminModerationController --> ICourseModerationService
+AdminModerationControllerBE --> ICourseModerationService
 CourseModerationService --> ICourseRepository
 CourseRepository --> AppDbContext
 
@@ -132,17 +180,16 @@ CourseModerationService ..|> ICourseModerationService
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY ===
-AdminCourseController ..> AdminModerationController
-AdminCourseController ..> ModerationFilterDto
-AdminModerationController ..> ModerationFilterDto
-AdminModerationController ..> PagedResultCourseModerationDto
+AdminModerationControllerFE ..> AdminModerationControllerBE
+AdminModerationControllerFE ..> CourseModerationViewModel
+AdminModerationControllerBE ..> ModerationFilterDto
+AdminModerationControllerBE ..> CourseModerationDto
 CourseModerationService ..> ModerationFilterDto
-CourseModerationService ..> PagedResultCourseModerationDto
+CourseModerationService ..> CourseModerationDto
 CourseRepository ..> ModerationFilterDto
-CourseRepository ..> PagedResultCourseModerationDto
+CourseRepository ..> CourseModerationDto
 CourseRepository ..> Course
 CourseRepository ..> Instructor
 
 %% ==================== STYLES ====================
-
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

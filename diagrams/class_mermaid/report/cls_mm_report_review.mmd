@@ -83,13 +83,13 @@ class LessonReviewReport {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IReportSubmissionService {
-    <<interface>>
+    <<service interface>>
     + CreateCourseReviewReportAsync(reporterId: int, request: CreateCourseReviewReportRequest) Task~bool~ *
     + CreateLessonReviewReportAsync(reporterId: int, request: CreateLessonReviewReportRequest) Task~bool~ *
 }
 
 class IReportRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPendingCourseReviewReportAsync(reporterId: int, courseReviewId: int, reason: string) Task~CourseReviewReport?~ *
     + AddCourseReviewReportAsync(report: CourseReviewReport) Task *
     + GetPendingLessonReviewReportAsync(reporterId: int, lessonReviewId: int, reason: string) Task~LessonReviewReport?~ *
@@ -100,6 +100,7 @@ class IReportRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ReportSubmissionService {
+    <<service>>
     - _reportRepo : IReportRepository
     
     + CreateCourseReviewReportAsync(reporterId: int, request: CreateCourseReviewReportRequest) Task~bool~
@@ -113,6 +114,7 @@ class ReportSubmissionService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ReportRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetPendingCourseReviewReportAsync(reporterId: int, courseReviewId: int, reason: string) Task~CourseReviewReport?~
@@ -125,6 +127,7 @@ class ReportRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReviewReports : DbSet~CourseReviewReport~
     + LessonReviewReports : DbSet~LessonReviewReport~
     

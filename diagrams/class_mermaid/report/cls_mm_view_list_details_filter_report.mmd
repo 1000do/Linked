@@ -20,6 +20,14 @@ class ReportStatsViewModel {
     + TotalRejectedToday : int
 }
 
+class ReportModerationPageViewModel {
+    <<view model>>
+    + Stats : ReportStatsViewModel
+    + CourseReports : PagedResult~CourseReportDetailViewModel~
+    + CourseReviewReports : PagedResult~ReviewReportDetailViewModel~
+    + LessonReviewReports : PagedResult~ReviewReportDetailViewModel~
+}
+
 class CourseReportDetailViewModel {
     <<view model>>
     + ReportId : int
@@ -64,24 +72,6 @@ class ReviewReportDetailViewModel {
     + ResolverEmail : string?
     + CreatedAt : DateTime?
     + ResolvedAt : DateTime?
-}
-
-class PagedResultCourseReportDetailViewModel["PagedResult~CourseReportDetailViewModel~"] {
-    <<view model>>
-    + Items : IEnumerable~CourseReportDetailViewModel~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
-}
-
-class PagedResultReviewReportDetailViewModel["PagedResult~ReviewReportDetailViewModel~"] {
-    <<view model>>
-    + Items : IEnumerable~ReviewReportDetailViewModel~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
 }
 
 class AdminModerationControllerBE["AdminModerationController"] {
@@ -156,24 +146,6 @@ class ReviewReportDetailResponse {
     + ResolvedAt : DateTime?
 }
 
-class PagedResultCourseReportDetailResponse["PagedResult~CourseReportDetailResponse~"] {
-    <<dto>>
-    + Items : IEnumerable~CourseReportDetailResponse~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
-}
-
-class PagedResultReviewReportDetailResponse["PagedResult~ReviewReportDetailResponse~"] {
-    <<dto>>
-    + Items : IEnumerable~ReviewReportDetailResponse~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
-}
-
 class CourseReport {
     + CourseReportId : int
     + ReporterId : int?
@@ -226,7 +198,7 @@ class LessonReviewReport {
 }
 
 class IReportModerationService {
-    <<interface>>
+    <<service interface>>
     + GetReportStatsAsync() Task~ReportStatsResponse~ *
     + GetAllCourseReportsAsync(request: PagedReportRequestDto) Task~PagedResult~CourseReportDetailResponse~~ *
     + GetAllCourseReviewReportsAsync(request: PagedReportRequestDto) Task~PagedResult~ReviewReportDetailResponse~~ *
@@ -234,7 +206,7 @@ class IReportModerationService {
 }
 
 class IReportRepository {
-    <<interface>>
+    <<repository interface>>
     + CountCourseReportsByStatusAsync(status: string, resolvedAtDate: DateTime?) Task~int~ *
     + CountCourseReviewReportsByStatusAsync(status: string, resolvedAtDate: DateTime?) Task~int~ *
     + CountLessonReviewReportsByStatusAsync(status: string, resolvedAtDate: DateTime?) Task~int~ *
@@ -244,6 +216,7 @@ class IReportRepository {
 }
 
 class ReportModerationService {
+    <<service>>
     - _reportRepo : IReportRepository
     + GetReportStatsAsync() Task~ReportStatsResponse~
     + GetAllCourseReportsAsync(request: PagedReportRequestDto) Task~PagedResult~CourseReportDetailResponse~~
@@ -252,6 +225,7 @@ class ReportModerationService {
 }
 
 class ReportRepository {
+    <<repository>>
     - _context : AppDbContext
     + CountCourseReportsByStatusAsync(status: string, resolvedAtDate: DateTime?) Task~int~
     + CountCourseReviewReportsByStatusAsync(status: string, resolvedAtDate: DateTime?) Task~int~
@@ -262,19 +236,17 @@ class ReportRepository {
 }
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReports : DbSet~CourseReport~
     + CourseReviewReports : DbSet~CourseReviewReport~
     + LessonReviewReports : DbSet~LessonReviewReport~
 }
 
-PagedResultCourseReportDetailViewModel o-- CourseReportDetailViewModel
-PagedResultReviewReportDetailViewModel o-- ReviewReportDetailViewModel
-PagedResultCourseReportDetailResponse o-- CourseReportDetailResponse
-PagedResultReviewReportDetailResponse o-- ReviewReportDetailResponse
 AdminModerationControllerFE ..> AdminModerationControllerBE
-AdminModerationControllerFE ..> ReportStatsViewModel
-AdminModerationControllerFE ..> PagedResultCourseReportDetailViewModel
-AdminModerationControllerFE ..> PagedResultReviewReportDetailViewModel
+AdminModerationControllerFE ..> ReportModerationPageViewModel
+ReportModerationPageViewModel *-- ReportStatsViewModel
+ReportModerationPageViewModel *-- CourseReportDetailViewModel
+ReportModerationPageViewModel *-- ReviewReportDetailViewModel
 AdminModerationControllerBE ..> PagedReportRequestDto
 ReportModerationService ..> PagedReportRequestDto
 AdminModerationControllerBE --> IReportModerationService
@@ -283,11 +255,11 @@ ReportRepository --> AppDbContext
 ReportModerationService ..|> IReportModerationService
 ReportRepository ..|> IReportRepository
 AdminModerationControllerBE ..> ReportStatsResponse
-AdminModerationControllerBE ..> PagedResultCourseReportDetailResponse
-AdminModerationControllerBE ..> PagedResultReviewReportDetailResponse
+AdminModerationControllerBE ..> CourseReportDetailResponse
+AdminModerationControllerBE ..> ReviewReportDetailResponse
 ReportModerationService ..> ReportStatsResponse
-ReportModerationService ..> PagedResultCourseReportDetailResponse
-ReportModerationService ..> PagedResultReviewReportDetailResponse
+ReportModerationService ..> CourseReportDetailResponse
+ReportModerationService ..> ReviewReportDetailResponse
 ReportRepository ..> CourseReport
 ReportRepository ..> CourseReviewReport
 ReportRepository ..> LessonReviewReport
