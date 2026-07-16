@@ -85,9 +85,9 @@ else User confirms
                 ctx->db++: Save changes to database
                 
                 alt Database Save Failure
-                    db-->>ctx--: Throw DbUpdateException
-                    ctx-->>repo--: Throw DbUpdateException
-                    repo-->>sv--: Throw DbUpdateException
+                    db-->>ctx: Throw DbUpdateException
+                    ctx-->>repo: Throw DbUpdateException
+                    repo-->>sv: Throw DbUpdateException
                     sv-->>be_ctrl: Throw DbUpdateException
                     be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
                     fe_ctrl-->>view: Return statusCode 302 (Redirect)
