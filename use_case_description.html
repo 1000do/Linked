@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Use Case Description</title>
+<style>
+    body {
+        font-family: 'Times New Roman', serif;
+        font-size: 12pt;
+        margin: 40px;
+    }
+    .title {
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 8px;
+        vertical-align: top;
+    }
+    th {
+        background-color: #f8cbad; /* Light peach color */
+        text-align: center;
+        font-weight: bold;
+    }
+    .center-col {
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+
+<div class="title">2.2.2 Use Case Description</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 8%;">ID</th>
+            <th style="width: 20%;">Use Case</th>
+            <th style="width: 15%;">Actors</th>
+            <th style="width: 57%;">Use Case Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td class="center-col">UC-01</td><td>Register</td><td class="center-col">Guest</td><td>Allows guests to register a new account using their email address, username, and password.</td></tr>
+        <tr><td class="center-col">UC-02</td><td>View Course List</td><td class="center-col">Guest, User, Instructor</td><td>Displays a paginated list of published courses on the marketplace.</td></tr>
+        <tr><td class="center-col">UC-03</td><td>View Course Detail</td><td class="center-col">Guest, User, Instructor, Staff, Admin</td><td>Displays the detailed content of a course including chapters, lessons, instructor biography, ratings, and pricing.</td></tr>
+        <tr><td class="center-col">UC-04</td><td>Search Courses</td><td class="center-col">Guest, User, Instructor</td><td>Searches for courses based on titles, descriptions, or keywords.</td></tr>
+        <tr><td class="center-col">UC-05</td><td>Filter Courses</td><td class="center-col">Guest, User, Instructor</td><td>Filters courses by categories, price ranges, or minimum ratings.</td></tr>
+        <tr><td class="center-col">UC-06</td><td>Sort Courses</td><td class="center-col">Guest, User, Instructor</td><td>Sorts the course lists by newest, price (lowest/highest), or ratings.</td></tr>
+        <tr><td class="center-col">UC-07</td><td>View Instructor Profile</td><td class="center-col">Guest, User, Instructor</td><td>Displays the public profile page of an instructor along with their list of created courses.</td></tr>
+        <tr><td class="center-col">UC-08</td><td>View review list</td><td class="center-col">User, Instructor</td><td>Displays the list of public course reviews.</td></tr>
+        <tr><td class="center-col">UC-09</td><td>Report A Review</td><td class="center-col">User, Instructor</td><td>Allows users to report or flag spam, offensive, or inappropriate course reviews.</td></tr>
+        <tr><td class="center-col">UC-10</td><td>View Learning Progress</td><td class="center-col">User, Instructor</td><td>Tracks the completion percentage of a course and keeps a list of marked/completed lessons.</td></tr>
+        <tr><td class="center-col">UC-11</td><td>Go To Learning</td><td class="center-col">User, Instructor</td><td>Opens the course player to watch video lectures, read text content, and view course slides.</td></tr>
+        <tr><td class="center-col">UC-12</td><td>View purchased course list</td><td class="center-col">User, Instructor</td><td>Displays all courses successfully purchased or enrolled in by the user.</td></tr>
+        <tr><td class="center-col">UC-13</td><td>Enroll courses</td><td class="center-col">User, Instructor</td><td>Grants immediate course access (for free courses) or updates status after payment confirmation (for paid courses).</td></tr>
+        <tr><td class="center-col">UC-14</td><td>Add personal reviews</td><td class="center-col">User, Instructor</td><td>Allows learners to submit reviews and star ratings for courses they are enrolled in, enforcing learning progress checks.</td></tr>
+        <tr><td class="center-col">UC-15</td><td>Report A Course</td><td class="center-col">User, Instructor</td><td>Allows enrolled users to report a course for quality issues or copyright violations.</td></tr>
+        <tr><td class="center-col">UC-16</td><td>Delete personal reviews</td><td class="center-col">User, Instructor</td><td>Allows users to delete the course reviews they have previously submitted.</td></tr>
+        <tr><td class="center-col">UC-17</td><td>Gift Courses</td><td class="center-col">User, Instructor</td><td>Allows users to purchase a course as a gift for another person instead of buying it for themselves.</td></tr>
+        <tr><td class="center-col">UC-18</td><td>Pay for a gift</td><td class="center-col">User, Instructor</td><td>Allows the user to specify the recipient's email address when purchasing a course as a gift.</td></tr>
+        <tr><td class="center-col">UC-19</td><td>Receive a gift</td><td class="center-col">User, Instructor</td><td>This allows the recipient to receive the course from the giver and begin studying.</td></tr>
+        <tr><td class="center-col">UC-20</td><td>Start Quiz Attempt</td><td class="center-col">User, Instructor</td><td>Begins taking a multiple-choice quiz.</td></tr>
+        <tr><td class="center-col">UC-21</td><td>Submit Quiz Attempt</td><td class="center-col">User, Instructor</td><td>Submits the quiz attempt after completion.</td></tr>
+        <tr><td class="center-col">UC-22</td><td>View Attempt Detail</td><td class="center-col">User, Instructor</td><td>Displays the detailed result of a specific quiz attempt.</td></tr>
+        <tr><td class="center-col">UC-23</td><td>View Quiz History</td><td class="center-col">User, Instructor</td><td>Displays the history of all completed quiz attempts.</td></tr>
+        <tr><td class="center-col">UC-24</td><td>Login</td><td class="center-col">User, Instructor, Staff, Admin</td><td>Log in using a registered email or username and password.</td></tr>
+        <tr><td class="center-col">UC-25</td><td>Login with Google</td><td class="center-col">User, Instructor</td><td>Log in quickly to the system using a personal Google account.</td></tr>
+        <tr><td class="center-col">UC-26</td><td>Verify Email</td><td class="center-col">User, Instructor</td><td>Verifies the user's account using the verification code (OTP) sent to their registered email address.</td></tr>
+        <tr><td class="center-col">UC-27</td><td>Change Password</td><td class="center-col">User, Instructor</td><td>Allows users to change their current password for security enhancement.</td></tr>
+        <tr><td class="center-col">UC-28</td><td>Update Personal Info</td><td class="center-col">User, Instructor</td><td>Updates user personal details such as full name, phone number, biography, and profile picture (avatar).</td></tr>
+        <tr><td class="center-col">UC-29</td><td>View Profile</td><td class="center-col">User, Instructor</td><td>Displays the logged-in user's personal profile information on the system.</td></tr>
+        <tr><td class="center-col">UC-30</td><td>Add wishlist items</td><td class="center-col">User, Instructor</td><td>Saves courses of interest to a personal wishlist for future view or purchase.</td></tr>
+        <tr><td class="center-col">UC-31</td><td>View Wishlist</td><td class="center-col">User, Instructor</td><td>Displays the list of courses saved by the user in their favorites/wishlist.</td></tr>
+        <tr><td class="center-col">UC-32</td><td>Delete Wishlist Items</td><td class="center-col">User, Instructor</td><td>Removes a course from the user's favorites/wishlist.</td></tr>
+        <tr><td class="center-col">UC-33</td><td>View Notification list</td><td class="center-col">User, Instructor</td><td>Displays a list of system, course, or payment notifications.</td></tr>
+        <tr><td class="center-col">UC-34</td><td>View Notification Detail</td><td class="center-col">User, Instructor</td><td>Displays the detailed content of a specific notification and automatically marks it as read.</td></tr>
+        <tr><td class="center-col">UC-35</td><td>Mark As Read</td><td class="center-col">User, Instructor</td><td>Marks one or all notifications in the list as read.</td></tr>
+        <tr><td class="center-col">UC-36</td><td>Delete Notifications</td><td class="center-col">User, Instructor</td><td>Removes selected notifications from the user's notification list.</td></tr>
+        <tr><td class="center-col">UC-37</td><td>Add to cart</td><td class="center-col">User, Instructor</td><td>Adds selected courses to the virtual shopping cart.</td></tr>
+        <tr><td class="center-col">UC-38</td><td>View Cart items</td><td class="center-col">User, Instructor</td><td>Displays all courses currently in the user's shopping cart.</td></tr>
+        <tr><td class="center-col">UC-39</td><td>Checkout</td><td class="center-col">User, Instructor</td><td>Completes the shopping cart checkout process through the Stripe payment gateway.</td></tr>
+        <tr><td class="center-col">UC-40</td><td>Delete cart items</td><td class="center-col">User, Instructor</td><td>Removes selected courses from the shopping cart before checkout.</td></tr>
+        <tr><td class="center-col">UC-41</td><td>Apply Coupons</td><td class="center-col">User, Instructor</td><td>Applies a discount code (coupon) to get a price reduction at checkout.</td></tr>
+        <tr><td class="center-col">UC-42</td><td>Cancel Coupons</td><td class="center-col">User, Instructor</td><td>Cancels/removes an applied coupon code from the checkout summary.</td></tr>
+        <tr><td class="center-col">UC-43</td><td>View Transaction List</td><td class="center-col">User, Instructor</td><td>Displays a summary list of all course purchase transactions.</td></tr>
+        <tr><td class="center-col">UC-44</td><td>Search Transaction History</td><td class="center-col">User, Instructor</td><td>Searches past transaction history by order ID or course name.</td></tr>
+        <tr><td class="center-col">UC-45</td><td>Request Refund</td><td class="center-col">User, Instructor</td><td>Requests a refund for a course transaction within the allowed policy time frame.</td></tr>
+        <tr><td class="center-col">UC-46</td><td>View Transaction Detail</td><td class="center-col">User, Instructor</td><td>Displays a detailed receipt and financial breakdown for a specific transaction.</td></tr>
+        <tr><td class="center-col">UC-47</td><td>Forget Password</td><td class="center-col">User, Instructor</td><td>Requests a password reset verification link or OTP code via email.</td></tr>
+        <tr><td class="center-col">UC-48</td><td>View Chat List</td><td class="center-col">User, Instructor</td><td>Displays a list of active conversation threads for the account.</td></tr>
+        <tr><td class="center-col">UC-49</td><td>Delete Chats</td><td class="center-col">User, Instructor</td><td>Hides or deletes the conversation history with a specific chat participant.</td></tr>
+        <tr><td class="center-col">UC-50</td><td>Send Messages</td><td class="center-col">User, Instructor</td><td>Sends real-time messages within chat conversations using SignalR connections.</td></tr>
+        <tr><td class="center-col">UC-51</td><td>View Chat History</td><td class="center-col">User, Instructor</td><td>Displays the chronological history of messages sent and received in a chat thread.</td></tr>
+        <tr><td class="center-col">UC-52</td><td>Search Chat History</td><td class="center-col">User, Instructor</td><td>Searches past chat messages in a conversation by keyword.</td></tr>
+        <tr><td class="center-col">UC-53</td><td>Logout</td><td class="center-col">User, Instructor, Staff, Admin</td><td>Exits the current active session and revokes refresh tokens.</td></tr>
+        <tr><td class="center-col">UC-54</td><td>Become An Instructor</td><td class="center-col">User, Instructor</td><td>Submits an application and profile credentials (CV, title, expertise) to upgrade to an instructor account.</td></tr>
+        <tr><td class="center-col">UC-55</td><td>Setup Payout</td><td class="center-col">Instructor</td><td>Configures Stripe Connect bank/account details to receive platform payouts.</td></tr>
+        <tr><td class="center-col">UC-56</td><td>Create Courses</td><td class="center-col">Instructor</td><td>Drafts basic details for a new course, including title, pricing, description, and curriculum outline.</td></tr>
+        <tr><td class="center-col">UC-57</td><td>Edit Courses</td><td class="center-col">Instructor</td><td>Updates the content, settings, and structures of an existing course.</td></tr>
+        <tr><td class="center-col">UC-58</td><td>Publish Courses</td><td class="center-col">Instructor</td><td>Submits a course to the platform managers for approval and public release.</td></tr>
+        <tr><td class="center-col">UC-59</td><td>Add Lessons</td><td class="center-col">Instructor</td><td>Creates new video or text lessons within the chapters of a course.</td></tr>
+        <tr><td class="center-col">UC-60</td><td>Remove Lessons</td><td class="center-col">Instructor</td><td>Deletes lessons from the course curriculum.</td></tr>
+        <tr><td class="center-col">UC-61</td><td>Add Learning Materials</td><td class="center-col">Instructor</td><td>Uploads supporting documents (PDFs, source code, slides) to accompany lessons.</td></tr>
+        <tr><td class="center-col">UC-62</td><td>Edit Learning Materials</td><td class="center-col">Instructor</td><td>Updates or replaces attached document files.</td></tr>
+        <tr><td class="center-col">UC-63</td><td>Remove Learning Materials</td><td class="center-col">Instructor</td><td>Deletes attached document files from lessons.</td></tr>
+        <tr><td class="center-col">UC-64</td><td>Assign Quiz To Course</td><td class="center-col">Instructor</td><td>Assigns an existing quiz to a specific chapter or course.</td></tr>
+        <tr><td class="center-col">UC-65</td><td>View Instructor's Course List</td><td class="center-col">Instructor</td><td>Displays a list of courses created by the instructor on the platform.</td></tr>
+        <tr><td class="center-col">UC-66</td><td>Remove Courses</td><td class="center-col">Instructor</td><td>Completely deletes/removes a course from the instructor's active list.</td></tr>
+        <tr><td class="center-col">UC-67</td><td>Hide courses</td><td class="center-col">Instructor</td><td>Temporarily hides a course from public display on the marketplace.</td></tr>
+        <tr><td class="center-col">UC-68</td><td>View list of removed learning materials</td><td class="center-col">Instructor</td><td>Displays a list of deleted learning materials (instructor's trash bin).</td></tr>
+        <tr><td class="center-col">UC-69</td><td>Restore learning materials</td><td class="center-col">Instructor</td><td>Restores deleted learning materials back to active lessons.</td></tr>
+        <tr><td class="center-col">UC-70</td><td>Permanently delete learning materials</td><td class="center-col">Instructor</td><td>Permanently deletes files from the storage server.</td></tr>
+        <tr><td class="center-col">UC-71</td><td>View Question Bank</td><td class="center-col">Instructor</td><td>Displays the question bank used for creating quizzes.</td></tr>
+        <tr><td class="center-col">UC-72</td><td>View Course Questions</td><td class="center-col">Instructor</td><td>Displays the list of questions associated with a specific course.</td></tr>
+        <tr><td class="center-col">UC-73</td><td>Create Question</td><td class="center-col">Instructor</td><td>Creates a new multiple-choice question in the bank.</td></tr>
+        <tr><td class="center-col">UC-74</td><td>Edit Question</td><td class="center-col">Instructor</td><td>Modifies the content and answers of an existing question.</td></tr>
+        <tr><td class="center-col">UC-75</td><td>Delete Question</td><td class="center-col">Instructor</td><td>Removes a question from the question bank.</td></tr>
+        <tr><td class="center-col">UC-76</td><td>View Quiz List</td><td class="center-col">Instructor</td><td>Displays the list of available quizzes within a course.</td></tr>
+        <tr><td class="center-col">UC-77</td><td>Create Quiz</td><td class="center-col">Instructor</td><td>Creates a new quiz assessment for a course.</td></tr>
+        <tr><td class="center-col">UC-78</td><td>Delete Quiz</td><td class="center-col">Instructor</td><td>Deletes an existing quiz from the system.</td></tr>
+        <tr><td class="center-col">UC-79</td><td>Edit Quiz Settings</td><td class="center-col">Instructor</td><td>Modifies quiz configurations such as time limits and passing scores.</td></tr>
+        <tr><td class="center-col">UC-80</td><td>View Balance</td><td class="center-col">Instructor</td><td>Displays the total available balance earned from course sales.</td></tr>
+        <tr><td class="center-col">UC-81</td><td>View Instructor's Transaction History</td><td class="center-col">Instructor</td><td>Displays transaction records showing revenues from individual course sales.</td></tr>
+        <tr><td class="center-col">UC-82</td><td>View Payout History</td><td class="center-col">Instructor</td><td>Displays withdrawal/payout history sent to the instructor's bank account.</td></tr>
+        <tr><td class="center-col">UC-83</td><td>Sort Instructor's Transaction History</td><td class="center-col">Instructor</td><td>Sorts course sales transaction records by date or amount.</td></tr>
+        <tr><td class="center-col">UC-84</td><td>Filter Instructor's Transaction History</td><td class="center-col">Instructor</td><td>Filters sales transactions by status or date range.</td></tr>
+        <tr><td class="center-col">UC-85</td><td>Filter Payout History</td><td class="center-col">Instructor</td><td>Filters payout withdrawal records by status or time period.</td></tr>
+        <tr><td class="center-col">UC-86</td><td>Sort Payout History</td><td class="center-col">Instructor</td><td>Sorts payout withdrawal records by date or amount.</td></tr>
+        <tr><td class="center-col">UC-87</td><td>View Instructor's Course Revenue</td><td class="center-col">Instructor</td><td>Displays course-wise revenue analysis and earnings reports.</td></tr>
+        <tr><td class="center-col">UC-88</td><td>View Instructor's Transaction History Detail</td><td class="center-col">Instructor</td><td>Displays details of the course sale transaction showing platform fee deductions and net revenue.</td></tr>
+        <tr><td class="center-col">UC-89</td><td>View Profile</td><td class="center-col">Staff, Admin</td><td>Displays profile information of manager accounts (Staff, Admin) on the system.</td></tr>
+        <tr><td class="center-col">UC-90</td><td>Edit Profile</td><td class="center-col">Staff, Admin</td><td>Updates profile information for manager accounts.</td></tr>
+        <tr><td class="center-col">UC-91</td><td>View Notification List</td><td class="center-col">Staff, Admin</td><td>Displays the history of notifications sent or received by managers.</td></tr>
+        <tr><td class="center-col">UC-92</td><td>Send Notifications</td><td class="center-col">Staff, Admin</td><td>Sends system announcements or notifications to users or specific roles via email and notifications list.</td></tr>
+        <tr><td class="center-col">UC-93</td><td>View Notification Detail</td><td class="center-col">Staff, Admin</td><td>Displays the detailed content of a specific notification.</td></tr>
+        <tr><td class="center-col">UC-94</td><td>Search Notifications</td><td class="center-col">Staff, Admin</td><td>Searches sent system notifications by title or keyword.</td></tr>
+        <tr><td class="center-col">UC-95</td><td>Sort Notifications</td><td class="center-col">Staff, Admin</td><td>Sorts notification history by send date.</td></tr>
+        <tr><td class="center-col">UC-96</td><td>Filter Notifications</td><td class="center-col">Staff, Admin</td><td>Filters notifications by status or recipient role.</td></tr>
+        <tr><td class="center-col">UC-97</td><td>View Chat List</td><td class="center-col">Staff, Admin</td><td>Displays active support conversation threads for customer support management.</td></tr>
+        <tr><td class="center-col">UC-98</td><td>Delete Chats</td><td class="center-col">Staff, Admin</td><td>Deletes completed support conversations.</td></tr>
+        <tr><td class="center-col">UC-99</td><td>Send Messages</td><td class="center-col">Staff, Admin</td><td>Sends responses to support requests inside active chat sessions.</td></tr>
+        <tr><td class="center-col">UC-100</td><td>View Chat History</td><td class="center-col">Staff, Admin</td><td>Reviews conversation history between users, instructors, and support staff.</td></tr>
+        <tr><td class="center-col">UC-101</td><td>Search Chat History</td><td class="center-col">Staff, Admin</td><td>Searches messages in support chats by keyword.</td></tr>
+        <tr><td class="center-col">UC-102</td><td>View Course Moderation List</td><td class="center-col">Staff, Admin</td><td>Displays all courses submitted by instructors that are pending review.</td></tr>
+        <tr><td class="center-col">UC-103</td><td>Search Courses</td><td class="center-col">Staff, Admin</td><td>Searches course list by title or instructor name for moderation purposes.</td></tr>
+        <tr><td class="center-col">UC-104</td><td>Sort Courses</td><td class="center-col">Staff, Admin</td><td>Sorts courses in the moderation list by submission date.</td></tr>
+        <tr><td class="center-col">UC-105</td><td>Filter Courses</td><td class="center-col">Staff, Admin</td><td>Filters courses by categories or moderation status (Pending, Approved, Rejected).</td></tr>
+        <tr><td class="center-col">UC-106</td><td>Approve Course Submission</td><td class="center-col">Staff, Admin</td><td>Approves a submitted course, marking it as published and visible on the marketplace.</td></tr>
+        <tr><td class="center-col">UC-107</td><td>Reject Course Submission</td><td class="center-col">Staff, Admin</td><td>Rejects a submitted course with reasons and feedback for the instructor.</td></tr>
+        <tr><td class="center-col">UC-108</td><td>Flag Course for Content Violation</td><td class="center-col">Staff, Admin</td><td>Flags a course for content or policy violations, hiding it from public display.</td></tr>
+        <tr><td class="center-col">UC-109</td><td>View Instructor Applications Detail</td><td class="center-col">Staff, Admin</td><td>Displays resumes, professional titles, and linked credentials for a specific instructor applicant.</td></tr>
+        <tr><td class="center-col">UC-110</td><td>View Instructor Applications</td><td class="center-col">Staff, Admin</td><td>Displays a list of applications submitted by users wishing to become instructors.</td></tr>
+        <tr><td class="center-col">UC-111</td><td>Approve Instructor Application</td><td class="center-col">Staff, Admin</td><td>Approves a user's instructor application, upgrading their account role.</td></tr>
+        <tr><td class="center-col">UC-112</td><td>Reject Instructor Application</td><td class="center-col">Staff, Admin</td><td>Rejects an instructor application with feedback on missing qualifications.</td></tr>
+        <tr><td class="center-col">UC-113</td><td>Search Instructor Applications</td><td class="center-col">Staff, Admin</td><td>Searches instructor applications by applicant name.</td></tr>
+        <tr><td class="center-col">UC-114</td><td>Filter Instructor Applications</td><td class="center-col">Staff, Admin</td><td>Filters instructor applications by status (Pending, Approved, Rejected).</td></tr>
+        <tr><td class="center-col">UC-115</td><td>Sort Instructor Applications</td><td class="center-col">Staff, Admin</td><td>Sorts instructor applications by date submitted.</td></tr>
+        <tr><td class="center-col">UC-116</td><td>View List of User Reports</td><td class="center-col">Staff, Admin</td><td>Displays a combined list of reported courses, lesson reviews, and course reviews submitted by users.</td></tr>
+        <tr><td class="center-col">UC-117</td><td>View Report Detail</td><td class="center-col">Staff, Admin</td><td>Displays details and evidence of a reported violation.</td></tr>
+        <tr><td class="center-col">UC-118</td><td>Filter Reports</td><td class="center-col">Staff, Admin</td><td>Filters reports by type (Course, Review, Lesson) or status.</td></tr>
+        <tr><td class="center-col">UC-119</td><td>Resolve Report</td><td class="center-col">Staff, Admin</td><td>Resolves a report by taking moderation action (e.g., removing content) and updating status.</td></tr>
+        <tr><td class="center-col">UC-120</td><td>View AI Model List</td><td class="center-col">Admin</td><td>Displays a list of registered AI moderation models.</td></tr>
+        <tr><td class="center-col">UC-121</td><td>Add AI Model</td><td class="center-col">Admin</td><td>Registers a new AI moderation model configuration in the system.</td></tr>
+        <tr><td class="center-col">UC-122</td><td>View AI Model Details</td><td class="center-col">Admin</td><td>Displays details of a configured AI moderation model.</td></tr>
+        <tr><td class="center-col">UC-123</td><td>Update AI Model</td><td class="center-col">Admin</td><td>Updates configurations, paths, or status of an existing AI model.</td></tr>
+        <tr><td class="center-col">UC-124</td><td>Delete AI Model</td><td class="center-col">Admin</td><td>Deletes an AI model config from the system database.</td></tr>
+        <tr><td class="center-col">UC-125</td><td>Set Confidence Threshold</td><td class="center-col">Admin</td><td>Sets the classification confidence threshold for automated AI moderation.</td></tr>
+        <tr><td class="center-col">UC-126</td><td>View Activity Log</td><td class="center-col">Admin</td><td>Displays chronological logs of manager actions and moderation events.</td></tr>
+        <tr><td class="center-col">UC-127</td><td>View Account List</td><td class="center-col">Admin</td><td>Displays a list of all user and manager accounts.</td></tr>
+        <tr><td class="center-col">UC-128</td><td>Create Accounts</td><td class="center-col">Admin</td><td>Creates a new staff/manager account on the system.</td></tr>
+        <tr><td class="center-col">UC-129</td><td>Update Accounts</td><td class="center-col">Admin</td><td>Updates details of a manager or staff account.</td></tr>
+        <tr><td class="center-col">UC-130</td><td>Delete Accounts</td><td class="center-col">Admin</td><td>Deletes/Removes an account from the system.</td></tr>
+        <tr><td class="center-col">UC-131</td><td>Filter Accounts</td><td class="center-col">Admin</td><td>Filters account list by role or status (Active, Banned).</td></tr>
+        <tr><td class="center-col">UC-132</td><td>Search Accounts</td><td class="center-col">Admin</td><td>Searches accounts by username, email, or full name.</td></tr>
+        <tr><td class="center-col">UC-133</td><td>Flag Accounts for Violation</td><td class="center-col">Admin</td><td>Flags an account for violations, incrementing flag counts and locking if threshold is exceeded.</td></tr>
+        <tr><td class="center-col">UC-134</td><td>View Account Details</td><td class="center-col">Admin</td><td>Displays account history, status, login details, and flagged count.</td></tr>
+        <tr><td class="center-col">UC-135</td><td>View Balance</td><td class="center-col">Admin</td><td>Displays the total platform balance available on the Stripe dashboard.</td></tr>
+        <tr><td class="center-col">UC-136</td><td>View Instructor Payout</td><td class="center-col">Admin</td><td>Displays the list of payouts scheduled or processed for instructors.</td></tr>
+        <tr><td class="center-col">UC-137</td><td>View Funds Withdrawal History</td><td class="center-col">Admin</td><td>Displays platform withdrawal history to system owner accounts.</td></tr>
+        <tr><td class="center-col">UC-138</td><td>View List of Refund Requests</td><td class="center-col">Admin</td><td>Displays pending refund request orders.</td></tr>
+        <tr><td class="center-col">UC-139</td><td>Approve Refund Request</td><td class="center-col">Admin</td><td>Approves a refund request, triggering refund transfer via Stripe API.</td></tr>
+        <tr><td class="center-col">UC-140</td><td>Reject Refund Request</td><td class="center-col">Admin</td><td>Rejects a refund request with reasons/notes.</td></tr>
+        <tr><td class="center-col">UC-141</td><td>View Transaction List</td><td class="center-col">Admin</td><td>Displays a master list of all transaction orders across the platform.</td></tr>
+        <tr><td class="center-col">UC-142</td><td>Search Transactions</td><td class="center-col">Admin</td><td>Searches transactions by Stripe charge ID, order number, or email.</td></tr>
+        <tr><td class="center-col">UC-143</td><td>Filter Transactions</td><td class="center-col">Admin</td><td>Filters transaction list by date, month, or payment status.</td></tr>
+        <tr><td class="center-col">UC-144</td><td>Sort Transactions</td><td class="center-col">Admin</td><td>Sorts transactions by date or amount.</td></tr>
+        <tr><td class="center-col">UC-145</td><td>Set Transfer Rate</td><td class="center-col">Admin</td><td>Sets the commission percentage rate of course revenue that the platform receives.</td></tr>
+        <tr><td class="center-col">UC-146</td><td>Set Payout Schedule of Instructor</td><td class="center-col">Admin</td><td>Configures weekly/monthly Stripe Connect payout schedule rules.</td></tr>
+        <tr><td class="center-col">UC-147</td><td>Withdraw Funds</td><td class="center-col">Admin</td><td>Triggers a platform revenue withdrawal command to the admin's bank account.</td></tr>
+        <tr><td class="center-col">UC-148</td><td>Filter Financial Dashboard By Period</td><td class="center-col">Admin</td><td>Filters financial statistics and dashboard data by a specific time period.</td></tr>
+        <tr><td class="center-col">UC-149</td><td>View transaction detail</td><td class="center-col">Admin</td><td>Displays the financial split (Gross, Platform fee, Instructor share) for a transaction.</td></tr>
+        <tr><td class="center-col">UC-150</td><td>View Coupons List</td><td class="center-col">Admin</td><td>Displays active and expired discount coupons.</td></tr>
+        <tr><td class="center-col">UC-151</td><td>Add Coupons</td><td class="center-col">Admin</td><td>Creates new discount coupon campaign codes.</td></tr>
+        <tr><td class="center-col">UC-152</td><td>Edit Coupons</td><td class="center-col">Admin</td><td>Updates coupon values, quantity limits, or expiry dates.</td></tr>
+        <tr><td class="center-col">UC-153</td><td>Delete Coupons</td><td class="center-col">Admin</td><td>Deletes/Removes coupon codes.</td></tr>
+        <tr><td class="center-col">UC-154</td><td>Search Coupons</td><td class="center-col">Admin</td><td>Searches coupons by code string.</td></tr>
+        <tr><td class="center-col">UC-155</td><td>Sort Coupons</td><td class="center-col">Admin</td><td>Sorts coupons list by creation date or discount value.</td></tr>
+        <tr><td class="center-col">UC-156</td><td>Filter Coupons</td><td class="center-col">Admin</td><td>Filters coupons by status (Active, Expired).</td></tr>
+    </tbody>
+</table>
+
+</body>
+</html>

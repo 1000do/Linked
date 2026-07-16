@@ -1,6 +1,13 @@
 classDiagram
 direction LR
 
+%% ==================== FRONTEND ====================
+
+class FrontendController["ChatController"] {
+    <<frontend controller>>
+    + ClearHistory(chatId: int) Task~IActionResult~
+}
+
 %% ==================== BACKEND - CONTROLLER ====================
 
 class ChatControllerBE["ChatController"] {
@@ -78,6 +85,7 @@ ChatService ..|> IChatService
 ChatRepository ..|> IChatRepository
 
 %% === DEPENDENCY ===
+FrontendController ..> ChatControllerBE
 ChatService ..> ChatParticipant
 ChatRepository ..> ChatParticipant
 

@@ -11,7 +11,7 @@ class FrontendController["ChatController"] {
 %% ==================== BACKEND - HUB & CONTROLLERS ====================
 
 class ChatHub {
-    <<signalr hub>>
+    <<hub>>
     + MarkAsRead(chatId: int) Task
 }
 
@@ -218,9 +218,12 @@ ChatRepository ..|> IChatRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
+FrontendController ..> ChatHub
 BackendController ..> MessageDto
 ChatService ..> MessageDto
+ChatService ..> ChatParticipant
 ChatRepository ..> Message
+ChatRepository ..> ChatParticipant
 
 %% ==================== STYLES ====================
 

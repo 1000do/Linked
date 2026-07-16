@@ -7,6 +7,7 @@ class FrontendController["NotificationController"] {
     <<frontend controller>>
     - _client : HttpClient
     + Details(id: int) Task~IActionResult~
+    + MarkAsRead(id: int) Task~IActionResult~
 }
 
 class NotificationViewModel {
@@ -31,6 +32,7 @@ class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     + GetNotificationDetail(id: int) Task~IActionResult~
+    + MarkAsRead(id: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -107,6 +109,7 @@ class INotificationService {
 class INotificationRepository {
     <<repository interface>>
     + GetByIdAsync(id: int) Task~Notification?~ *
+    + Update(notification: Notification) void *
     + SaveChangesAsync() Task~int~ *
 }
 
@@ -126,6 +129,7 @@ class NotificationRepository {
     <<repository>>
     - _context : AppDbContext
     + GetByIdAsync(id: int) Task~Notification?~
+    + Update(notification: Notification) void
     + SaveChangesAsync() Task~int~
 }
 
@@ -145,6 +149,7 @@ class AppDbContext {
 
 class NotificationHub {
     <<hub>>
+    + SendAsync(method: string) Task
 }
 
 %% ==================== RELATIONSHIPS ====================

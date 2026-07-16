@@ -97,6 +97,7 @@ class AppDbContext {
 
 class NotificationHub {
     <<hub>>
+    + SendAsync(method: string) Task
 }
 
 %% ==================== RELATIONSHIPS ====================
