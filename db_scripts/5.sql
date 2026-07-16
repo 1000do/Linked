@@ -13,6 +13,9 @@ DROP TABLE IF EXISTS lesson_review_reports CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
+DROP TABLE IF EXISTS course_ai_feedbacks CASCADE;
+DROP TABLE IF EXISTS lesson_ai_feedbacks CASCADE;
+DROP TABLE IF EXISTS learning_material_ai_feedbacks CASCADE;
 DROP TABLE IF EXISTS lockouts CASCADE;
 DROP TABLE IF EXISTS transaction_exts CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
@@ -811,6 +814,30 @@ GROUP BY i.instructor_id;
 CREATE TABLE course_field_moderation_feedbacks (
     feedback_id SERIAL PRIMARY KEY,
     course_id INT NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE course_ai_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    course_id INT NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE lesson_ai_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    lesson_id INT NOT NULL REFERENCES lessons(lesson_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE learning_material_ai_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    material_id INT NOT NULL REFERENCES learning_materials(material_id) ON DELETE CASCADE,
     field_name VARCHAR(100) NOT NULL,
     feedback_text TEXT NOT NULL,
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
