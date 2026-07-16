@@ -19,75 +19,18 @@ logger = logging.getLogger(__name__)
 class TextClassifierService(BaseService):
     """Classify text for toxicity and spam using fine-tuned DistilBert ensemble."""
     
-    # Class-level model cache (singleton pattern)
-    _spam_model = None
-    _spam_tokenizer = None
-    _toxic_model = None
-    _toxic_tokenizer = None
-    _spam_path = None
-    _toxic_path = None
-    _models_loaded = False
-    
     def __init__(self, settings: Settings = None):
         """Initialize text classifier service."""
         super().__init__("TextClassifierService")
         self.settings = settings or get_settings()
         self.device = torch.device(self.settings.DEVICE)
         
-        
-        if not TextClassifierService._models_loaded:
-            self._load_models()
-    
-    @classmethod
-    def _load_models(cls):
-        """Load models once (class-level cache)."""
-        if cls._models_loaded:
-            return
-        
-        logger.info("Loading text classification models...")
-        
-        try:
-            settings = get_settings()
-            device = torch.device(settings.DEVICE)
-            
-            # Load spam model
-            spam_path = os.path.abspath(settings.SPAM_MODEL_PATH)
-            logger.info(f"Loading spam model from {spam_path}...")
-            
-            cls._spam_tokenizer = AutoTokenizer.from_pretrained(spam_path, local_files_only=True)
-            cls._spam_model = AutoModelForSequenceClassification.from_pretrained(spam_path, local_files_only=True)
-            cls._spam_model.to(device)
-            cls._spam_model.eval()
-            cls._spam_path = spam_path
-            logger.info("✓ Spam model loaded")
-            
-            # Load toxicity model
-            toxic_path = os.path.abspath(settings.TOXIC_MODEL_PATH)
-            logger.info(f"Loading toxicity model from {toxic_path}...")
-            
-            cls._toxic_tokenizer = AutoTokenizer.from_pretrained(toxic_path, local_files_only=True)
-            cls._toxic_model = AutoModelForSequenceClassification.from_pretrained(toxic_path, local_files_only=True)
-            cls._toxic_model.to(device)
-            cls._toxic_model.eval()
-            cls._toxic_path = toxic_path
-            logger.info("✓ Toxicity model loaded")
-            
-            cls._models_loaded = True
-            logger.info("✓ All text classification models loaded successfully")
-        
-        except Exception as e:
-            logger.error(f"Failed to load text classification models: {e}")
-            raise ModelInferenceException(
-                "text_classifier",
-                f"Model loading failed: {e}"
-            )
+        from providers.ml_model_provider import MLModelProvider
+        self.model_provider = MLModelProvider(self.settings)
 
     def robust_sliding_window(self, text: str, window_size: int = 128, stride: int = 64) -> List[Dict[str, Any]]:
-        spam_model = self._spam_model
-        toxic_model = self._toxic_model
-        spam_model.eval()
-        toxic_model.eval()
-        tokenizer = self._spam_tokenizer
+        tokenizer, spam_model = self.model_provider.get_spam_model()
+        _, toxic_model = self.model_provider.get_toxic_model()
         
         tokens = tokenizer.encode(text, add_special_tokens=False)
         length = len(tokens)
@@ -141,11 +84,8 @@ class TextClassifierService(BaseService):
         return chunk_results
 
     def check_course_description(self, text: str) -> Dict[str, Any]:
-        spam_model = self._spam_model
-        toxic_model = self._toxic_model
-        tokenizer = self._spam_tokenizer
-        spam_model.eval()
-        toxic_model.eval()
+        tokenizer, spam_model = self.model_provider.get_spam_model()
+        _, toxic_model = self.model_provider.get_toxic_model()
         
         inputs = tokenizer(
             text,
@@ -364,11 +304,8 @@ class TextClassifierService(BaseService):
 
         start_time = time.time()
         try:
-            spam_model = self._spam_model
-            toxic_model = self._toxic_model
-            spam_model.eval()
-            toxic_model.eval()
-            tokenizer = self._spam_tokenizer
+            tokenizer, spam_model = self.model_provider.get_spam_model()
+            _, toxic_model = self.model_provider.get_toxic_model()
             
             # 1. Tokenize and apply sliding window to all texts
             all_chunks = []

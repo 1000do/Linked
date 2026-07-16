@@ -33,21 +33,32 @@ async def lifespan(app: FastAPI):
     
     try:
         # Pre-load models on startup
-        from services.text_classifier_service import TextClassifierService
-        from services.embedding_service import EmbeddingService
-        from services.text_extraction_service import TextExtractionService
+        from providers.ml_model_provider import MLModelProvider
+        provider = MLModelProvider(settings)
         
-        logger.info("Initializing TextClassifierService...")
-        TextClassifierService()
-        logger.info("✓ TextClassifierService ready")
+        logger.info("Pre-loading Spam model...")
+        provider.get_spam_model()
+        logger.info("✓ Spam model ready")
+
+        logger.info("Pre-loading Toxicity model...")
+        provider.get_toxic_model()
+        logger.info("✓ Toxicity model ready")
         
-        logger.info("Initializing EmbeddingService...")
-        EmbeddingService()
-        logger.info("✓ EmbeddingService ready")
+        logger.info("Pre-loading Text Embedding model...")
+        provider.get_text_embedding_model()
+        logger.info("✓ Text Embedding model ready")
         
-        logger.info("Initializing TextExtractionService...")
-        TextExtractionService()
-        logger.info("✓ TextExtractionService ready")
+        logger.info("Pre-loading CLIP model...")
+        provider.get_clip_model()
+        logger.info("✓ CLIP model ready")
+
+        logger.info("Pre-loading Whisper model...")
+        provider.get_whisper_model()
+        logger.info("✓ Whisper model ready")
+
+        logger.info("Pre-loading OCR model...")
+        provider.get_ocr_reader()
+        logger.info("✓ OCR model ready")
         
         logger.info("✓ All models loaded successfully")
         logger.info("=" * 80)
