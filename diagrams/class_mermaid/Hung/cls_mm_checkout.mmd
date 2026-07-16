@@ -1,0 +1,164 @@
+```mermaid
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class CartControllerFE["CartController"] {
+    <<frontend controller>>
+    + Checkout() Task~IActionResult~
+    + CreatePaymentIntentAjax(couponCode: string) Task~IActionResult~
+    + CheckoutSuccess(payment_intent_id: string) Task~IActionResult~
+}
+
+class CheckoutViewModel {
+    <<view model>>
+    + Cart : CartSummaryResponse
+    + Email : string
+    + PublishableKey : string
+}
+
+class CartSummaryResponse {
+    <<view model>>
+    + Items : List~CartItemViewModel~
+    + SubTotal : decimal
+    + Total : decimal
+    + HasDiscount : bool
+    + DiscountAmount : decimal
+    + AppliedCouponCode : string
+}
+
+class UserProfile {
+    <<view model>>
+    + Email : string
+    + FullName : string
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class CheckoutControllerBE["CheckoutController"] {
+    <<backend controller>>
+    - _checkoutService : ICheckoutService
+    + CreateIntent(userId: string, couponCode: string) Task~IActionResult~
+    + SuccessIntent(payment_intent_id: string) Task~IActionResult~
+    + GetCartSummary(couponCode: string) Task~IActionResult~
+    + GetProfile() Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class CheckoutResponse {
+    <<dto>>
+    + SessionUrl : string
+    + SessionId : string
+    + ClientSecret : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class OrderInfo {
+    <<entity>>
+    + OrderId : int
+    + UserId : int
+    + OrderDate : DateTime
+    + OrderStatus : string
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int
+    + CourseId : int
+    + PurchasePrice : decimal
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + AccountFrom : int
+    + AccountTo : int
+    + Amount : decimal
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ICheckoutService {
+    <<interface>>
+    + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~ *
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task *
+}
+
+class ICheckoutRepository {
+    <<interface>>
+    + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IPaymentGatewayService {
+    <<interface>>
+    + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~ *
+    + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~ *
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
+
+class CheckoutService {
+    - _repo : ICheckoutRepository
+    - _paymentGateway : IPaymentGatewayService
+    + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~
+    + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
+    - AddEntitiesToContext(order: OrderInfo, orderItem: OrderItem, transaction: Transaction) void
+    - ClearCartItemsFromContext(userId: string) void
+}
+
+class CheckoutRepository {
+    - _context : AppDbContext
+    + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~
+    + SaveChangesAsync() Task~int~
+}
+
+class StripePaymentService {
+    + CreatePaymentIntentAsync(...) Task~Tuple~
+    + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
+}
+
+class AppDbContext {
+    + Orders : DbSet~OrderInfo~
+    + OrderItems : DbSet~OrderItem~
+    + Transactions : DbSet~Transaction~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION ===
+CheckoutViewModel o-- CartSummaryResponse
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CheckoutControllerBE --> ICheckoutService
+CheckoutService --> ICheckoutRepository
+CheckoutService --> IPaymentGatewayService
+CheckoutRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+CheckoutService ..|> ICheckoutService
+CheckoutRepository ..|> ICheckoutRepository
+StripePaymentService ..|> IPaymentGatewayService
+
+%% === DEPENDENCY (dashed arrows) ===
+CartControllerFE ..> CheckoutControllerBE
+
+CartControllerFE ..> CheckoutViewModel
+CartControllerFE ..> CartSummaryResponse
+CartControllerFE ..> UserProfile
+
+CheckoutControllerBE ..> CheckoutResponse
+CheckoutService ..> CheckoutResponse
+
+CheckoutService ..> OrderInfo
+CheckoutService ..> OrderItem
+CheckoutService ..> Transaction
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+```

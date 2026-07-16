@@ -30,6 +30,8 @@ mainframe Delete Notifications (User/Instructor)
 
 actor User as act
 participant "NotificationPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":INotificationService" as sv
@@ -44,10 +46,23 @@ view->view++: Show Confirm Delete dialog
 view--
 act->view: Click "Delete" to confirm
 
-view->fe_ctrl++: Send DELETE /Notification/Delete/{id}
-fe_ctrl->be_ctrl++: Send DELETE /api/Notification/{id} (with Bearer Token)
+view->fe_ctrl++: DELETE /Notification/Delete/{id}
 
-be_ctrl->sv++: Call DeleteNotificationAsync(id, userId)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++: DELETE /api/Notification/{id}
+    
+    be_ctrl->sv++: Call DeleteNotificationAsync(id, userId)
 sv->repo++: Call GetByIdAsync(id)
 repo->ctx++: Call GetByIdAsync(id)
 ctx->db++: Execute SELECT query
@@ -55,12 +70,12 @@ db-->>ctx--: Return notification entity
 ctx-->>repo--: Return notification entity
 repo-->>sv--: Return notification entity
 
-alt [notification == null || notification.ReceiverId != userId]
+alt notification == null || notification.ReceiverId != userId
     sv-->>be_ctrl: throw KeyNotFoundException
     be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
     fe_ctrl-->>view: Return JSON error response
     view-->>act: Display deletion failure message
-else [notification exists and belongs to user]
+else notification exists and belongs to user
     sv->repo++: Call Delete(noti)
     repo->ctx++: Set IsRemoved = true and Update
     ctx-->>repo--: Return
@@ -70,7 +85,7 @@ else [notification exists and belongs to user]
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Execute UPDATE statement
     
-    alt [Database Save Fails (throws DbUpdateException)]
+    alt Database Save Failure
         db-->>ctx: Throw DbUpdateException
         ctx-->>repo: Throw DbUpdateException
         repo-->>sv: Throw NotificationException
@@ -78,7 +93,7 @@ else [notification exists and belongs to user]
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
         fe_ctrl-->>view: Return JSON error response
         view-->>act: Display deletion failure message
-    else [Database Save Succeeds]
+    else Database Save Success
         db-->>ctx--: Return result
         ctx-->>repo--: Return result
         repo-->>sv--: Return result
@@ -94,6 +109,7 @@ else [notification exists and belongs to user]
         view--
         view-->>act--: Display success alert
     end
+end
 end
 
 @enduml

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
@@ -19,7 +20,9 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             _profileService = profileService;
         }
 
+        // UC-75: View Profile (For Manager) — Staff và Admin
         [HttpGet]
+        [CustomAuthorize(requireAuth: true, "staff", "admin")]
         public async Task<IActionResult> GetProfile()
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -33,8 +36,10 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             return Ok(new { status = 200, data = profile });
         }
 
+        // UC-76: Edit Profile (For Manager) — Staff và Admin
         [HttpPut("update")]
         [Consumes("multipart/form-data")]
+        [CustomAuthorize(requireAuth: true, "staff", "admin")]
         public async Task<IActionResult> UpdateProfile([FromForm] UpdateManagerProfileRequest request)
         {
             if (!ModelState.IsValid)
@@ -54,7 +59,9 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             return BadRequest(new { status = 400, message = "Failed to update manager profile." });
         }
 
+        // UC-75/76: Change Password (For Manager) — Staff và Admin
         [HttpPost("change-password")]
+        [CustomAuthorize(requireAuth: true, "staff", "admin")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

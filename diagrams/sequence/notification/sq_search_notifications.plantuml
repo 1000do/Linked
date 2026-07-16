@@ -30,23 +30,92 @@ mainframe Search Notifications (Staff/Admin)
 
 actor Admin as act
 participant "NotificationManagementPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
+participant "NotificationController" as fe_ctrl <<frontend controller>>
+participant "NotificationHub" as hub
+participant "NotificationController" as be_ctrl <<backend controller>>
+participant ":INotificationService" as sv
+participant ":INotificationRepository" as repo
+participant ":NotificationAdminResponseDto" as notif_admin_dto
+participant ":AppDbContext" as ctx
+database Database as db
 
 act++
-act->view++: Enter keyword in search input field
-view->view++: EventListener: input event triggered
+act->view++: Access System Notifications page
+view->fe_ctrl++: GET /Notification/Admin
+fe_ctrl-->>view--: Return Admin View
 
-view->view++: applyFilters() (runs client-side search on cached notifications)
-note over view
-    Filters allNotifications by checking if:
-    n.receiverFullName, n.receiverEmail,
-    n.title, or n.content contains search value
-end note
-view--
+view->hub++: Start SignalR connection to /notificationHub
+hub-->>view: Connection established successfully
 
-view->view++: renderTable() (paginates and renders matching results)
-view--
+view->fe_ctrl++: GET /Notification/GetAllAdmin
 
-view-->>act: Display filtered notification list matching search criteria
-deactivate view
-deactivate view
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++: GET /api/Notification/all
+    
+    be_ctrl->sv++: Call GetAllNotificationsForAdminAsync()
+    
+    sv->repo++: Call AutoCleanupAdminNotificationsAsync()
+    repo->ctx++: Query old read notifications (> 90 days)
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return old notifications list
+    ctx-->>repo--: Return old notifications list
+    
+    opt Old notifications exist
+        repo->ctx++: Mark IsRemoved = true for old notifications
+        ctx-->>repo--: Return
+        repo->ctx++: Call SaveChangesAsync()
+        ctx->db++: Save changes to database (Execute UPDATE)
+        db-->>ctx--: Return numberOfRowsAffected
+        ctx-->>repo--: Return numberOfRowsAffected
+    end
+    repo-->>sv--: Return result
+    
+    sv->repo++: Call GetAllAsync()
+    repo->ctx++: Query active notifications
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return active notifications list
+    ctx-->>repo--: Return active notifications list
+    repo-->>sv--: Return active notifications list
+    
+    sv->notif_admin_dto++: Call NotificationAdminResponseDto()
+    notif_admin_dto-->>sv--: Return NotificationAdminResponseDto list
+    
+    sv-->>be_ctrl--: Return PagedResult<NotificationAdminResponseDto>
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    fe_ctrl-->>view--: Return JSON notifications list
+    
+    view->view++: Apply default filters and sorting
+    view--
+    view->view++: Render notifications in table
+    view--
+    
+    view-->>act: Display system notifications list
+
+    act->view++: Enter keyword in search input field
+    view->view++: EventListener: input event triggered
+    view--
+    
+    view->view++: applyFilters() (runs client-side search on cached notifications)
+
+    view--
+    
+    view->view++: renderTable() (paginates and renders matching results)
+    view--
+    
+    view-->>act--: Display filtered notification list matching search criteria
+end
+
 @enduml

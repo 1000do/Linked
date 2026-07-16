@@ -24,113 +24,154 @@
     }
 </style>
 
-hide footbox
-
+hide footbox    
 mainframe Become an Instructor
-actor User as act
 
-participant "Instructor/Become.cshtml" as view
-participant "Instructor/ApplicationStatus.cshtml" as status_view
+
+actor User as act
+participant "HomePage" as portal
+participant "ApplyPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as status_view
 participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant ":InstructorApplyViewModel" as view_model
 participant "InstructorController" as be_ctrl <<backend controller>>
-participant ":InstructorService" as sv
-participant ":InstructorRepository" as repo
-participant "Cloudinary API" as cloud
+participant ":IInstructorService" as sv
+participant ":IUserRepository" as user_repo
+participant ":IInstructorRepository" as repo
+participant ":IFileUploadService" as upload
+participant ":Instructor" as ett
 participant ":AppDbContext" as ctx
 database Database as db
 
-== Step 1: Access Application Form ==
-act++
-act->view++: Access "Become an Instructor" page
-view->fe_ctrl++: Send GET /Instructor/Apply
+act ++
 
-fe_ctrl->be_ctrl++: Send GET /api/instructor/dashboard (with Bearer Token)
-be_ctrl-->>fe_ctrl--: Return statusCode 404 (Not Found)
+act -> portal++: Click "Become an Instructor"
+portal -> fe_ctrl++: GET /Instructor/Apply
+portal--
 
-fe_ctrl->be_ctrl++: Send GET /api/instructor/stripe-countries
-be_ctrl-->>fe_ctrl--: Return supported countries list
+fe_ctrl -> fe_ctrl++: Validate User's authentication and authorization
+fe_ctrl--
 
-fe_ctrl->be_ctrl++: Send GET /api/public/courses/categories
-be_ctrl-->>fe_ctrl--: Return available categories list
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid User's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/instructor/dashboard
+    be_ctrl -->> fe_ctrl--: Return statusCode 200
 
-fe_ctrl-->>view--: Return View(applyModel)
-view-->>act--: Display Become an Instructor form
-
-== Step 2: Submit Application ==
-act++
-act->view++: Enter bio, professional title, upload CV, and click "Submit"
-view->fe_ctrl++: Send POST /Instructor/Apply (with Form Data)
-
-fe_ctrl->be_ctrl++: Send POST /api/instructor/apply (with MultipartFormDataContent)
-
-be_ctrl->sv++: Call SubmitApplicationAsync(userId, request)
-sv->repo++: Call GetApplicationByUserIdAsync(userId)
-repo->ctx++: Query existing application
-ctx->db++: Execute SELECT query
-db-->>ctx--: Return application
-ctx-->>repo--: Return application
-repo-->>sv--: Return application
-
-alt [CV Document File provided]
-    sv->cloud++: Upload certificate/CV file
-    cloud-->>sv--: Return Cloudinary file URL
-end
-
-alt [Previous application was Rejected]
-    sv->repo++: Call UpdateApplicationAsync(app)
-    repo->ctx++: Mark application as modified
-    ctx-->>repo--: Return
-    repo-->>sv--: Return
-else [New application]
-    sv->repo++: Call AddApplicationAsync(app)
-    repo->ctx++: Add application entity
-    ctx-->>repo--: Return
-    repo-->>sv--: Return
-end
-
-sv->repo++: Call SaveChangesAsync()
-repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Execute INSERT or UPDATE statement
-db-->>ctx--: Return result
-ctx-->>repo--: Return numberOfRowsAffected
-repo-->>sv--: Return numberOfRowsAffected
-
-repo->repo++: Check numberOfRowsAffected
-repo--
-
-alt [numberOfRowsAffected > 0]
-    repo-->>sv: Return true
-    sv-->>be_ctrl--: Return success message
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
-    
-    fe_ctrl -> status_view++: Redirect to status page
-    deactivate fe_ctrl
-    deactivate view
-    
-    status_view->fe_ctrl++: Send GET /Instructor/ApplicationStatus
-    fe_ctrl->be_ctrl++: Send GET /api/instructor/dashboard (with Bearer Token)
-    be_ctrl->sv++: Call GetInstructorDashboardAsync(userId)
-    sv->repo++: Call GetDashboardAsync(userId)
-    repo->ctx++: Query details
-    ctx->db++: Execute SELECT query
-    db-->>ctx--: Return details
-    ctx-->>repo--: Return details
-    repo-->>sv--: Return details
-    sv-->>be_ctrl--: Return details
-    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with dashboard JSON
-    
-    fe_ctrl->fe_ctrl++: Save Cookie "InstructorApprovalStatus" = "Pending"
+    fe_ctrl -> fe_ctrl++: Check ApprovalStatus
     fe_ctrl--
-    fe_ctrl-->>status_view--: Return View(model)
-    deactivate fe_ctrl
-    status_view-->>act--: Display application status page
-else [numberOfRowsAffected = 0]
-    repo-->>sv--: Return false
-    sv->sv++: throw InvalidOperationException
-    sv--
-    sv-->>be_ctrl--: throw InvalidOperationException
-    be_ctrl-->>fe_ctrl--: Return statusCode 400 (BadRequest)
-    fe_ctrl-->>view--: Return statusCode 400
-    view-->>act--: Display submission failure error message
+
+    alt ApprovalStatus == "Pending" or "Approved"
+        fe_ctrl -->> status_view++: Return statusCode 302
+        status_view -->> act--: Display Application Status
+    else ApprovalStatus == "Rejected"
+        fe_ctrl -> be_ctrl++: GET /api/instructor/apply-info
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+        fe_ctrl -> view_model++: Call InstructorApplyViewModel(IsResubmit=true)
+        view_model -->> fe_ctrl--: Return InstructorApplyViewModel object
+        
+        fe_ctrl -> fe_ctrl++: Pre-fill ViewModel (IsResubmit = true)
+        fe_ctrl--
+        
+        fe_ctrl -> fe_ctrl++: Load auxiliary dependencies (Profile, Countries, Categories)
+        fe_ctrl--
+
+        fe_ctrl -->> view++: Return statusCode 200
+        view -->> act--: Display instructor application form
+    else ApprovalStatus == null
+        fe_ctrl -> fe_ctrl++: Load auxiliary dependencies (Profile, Countries, Categories)
+        fe_ctrl--
+
+        fe_ctrl -> view_model++: Call InstructorApplyViewModel()
+        view_model -->> fe_ctrl--: Return InstructorApplyViewModel object
+
+        fe_ctrl -->> view--: Return statusCode 200
+        activate view
+        view -->> act--: Display instructor application form
+    end
 end
+
+act -> view++: Fill professional details, Stripe country, and upload document(s)
+act -> view: Click "Submit Application"
+view -> fe_ctrl++: POST /Instructor/Apply (FormData)
+
+fe_ctrl -> fe_ctrl++: Validate ModelState and file constraints
+fe_ctrl--
+
+alt Invalid Form Data
+    fe_ctrl -->> view: Return statusCode 400
+    view -->> act: Display validation errors inline
+else Valid Form Data
+    fe_ctrl -> be_ctrl++: POST /api/instructor/apply (FormData)
+    
+    be_ctrl -> sv++: SubmitApplicationAsync(userId, request)
+    
+    sv -> user_repo++: GetAccountByIdAsync(userId)
+    user_repo -->> sv--: Return Account entity
+    
+    sv -> sv++: Validate account verification and documents
+    sv--
+    
+    alt Account Not Verified or Missing Documents
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return statusCode 400
+        view -->> act: Display error message
+    else Account Verified and Documents Valid
+        sv -> repo++: GetByIdAsync(userId)
+        repo -->> sv--: Return Instructor entity
+        
+        sv -> upload++: UploadImageAsync(file)
+        upload -->> sv--: Return document URL
+        
+        sv -> sv++: Check if application already exists
+        sv--
+        
+        alt Resubmitting a Rejected Application
+            sv -> sv++: Update existing application properties (ApprovalStatus = Pending)
+            sv--
+        else New Application
+            sv -> ett++: Call Instructor()
+            ett -->> sv--: Return Instructor object
+            sv -> repo++: AddAsync(instructor)
+            repo -->> sv--: Return result
+        end
+        
+        sv -> repo++: SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Execute INSERT / UPDATE
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> sv++: Check numberOfRowsAffected
+        sv--
+        
+        alt Database Save Failure (numberOfRowsAffected = 0)
+            sv -->> be_ctrl: throw InvalidOperationException
+            sv--
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            be_ctrl--
+            fe_ctrl -->> view: Return statusCode 500
+            fe_ctrl--
+            view -->> act: Display error message
+            view--
+        else Database Save Success (numberOfRowsAffected > 0)
+            sv -->> be_ctrl--: Return success message
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> status_view++: Return statusCode 302
+            fe_ctrl--
+            deactivate view
+            status_view -->> act--: Display "Your application has been submitted successfully!"
+        end
+    end
+end
+
 @enduml

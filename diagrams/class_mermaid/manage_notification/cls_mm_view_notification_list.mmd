@@ -30,6 +30,7 @@ class NotificationViewModel {
 class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
+    
     + GetAllNotifications(page: int, pageSize: int) Task~IActionResult~
 }
 
@@ -49,6 +50,12 @@ class NotificationAdminResponseDto {
     + SenderId : int?
     + SenderRole : string?
     + LinkAction : string?
+}
+
+class PagedResultNotificationAdminResponseDto["PagedResult~NotificationAdminResponseDto~"] {
+    <<dto>>
+    + Items : List~NotificationAdminResponseDto~?
+    + TotalCount : int
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -94,6 +101,30 @@ class User {
     + FullName : string
     + Bio : string?
     + DateOfBirth : DateOnly?
+    + UserAddresses : ICollection~UserAddress~
+    + UserPayments : ICollection~UserPayment~
+    + Account : Account
+    + Instructor : Instructor?
+}
+
+class Instructor {
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + Courses : ICollection~Course~
+    + InstructorPayouts : ICollection~InstructorPayout~
+    + InstructorNavigation : User
 }
 
 class Manager {
@@ -104,6 +135,8 @@ class Manager {
     + PhoneNumber : string?
     + AvatarUrl : string?
     + Bio : string?
+    + Account : Account
+    + Coupons : ICollection~Coupon~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -125,13 +158,17 @@ class INotificationRepository {
 
 class NotificationService {
     - _repo : INotificationRepository
+    
     + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~
+    - MapToAdminResponseDtos(notifications: IEnumerable~Notification~) List~NotificationAdminResponseDto~
+    - GetAccountRole(account: Account?, defaultRole: string) string
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
     - _context : AppDbContext
+    
     + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
     + AutoCleanupAdminNotificationsAsync() Task~int~
 }
@@ -143,6 +180,9 @@ class AppDbContext {
     + Users : DbSet~User~
     + Managers : DbSet~Manager~
     + Notifications : DbSet~Notification~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -150,7 +190,13 @@ class AppDbContext {
 %% === COMPOSITION (filled diamond) ===
 Account *-- User
 Account *-- Manager
-Account *-- Notification
+User *-- Instructor
+
+%% === BIDIRECTIONAL ASSOCIATION (solid line) ===
+Account -- Notification
+
+%% === AGGREGATION (hollow diamond) ===
+PagedResultNotificationAdminResponseDto o-- NotificationAdminResponseDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendController --> INotificationService
@@ -164,10 +210,29 @@ NotificationRepository ..|> INotificationRepository
 %% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
 FrontendController ..> NotificationViewModel
-BackendController ..> NotificationAdminResponseDto
+BackendController ..> PagedResultNotificationAdminResponseDto
+NotificationService ..> PagedResultNotificationAdminResponseDto
 NotificationService ..> NotificationAdminResponseDto
+NotificationService ..> Account
 NotificationRepository ..> Notification
 
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+
+%% ==================== LINKS ====================
+click FrontendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Controllers/NotificationController.cs" "NotificationController.cs"
+click NotificationViewModel href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/NotificationViewModel.cs" "NotificationViewModel.cs"
+click BackendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/NotificationController.cs" "NotificationController.cs"
+click NotificationAdminResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/NotificationAdminResponseDto.cs" "NotificationAdminResponseDto.cs"
+click PagedResultNotificationAdminResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/Common/PagedResult.cs" "PagedResult.cs"
+click Notification href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Notification.cs" "Notification.cs"
+click Account href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Account.cs" "Account.cs"
+click User href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/User.cs" "User.cs"
+click Instructor href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Instructor.cs" "Instructor.cs"
+click Manager href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Manager.cs" "Manager.cs"
+click INotificationService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/INotificationService.cs" "INotificationService.cs"
+click INotificationRepository href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/INotificationRepository.cs" "INotificationRepository.cs"
+click NotificationService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/NotificationService.cs" "NotificationService.cs"
+click NotificationRepository href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/NotificationRepository.cs" "NotificationRepository.cs"
+click AppDbContext href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Data/AppDbContext.cs" "AppDbContext.cs"

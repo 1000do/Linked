@@ -1,0 +1,203 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Checkout
+
+actor User as act
+participant "CartPage" as cart_view
+participant "CheckoutPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "MyCoursesPage" as my_courses_view
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":ICheckoutService" as sv
+participant ":IPaymentGatewayService" as gateway
+participant "Stripe API" as stripe_api <<external>>
+participant ":ICheckoutRepository" as repo
+participant ":CheckoutResponse" as dto
+participant ":CartSummaryResponse" as summary_dto
+participant ":UserProfile" as profile_dto
+participant ":CheckoutViewModel" as vm
+participant ":OrderInfo" as order_ent
+participant ":OrderItem" as orderitem_ent
+participant ":Transaction" as trans_ent
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> cart_view ++: Click "Checkout" button
+cart_view -> fe_ctrl ++: GET /Cart/Checkout
+
+fe_ctrl -> fe_ctrl ++: Validate actor's authentication and authorization
+fe_ctrl --
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act --: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --: Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> be_ctrl ++: GET /api/cart/summary?couponCode={codes}
+    be_ctrl -->> fe_ctrl --: Return statusCode 200 (CartSummaryResponse)
+    fe_ctrl -> summary_dto ++: Call CartSummaryResponse()
+    summary_dto -->> fe_ctrl --: Return CartSummaryResponse object
+    
+    fe_ctrl -> be_ctrl ++: GET /api/Profile
+    be_ctrl -->> fe_ctrl --: Return statusCode 200 (UserProfile)
+    fe_ctrl -> profile_dto ++: Call UserProfile()
+    profile_dto -->> fe_ctrl --: Return UserProfile object
+    
+    fe_ctrl -> fe_ctrl ++: Check cart is not empty
+    fe_ctrl --
+    
+    alt Cart is empty
+        fe_ctrl -->> cart_view : Return JSON (success = false)
+        
+        cart_view -->> act: Display empty cart error message
+        
+    else Cart has items
+        fe_ctrl -> vm ++: Call CheckoutViewModel()
+        vm -->> fe_ctrl --: Return CheckoutViewModel object
+        fe_ctrl -->> view --: Return View(CheckoutViewModel)
+        activate view
+        view -->> act--: Display CheckoutPage
+        
+        act -> view++: Fill in Card details and click "Pay Securely" button
+        
+        view -> view ++: Validate form inputs
+        view --
+        
+        opt Invalid form input
+          view -->> act: Display invalid form input message
+        end
+        
+        view -> fe_ctrl ++: POST /Cart/CreatePaymentIntentAjax
+        
+        fe_ctrl -> be_ctrl ++: POST /api/checkout/create-intent
+            
+            be_ctrl -> sv ++: Call InitiatePaymentIntentAsync(userId, couponCode)
+            
+            sv -> repo ++: Call GetCartItemsWithCourseAndInstructorAsync(userId)
+            repo -> ctx ++: Query CartItems
+            ctx -> db ++: Execute SELECT
+            db -->> ctx --: Return database records
+            ctx -->> repo --: Return data
+            repo -->> sv --: Return CartItems list
+            
+            sv -> sv ++: Validate cart items and eligible coupons
+            sv --
+            
+            sv -> sv ++: Calculate total amount and apply discounts
+            sv --
+            
+            sv -> gateway ++: Call CreatePaymentIntentAsync(totalAmount, currency, metadata)
+            gateway -->> sv --: Return (clientSecret, paymentIntentId)
+            
+            sv -> dto ++: Call CheckoutResponse()
+            dto -->> sv --: Return CheckoutResponse object
+            
+            sv -->> be_ctrl --: Return CheckoutResponse DTO
+            
+            be_ctrl -->> fe_ctrl --: Return statusCode 200 (JSON)
+            fe_ctrl -->> view --: Return JSON with clientSecret
+        
+        view -> stripe_api ++: stripe.confirmCardPayment(clientSecret, cardDetails)
+        stripe_api -->> view --: Return payment result
+        
+        alt Payment declined
+            view -->> act: Display payment error message
+        else Payment Successful
+            view -> fe_ctrl ++: GET /Cart/CheckoutSuccess?payment_intent_id={id}
+            
+            fe_ctrl -> be_ctrl ++: GET /api/checkout/success-intent?payment_intent_id={id}
+            
+            be_ctrl -> sv ++: Call ProcessPaymentIntentSuccessAsync(paymentIntentId)
+                    
+                    sv -> sv ++: Check IsTransactionAlreadyProcessedAsync()
+                    sv --
+                    
+                    sv -> gateway ++: Call GetPaymentIntentMetadataAsync(paymentIntentId)
+                    gateway -->> sv --: Return metadata dictionary
+                    
+                    sv -> sv ++: Call ProcessSuccessfulPaymentCoreAsync()
+                    
+                    sv -> sv ++: Call CreateEntitiesAsync
+                    
+                    sv -> order_ent ++: Call OrderInfo()
+                    order_ent -->> sv --: Return OrderInfo object
+                    
+                    sv -> orderitem_ent ++: Call OrderItem()
+                    orderitem_ent -->> sv --: Return OrderItem object
+                    
+                    sv -> trans_ent ++: Call Transaction()
+                    trans_ent -->> sv --: Return Transaction object
+                    
+                    sv -> sv ++: Call AddEntitiesToContext(order, orderItem, transaction)
+                    sv --
+                    
+                    sv -> sv ++: Call ClearCartItemsFromContext(userId)
+                    sv --
+                    
+                    sv -> repo ++: SaveChangesAsync()
+                    repo -> ctx ++: SaveChangesAsync()
+                    ctx -> db ++: Save changes to database
+                    db -->> ctx --: Return numberOfRowsAffected
+                    ctx -->> repo --: Return numberOfRowsAffected
+                    repo -->> sv --: Return numberOfRowsAffected
+                    
+                    sv --
+                    
+                    sv --
+                    
+                    alt Database Transaction Failure
+                        sv -->> be_ctrl : throw Exception
+                        be_ctrl -->> fe_ctrl : Return statusCode 500
+                        fe_ctrl -->> cart_view : Redirect to CartPage (with error message)
+                        cart_view -->> act --: Display payment processing error
+                    else Transaction Committed Successfully
+                        sv -->> be_ctrl --: Return Task completed
+                        be_ctrl -->> fe_ctrl --: Return statusCode 200
+                        
+                        fe_ctrl -> fe_ctrl ++: Delete coupon cookie
+                        fe_ctrl --
+                        
+                        fe_ctrl -->> view --: Return Redirect to /Course/MyCourses
+                        view -->> my_courses_view: Redirect to My Courses page
+                        deactivate view
+                        activate my_courses_view
+                        my_courses_view -->> act --: Display "Payment successful" message
+                    end
+        end
+    end
+end
+@enduml

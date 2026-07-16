@@ -2,6 +2,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -36,7 +37,9 @@ public class TransactionController : ControllerBase
     /// <summary>
     /// UC-115: Lấy danh sách tất cả giao dịch, hỗ trợ phân trang.
     /// </summary>
+    // UC-130: View TX System, UC-131: Search, UC-132: Filter, UC-133: Sort — Chỉ Admin
     [HttpGet]
+    [CustomAuthorize(requireAuth: true, "admin")]
     public async Task<IActionResult> GetTransactions(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -65,7 +68,9 @@ public class TransactionController : ControllerBase
     /// UC-114: Lấy biên lai chi tiết 1 giao dịch theo ID nội bộ.
     /// Trả về phân bổ tài chính: GrossAmount → PlatformProfit + InstructorPayout.
     /// </summary>
+    // UC-129: View Transaction Detail (For System) — Admin và Instructor (xem giao dịch liên quan tới mình)
     [HttpGet("{id:int}")]
+    [CustomAuthorize(requireAuth: true, "admin", "instructor", "user")]
     public async Task<IActionResult> GetTransactionDetail(int id)
     {
         try
@@ -90,7 +95,9 @@ public class TransactionController : ControllerBase
     // GET /api/transactions/instructor?page=1&pageSize=20
     // Lấy danh sách giao dịch cho Giảng viên (Dùng token để xác định ID)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-67: View Instructor TX, UC-69: Sort, UC-70: Filter — Chỉ Instructor
     [HttpGet("instructor")]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> GetInstructorTransactions(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -119,7 +126,9 @@ public class TransactionController : ControllerBase
     // GET /api/transactions/instructor/course-revenues
     // Lấy doanh thu khóa học chi tiết của giảng viên
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-74: View Instructor's Course Revenue — Chỉ Instructor
     [HttpGet("instructor/course-revenues")]
+    [CustomAuthorize(requireAuth: true, "instructor")]
     public async Task<IActionResult> GetInstructorCourseRevenues([FromQuery] int year, [FromQuery] int month)
     {
         try
@@ -141,7 +150,9 @@ public class TransactionController : ControllerBase
     // GET /api/transactions/my?page=1&pageSize=20
     // Lấy danh sách giao dịch cho Người mua (Dùng token để xác định ID)
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-39: View Transaction List, UC-40: Search — User và Instructor xem lịch sử của mình
     [HttpGet("my")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GetMyTransactions(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -168,7 +179,9 @@ public class TransactionController : ControllerBase
     // POST /api/transactions/{transactionId}/request-refund
     // Học viên gửi yêu cầu hoàn tiền
     // ═══════════════════════════════════════════════════════════════════════
+    // UC-41: Request Refund — User và Instructor gửi yêu cầu hoàn tiền
     [HttpPost("{transactionId:int}/request-refund")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> RequestRefund(int transactionId, [FromBody] StudentRefundRequest request)
     {
         try

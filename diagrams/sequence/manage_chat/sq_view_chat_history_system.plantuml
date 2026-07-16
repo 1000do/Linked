@@ -30,6 +30,8 @@ mainframe View Chat History (System)
 
 actor Staff as act
 participant "ChatIndexPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant ":ChatService" as sv
@@ -46,10 +48,23 @@ act->view++: Click on a chat room card
 view->view++: selectChat(chatId, name, avatar, isOnline)
 view--
 
-view->fe_ctrl++: Send GET /Chat/GetHistory?roomId={chatId}
-fe_ctrl->be_ctrl++: Send GET /api/Chat/history?roomId={chatId} (with Bearer Token)
+view->fe_ctrl++: GET /Chat/GetHistory?roomId={chatId}
 
-be_ctrl->sv++: Call GetChatHistoryAsync(chatId, accountId)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++: GET /api/Chat/history?roomId={chatId}
+    
+    be_ctrl->sv++: Call GetChatHistoryAsync(chatId, accountId)
 
 sv->sv++: Call HasAccessToChatAsync(accountId, chatId)
 sv->repo++: Call IsParticipantAsync(chatId, accountId)
@@ -60,7 +75,7 @@ db-->>ctx--: Return isParticipant
 ctx-->>repo--: Return isParticipant
 repo-->>sv--: Return isParticipant
 
-alt [isParticipant == false]
+alt isParticipant == false
     sv->user_repo++: Call GetRoleByAccountIdAsync(accountId)
     user_repo->ctx++: Call GetRoleByAccountIdAsync(accountId)
     ctx->db++: Execute SELECT query
@@ -69,7 +84,7 @@ alt [isParticipant == false]
     ctx-->>user_repo--: Return role
     user_repo-->>sv--: Return role
     
-    alt [role == "admin" || role == "staff"]
+    alt role == "admin" || role == "staff"
         sv->repo++: Call HasActiveReportForChatAsync(chatId)
         repo->ctx++: Call HasActiveReportForChatAsync(chatId)
         ctx->db++: Execute SELECT query
@@ -82,12 +97,12 @@ end
 
 sv-->>sv--: Return hasAccess
 
-alt [hasAccess == false]
+alt hasAccess == false
     sv-->>be_ctrl: Throw UnauthorizedAccessException
     be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
     fe_ctrl-->>view: Return statusCode 403 (Forbidden)
     view-->>act: Display permission error message
-else [hasAccess == true]
+else hasAccess == true
     sv->sv++: Call MarkChatAsReadAsync(chatId, accountId)
     sv->repo++: Call MarkAsReadAsync(chatId, accountId)
     repo->ctx++: Call MarkAsReadAsync(chatId, accountId)
@@ -98,7 +113,7 @@ else [hasAccess == true]
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes (Execute UPDATE statement)
     
-    alt [Database Save Fails (throws DbUpdateException)]
+    alt Database Save Failure
         db-->>ctx: Throw DbUpdateException
         ctx-->>repo: Throw DbUpdateException
         repo-->>sv: Throw DbUpdateException
@@ -106,7 +121,7 @@ else [hasAccess == true]
         be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
         fe_ctrl-->>view: Return JSON error
         view-->>act: Display database error message
-    else [Database Save Succeeds]
+    else Database Save Success
         db-->>ctx--: Return result
         ctx-->>repo--: Return result
         repo-->>sv--: Return result
@@ -151,6 +166,7 @@ else [hasAccess == true]
         
         view-->>act--: Display chat messages in panel
     end
+end
 end
 
 @enduml

@@ -30,42 +30,41 @@ mainframe View Notification List (Staff/Admin)
 
 actor Admin as act
 participant "NotificationManagementPage" as view
-participant "ErrorPage" as error_page
 participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
+participant "NotificationHub" as hub
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":INotificationService" as sv
-participant ":NotificationAdminResponseDto" as notif_admin_dto
 participant ":INotificationRepository" as repo
+participant ":NotificationAdminResponseDto" as notif_admin_dto
 participant ":AppDbContext" as ctx
 database Database as db
-participant "NotificationHub" as hub
 
 act++
 act->view++: Access System Notifications page
-view->fe_ctrl++: Send GET /Notification/Admin
+view->fe_ctrl++: GET /Notification/Admin
 fe_ctrl-->>view--: Return Admin View
 
-view->view++: Validate Access Token
-view--
-group opt [Token is missing or expired]
-    view -->> login_view: Redirect to Login page
-    activate login_view
-    login_view -->> act: Display Login page
-    deactivate login_view
-end
-
-view->hub++: Start SignalR connection to /notificationHub (with AccessToken)
+view->hub++: Start SignalR connection to /notificationHub
 hub-->>view: Connection established successfully
 
-view->fe_ctrl++: Send GET /Notification/GetAllAdmin
-fe_ctrl->be_ctrl++: Send GET /api/Notification/all (with Bearer Token)
+view->fe_ctrl++: GET /Notification/GetAllAdmin
 
-alt [Unauthorized role]
-    be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-    fe_ctrl-->>error_page++: Redirect to ErrorPage
-    error_page-->>act--: Display Access Denied message
-else [Authorized Admin/Staff]
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page: Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++: GET /api/Notification/all
+    
     be_ctrl->sv++: Call GetAllNotificationsForAdminAsync()
     
     sv->repo++: Call AutoCleanupAdminNotificationsAsync()
@@ -74,15 +73,15 @@ else [Authorized Admin/Staff]
     db-->>ctx--: Return old notifications list
     ctx-->>repo--: Return old notifications list
     
-    opt [Old notifications exist]
+    opt Old notifications exist
         repo->ctx++: Mark IsRemoved = true for old notifications
         ctx-->>repo--: Return
         repo->ctx++: Call SaveChangesAsync()
-        ctx->db++: Execute UPDATE statement
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return result
+        ctx->db++: Save changes to database (Execute UPDATE)
+        db-->>ctx--: Return numberOfRowsAffected
+        ctx-->>repo--: Return numberOfRowsAffected
     end
-    repo-->>sv--: Return
+    repo-->>sv--: Return result
     
     sv->repo++: Call GetAllAsync()
     repo->ctx++: Query active notifications
@@ -92,8 +91,8 @@ else [Authorized Admin/Staff]
     repo-->>sv--: Return active notifications list
     
     sv->notif_admin_dto++: Call NotificationAdminResponseDto()
-    
     notif_admin_dto-->>sv--: Return NotificationAdminResponseDto list
+    
     sv-->>be_ctrl--: Return PagedResult<NotificationAdminResponseDto>
     be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
     fe_ctrl-->>view--: Return JSON notifications list

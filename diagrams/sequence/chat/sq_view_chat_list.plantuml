@@ -31,6 +31,7 @@ mainframe View Chat List
 actor User as act
 participant "ChatIndexPage" as view
 participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
 participant ":IChatService" as sv
@@ -44,27 +45,34 @@ act++
 act->view++: Access Chat page
 view->fe_ctrl++: Send GET /Chat/Index
 
-alt [AccessToken cookie is missing]
+alt AccessToken cookie is missing
     fe_ctrl-->>view: Return statusCode 302 (Redirect)
     view->login_view++: Redirect to Login page
     deactivate view
     login_view-->>act--: Display Login page
-else [AccessToken cookie exists]
+else AccessToken cookie exists
     fe_ctrl-->>view--: Return View
     activate view
     
     view->view++: loadChats()
     view--
     
-    view->fe_ctrl++: Send GET /Chat/GetList
-    fe_ctrl->be_ctrl++: Send GET /api/chat/list (with Bearer Token)
+    view->fe_ctrl++: GET /Chat/GetList
     
-    alt [Token is invalid or expired]
-        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-        fe_ctrl-->>view: Return Unauthorized
-        view->login_view++: Redirect to Login page
-        login_view-->>act--: Display Login page
-    else [Token is valid]
+    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+    fe_ctrl--
+    
+    alt Session Invalid
+        fe_ctrl -->> login_view: Redirect to LoginPage
+        activate login_view
+        login_view -->> act--: Display login form
+    else Unauthorized Access
+        fe_ctrl -->> error_page: Redirect to ErrorPage
+        activate error_page
+        error_page -->> act--: Display error message
+    else Valid actor's authentication and authorization
+        fe_ctrl->be_ctrl++: GET /api/chat/list
+        
         be_ctrl->sv++: Call GetMyChatsAsync(accountId)
         
         sv->repo++: Call GetParticipantsByAccountIdAsync(accountId)
@@ -97,5 +105,6 @@ else [AccessToken cookie exists]
         view-->>act--: Display conversation list with online statuses and unread counts
     end
 end
+
 
 @enduml

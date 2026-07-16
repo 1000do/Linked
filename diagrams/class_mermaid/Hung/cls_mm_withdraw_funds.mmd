@@ -1,0 +1,109 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND - CONTROLLER ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    + Withdraw(amount: decimal?, description: string?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class AdminFinanceControllerBE["AdminFinanceController"] {
+    <<backend controller>>
+    - _financeService : IAdminFinanceService
+    + Withdraw(request: WithdrawRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IAdminFinanceService {
+    <<interface>>
+    + CreateWithdrawalAsync(request: WithdrawRequest, managerId: int) Task~WithdrawResponse~ *
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~ *
+}
+
+class IStripeConnectService {
+    <<interface>>
+    + GetPlatformBalanceAsync() Task~StripePlatformBalanceDto~ *
+    + CreatePlatformWithdrawalAsync(amount: decimal, description: string, managerId: int) Task~StripeWithdrawalResponseDto~ *
+}
+
+class IAdminFinanceRepository {
+    <<interface>>
+    + AddWithdrawalAsync(withdrawal: PlatformWithdrawal) Task~int~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - SERVICE/REPO IMPLEMENTATIONS ====================
+
+class AdminFinanceService {
+    - _repo : IAdminFinanceRepository
+    - _paymentGateway : IPaymentGatewayService
+    - _instructorRepo : IInstructorRepository
+    - _notiService : INotificationService
+    - _hubContext : IHubContext~FinanceHub~
+    - _logger : ILogger~AdminFinanceService~
+    - _configRepo : ISystemConfigRepository
+    - _courseRepo : ICourseRepository
+    - _stripeConnect : IStripeConnectService
+    - _giftRepo : IGiftRepository
+    + CreateWithdrawalAsync(request: WithdrawRequest, managerId: int) Task~WithdrawResponse~
+    + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
+}
+
+class StripeConnectService {
+    - _configuration : IConfiguration
+    + GetPlatformBalanceAsync() Task~StripePlatformBalanceDto~
+    + CreatePlatformWithdrawalAsync(amount: decimal, description: string, managerId: int) Task~StripeWithdrawalResponseDto~
+}
+
+class AdminFinanceRepository {
+    - _context : AppDbContext
+    + AddWithdrawalAsync(withdrawal: PlatformWithdrawal) Task~int~
+    + SaveChangesAsync() Task~int~
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    + PlatformWithdrawals : DbSet~PlatformWithdrawal~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class PlatformWithdrawal {
+    <<entity>>
+    + WithdrawalId : int
+    + ManagerId : int?
+    + Amount : decimal
+    + Currency : string
+    + StripePayoutId : string?
+    + Status : string
+    + Description : string?
+    + CreatedAt : DateTime
+    + ArrivedAt : DateTime?
+    + Manager : Manager?
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === ASSOCIATION (solid arrow) ===
+AdminFinanceControllerBE --> IAdminFinanceService
+AdminFinanceService --> IStripeConnectService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceRepository --> AppDbContext
+
+%% === REALIZATION (hollow arrow) ===
+AdminFinanceService ..|> IAdminFinanceService
+StripeConnectService ..|> IStripeConnectService
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+%% === DEPENDENCY (dashed arrow) ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
+AdminFinanceRepository ..> PlatformWithdrawal
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

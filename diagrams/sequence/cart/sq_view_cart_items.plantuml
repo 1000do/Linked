@@ -31,6 +31,7 @@ mainframe View Cart Items
 actor User as act
 participant "CartIndexPage" as view
 participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
 participant ":ICartService" as sv
@@ -42,24 +43,25 @@ database Database as db
 
 act++
 act->view++: Access Shopping Cart page
-view->fe_ctrl++: Send GET /Cart
-
-alt [AccessToken cookie is missing]
-    fe_ctrl-->>login_view: Redirect to Login page
-    activate login_view
-    login_view-->>act--: Display Login page
-else [AccessToken cookie exists]
-    fe_ctrl->fe_ctrl++: Get couponMap from cart_coupon cookie
+    view->fe_ctrl++: GET /Cart
+    
+    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
     fe_ctrl--
     
-    fe_ctrl->be_ctrl++: Send GET /api/cart/summary?couponCode={couponCode} (with Bearer Token)
-    
-    alt [Token is invalid or expired]
-        be_ctrl-->>fe_ctrl: Return statusCode 401 (Unauthorized)
-        fe_ctrl-->>login_view: Redirect to Login page
+    alt Session Invalid
+        fe_ctrl -->> login_view: Redirect to LoginPage
         activate login_view
-        login_view-->>act--: Display Login page
-    else [Token is valid]
+        login_view -->> act--: Display login form
+    else Unauthorized Access
+        fe_ctrl -->> error_page: Redirect to ErrorPage
+        activate error_page
+        error_page -->> act--: Display error message
+    else Valid actor's authentication and authorization
+        fe_ctrl->fe_ctrl++: Get couponMap from cart_coupon cookie
+        fe_ctrl--
+        
+        fe_ctrl->be_ctrl++: GET /api/cart/summary?couponCode={couponCode}
+        
         be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
         
         sv->repo++: Call GetCartItemsWithDetailsAsync(userId)
@@ -70,7 +72,7 @@ else [AccessToken cookie exists]
         ctx-->>repo--: Return List<CartItem>
         repo-->>sv--: Return List<CartItem>
         
-        opt [couponCode is provided]
+        opt couponCode is provided
             loop for each couponCode in list
                 sv->couponRepo++: Call GetByCodeAsync(code)
                 couponRepo->ctx++: Call GetByCodeAsync(code)
@@ -79,12 +81,12 @@ else [AccessToken cookie exists]
                 ctx-->>couponRepo--: Return Coupon
                 couponRepo-->>sv--: Return Coupon
                 
-                alt [coupon is null OR inactive OR expired/limit reached]
+                alt coupon is null OR inactive OR expired/limit reached
                     sv-->>be_ctrl: throw InvalidOperationException
                     be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
                     fe_ctrl-->>view: Return statusCode 400 (BadRequest)
                     view-->>act: Display coupon error message
-                else [coupon is valid]
+                else coupon is valid
                     sv->sv++: Calculate eligibleSubTotal & discountAmount
                     sv--
                 end
@@ -110,6 +112,5 @@ else [AccessToken cookie exists]
         fe_ctrl-->>view--: Return statusCode 200 (View)
         view-->>act--: Display cart items list, pricing summary, and available coupons
     end
-end
 
 @enduml

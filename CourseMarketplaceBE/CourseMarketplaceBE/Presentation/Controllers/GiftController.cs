@@ -5,6 +5,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -13,10 +14,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class GiftController : ControllerBase
 {
     private readonly IGiftService _giftService;
+    private readonly ICourseQueryService _courseQueryService;
 
-    public GiftController(IGiftService giftService)
+    public GiftController(IGiftService giftService, ICourseQueryService courseQueryService)
     {
         _giftService = giftService;
+        _courseQueryService = courseQueryService;
     }
 
     private int? GetUserId()
@@ -25,7 +28,9 @@ public class GiftController : ControllerBase
         return int.TryParse(str, out int id) ? id : null;
     }
 
+    // UC-19: Validate gift token — public, không cần auth (người nhận check trước khi login)
     [HttpGet("validate/{token}")]
+    [AllowAnonymous]
     public async Task<IActionResult> ValidateGiftToken(string token)
     {
         try
@@ -43,8 +48,9 @@ public class GiftController : ControllerBase
         }
     }
 
+    // UC-19: Receive a Gift — User hoặc Instructor đã đăng nhập mới được claim
     [HttpPost("claim")]
-    [Authorize]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> ClaimGift([FromBody] GiftClaimRequest request)
     {
         var userId = GetUserId();
@@ -69,7 +75,9 @@ public class GiftController : ControllerBase
         }
     }
 
+    // UC-17: Gift Courses — Người tặng (user/instructor) kiểm tra người nhận trước khi tặng
     [HttpGet("check-recipient")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> CheckRecipientEnrollment([FromQuery] string email, [FromQuery] int courseId)
     {
         if (string.IsNullOrWhiteSpace(email))
@@ -83,6 +91,32 @@ public class GiftController : ControllerBase
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+    }
+
+    // UC-17/19: Lấy thông tin khóa học để hiển thị trang Gift/Claim — cần đăng nhập
+    [HttpGet("course/{id}")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
+    public async Task<IActionResult> GetCourseDetails(int id)
+    {
+        try
+        {
+            var userId = GetUserId();
+            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var course = await _courseQueryService.GetCourseWithDetailsAsync(id, userId, role);
+            return Ok(ApiResponse<object>.SuccessResponse(course, "Retrieved course successfully."));
+        }
+        catch (System.Collections.Generic.KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
         }
     }
 }

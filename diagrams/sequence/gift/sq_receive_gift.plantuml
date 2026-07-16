@@ -1,0 +1,178 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Receive Gift
+
+actor User as act
+participant "ClaimPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "GiftController" as fe_ctrl <<frontend controller>>
+participant "GiftController" as be_ctrl <<backend controller>>
+participant ":IGiftService" as sv
+participant ":Enrollment" as enrollment
+participant ":IGiftRepository" as gift_repo
+participant ":ICourseRepository" as course_repo
+participant ":IEnrollmentRepository" as enroll_repo
+participant ":ITransactionRepository" as transaction_repo
+database Database as db
+
+act ++
+act -> view++: Click "Claim Gift" button
+view -> fe_ctrl++: POST /Gift/ClaimGiftAjax
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> be_ctrl++: POST /api/gift/claim
+    
+    be_ctrl -> be_ctrl++: Validate ModelState
+    be_ctrl--
+    
+    opt Invalid ModelState
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return Json(success=false)
+        view -->> act: Display error message
+    end
+    
+    be_ctrl -> sv++: ClaimGiftAsync(userId, token)
+            
+            sv -> gift_repo++: GetByTokenAsync(token)
+            gift_repo -> db++: Execute query
+            db -->> gift_repo--: Return result
+            gift_repo -->> sv--: Return Gift object
+            
+            sv -> sv++: Validate gift and token
+            sv--
+            
+            alt Gift not found or token invalid
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return Json(success=false)
+                view -->> act: Display error message
+            else Gift already claimed or refunded
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return Json(success=false)
+                view -->> act: Display error message
+            else Valid gift
+                
+                sv -> course_repo++: GetByIdAsync(courseId)
+                course_repo -> db++: Execute query
+                db -->> course_repo--: Return result
+                course_repo -->> sv--: Return Course object
+                
+                sv -> sv++: Validate course
+                sv--
+                
+                alt Course not found
+                    sv -->> be_ctrl: throw InvalidOperationException
+                    be_ctrl -->> fe_ctrl: Return statusCode 400
+                    fe_ctrl -->> view: Return Json(success=false)
+                    view -->> act: Display error message
+                else Course found
+                    
+                    sv -> enroll_repo++: GetEnrollmentAsync(userId, courseId)
+                    enroll_repo -> db++: Execute query
+                    db -->> enroll_repo--: Return result
+                    enroll_repo -->> sv--: Return Enrollment object
+                    
+                    sv -> sv++: Check enrollment status
+                    sv--
+                    
+                    alt Recipient already enrolled
+                        sv -->> be_ctrl: throw InvalidOperationException
+                        be_ctrl -->> fe_ctrl: Return statusCode 400
+                        fe_ctrl -->> view: Return Json(success=false)
+                        view -->> act: Display error message
+                    else Recipient not enrolled
+                        
+                        sv -> enroll_repo++: BeginTransactionAsync()
+                        enroll_repo -> db++: Execute query
+                        db -->> enroll_repo--: Return result
+                        enroll_repo -->> sv--: Return result
+                        
+                        sv -> sv++: CreateEnrollmentWithinTransactionAsync(userId, course)
+                        
+                        sv -> enrollment++: Call Enrollment()
+                        enrollment -->> sv--: Return Enrollment object
+                        
+                        sv -> enroll_repo++: AddEnrollmentAsync(enrollment)
+                        enroll_repo -> db++: Execute query
+                        db -->> enroll_repo--: Return result
+                        enroll_repo -->> sv--: Return result
+                        
+                        sv -> enroll_repo++: SaveChangesAsync()
+                        enroll_repo -> db++: Save changes to database
+                        db -->> enroll_repo--: Return result
+                        enroll_repo -->> sv--: Return result
+                        sv--
+                        
+                        sv -> sv++: MarkGiftAsClaimedWithinTransactionAsync(gift, userId)
+                        sv -> gift_repo++: Update(gift)
+                        gift_repo -->> sv--: Return result
+                        
+                        sv -> gift_repo++: SaveChangesAsync()
+                        gift_repo -> db++: Save changes to database
+                        db -->> gift_repo--: Return result
+                        gift_repo -->> sv--: Return result
+                        sv--
+                        
+                        sv -> transaction_repo++: RejectPendingRefundForGiftClaimedAsync(orderItemId)
+                        transaction_repo -> db++: Execute query
+                        db -->> transaction_repo--: Return result
+                        transaction_repo -->> sv--: Return result (rejected boolean)
+                        
+                        sv -> enroll_repo++: Commit transaction
+                        enroll_repo -> db++: Execute query
+                        db -->> enroll_repo--: Return result
+                        enroll_repo -->> sv--: Return result
+                        
+                        opt rejected == true
+                            sv -> sv++: NotifyAdminFinanceOfRefundRejectionAsync()
+                            sv--
+                        end
+                        
+                        sv -->> be_ctrl--: Return result
+                        be_ctrl -->> fe_ctrl--: Return statusCode 200
+                        fe_ctrl -->> view--: Return Json(success=true)
+                        view -->> act--: Display success message
+                    end
+                end
+            end
+        end
+@enduml

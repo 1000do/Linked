@@ -30,6 +30,8 @@ mainframe View Notification Detail (User/Instructor)
 
 actor User as act
 participant "NotificationPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
 participant "NotificationController" as fe_ctrl <<frontend controller>>
 participant "NotificationController" as be_ctrl <<backend controller>>
 participant ":INotificationService" as sv
@@ -44,11 +46,24 @@ view->view++: Populate and display notification modal
 view--
 view-->>act: Display Notification Detail Modal
 
-alt [Notification is unread]
-    view->fe_ctrl++: Send PUT /Notification/MarkAsRead/{id}
-    fe_ctrl->be_ctrl++: Send PUT /api/Notification/mark-as-read/{id} (with Bearer Token)
+alt Notification is unread
+    view->fe_ctrl++: PUT /Notification/MarkAsRead/{id}
     
-    be_ctrl->sv++: Call MarkAsReadAsync(id, userId)
+    fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+    fe_ctrl--
+    
+    alt Session Invalid
+        fe_ctrl -->> login_view: Redirect to LoginPage
+        activate login_view
+        login_view -->> act--: Display login form
+    else Unauthorized Access
+        fe_ctrl -->> error_page: Redirect to ErrorPage
+        activate error_page
+        error_page -->> act--: Display error message
+    else Valid actor's authentication and authorization
+        fe_ctrl->be_ctrl++: PUT /api/Notification/mark-as-read/{id}
+        
+        be_ctrl->sv++: Call MarkAsReadAsync(id, userId)
     sv->repo++: Call GetByIdAsync(id)
     repo->ctx++: Call GetByIdAsync(id)
     ctx->db++: Execute SELECT query
@@ -56,12 +71,12 @@ alt [Notification is unread]
     ctx-->>repo--: Return notification entity
     repo-->>sv--: Return notification entity
     
-    alt [notification == null || notification.ReceiverId != userId]
+    alt notification == null || notification.ReceiverId != userId
         sv-->>be_ctrl: throw KeyNotFoundException
         be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
         fe_ctrl-->>view: Return JSON error response
         view-->>act: Display error message
-    else [notification exists and belongs to user]
+    else notification exists and belongs to user
         sv->repo++: Call Update(noti)
         repo->ctx++: Update notification entity state
         ctx-->>repo--: Return
@@ -71,7 +86,7 @@ alt [Notification is unread]
         repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Execute UPDATE statement
         
-        alt [Database Save Fails (throws DbUpdateException)]
+        alt Database Save Failure
             db-->>ctx: Throw DbUpdateException
             ctx-->>repo: Throw DbUpdateException
             repo-->>sv: Throw NotificationException
@@ -79,7 +94,7 @@ alt [Notification is unread]
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON error response
             view-->>act: Display error message
-        else [Database Save Succeeds]
+        else Database Save Success
             db-->>ctx--: Return result
             ctx-->>repo--: Return result
             repo-->>sv--: Return result
@@ -96,7 +111,8 @@ alt [Notification is unread]
             view-->>act: Update notification UI to show as read
         end
     end
-else [Notification is already read]
+end
+else Notification is already read
     view-->>act--: (No further action)
 end
 
