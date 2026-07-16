@@ -1,6 +1,13 @@
 @startuml 
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -23,6 +30,7 @@
         }
     }
 </style>
+
 
 hide footbox
 mainframe Fetch User Reports

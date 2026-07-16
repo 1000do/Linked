@@ -1,6 +1,13 @@
 @startuml 
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -31,7 +38,6 @@ actor "Staff / Admin" as act
 participant "ReportCenterPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
-participant "HomePage" as home_view
 participant "AdminModerationController" as fe_ctrl <<frontend controller>>
 participant ":ReviewReportDetailViewModel" as view_model <<view model>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
