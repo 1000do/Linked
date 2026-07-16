@@ -197,7 +197,7 @@ namespace CourseMarketplaceFE.Controllers
             return NotFound();
         }
 
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
 
         public async Task<IActionResult> Learn(int id)
         {
@@ -235,7 +235,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> DownloadMaterial(string url, string fileName)
         {
             if (string.IsNullOrEmpty(url)) return BadRequest("URL is missing.");
@@ -267,7 +267,7 @@ namespace CourseMarketplaceFE.Controllers
             }
         }
         [HttpGet]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> GetProgress(int id)
         {
             var response = await _apiClient.GetAsync($"enrollment/progress/{id}");
@@ -281,7 +281,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> UpdateProgress([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("enrollment/progress", body);
@@ -356,7 +356,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Kiểm tra quyền review của user cho khóa học</summary>
         [HttpGet]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> GetReviewEligibility(int id)
         {
             var response = await _apiClient.GetAsync($"review/eligibility/{id}");

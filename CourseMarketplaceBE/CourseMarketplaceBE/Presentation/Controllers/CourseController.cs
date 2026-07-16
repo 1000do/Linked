@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -72,7 +72,7 @@ public class CourseController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Roles = "instructor")]
+    [Authorize(Roles = "instructor,admin,staff")]
     public async Task<IActionResult> GetCourse(int id)
     {
         try
