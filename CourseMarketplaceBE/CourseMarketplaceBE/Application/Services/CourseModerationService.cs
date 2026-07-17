@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Domain.Entities;
@@ -259,41 +260,8 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(request.CourseId);
             if (course == null) return false;
 
-            var courseFeedbackParts = new List<string>();
             var rejectedLessonIds = new HashSet<int>();
             var rejectedMaterialIds = new HashSet<int>();
-
-            course.ModerationFeedback = null;
-            course.FieldModerationFeedbacks.Clear();
-            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
-            if (allMaterials != null)
-            {
-                foreach (var m in allMaterials)
-                {
-                    if (m.LearningStatus != LearningStatus.Removed.ToValue())
-                    {
-                        m.ModerationFeedback = null;
-                        if (m.LearningStatus != LearningStatus.Active.ToValue())
-                        {
-                            m.LearningStatus = LearningStatus.Active.ToValue();
-                        }
-                        _materialRepository.Update(m);
-                    }
-                }
-            }
-
-            var lessons = await _lessonRepository.GetByCourseIdAsync(request.CourseId);
-            if (lessons != null)
-            {
-                foreach (var l in lessons)
-                {
-                    if (l.LessonStatus != LessonStatus.Active.ToValue())
-                    {
-                        l.LessonStatus = LessonStatus.Active.ToValue();
-                        _lessonRepository.Update(l);
-                    }
-                }
-            }
 
             foreach (var item in request.Items)
             {
@@ -317,27 +285,25 @@ namespace CourseMarketplaceBE.Application.Services
                 else if (item.Target == "lesson.title" && item.LessonId.HasValue)
                 {
                     rejectedLessonIds.Add(item.LessonId.Value);
-                    courseFeedbackParts.Add($"[Lesson: {item.LessonTitle ?? $"#{item.LessonId}"}] {item.Reason}");
                 }
                 else if (item.Target.StartsWith("course."))
                 {
-                    var label = item.Target switch
+                    var existingFieldFeedback = course.FieldModerationFeedbacks.FirstOrDefault(f => f.FieldName == item.Target);
+                    if (existingFieldFeedback != null)
                     {
-                        "course.title" => "Title",
-                        "course.description" => "Description",
-                        "course.thumbnail" => "Thumbnail",
-                        "course.what_you_will_learn" => "What You Will Learn",
-                        "course.requirements" => "Requirements",
-                        _ => item.Target
-                    };
-                    courseFeedbackParts.Add($"[@{label}] {item.Reason}");
-                    course.FieldModerationFeedbacks.Add(new CourseFieldModerationFeedback
+                        existingFieldFeedback.FeedbackText = item.Reason;
+                        existingFieldFeedback.DateAdded = DateTime.Now;
+                    }
+                    else
                     {
-                        CourseId = course.CourseId,
-                        FieldName = item.Target,
-                        FeedbackText = item.Reason,
-                        DateAdded = DateTime.Now
-                    });
+                        course.FieldModerationFeedbacks.Add(new CourseFieldModerationFeedback
+                        {
+                            CourseId = course.CourseId,
+                            FieldName = item.Target,
+                            FeedbackText = item.Reason,
+                            DateAdded = DateTime.Now
+                        });
+                    }
                 }
             }
 
@@ -352,9 +318,37 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
+            // Aggregate all feedbacks (both old and new)
+            var courseFeedbackParts = new System.Text.StringBuilder();
+
+            foreach (var fieldFeedback in course.FieldModerationFeedbacks)
+            {
+                var label = fieldFeedback.FieldName switch
+                {
+                    "course.title" => "Course Title",
+                    "course.description" => "Description",
+                    "course.thumbnail" => "Thumbnail",
+                    "course.what_you_will_learn" => "What You Will Learn",
+                    "course.requirements" => "Requirements",
+                    _ => fieldFeedback.FieldName
+                };
+                courseFeedbackParts.AppendLine($"- {label}: {fieldFeedback.FeedbackText}");
+            }
+
+            var allMaterials = await _materialRepository.GetByCourseIdAsync(request.CourseId);
+            if (allMaterials != null)
+            {
+                var rejectedMaterials = allMaterials.Where(m => !string.IsNullOrEmpty(m.ModerationFeedback)).ToList();
+                foreach (var m in rejectedMaterials)
+                {
+                    var lessonTitle = m.Lesson?.Title ?? "Unknown Lesson";
+                    courseFeedbackParts.AppendLine($"- Lesson '{lessonTitle}' - File '{m.Title}': {m.ModerationFeedback}");
+                }
+            }
+
             course.CourseStatus = CourseStatus.Rejected.ToValue();
-            course.ModerationFeedback = courseFeedbackParts.Count > 0
-                ? string.Join("\n", courseFeedbackParts)
+            course.ModerationFeedback = courseFeedbackParts.Length > 0
+                ? courseFeedbackParts.ToString().TrimEnd()
                 : "Course rejected. Please check flagged files.";
             course.UpdatedAt = DateTime.Now;
 
@@ -362,9 +356,15 @@ namespace CourseMarketplaceBE.Application.Services
             await _embeddingService.PersistPendingMaterialEmbeddingsAsync(request.CourseId, excludedMaterialIds: rejectedMaterialIds);
 
             _courseRepository.Update(course);
-            int rowsRejectDetailed = await _courseRepository.SaveChangesAsync();
-            if (rowsRejectDetailed <= 0)
-                throw new InvalidOperationException("Failed to save changes when rejecting course (detailed).");
+            
+            try
+            {
+                int rowsRejectDetailed = await _courseRepository.SaveChangesAsync();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+            {
+                throw new BadRequestException("Database operation failed due to a constraint violation or data issue while saving the course rejection.");
+            }
 
             if (course.InstructorId.HasValue)
             {

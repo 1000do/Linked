@@ -1108,3 +1108,11 @@ END $$;
 
 
 CREATE UNIQUE INDEX ix_quizzes_title_instructor_id ON quizzes (title, instructor_id) WHERE is_removed = false;
+
+-- ==============================================================================
+-- Cập nhật lại các sequence sau khi insert dữ liệu mẫu có sẵn ID
+-- ==============================================================================
+SELECT setval('courses_course_id_seq', COALESCE((SELECT MAX(course_id)+1 FROM courses), 1), false);
+SELECT setval('lessons_lesson_id_seq', COALESCE((SELECT MAX(lesson_id)+1 FROM lessons), 1), false);
+SELECT setval('learning_materials_material_id_seq', COALESCE((SELECT MAX(material_id)+1 FROM learning_materials), 1), false);
+SELECT setval('media_embeddings_media_embedding_id_seq', COALESCE((SELECT MAX(media_embedding_id)+1 FROM media_embeddings), 1), false);

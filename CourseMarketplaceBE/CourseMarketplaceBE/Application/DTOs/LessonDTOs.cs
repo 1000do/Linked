@@ -34,6 +34,7 @@ public class LessonResponse
     public DateTime? UpdatedAt { get; set; }
     public string? LessonStatus { get; set; }
     public string? CourseStatus { get; set; }
+    public string? ModerationFeedback { get; set; }
     
     public List<MaterialResponse> LearningMaterials { get; set; } = new List<MaterialResponse>();
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -20,15 +20,18 @@ public class CourseController : ControllerBase
     private readonly ICourseQueryService _courseQueryService;
     private readonly ICourseCommandService _courseCommandService;
     private readonly ICourseAiModerationService _courseAiModerationService;
+    private readonly ILessonService _lessonService;
 
     public CourseController(
         ICourseQueryService courseQueryService,
         ICourseCommandService courseCommandService,
-        ICourseAiModerationService courseAiModerationService)
+        ICourseAiModerationService courseAiModerationService,
+        ILessonService lessonService)
     {
         _courseQueryService = courseQueryService;
         _courseCommandService = courseCommandService;
         _courseAiModerationService = courseAiModerationService;
+        _lessonService = lessonService;
     }
 
     private int GetInstructorId()
@@ -160,6 +163,13 @@ public class CourseController : ControllerBase
         {
             var instructorId = GetInstructorId();
             await _courseCommandService.UpdateCourseStatusAsync(id, request.Status, instructorId);
+
+            if (string.Equals(request.Status, CourseStatus.Pending.ToValue(), StringComparison.OrdinalIgnoreCase))
+            {
+                await _lessonService.UpdateLessonStatusByCourseIdAsync(id, LessonStatus.Active.ToValue());
+                await _lessonService.UpdateLearningMaterialStatusByCourseIdAsync(id, LearningStatus.Active.ToValue());
+            }
+
             return Ok(ApiResponse<object>.SuccessResponse(null, "Course status updated successfully."));
         }
         catch (UnauthorizedAccessException ex)
