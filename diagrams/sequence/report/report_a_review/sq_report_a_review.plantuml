@@ -1,0 +1,46 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Report a Review
+
+actor "User" as act
+participant "CourseDetailsPage" as course_view
+participant "CourseLearningPage" as lesson_view
+
+    |||
+    ref over act, course_view: Report Course Review
+    |||
+    ref over act, lesson_view: Report Lesson Review
+
+@enduml

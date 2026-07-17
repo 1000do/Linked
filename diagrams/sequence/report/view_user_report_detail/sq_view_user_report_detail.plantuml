@@ -1,0 +1,95 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Report Detail
+
+actor "Staff / Admin" as act
+participant "ReportCenterPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant ":ReportModerationPageViewModel" as view_model
+' participant "AdminModerationController" as be_ctrl <<backend controller>>
+' participant ":IReportModerationService" as sv
+' participant ":CourseReportDetailResponse" as c_res
+' participant ":ReviewReportDetailResponse" as r_res
+' participant ":IReportRepository" as repo
+' participant ":AppDbContext" as ctx
+' database Database as db
+
+act ++
+act -> view++: Access the Report Center page
+view -> fe_ctrl++: GET /AdminModeration/Reports
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> view_model++: Call ReportModerationPageViewModel()
+    view_model -->> fe_ctrl--: Return ReportModerationPageViewModel object
+    
+    ref over fe_ctrl: Fetch User Reports
+    
+    fe_ctrl -> fe_ctrl++: Populate fetched data to ReportModerationPageViewModel
+    fe_ctrl--
+    
+    fe_ctrl -->> view--: Return View(model)
+    
+    alt Empty Report List
+        view -->> act: Display empty state message
+    else Reports Exist
+        view -->> act: Display list of pending course reports by default
+        
+        act -> view: Click on a report row
+        
+        view -> view++: Retrieve selected report details from local state
+        view--
+        
+        opt Report contains resolution details (Resolved/Rejected)
+            view -> view++: Append Resolution Details (Moderator, Resolved At, Note)
+            view--
+        end
+        
+        view -->> act--: Display popup containing report details
+    end
+end
+@enduml
