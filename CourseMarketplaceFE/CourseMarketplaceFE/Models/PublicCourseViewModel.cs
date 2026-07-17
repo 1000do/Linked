@@ -67,6 +67,7 @@ namespace CourseMarketplaceFE.Models
         public string? Description { get; set; }
         public string? ThumbnailUrl { get; set; }
         public string? LessonStatus { get; set; }
+        public string? ModerationFeedback { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public List<MaterialViewModel> LearningMaterials { get; set; } = new List<MaterialViewModel>();
         public int TotalSeconds => LearningMaterials.Sum(m => m.MaterialMetadata?.Duration ?? 0);

@@ -520,8 +520,33 @@
             container.classList.remove('hidden');
             addBtn.classList.remove('hidden');
             
-            // Add first row by default
-            addRejectRow();
+            // Prefill existing feedbacks
+            let hasPreFill = false;
+            if (rejectCourseData.fieldModerationFeedbacks && rejectCourseData.fieldModerationFeedbacks.length > 0) {
+                rejectCourseData.fieldModerationFeedbacks.forEach(ff => {
+                    addRejectRow(ff.fieldName, ff.feedbackText);
+                    hasPreFill = true;
+                });
+            }
+
+            const lessons = rejectCourseData.lessons || [];
+            lessons.forEach(l => {
+                if (l.moderationFeedback) {
+                    addRejectRow('lesson.title', l.moderationFeedback, l.lessonId || l.LessonId);
+                    hasPreFill = true;
+                }
+                const materials = l.learningMaterials || l.LearningMaterials || [];
+                materials.forEach(m => {
+                    if (m.moderationFeedback) {
+                        addRejectRow('file', m.moderationFeedback, null, m.materialId || m.MaterialId);
+                        hasPreFill = true;
+                    }
+                });
+            });
+
+            if (!hasPreFill) {
+                addRejectRow();
+            }
         } catch(e) {
             loading.innerHTML = '<span class="text-red-500">Failed to load course details.</span>';
         }
@@ -563,12 +588,15 @@
         return opts;
     }
 
-    function addRejectRow() {
+    function addRejectRow(targetValue = '', reasonText = '', lessonId = null, materialId = null) {
         rejectRowCounter++;
         const container = document.getElementById('reject-items-container');
         const row = document.createElement('div');
         row.className = 'reject-row flex gap-3 items-start bg-slate-50 p-4 rounded-xl border border-slate-200';
         row.dataset.rowId = rejectRowCounter;
+        
+        let safeReasonText = reasonText ? reasonText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') : '';
+
         row.innerHTML = `
             <div class="flex-1 space-y-3">
                 <div class="relative custom-dropdown" data-row-id="${rejectRowCounter}">
@@ -594,7 +622,7 @@
                 </div>
                 <div>
                     <label class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Rejection Reason</label>
-                    <textarea class="reject-reason w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm" rows="2" placeholder="Describe why this specific element is being rejected..."></textarea>
+                    <textarea class="reject-reason w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm" rows="2" placeholder="Describe why this specific element is being rejected...">${safeReasonText}</textarea>
                 </div>
             </div>
             <button onclick="this.closest('.reject-row').remove()" class="mt-7 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all shrink-0">
@@ -603,6 +631,32 @@
         `;
         container.appendChild(row);
         initCustomDropdown(rejectRowCounter);
+
+        if (targetValue) {
+            const select = row.querySelector('.reject-target');
+            
+            // To select the correct option, especially for lesson/material where multiple exist
+            let targetOption = null;
+            if (targetValue === 'lesson.title' && lessonId) {
+                targetOption = Array.from(select.options).find(o => o.value === targetValue && o.dataset.lessonId == lessonId);
+            } else if (targetValue === 'file' && materialId) {
+                targetOption = Array.from(select.options).find(o => o.value === targetValue && o.dataset.materialId == materialId);
+            } else {
+                targetOption = Array.from(select.options).find(o => o.value === targetValue);
+            }
+            
+            if (targetOption) {
+                targetOption.selected = true;
+                
+                // Update dropdown visual state after a small tick
+                setTimeout(() => {
+                    const searchInput = row.querySelector('.dropdown-search');
+                    if(searchInput) {
+                        searchInput.value = targetOption.text;
+                    }
+                }, 50);
+            }
+        }
     }
 
     function closeRejectModal() {

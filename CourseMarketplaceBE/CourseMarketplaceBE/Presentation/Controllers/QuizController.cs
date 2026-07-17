@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
-/// <summary>Instructor quản lý bộ quiz độc lập của mình.</summary>
+/// <summary>Instructor quáº£n lÃ½ bá»™ quiz Ä‘á»™c láº­p cá»§a mÃ¬nh.</summary>
 [ApiController]
 [Route("api/quizzes")]
 public class QuizController : ControllerBase
@@ -28,7 +28,7 @@ public class QuizController : ControllerBase
         return id;
     }
 
-    // ── GET api/quizzes ────────────────────────────────────────────────────────
+    // â”€â”€ GET api/quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpGet]
     [Authorize(Roles = "instructor")]
@@ -44,10 +44,10 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── GET api/quizzes/{id} ───────────────────────────────────────────────────
+    // â”€â”€ GET api/quizzes/{id} â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpGet("{id:int}")]
-    [Authorize(Roles = "instructor")]
+    [Authorize(Roles = "instructor,admin,staff")]
     public async Task<IActionResult> GetQuizDetail(int id)
     {
         try
@@ -85,7 +85,7 @@ public class QuizController : ControllerBase
     }
 
     [HttpGet("{id:int}/question-pool")]
-    [Authorize(Roles = "instructor")]
+    [Authorize(Roles = "instructor,admin,staff")]
     public async Task<IActionResult> GetQuizQuestionPool(int id)
     {
         try
@@ -100,7 +100,7 @@ public class QuizController : ControllerBase
     }
 
 
-    // ── POST api/quizzes ───────────────────────────────────────────────────────
+    // â”€â”€ POST api/quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpPost]
     [Authorize(Roles = "instructor")]
@@ -117,7 +117,7 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── PATCH api/quizzes/{id} ─────────────────────────────────────────────────
+    // â”€â”€ PATCH api/quizzes/{id} â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpPatch("{id:int}")]
     [Authorize(Roles = "instructor")]
@@ -134,7 +134,7 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── PATCH api/quizzes/{id}/hide ────────────────────────────────────────────
+    // â”€â”€ PATCH api/quizzes/{id}/hide â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpPatch("{id:int}/hide")]
     [Authorize(Roles = "instructor")]
@@ -151,7 +151,7 @@ public class QuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── DELETE api/quizzes/{id} ────────────────────────────────────────────────
+    // â”€â”€ DELETE api/quizzes/{id} â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "instructor")]

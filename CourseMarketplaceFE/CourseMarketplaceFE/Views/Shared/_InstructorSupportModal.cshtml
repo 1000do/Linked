@@ -1,0 +1,66 @@
+<!-- Support Guide Modal -->
+<div id="support-guide-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">school</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Instructor Support Guide</h3>
+                    <p class="text-xs text-slate-500">Everything you need to know about teaching on LinkedLearn</p>
+                </div>
+            </div>
+            <button onclick="document.getElementById('support-guide-modal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-500 transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        
+        <!-- Content -->
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-8">
+            <!-- Section 1 -->
+            <section>
+                <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-[20px]">add_circle</span> 1. Course Creation & Management</h4>
+                <div class="text-sm text-slate-600 space-y-2 pl-7">
+                    <p>Start by creating a Draft course. Provide a compelling title, comprehensive description, category, and set your price.</p>
+                    <p><strong>Note:</strong> Free courses are limited to 60 minutes of total video content. Premium courses require Stripe connection to remove limits.</p>
+                </div>
+            </section>
+            
+            <!-- Section 2 -->
+            <section>
+                <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-blue-500 text-[20px]">video_library</span> 2. Building Your Curriculum</h4>
+                <div class="text-sm text-slate-600 space-y-2 pl-7">
+                    <p>Use the Curriculum Editor to add <strong>Lessons</strong>, <strong>Video Materials</strong>, and <strong>Documents</strong>. You can also build interactive <strong>Quizzes</strong> to assess your students.</p>
+                    <ul class="list-disc pl-5 mt-2 space-y-1 text-slate-500">
+                        <li>Ensure all videos are high-quality and clear.</li>
+                        <li>Quizzes must contain at least one question and a passing score to be valid.</li>
+                    </ul>
+                </div>
+            </section>
+            
+            <!-- Section 3 -->
+            <section>
+                <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-amber-500 text-[20px]">verified</span> 3. The Moderation Process</h4>
+                <div class="text-sm text-slate-600 space-y-2 pl-7">
+                    <p>Before publishing, your course must be submitted for <strong>Review</strong>. Our moderation team will check the content against our quality standards.</p>
+                    <p>If changes are needed, the course will be <strong>Rejected</strong> with specific feedback flags on lessons or materials. You must address all feedback before re-submitting.</p>
+                </div>
+            </section>
+
+            <!-- Section 4 -->
+            <section>
+                <h4 class="text-md font-bold text-slate-900 mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-purple-500 text-[20px]">payments</span> 4. Payments & Stripe Integration</h4>
+                <div class="text-sm text-slate-600 space-y-2 pl-7">
+                    <p>To monetize your courses, you must connect a valid <strong>Stripe Account</strong> via the <a href="/Instructor/ApplicationStatus" class="text-primary font-bold hover:underline">Application Status</a> page. This allows seamless payouts directly to your bank account.</p>
+                    <p>Without Stripe, your account operates in <strong>Limited Mode</strong>: Max 2 courses, 5 lessons/course, and 30 minutes of video.</p>
+                </div>
+            </section>
+
+            <div class="mt-4 p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm text-slate-500 italic text-center">
+                Need more help? Contact our support staff directly via the <a href="/Chat/Instructor" class="text-primary font-bold hover:underline">Chat Center</a>.
+            </div>
+        </div>
+    </div>
+</div>
