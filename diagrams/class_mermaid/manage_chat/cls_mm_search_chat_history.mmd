@@ -37,6 +37,7 @@ class ChatListDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Chat {
+    <<entity>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string
@@ -47,6 +48,7 @@ class Chat {
 }
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + Role : string
@@ -57,6 +59,7 @@ class ChatParticipant {
 }
 
 class Message {
+    <<entity>>
     + MessageId : int
     + ChatId : int
     + SenderId : int?
@@ -68,6 +71,7 @@ class Message {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -86,6 +90,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -93,6 +98,7 @@ class User {
 }
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + Role : string?
     + DisplayName : string
@@ -105,20 +111,21 @@ class Manager {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + SearchChatsAsync(accountId: int, query: string) Task~List~ChatListDto~~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + SearchParticipantsByAccountIdAsync(accountId: int, query: string) Task~List~ChatParticipant~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _repo : IChatRepository
     + SearchChatsAsync(accountId: int, query: string) Task~List~ChatListDto~~
 }
@@ -126,6 +133,7 @@ class ChatService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + SearchParticipantsByAccountIdAsync(accountId: int, query: string) Task~List~ChatParticipant~~
 }
@@ -133,6 +141,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Users : DbSet~User~
     + Managers : DbSet~Manager~

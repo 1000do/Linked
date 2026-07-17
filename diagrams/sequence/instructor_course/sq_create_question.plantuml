@@ -1,0 +1,100 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Create Question
+
+actor Instructor as act
+participant "QuestionBankPage" as view
+participant "QuestionBankController" as fe_ctrl <<frontend controller>>
+participant "QuestionBankController" as be_ctrl <<backend controller>>
+participant ":QuestionBankService" as sv
+participant ":QuizQuestionResponse" as res
+participant ":QuizQuestion" as ett
+participant ":IQuestionBankRepository" as repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Submit add question form
+view -> fe_ctrl++: POST /QuestionBank/CreateQuestion?courseId={courseId}
+
+fe_ctrl -> be_ctrl++: POST /api/QuestionBank/courses/{courseId}/questions
+
+be_ctrl -> sv++: Call AddQuestionAsync(courseId, request, instructorId)
+
+sv -> sv++: Call ValidateQuizOptions(request.Options)
+sv--
+
+alt Invalid Options
+    sv -->> be_ctrl: throw ArgumentException
+    be_ctrl -->> fe_ctrl: Return statusCode 400
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display validation error message
+else Valid Options
+    sv -> sv++: Call EnsureInstructorOwnsCourseAsync(courseId, instructorId)
+    sv--
+    
+    sv -> course_repo++: Call GetByIdAsync(courseId)
+    course_repo -->> sv--: Return course entity
+    
+    alt Course Not Found Or Unauthorized
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display unauthorized error message
+    else Authorized
+        sv -> ett++: Call QuizQuestion()
+        ett -->> sv--: Return QuizQuestion entity
+        
+        sv -> repo++: Call AddQuestionAsync(question)
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Insert QuizQuestion and QuizOptions
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return createdQuestion
+            
+            sv -> res++: Call QuizQuestionResponse()
+            res -->> sv--: Return QuizQuestionResponse object
+            
+            sv -->> be_ctrl--: Return QuizQuestionResponse object
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display question added successfully
+        end
+    end
+end

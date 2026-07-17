@@ -75,8 +75,9 @@ public class ResolveReportRequest
     [MaxLength(50)]
     public string Status { get; set; } = null!;
 
+    [Required]
     [MaxLength(1000)]
-    public string ResolutionNote { get; set; } = "Report has been resolved";
+    public string ResolutionNote { get; set; } = null!;
 
     /// <summary>
     /// Chỉ dùng khi Status = "resolved" và cần gỡ nội dung vi phạm.

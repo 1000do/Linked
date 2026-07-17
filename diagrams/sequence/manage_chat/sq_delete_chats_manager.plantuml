@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -45,10 +52,7 @@ act->view++: Click the clear chat button
 view->view++: Confirm deletion with dialog
 view--
 
-alt User cancels
-    view-->>act: Do nothing
-else User confirms
-    view->fe_ctrl++: DELETE /Chat/ClearHistory?chatId={chatId}
+view->fe_ctrl++: DELETE /Chat/ClearHistory?chatId={chatId}
     
     fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
     fe_ctrl--
@@ -83,7 +87,8 @@ else User confirms
         sv->sv++: Set participant.ClearedAt = DateTime.UtcNow
         sv--
         
-        sv->repo: Call UpdateParticipantAsync(participant)
+        sv->repo++: Call UpdateParticipantAsync(participant)
+        repo-->>sv--: Return
         
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Call SaveChangesAsync()
@@ -119,7 +124,6 @@ else User confirms
             view-->>act--: Display empty panel and success message
         end
     end
-end
 end
 
 @enduml

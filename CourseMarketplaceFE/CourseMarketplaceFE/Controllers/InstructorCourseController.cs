@@ -317,7 +317,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // ─── EDITOR ──────────────────────────────────────────────────────
-        [Authorize(Roles = "instructor")]
+        [Authorize(Roles = "instructor,admin,staff")]
         public async Task<IActionResult> Editor(int id)
         {
             ViewBag.CourseId = id;

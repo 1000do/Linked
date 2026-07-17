@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -42,7 +49,8 @@ participant ":Message" as msg_ett
 participant ":MessageAttachment" as msg_att_ett
 participant ":MessageDto" as msg_dto
 participant ":IChatRepository" as repo
-
+participant ":IUserRepository" as user_repo
+participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -120,6 +128,8 @@ else Valid Permissions
     repo-->>sv--: Return success
     
     sv->sv++: Call UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt)
+    sv->redis++: Call IncrementUnreadCountAsync(accountId, chatId)
+    redis-->>sv--: Return
     sv--
     
     sv->repo++: Call SaveChangesAsync()
@@ -140,8 +150,12 @@ else Valid Permissions
         ctx-->>repo--: Return result
         repo-->>sv--: Return result
         
-        sv->sv++: Fetch sender details
-        sv--
+        sv->user_repo++: Call GetByIdAsync(senderId)
+        user_repo->ctx++: Call GetByIdAsync(senderId)
+        ctx->db++: Execute SELECT query
+        db-->>ctx--: Return User
+        ctx-->>user_repo--: Return User
+        user_repo-->>sv--: Return User
         
         sv->msg_dto++: Call MessageDto()
         msg_dto-->>sv--: Return MessageDto object

@@ -94,6 +94,7 @@ class ReviewModerationLogAdminDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CourseAiUsageLog {
+    <<entity>>
     + LogId : int
     + IntegrationId : int?
     + InteractionType : string?
@@ -106,6 +107,7 @@ class CourseAiUsageLog {
 }
 
 class CourseReviewModerationLog {
+    <<entity>>
     + LogId : int
     + ModelId : int?
     + CourseReviewId : int?
@@ -117,6 +119,7 @@ class CourseReviewModerationLog {
 }
 
 class LessonReviewModerationLog {
+    <<entity>>
     + LogId : int
     + ModelId : int?
     + LessonReviewId : int?

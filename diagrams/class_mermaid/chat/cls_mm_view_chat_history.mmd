@@ -1,7 +1,12 @@
 classDiagram
 direction LR
 
-%% ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND - HUB & CONTROLLERS ====================
+
+class ChatHub {
+    <<signalr hub>>
+    + MarkAsRead(chatId: int) Task
+}
 
 class ChatControllerBE["ChatController"] {
     <<backend controller>>
@@ -37,6 +42,7 @@ class AttachmentDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Message {
+    <<entity>>
     + MessageId : int
     + ChatId : int
     + SenderId : int?
@@ -45,6 +51,7 @@ class Message {
 }
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + ClearedAt : DateTime?
@@ -55,14 +62,14 @@ class ChatParticipant {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + GetChatHistoryAsync(chatId: int, accountId: int) Task~List~MessageDto~~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + GetMessagesByChatIdAsync(chatId: int) Task~List~Message~~ *
     + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~ *
     + MarkAsReadAsync(chatId: int, accountId: int) Task *
@@ -72,13 +79,17 @@ class IChatRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _chatRepository : IChatRepository
     + GetChatHistoryAsync(chatId: int, accountId: int) Task~List~MessageDto~~
+    - HasAccessToChatAsync(accountId: int, chatId: int) Task~bool~
+    - MarkChatAsReadAsync(chatId: int, accountId: int) Task~void~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetMessagesByChatIdAsync(chatId: int) Task~List~Message~~
     + GetParticipantAsync(chatId: int, accountId: int) Task~ChatParticipant?~
@@ -89,6 +100,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Messages : DbSet~Message~
     + ChatParticipants : DbSet~ChatParticipant~
 }

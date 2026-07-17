@@ -280,6 +280,13 @@
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-slate-500 text-[20px]">expand_more</span>
                                 <span class="font-bold text-slate-800">@lesson.Title</span>
+                                @if (isManager && !string.IsNullOrEmpty(lesson.ModerationFeedback))
+                                {
+                                    <div class="flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                                        <span class="material-symbols-outlined text-red-500 text-[14px]">cancel</span>
+                                        <span class="text-xs text-red-600 font-medium truncate max-w-[200px]" title="@lesson.ModerationFeedback">@lesson.ModerationFeedback</span>
+                                    </div>
+                                }
                                 @if (isManager && Model.LastApprovedAt.HasValue && lesson.UpdatedAt > Model.LastApprovedAt)
                                 {
                                     <span class="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full border border-amber-200 font-bold uppercase tracking-wider ml-1">Edited Section</span>
@@ -319,6 +326,14 @@
                                         else
                                         {
                                             <a href="/Course/Learn/@Model.CourseId" class="hover:text-[#a435f0] hover:underline cursor-pointer">@material.Title</a>
+                                        }
+
+                                        @if (isManager && !string.IsNullOrEmpty(material.ModerationFeedback))
+                                        {
+                                            <div class="flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded border border-red-100 ml-2">
+                                                <span class="material-symbols-outlined text-red-500 text-[14px]">cancel</span>
+                                                <span class="text-xs text-red-600 font-medium truncate max-w-[200px]" title="@material.ModerationFeedback">@material.ModerationFeedback</span>
+                                            </div>
                                         }
 
                                         @if (isManager && Model.LastApprovedAt.HasValue && material.UpdatedAt > Model.LastApprovedAt)

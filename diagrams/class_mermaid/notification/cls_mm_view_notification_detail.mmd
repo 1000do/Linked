@@ -7,6 +7,7 @@ class FrontendController["NotificationController"] {
     <<frontend controller>>
     - _client : HttpClient
     + Details(id: int) Task~IActionResult~
+    + MarkAsRead(id: int) Task~IActionResult~
 }
 
 class NotificationViewModel {
@@ -31,6 +32,7 @@ class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
     + GetNotificationDetail(id: int) Task~IActionResult~
+    + MarkAsRead(id: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -50,6 +52,7 @@ class NotificationResponseDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification {
+    <<entity>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -64,6 +67,7 @@ class Notification {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -85,6 +89,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -94,7 +99,7 @@ class User {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + GetNotificationDetailAsync(id: int, userId: int) Task~NotificationResponseDto?~ *
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~ *
 }
@@ -102,15 +107,18 @@ class INotificationService {
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Notification?~ *
+    + Update(notification: Notification) void *
     + SaveChangesAsync() Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
+    <<service>>
     - _repo : INotificationRepository
+    - _hubContext : IHubContext~NotificationHub~
     + GetNotificationDetailAsync(id: int, userId: int) Task~NotificationResponseDto?~
     + MarkAsReadAsync(notificationId: int, userId: int) Task~bool~
 }
@@ -118,20 +126,30 @@ class NotificationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetByIdAsync(id: int) Task~Notification?~
+    + Update(notification: Notification) void
     + SaveChangesAsync() Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Notifications : DbSet~Notification~
     + Users : DbSet~User~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== BACKEND - HUBS ====================
+
+class NotificationHub {
+    <<hub>>
+    + SendAsync(method: string) Task
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -144,6 +162,7 @@ Account *-- Notification
 BackendController --> INotificationService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
+NotificationService --> NotificationHub
 
 %% === INTERFACE REALIZATION ===
 NotificationService ..|> INotificationService

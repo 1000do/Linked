@@ -52,8 +52,10 @@ namespace CourseMarketplaceFE.Models
         [Required]
         [MaxLength(50)]
         public string Status { get; set; } = null!; // resolved | rejected | escalated | under_review
+
+        [Required]
         [MaxLength(1000)]
-        public string? ResolutionNote { get; set; }
+        public string ResolutionNote { get; set; } = null!;
         public bool RemoveContent { get; set; } = false;
     }
 

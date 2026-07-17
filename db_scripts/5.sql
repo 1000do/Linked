@@ -13,6 +13,9 @@ DROP TABLE IF EXISTS lesson_review_reports CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS chats CASCADE;
+DROP TABLE IF EXISTS course_ai_feedbacks CASCADE;
+DROP TABLE IF EXISTS lesson_ai_feedbacks CASCADE;
+DROP TABLE IF EXISTS learning_material_ai_feedbacks CASCADE;
 DROP TABLE IF EXISTS lockouts CASCADE;
 DROP TABLE IF EXISTS transaction_exts CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
@@ -816,6 +819,30 @@ CREATE TABLE course_field_moderation_feedbacks (
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE course_ai_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    course_id INT NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE lesson_ai_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    lesson_id INT NOT NULL REFERENCES lessons(lesson_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE learning_material_ai_feedbacks (
+    feedback_id SERIAL PRIMARY KEY,
+    material_id INT NOT NULL REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    field_name VARCHAR(100) NOT NULL,
+    feedback_text TEXT NOT NULL,
+    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexing
 CREATE INDEX idx_course_reviews_enrollment ON course_reviews(enrollment_id);
 CREATE INDEX idx_lesson_reviews_enrollment ON lesson_reviews(enrollment_id);
@@ -1108,3 +1135,11 @@ END $$;
 
 
 CREATE UNIQUE INDEX ix_quizzes_title_instructor_id ON quizzes (title, instructor_id) WHERE is_removed = false;
+
+-- ==============================================================================
+-- Cập nhật lại các sequence sau khi insert dữ liệu mẫu có sẵn ID
+-- ==============================================================================
+SELECT setval('courses_course_id_seq', COALESCE((SELECT MAX(course_id)+1 FROM courses), 1), false);
+SELECT setval('lessons_lesson_id_seq', COALESCE((SELECT MAX(lesson_id)+1 FROM lessons), 1), false);
+SELECT setval('learning_materials_material_id_seq', COALESCE((SELECT MAX(material_id)+1 FROM learning_materials), 1), false);
+SELECT setval('media_embeddings_media_embedding_id_seq', COALESCE((SELECT MAX(media_embedding_id)+1 FROM media_embeddings), 1), false);

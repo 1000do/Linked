@@ -91,6 +91,7 @@ class AttachmentDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Chat {
+    <<entity>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string
@@ -101,6 +102,7 @@ class Chat {
 }
 
 class Message {
+    <<entity>>
     + MessageId : int
     + ChatId : int
     + SenderId : int?
@@ -112,6 +114,7 @@ class Message {
 }
 
 class MessageAttachment {
+    <<entity>>
     + AttachmentId : int
     + MessageId : int
     + FileUrl : string
@@ -124,19 +127,19 @@ class MessageAttachment {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~ *
     + CreateSupportRequestAsync(senderId: int, dto: SupportRequestDto) Task~SupportTicketDto~ *
     + GetParticipantIdsAsync(chatId: int) Task~List~int~~ *
 }
 
 class IRedisService {
-    <<interface>>
+    <<service interface>>
     + IncrementUnreadCountAsync(accountId: int, chatId: int) Task *
 }
 
 class ICloudinaryUploadService {
-    <<interface>>
+    <<service interface>>
     + UploadImageAsync(file: IFormFile) Task~string?~ *
     + UploadVideoAsync(file: IFormFile) Task~string?~ *
     + UploadFileAsync(file: IFormFile) Task~string?~ *
@@ -145,8 +148,13 @@ class ICloudinaryUploadService {
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + AddMessageAsync(message: Message) Task *
+}
+
+class IUserRepository {
+    <<repository interface>>
+    + GetByIdAsync(id: int) Task~User?~ *
     + GetChatByIdAsync(chatId: int) Task~Chat?~ *
     + UpdateChatAsync(chat: Chat) Task *
     + GetParticipantIdsAsync(chatId: int) Task~List~int~~ *
@@ -156,8 +164,10 @@ class IChatRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _repo : IChatRepository
     - _redisService : IRedisService
+    - _userRepository : IUserRepository
     + SaveMessageAsync(senderId: int, dto: SendMessageDto) Task~MessageDto~
     + CreateSupportRequestAsync(senderId: int, dto: SupportRequestDto) Task~SupportTicketDto~
     + GetParticipantIdsAsync(chatId: int) Task~List~int~~
@@ -168,6 +178,7 @@ class ChatService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + AddMessageAsync(message: Message) Task
     + GetChatByIdAsync(chatId: int) Task~Chat?~
@@ -179,6 +190,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Chats : DbSet~Chat~
     + Messages : DbSet~Message~
     + MessageAttachments : DbSet~MessageAttachment~
@@ -201,6 +213,7 @@ ChatAttachmentController --> ICloudinaryUploadService
 ChatHub --> IChatService
 ChatService --> IChatRepository
 ChatService --> IRedisService
+ChatService --> IUserRepository
 ChatRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===

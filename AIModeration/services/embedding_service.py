@@ -21,13 +21,6 @@ logger = logging.getLogger(__name__)
 class EmbeddingService(BaseService):
     """Generate embeddings for semantic deduplication."""
     
-    # Class-level model cache (singleton pattern)
-    _text_embedding_model = None
-    _text_embedding_tokenizer = None
-    _clip_model = None
-    _clip_processor = None
-    _models_loaded = False
-    
     def __init__(self, settings: Settings = None):
         """Initialize embedding service."""
         super().__init__("EmbeddingService")
@@ -35,8 +28,8 @@ class EmbeddingService(BaseService):
         self.device = torch.device(self.settings.DEVICE)
         self.text_extraction_service = TextExtractionService()
         
-        if not EmbeddingService._models_loaded:
-            self._load_models()
+        from providers.ml_model_provider import MLModelProvider
+        self.model_provider = MLModelProvider(self.settings)
 
     def get_file_type_for_embedding(self, file_extension: str) -> str:
         """Map file extension to allowed types in embed_generic."""
@@ -59,41 +52,6 @@ class EmbeddingService(BaseService):
             return "excel"
         return "text"
     
-    @classmethod
-    def _load_models(cls):
-        """Load models once (class-level cache)."""
-        if cls._models_loaded:
-            return
-        
-        logger.info("Loading embedding models...")
-        
-        try:
-            settings = get_settings()
-            device = torch.device(settings.DEVICE)
-            
-            # Load Sequence Transformer for text embeddings
-            logger.info(f"Loading Text Embedding Model from {settings.TEXT_EMBEDDING_MODEL_NAME}...")
-            cls._text_embedding_tokenizer = AutoTokenizer.from_pretrained(settings.TEXT_EMBEDDING_MODEL_NAME)
-            cls._text_embedding_model = AutoModel.from_pretrained(settings.TEXT_EMBEDDING_MODEL_NAME)
-            cls._text_embedding_model.to(device)
-            cls._text_embedding_model.eval()
-            logger.info("✓ Text Embedding Model loaded")
-            
-            # Load CLIP for vision embeddings
-            logger.info(f"Loading CLIP from {settings.CLIP_MODEL_NAME}...")
-            cls._clip_processor = CLIPProcessor.from_pretrained(settings.CLIP_MODEL_NAME)
-            cls._clip_model = CLIPModel.from_pretrained(settings.CLIP_MODEL_NAME)
-            cls._clip_model.to(device)
-            cls._clip_model.eval()
-            logger.info("✓ CLIP loaded")
-            
-            cls._models_loaded = True
-            logger.info("✓ All embedding models loaded successfully")
-            
-        except Exception as e:
-            logger.error(f"Failed to load embedding models: {e}")
-            raise EmbeddingException("embedding_models", f"Model loading failed: {e}")
-    
     async def embed_text(self, text: str, max_length: int = 512) -> List[float]:
         """
         Generate embedding for text using DistilBert.
@@ -110,8 +68,9 @@ class EmbeddingService(BaseService):
         
         try:
             with self.time_operation("embed_text", text_length=len(text)):
+                tokenizer, model = self.model_provider.get_text_embedding_model()
                 # Tokenize
-                inputs = self._text_embedding_tokenizer(
+                inputs = tokenizer(
                     text[:max_length * 4],  # Approximate char-to-token ratio
                     return_tensors="pt",
                     truncation=True,
@@ -123,7 +82,7 @@ class EmbeddingService(BaseService):
                 
                 # Get embeddings
                 with torch.no_grad():
-                    outputs = self._text_embedding_model(**inputs)
+                    outputs = model(**inputs)
                     # Mean pooling for sentence-transformers
                     token_embeddings = outputs.last_hidden_state
                     attention_mask = inputs['attention_mask']
@@ -153,16 +112,17 @@ class EmbeddingService(BaseService):
         
         try:
             with self.time_operation("embed_image", image_size=len(image_bytes)):
+                processor, model = self.model_provider.get_clip_model()
                 # Load image
                 image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
                 
                 # Process with CLIP
-                inputs = self._clip_processor(images=image, return_tensors="pt", padding=True)
+                inputs = processor(images=image, return_tensors="pt", padding=True)
                 inputs = {k: v.to(self.device) for k, v in inputs.items()}
                 
                 # Get image features
                 with torch.no_grad():
-                    outputs = self._clip_model.get_image_features(**inputs)
+                    outputs = model.get_image_features(**inputs)
                     if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
                         embedding = outputs.pooler_output.cpu().numpy()[0]
                     elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:
@@ -219,12 +179,14 @@ class EmbeddingService(BaseService):
                             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                             frame_image = Image.fromarray(rgb_frame)
                             
+                            processor, model = self.model_provider.get_clip_model()
+                            
                             # Get embedding
-                            inputs = self._clip_processor(images=frame_image, return_tensors="pt", padding=True)
+                            inputs = processor(images=frame_image, return_tensors="pt", padding=True)
                             inputs = {k: v.to(self.device) for k, v in inputs.items()}
                             
                             with torch.no_grad():
-                                outputs = self._clip_model.get_image_features(**inputs)
+                                outputs = model.get_image_features(**inputs)
                                 if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
                                     embedding = outputs.pooler_output.cpu().numpy()[0]
                                 elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:

@@ -1,0 +1,113 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Fetch Moderation Logs
+
+participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
+participant "AdminAiServiceController" as be_ctrl <<backend controller>>
+participant ":IAiModerationLogService" as sv
+participant ":CourseModerationLogAdminDto" as c_dto
+participant ":ReviewModerationLogAdminDto" as r_dto
+participant ":ICourseAiUsageLogRepository" as course_repo
+participant ":ICourseReviewModerationLogRepository" as course_rev_repo
+participant ":ILessonReviewModerationLogRepository" as lesson_rev_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+fe_ctrl++
+par Fetch Course Logs
+    fe_ctrl -> be_ctrl++: Send GET request to /api/admin/ai-service/logs/course
+    be_ctrl -> sv++: Call GetCourseModerationLogsAsync(req)
+    sv -> course_repo++: Call GetPagedAdminAsync(page, pageSize)
+    course_repo -> ctx++: Query CourseAiUsageLogs
+    ctx -> db++: Execute query
+    alt Database Query Failure
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> course_repo: Return empty list, totalCount = 0
+        course_repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+    else Database Query Success
+        db -->> ctx--: Return data
+        ctx -->> course_repo--: Return data
+        course_repo -->> sv--: Return (items, totalCount)
+        sv -> c_dto++: Map to PagedResult<CourseModerationLogAdminDto>
+        c_dto -->> sv--: Return PagedResult
+        sv -->> be_ctrl--: Return PagedResult<CourseModerationLogAdminDto>
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+    end
+else Fetch Course Review Logs
+    fe_ctrl -> be_ctrl++: Send GET request to /api/admin/ai-service/logs/course-review
+    be_ctrl -> sv++: Call GetCourseReviewModerationLogsAsync(req)
+    sv -> course_rev_repo++: Call GetPagedAdminAsync(page, pageSize)
+    course_rev_repo -> ctx++: Query CourseReviewModerationLogs
+    ctx -> db++: Execute query
+    alt Database Query Failure
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> course_rev_repo: Return empty list, totalCount = 0
+        course_rev_repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+    else Database Query Success
+        db -->> ctx--: Return data
+        ctx -->> course_rev_repo--: Return data
+        course_rev_repo -->> sv--: Return (items, totalCount)
+        sv -> r_dto++: Map to PagedResult<ReviewModerationLogAdminDto>
+        r_dto -->> sv--: Return PagedResult
+        sv -->> be_ctrl--: Return PagedResult<ReviewModerationLogAdminDto>
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+    end
+else Fetch Lesson Review Logs
+    fe_ctrl -> be_ctrl++: Send GET request to /api/admin/ai-service/logs/lesson-review
+    be_ctrl -> sv++: Call GetLessonReviewModerationLogsAsync(req)
+    sv -> lesson_rev_repo++: Call GetPagedAdminAsync(page, pageSize)
+    lesson_rev_repo -> ctx++: Query LessonReviewModerationLogs
+    ctx -> db++: Execute query
+    alt Database Query Failure
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> lesson_rev_repo: Return empty list, totalCount = 0
+        lesson_rev_repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+    else Database Query Success
+        db -->> ctx--: Return data
+        ctx -->> lesson_rev_repo--: Return data
+        lesson_rev_repo -->> sv--: Return (items, totalCount)
+        sv -> r_dto++: Map to PagedResult<ReviewModerationLogAdminDto>
+        r_dto -->> sv--: Return PagedResult
+        sv -->> be_ctrl--: Return PagedResult<ReviewModerationLogAdminDto>
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+    end
+end
+@enduml
