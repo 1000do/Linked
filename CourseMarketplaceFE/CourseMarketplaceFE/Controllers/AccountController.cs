@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CourseMarketplaceFE.Controllers
 {
@@ -186,6 +187,7 @@ namespace CourseMarketplaceFE.Controllers
         }
         
         [HttpPost]
+        [Authorize(Roles = "user,instructor,staff,admin")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
@@ -205,7 +207,8 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         // Giữ GET logout cho trường hợp link đơn giản (không form)
-        [HttpGet]
+        [HttpGet("logout")]
+        [Authorize(Roles = "user,instructor,staff,admin")]
         public async Task<IActionResult> LogoutGet()
         {
             await _api.PostAsync("Auth/logout");
@@ -223,6 +226,7 @@ namespace CourseMarketplaceFE.Controllers
         // ================= PROFILE MANAGEMENT =================
 
         [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> Profile()
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
@@ -247,6 +251,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> EditProfile()
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
@@ -281,6 +286,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> EditProfile(UpdateProfileViewModel model)
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
@@ -335,6 +341,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "user,instructor")]
         public IActionResult ChangePassword()
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
@@ -342,6 +349,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");

@@ -1,0 +1,141 @@
+@startuml HideCourse
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Hide Course
+actor Instructor as act
+
+participant "CourseListView" as view
+participant "InstructorCourseController" as fe_ctrl
+participant "CourseController" as be_ctrl
+
+participant ":CourseCommandService" as sv
+participant ":LockoutRepository" as lock_repo
+participant ":CourseRepository" as repo
+participant ":RedisService" as redis
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++:1. Click "Hide" / "Archive" button of a course
+view->view++:2. Show archive confirmation dialog
+view--
+group opt [Instructor cancels action]
+    view-->>act:2.1. Close confirmation dialog
+end
+
+act->view:3. Confirm archiving the course
+view->fe_ctrl++:4. Send AJAX POST request to InstructorCourse/UpdateCourseStatus (status = "archived")
+
+fe_ctrl->be_ctrl++:5. Send PATCH request to /api/courses/{courseId}/status (JSON payload)
+be_ctrl->be_ctrl++:6. Call GetInstructorId()
+be_ctrl--
+be_ctrl->sv++:7. Call UpdateCourseStatusAsync(courseId, "archived", instructorId)
+
+sv->repo++:8. Call GetByIdAsync(courseId)
+repo->ctx++:9. Call FindAsync(courseId)
+ctx->db++:10. Query Course by courseId
+db-->>ctx--:11. Return course or null
+ctx-->>repo--:12. Return course or null
+repo-->>sv--:13. Return course or null
+
+sv->sv++:14. Check if course is null
+sv--
+group opt [Course is null]
+    sv-->>be_ctrl:14.2. Throw Exception("Course not found.")
+    be_ctrl-->>fe_ctrl:14.2.1. Return statusCode 500 (InternalServerError)
+    fe_ctrl-->>view:14.2.2. Return JSON { success = false }
+    view-->>act:14.2.3. Display "Course not found" error message
+end
+
+sv->sv++:15. Check course ownership
+sv--
+group opt [course.InstructorId != instructorId]
+    sv-->>be_ctrl:15.3. Throw UnauthorizedAccessException("...")
+    be_ctrl-->>fe_ctrl:15.3.1. Return statusCode 403 (Forbidden)
+    fe_ctrl-->>view:15.3.2. Return JSON { success = false }
+    view-->>act:15.3.3. Display "Permission denied" error message
+end
+
+sv->lock_repo++:16. Call GetActiveLockoutAsync(instructorId, "instructor")
+lock_repo->ctx++:17. Call GetActiveLockoutAsync()
+ctx->db++:18. Query active lockout
+db-->>ctx--:19. Return activeLockout or null
+ctx-->>lock_repo--:20. Return activeLockout or null
+lock_repo-->>sv--:21. Return activeLockout or null
+
+sv->sv++:22. Check if instructor is locked out
+sv--
+group opt [Instructor account is locked]
+    sv-->>be_ctrl:22.4. Throw BadRequestException("...")
+    be_ctrl-->>fe_ctrl:22.4.1. Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view:22.4.2. Return JSON { success = false }
+    view-->>act:22.4.3. Display lockout error message
+end
+
+sv->sv++:23. Check if course is discontinued
+sv--
+group opt [Course is archived and flag count >= 3]
+    sv-->>be_ctrl:23.5. Throw BadRequestException("...")
+    be_ctrl-->>fe_ctrl:23.5.1. Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view:23.5.2. Return JSON { success = false }
+    view-->>act:23.5.3. Display discontinued error message
+end
+
+sv->sv++:24. Set course.CourseStatus = "archived"
+sv--
+
+sv->repo++:25. Call Update(course)
+repo-->>sv--:26. Return success
+
+sv->repo++:27. Call SaveChangesAsync()
+repo->ctx++:28. Call SaveChangesAsync()
+ctx->db++:29. Save updates to Database
+db-->>ctx--:30. Return numberOfRowsAffected
+ctx-->>repo--:31. Return numberOfRowsAffected
+repo-->>sv--:32. Return numberOfRowsAffected
+
+sv->sv++:33. Check if numberOfRowsAffected > 0
+sv--
+
+alt numberOfRowsAffected > 0
+    sv->redis++:33.1. Call RemoveCacheAsync(courseKey)
+    redis-->>sv--:33.1.1. Cache removed
+    
+    sv-->>be_ctrl:33.1.2. Return success
+    be_ctrl-->>fe_ctrl:33.1.3. Return statusCode 200 (Ok)
+    fe_ctrl-->>view:33.1.4. Return success JSON { success = true }
+    view-->>act:33.1.5. Display "Course hidden successfully" notification and refresh list
+else numberOfRowsAffected == 0
+    sv-->>be_ctrl--:33.2. Throw InvalidOperationException("Failed to save changes")
+    be_ctrl-->>fe_ctrl--:33.2.1. Return statusCode 400 (BadRequest)
+    fe_ctrl-->>view--:33.2.2. Return JSON { success = false }
+    view-->>act--:33.2.3. Display "Hiding course failed" error message
+end
+
+@enduml

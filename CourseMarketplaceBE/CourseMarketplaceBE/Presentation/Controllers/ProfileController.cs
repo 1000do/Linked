@@ -3,6 +3,7 @@ using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -19,6 +20,8 @@ public class ProfileController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous] // Override default Authorize if any
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GetProfile()
     {
         var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -36,6 +39,8 @@ public class ProfileController : ControllerBase
 
     [HttpPut("update")]
     [Consumes("multipart/form-data")]
+    [AllowAnonymous] // Override default Authorize if any
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileRequest request)
     {
         if (!ModelState.IsValid)
@@ -69,6 +74,8 @@ public class ProfileController : ControllerBase
     }
 
     [HttpPost("change-password")]
+    [AllowAnonymous] // Override default Authorize if any
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
     {
         if (!ModelState.IsValid)

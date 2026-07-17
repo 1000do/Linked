@@ -2,6 +2,7 @@ using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -17,7 +18,8 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "user")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GetWishlist()
     {
         var userId = GetUserId();
@@ -28,7 +30,8 @@ public class WishlistController : ControllerBase
     }
 
     [HttpPost("{courseId}")]
-    [Authorize(Roles = "user")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> AddToWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -46,7 +49,8 @@ public class WishlistController : ControllerBase
     }
 
     [HttpDelete("{courseId}")]
-    [Authorize(Roles = "user")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> RemoveFromWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -68,7 +72,8 @@ public class WishlistController : ControllerBase
     }
 
     [HttpPost("toggle/{courseId}")]
-    [Authorize(Roles = "user")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> ToggleWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -90,7 +95,8 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet("check/{courseId}")]
-    [Authorize(Roles = "user")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: false)]
     public async Task<IActionResult> CheckWishlist(int courseId)
     {
         var userId = GetUserId();
@@ -102,7 +108,8 @@ public class WishlistController : ControllerBase
     }
 
     [HttpGet("count")]
-    [Authorize(Roles = "user")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GetWishlistCount()
     {
         var userId = GetUserId();

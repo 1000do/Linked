@@ -32,14 +32,19 @@ actor Admin as act
 participant "AdminAccountView" as view
 participant "AdminAccountController" as fe_ctrl <<frontend controller>>
 participant "AdminAccountController" as be_ctrl <<backend controller>>
-participant ":AdminAccountService" as sv
-participant ":UserRepository" as u_repo
-participant ":LockoutRepository" as lockout_repo
-participant ":ReportRepository" as report_repo
-participant ":NotificationRepository" as notif_repo
-participant ":ChatRepository" as chat_repo
-participant ":TransactionRepository" as trans_repo
-participant ":EnrollmentRepository" as enroll_repo
+participant ":AdminAccountDetailDto" as detail_dto
+participant ":AccountTransactionSummaryDto" as summary_dto
+participant ":AdminAccountDetailViewModel" as vm_acc
+participant ":AccountTransactionSummaryViewModel" as vm_trans
+participant ":AdminAccountDetailPageViewModel" as vm_page
+participant ":IAdminAccountService" as sv
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lockout_repo
+participant ":IReportRepository" as report_repo
+participant ":INotificationRepository" as notif_repo
+participant ":IChatRepository" as chat_repo
+participant ":ITransactionRepository" as trans_repo
+participant ":IEnrollmentRepository" as enroll_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -47,7 +52,7 @@ act++
 act->view++: Click "View Detail" on an account
 view->fe_ctrl++: GET /AdminAccount/Detail/{id}
 
-== 1. Get Account Details ==
+
 fe_ctrl->be_ctrl++: GET /api/admin/accounts/{id}
 
 be_ctrl->sv++: Call GetAccountDetailAsync(id)
@@ -120,10 +125,13 @@ opt Account is Student
     end
 end
 
-sv-->>be_ctrl--: Return AdminAccountDetail object
+sv->detail_dto++: Call AdminAccountDetailDto()
+detail_dto-->>sv--: Return AdminAccountDetailDto object
+
+sv-->>be_ctrl--: Return AdminAccountDetailDto object
 be_ctrl-->>fe_ctrl--: Return statusCode 200
 
-== 2. Get Account Transactions ==
+
 fe_ctrl->be_ctrl++: GET /api/admin/accounts/{id}/transactions
 
 be_ctrl->sv++: Call GetAccountTransactionsAsync(id)
@@ -141,17 +149,30 @@ db-->>ctx--: Return result
 ctx-->>trans_repo--: Return summary
 trans_repo-->>sv--: Return summary
 
-sv-->>be_ctrl--: Return AccountTransactionSummary object
+sv->summary_dto++: Call AccountTransactionSummaryDto()
+summary_dto-->>sv--: Return AccountTransactionSummaryDto object
+
+sv-->>be_ctrl--: Return AccountTransactionSummaryDto object
 be_ctrl-->>fe_ctrl--: Return statusCode 200
 
-== 3. Render View ==
-alt Both requests are successful
-    fe_ctrl->fe_ctrl++: Parse JSON & construct ViewModel
-    fe_ctrl--
+
+alt Any request failed
+    fe_ctrl-->>view: Return statusCode 302
+    view-->>act: Display Index page with error message
+else Both requests are successful
+    fe_ctrl->vm_acc++: Call AdminAccountDetailViewModel()
+    vm_acc-->>fe_ctrl--: Return AdminAccountDetailViewModel object
+
+    fe_ctrl->vm_trans++: Call AccountTransactionSummaryViewModel()
+    vm_trans-->>fe_ctrl--: Return AccountTransactionSummaryViewModel object
+
+    fe_ctrl->vm_page++: Call AdminAccountDetailPageViewModel()
+    vm_page-->>fe_ctrl--: Return AdminAccountDetailPageViewModel object
+
     fe_ctrl-->>view: Return statusCode 200
+    deactivate fe_ctrl
     view-->>act: Display Account Detail page
-else Any request failed
-    fe_ctrl-->>view--: Return statusCode 302
-    view-->>act--: Display Index page with error message
+    deactivate view
 end
+deactivate act
 @enduml

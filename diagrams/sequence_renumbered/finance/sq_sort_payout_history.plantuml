@@ -1,0 +1,79 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Sort Payout History
+actor Instructor as act
+
+participant "Transaction/Instructor.cshtml" as view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Select sort option and click "Filter"
+view->fe_ctrl++:2. Send GET /Transaction/Instructor?tab=po&payoutSortBy=amount_desc&payoutPage=1
+
+fe_ctrl->be_ctrl++:3. Send GET /api/instructor/payouts?page=1&pageSize=20&sortBy=amount_desc&year=... (with Bearer Token)
+
+be_ctrl->sv++:4. Call GetPayoutsAsync(..., sortBy: "amount_desc", ...)
+sv->repo++:5. Call GetPayoutsAsync(..., sortBy: "amount_desc", ...)
+
+repo->repo++:6. Construct EF Core IQueryable for InstructorPayouts
+repo--
+
+alt [sortBy == "amount_desc"]
+    repo->repo++:6.1. Apply .OrderByDescending(p => p.PayoutAmount)
+    repo--
+else [sortBy == "amount_asc"]
+    repo->repo++:6.2. Apply .OrderBy(p => p.PayoutAmount)
+    repo--
+else [sortBy == "date_desc" (Default)]
+    repo->repo++:6.3. Apply .OrderByDescending(p => p.PayoutDate)
+    repo--
+else [sortBy == "date_asc"]
+    repo->repo++:6.4. Apply .OrderBy(p => p.PayoutDate)
+    repo--
+end
+
+repo->ctx++:7. Query InstructorPayouts
+ctx->db++:8. Execute ordered query with Skip() and Take()
+db-->>ctx--:9. Return ordered payouts list & total count
+ctx-->>repo--:10. Return payouts list and count
+
+repo-->>sv--:11. Return PagedResult<InstructorPayoutDto>
+sv-->>be_ctrl--:12. Return PagedResult<InstructorPayoutDto>
+be_ctrl-->>fe_ctrl--:13. Return statusCode 200 (Ok) with sorted Payouts JSON
+
+fe_ctrl-->>view--:14. Return View(vm)
+view->view++:15. Re-render Payout History table
+view--
+view-->>act--:16. Display payout list sorted by amount
+@enduml

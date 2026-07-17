@@ -30,10 +30,12 @@ mainframe View Wishlist
 actor User as act
 
 participant "WishlistView" as view
+participant "LoginView" as login_view
 participant "WishlistController" as fe_ctrl <<frontend controller>>
 participant "WishlistController" as be_ctrl <<backend controller>>
-participant ":WishlistService" as sv
-participant ":WishlistRepository" as w_repo
+participant ":WishlistResponse" as be_res
+participant ":IWishlistService" as sv
+participant ":IWishlistRepository" as w_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -46,24 +48,35 @@ fe_ctrl->be_ctrl++: GET /api/wishlist
 be_ctrl->be_ctrl++: Parse userId from token
 be_ctrl--
 
-be_ctrl->sv++: Call GetWishlistAsync(userId)
-
-sv->w_repo++: Call GetByUserIdAsync(userId)
-w_repo->ctx++: Query WishlistItem
-ctx->db++: Execute query
-db-->>ctx--: Return result
-ctx-->>w_repo--: Return result
-w_repo-->>sv--: Return result
-
-sv->sv++: Fetch course stats and enrollment status
-sv--
-
-sv-->>be_ctrl--: Return result
-be_ctrl-->>fe_ctrl--: Return statusCode 200
-
-fe_ctrl->fe_ctrl++: Deserialize response
-fe_ctrl--
-
-fe_ctrl-->>view--: Return statusCode 200
-view-->>act--: Display wishlist page
+alt Invalid login session
+    be_ctrl-->>fe_ctrl: Return statusCode 401
+    fe_ctrl-->>view: Return statusCode 302
+    view-->>act: Redirect to Login page
+    act->login_view++: Access Login page
+    login_view-->>act--: Display Login page
+else Valid login session
+    be_ctrl->sv++: Call GetWishlistAsync(userId)
+    
+    sv->w_repo++: Call GetByUserIdAsync(userId)
+    w_repo->ctx++: Query WishlistItem
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>w_repo--: Return result
+    w_repo-->>sv--: Return List<WishlistItem> entity
+    
+    sv->sv++: Fetch course stats and enrollment status
+    sv--
+    
+    sv->be_res++: Call List<WishlistResponse>()
+    be_res-->>sv--: Return List<WishlistResponse> object
+    
+    sv-->>be_ctrl--: Return List<WishlistResponse> object
+    be_ctrl-->>fe_ctrl--: Return statusCode 200
+    
+    fe_ctrl->fe_ctrl++: Deserialize response
+    fe_ctrl--
+    
+    fe_ctrl-->>view--: Return statusCode 200
+    view-->>act--: Display wishlist page
+end
 @enduml

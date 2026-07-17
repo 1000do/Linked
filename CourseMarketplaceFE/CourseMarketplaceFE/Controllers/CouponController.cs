@@ -16,7 +16,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ── Razor Views ───────────────────────────────────────────────────────
         public IActionResult Index() => View();
-        [Authorize(Roles = "admin,staff")]
+        [Authorize(Roles = "admin")]
         public IActionResult Admin() => View();
 
         // ── Proxy APIs (for JavaScript – bypasses HttpOnly cookie & Docker networking) ──

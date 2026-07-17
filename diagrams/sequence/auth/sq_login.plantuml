@@ -34,9 +34,11 @@ participant "AdminNotificationView" as admin_view
 participant "HomeIndexView" as home_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
-participant ":AuthService" as sv
-participant ":UserRepository" as u_repo
-participant ":LockoutRepository" as lock_repo
+participant ":LoginRequestDTO" as req
+participant ":LoginResponseDTO" as res
+participant ":IAuthService" as sv
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lock_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -46,7 +48,10 @@ view->fe_ctrl++: POST /Account/Login
 
 fe_ctrl->be_ctrl++: POST /api/auth/login
 
-be_ctrl->sv++: Call LoginAsync(request)
+be_ctrl->req++: Call LoginRequestDTO()
+req-->>be_ctrl--: Return LoginRequestDTO object
+
+be_ctrl->sv++: Call LoginAsync(req)
 
 sv->u_repo++: Call GetAccountByEmailOrUsernameAsync(usernameOrEmail)
 u_repo->ctx++: Query Account
@@ -61,7 +66,7 @@ sv--
 alt Invalid credentials
     sv-->>be_ctrl: Return null
     be_ctrl-->>fe_ctrl: Return statusCode 401
-    fe_ctrl-->>view: Return statusCode 200
+    fe_ctrl-->>view: Return statusCode 401
     view-->>act: Display error message
 else Valid credentials
     sv->lock_repo++: Call GetActiveLockoutAsync(accountId, "account")
@@ -74,16 +79,22 @@ else Valid credentials
     sv->sv++: Check activeLockout
     sv--
 
-    alt Account is active
+    alt Account is locked out
+        sv-->>be_ctrl: throw UnauthorizedAccessException
+        be_ctrl-->>fe_ctrl: Return statusCode 403
+        fe_ctrl-->>view: Return statusCode 403
+        view-->>act: Display error message
+        deactivate view
+    else Account is active
         sv->u_repo++: Call UpdateLastLoginAsync(accountId)
         u_repo->ctx++: Update LastLoginDate
         ctx-->>u_repo--: Return result
         
         u_repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Save changes to database
-        db-->>ctx--: Return result
+        db-->>ctx--: Return numberOfRowsAffected
         ctx-->>u_repo--: Return numberOfRowsAffected
-        u_repo-->>sv--: Return result
+        u_repo-->>sv--: Return numberOfRowsAffected
         
         sv->u_repo++: Call GetRoleByAccountIdAsync(accountId)
         u_repo->ctx++: Query Role
@@ -101,36 +112,33 @@ else Valid credentials
         
         u_repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Save changes to database
-        db-->>ctx--: Return result
+        db-->>ctx--: Return numberOfRowsAffected
         ctx-->>u_repo--: Return numberOfRowsAffected
-        u_repo-->>sv--: Return result
+        u_repo-->>sv--: Return numberOfRowsAffected
         
-        sv-->>be_ctrl: Return LoginResponse object
+        sv->res++: Call LoginResponseDTO()
+        res-->>sv--: Return LoginResponseDTO object
+        
+        sv-->>be_ctrl--: Return LoginResponseDTO object
         
         be_ctrl->be_ctrl++: Append HttpOnly cookies
         be_ctrl--
         
-        be_ctrl-->>fe_ctrl: Return statusCode 200
+        be_ctrl-->>fe_ctrl--: Return statusCode 200
         
         fe_ctrl->fe_ctrl++: Append HttpOnly cookies and user info cookies
         fe_ctrl--
         
+        deactivate view
         alt role == admin or staff
-            fe_ctrl -->> admin_view: Redirect to Admin Notification page
+            fe_ctrl -->> admin_view--: Redirect to Admin Notification page
             activate admin_view
-            admin_view -->> act: Display Admin Notification page
-            deactivate admin_view
+            admin_view -->> act--: Display Admin Notification page
         else role == user or instructor
-            fe_ctrl -->> home_view: Redirect to Home Index page
+            fe_ctrl -->> home_view--: Redirect to Home Index page
             activate home_view
-            home_view -->> act: Display Homepage
-            deactivate home_view
+            home_view -->> act--: Display Homepage
         end
-    else Account is locked out
-        sv-->>be_ctrl--: throw UnauthorizedAccessException
-        be_ctrl-->>fe_ctrl--: Return statusCode 500
-        fe_ctrl-->>view--: Return statusCode 200
-        view-->>act--: Display error message
     end
 end
 @enduml

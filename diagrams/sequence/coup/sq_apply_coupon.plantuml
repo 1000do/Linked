@@ -32,9 +32,10 @@ actor User as act
 participant "CartView" as view
 participant "CartController" as fe_ctrl <<frontend controller>>
 participant "CartController" as be_ctrl <<backend controller>>
-participant ":CartService" as sv
-participant ":CartRepository" as cart_repo
-participant ":CouponRepository" as coupon_repo
+participant ":CartSummaryResponseDTO" as res
+participant ":ICartService" as sv
+participant ":ICartRepository" as cart_repo
+participant ":ICouponRepository" as coupon_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -80,7 +81,10 @@ alt Coupon is valid and eligible
     ctx-->>coupon_repo--: Return list
     coupon_repo-->>sv--: Return list
     
-    sv-->>be_ctrl: Return CartSummaryResponse object
+    sv->res++: Call CartSummaryResponseDTO()
+    res-->>sv--: Return CartSummaryResponseDTO object
+    
+    sv-->>be_ctrl: Return CartSummaryResponseDTO object
     be_ctrl-->>fe_ctrl: Return statusCode 200
     
     fe_ctrl->fe_ctrl++: Set success message
@@ -101,7 +105,10 @@ else Coupon is invalid or expired
     sv->sv++: Fetch items and calculate totals
     sv--
     
-    sv-->>be_ctrl--: Return CartSummaryResponse object
+    sv->res++: Call CartSummaryResponseDTO()
+    res-->>sv--: Return CartSummaryResponseDTO object
+    
+    sv-->>be_ctrl--: Return CartSummaryResponseDTO object
     be_ctrl-->>fe_ctrl--: Return statusCode 200
     
     fe_ctrl->fe_ctrl++: Set error message

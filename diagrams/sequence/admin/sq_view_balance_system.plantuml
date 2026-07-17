@@ -85,8 +85,7 @@ else Valid actor's authentication and authorization
         stripe_sv -->> finance_sv--: Return PlatformBalanceVM object
         finance_sv -->> be_ctrl--: Return PlatformBalanceVM object
         be_ctrl -->> fe_ctrl--: Return statusCode 200
-        
-    else Main Thread Return
+else Main Thread Return
         fe_ctrl -> fe_ctrl++: Deserialize JSON responses
         fe_ctrl--
         

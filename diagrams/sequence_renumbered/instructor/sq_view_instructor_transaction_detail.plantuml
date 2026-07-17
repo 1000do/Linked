@@ -1,0 +1,118 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor's Transaction History Detail
+
+actor Instructor as act
+participant "EaringInstructorPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "InstructorTransactionDetailPage" as detail_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":ITransactionService" as tx_sv
+participant ":ITransactionRepository" as tx_repo
+participant ":TransactionDetailDto" as res_dto
+participant ":TransactionDetailVM" as view_model
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> view++:1. Click "View" button next to a transaction row
+view -> fe_tx_ctrl++:2. GET /Transaction/InstructorDetail/{id}
+view--
+
+fe_tx_ctrl -> fe_tx_ctrl++:3. Validate actor's authentication and authorization
+fe_tx_ctrl--
+
+alt Session Invalid
+    fe_tx_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_tx_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_tx_ctrl -> be_tx_ctrl++:3.3. GET /api/transactions/{id}
+    be_tx_ctrl -> tx_sv++:3.3.1. GetTransactionDetailAsync(id)
+
+    tx_sv -> tx_sv++:3.3.2. Validate transaction ID (id <= 0)
+    tx_sv--
+
+alt Invalid Transaction ID
+        tx_sv -->> be_tx_ctrl:3.3.2.1. throw ArgumentException
+        be_tx_ctrl -->> fe_tx_ctrl:3.3.2.1.1. Return statusCode 400
+        
+        fe_tx_ctrl -->> view:3.3.2.1.2. Redirect to InstructorFinancePage
+        activate view
+        view -->> act:3.3.2.1.3. Display error message
+        deactivate view
+else Valid Transaction ID
+        tx_sv -> tx_repo++:3.3.2.2. GetTransactionDetailAsync(transactionId)
+        tx_repo -> ctx++:3.3.2.2.1. Query Transaction by id
+        ctx -> db++:3.3.2.2.2. Execute SELECT
+        db -->> ctx--:3.3.2.2.3. Return data
+        ctx -->> tx_repo--:3.3.2.2.4. Return mapped data
+        
+        tx_repo -> res_dto++:3.3.2.2.5. Call TransactionDetailDto()
+        res_dto -->> tx_repo--:3.3.2.2.6. Return TransactionDetailDto object
+        
+        tx_repo -->> tx_sv--:3.3.2.2.7. Return TransactionDetailDto object
+        tx_sv -->> be_tx_ctrl--:3.3.2.2.8. Return TransactionDetailDto object
+        
+alt Transaction not found (Null)
+            be_tx_ctrl -->> fe_tx_ctrl:3.3.2.2.8.1. Return statusCode 404
+            
+            fe_tx_ctrl -->> view:3.3.2.2.8.1.1. Redirect to InstructorFinancePage
+            activate view
+            view -->> act:3.3.2.2.8.1.2. Display error message
+            deactivate view
+else Transaction found
+            be_tx_ctrl -->> fe_tx_ctrl--:3.3.2.2.8.2. Return statusCode 200
+            
+            fe_tx_ctrl -> fe_tx_ctrl++:3.3.2.2.8.2.1. Deserialize JSON to TransactionDetailVM
+            fe_tx_ctrl--
+            
+            fe_tx_ctrl -> view_model++:3.3.2.2.8.2.2. Call TransactionDetailVM()
+            view_model -->> fe_tx_ctrl--:3.3.2.2.8.2.3. Return TransactionDetailVM object
+            
+alt Invalid Transaction Data
+                fe_tx_ctrl -->> view:3.3.2.2.8.2.3.1. Redirect to InstructorFinancePage
+                activate view
+                view -->> act:3.3.2.2.8.2.3.1.1. Display error message
+                deactivate view
+else Valid Transaction Data
+                fe_tx_ctrl -->> detail_view++:3.3.2.2.8.2.3.2. Return View(parsed.Data)
+                detail_view -->> act--:3.3.2.2.8.2.3.2.1. Display Transaction details page
+end
+end
+end
+end
+
+@enduml

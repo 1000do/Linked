@@ -4,12 +4,14 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
 [Route("api/admin/accounts")]
 [ApiController]
-[Authorize(Roles = "admin")]
+[AllowAnonymous]
+[CustomAuthorize(requireAuth: true, "admin")]
 public class AdminAccountController : ControllerBase
 {
     private readonly IAdminAccountService _accountService;
@@ -210,6 +212,36 @@ public class AdminAccountController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { status = 400, message = "Failed to flag account" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"Internal server error: {ex.Message}" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/admin/accounts/{id}/unflag (Giảm flag count)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("{id}/unflag")]
+    public async Task<IActionResult> UnflagAccount(int id, [FromBody] UnflagAccountRequest request)
+    {
+        try
+        {
+            var result = await _accountService.UnflagAccountAsync(id, request.Reason);
+            if (!result.Success)
+            {
+                if (result.ErrorMessage == "Account not found.")
+                {
+                    return NotFound(new { status = 404, message = result.ErrorMessage });
+                }
+                return BadRequest(new { status = 400, message = result.ErrorMessage });
+            }
+
+            return Ok(new { status = 200, message = "Account unflagged successfully.", currentFlags = result.CurrentFlags, newStatus = result.NewStatus });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { status = 400, message = "Failed to unflag account" });
         }
         catch (Exception ex)
         {

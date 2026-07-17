@@ -31,8 +31,9 @@ actor Admin as act
 
 participant "AdminCouponView" as view
 participant "CouponController" as be_ctrl <<backend controller>>
-participant ":CouponService" as sv
-participant ":CouponRepository" as repo
+participant ":CouponResponseDTO" as res_dto
+participant ":ICouponService" as sv
+participant ":ICouponRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -48,10 +49,10 @@ db-->>ctx--: Return result
 ctx-->>repo--: Return list of Coupons
 repo-->>sv--: Return list of Coupons
 
-sv->sv++: Map to list of CouponResponse
-sv--
+sv->res_dto++: Call CouponResponseDTO()
+res_dto-->>sv--: Return CouponResponseDTO object
 
-sv-->>be_ctrl--: Return result
+sv-->>be_ctrl--: Return list of CouponResponseDTO objects
 be_ctrl-->>view--: Return statusCode 200
 view-->>act--: Render Coupon List table
 @enduml

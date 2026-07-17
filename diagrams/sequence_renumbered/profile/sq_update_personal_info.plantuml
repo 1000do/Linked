@@ -1,0 +1,138 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Update Personal Info
+actor User as act
+
+participant "EditProfileView" as view
+participant "ProfileView" as r_view
+participant "LoginView" as login_view
+participant ":UpdateProfileViewModel" as fe_req
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant ":UpdateProfileRequestDTO" as be_req
+participant "ProfileController" as be_ctrl <<backend controller>>
+participant ":IUserProfileService" as sv
+participant ":IFileUploadService" as upload_sv
+participant ":IUserRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Enter personal info (Name, Bio, Dob, Phone, AvatarFile)
+act->view:2. Click "Save Changes"
+
+view->view++:3. Validate input
+view--
+
+view->fe_req++:4. Call UpdateProfileViewModel()
+fe_req-->>view--:5. Return UpdateProfileViewModel object
+
+view->fe_ctrl++:6. POST /Account/EditProfile
+
+fe_ctrl->fe_ctrl++:7. Check AccessToken cookie
+fe_ctrl--
+
+fe_ctrl->be_req++:8. Call UpdateProfileRequestDTO()
+be_req-->>fe_ctrl--:9. Return UpdateProfileRequestDTO object
+
+fe_ctrl->be_ctrl++:10. PUT /api/Profile/update
+
+be_ctrl->be_ctrl++:11. Validate ModelState & login session
+be_ctrl--
+
+be_ctrl->sv++:12. Call UpdateProfileAsync(userId, request)
+
+sv->repo++:13. Call GetUserByIdAsync(userId)
+repo->ctx++:14. Query User joined with navigation details
+ctx->db++:15. Execute query
+db-->>ctx--:16. Return result
+ctx-->>repo--:17. Return User entity
+repo-->>sv--:18. Return User entity
+
+sv->sv++:19. Check User, Account, Google Email modification and Email format
+sv--
+
+opt AvatarFile != null
+    sv->upload_sv++:19.1. Call UploadImageAsync(AvatarFile)
+    upload_sv-->>sv--:19.1.1. Return avatarUrl
+end
+
+sv->repo++:20. Call UpdateUserProfileAsync(...)
+
+repo->ctx++:21. Begin database transaction
+ctx-->>repo--:22. Return result
+
+repo->ctx++:23. Query User joined with navigation details
+ctx->db++:24. Execute query
+db-->>ctx--:25. Return result
+ctx-->>repo--:26. Return User entity
+
+repo->repo++:27. Set modified fields
+repo--
+
+opt Email is modified
+    repo->ctx++:27.2. Check if email is already taken
+    ctx->db++:27.2.1. Execute query
+    db-->>ctx--:27.2.2. Return result
+    ctx-->>repo--:27.2.3. Return result
+end
+
+repo->ctx++:28. Call SaveChangesAsync()
+ctx->db++:29. Execute query
+db-->>ctx--:30. Return result
+ctx-->>repo--:31. Return numberOfRowsAffected
+
+repo->repo++:32. Check numberOfRowsAffected
+repo--
+
+repo->ctx++:33. Commit transaction
+ctx-->>repo--:34. Return result
+repo-->>sv--:35. Return success
+
+sv-->>be_ctrl--:36. Return success
+be_ctrl-->>fe_ctrl--:37. Return statusCode 200
+
+fe_ctrl->be_ctrl++:38. GET /api/Profile
+be_ctrl->sv++:39. Call GetUserProfileAsync(userId)
+sv->repo++:40. Call GetUserByIdAsync(userId)
+repo->ctx++:41. Query User joined with navigation details
+ctx->db++:42. Execute query
+db-->>ctx--:43. Return result
+ctx-->>repo--:44. Return User entity
+repo-->>sv--:45. Return User entity
+sv-->>be_ctrl--:46. Return UserProfileResponse object
+be_ctrl-->>fe_ctrl--:47. Return statusCode 200
+
+fe_ctrl->fe_ctrl++:48. Sync display cookies
+fe_ctrl--
+
+fe_ctrl-->>view--:49. Return statusCode 200
+view-->>act--:50. Redirect to Profile page
+act->r_view++:51. Access Profile page
+r_view-->>act--:52. Display "Updated successfully!" and show updated profile info
+@enduml

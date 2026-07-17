@@ -1,0 +1,130 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Resolve Course Report
+
+actor "Staff / Admin" as act
+participant "ReportCenterPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":IReportModerationService" as sv
+participant ":IReportRepository" as repo
+participant ":IRedisService" as redis
+database Database as db
+
+act ++
+act -> view++:1. Click "Moderate" on a course report row
+view -->> act:2. Display Moderate Report popup
+act -> view:3. Select resolution status
+act -> view:4. Click "Submit Decision"
+
+view -> fe_ctrl++:5. POST /AdminModeration/ResolveCourseReport?reportId={id}
+
+fe_ctrl -> fe_ctrl++:6. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:6.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:6.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:6.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:6.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++:6.3. Validate ModelState
+    fe_ctrl--
+
+opt Invalid ModelState
+        fe_ctrl -->> view:6.3.1. Return BadRequest()
+        view -->> act:6.3.1.1. Display error message
+end
+
+    fe_ctrl -> be_ctrl++:6.4. PATCH /api/admin/moderation/reports/courses/{reportId}
+
+    be_ctrl -> sv++:6.5. Call ResolveCourseReportAsync()
+
+    sv -> sv++:6.6. Validate report resolution request
+    sv--
+
+alt Report or entity not found
+        sv -->> be_ctrl:6.6.1. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:6.6.1.1. Return statusCode 404
+        fe_ctrl -->> view:6.6.1.2. Return NotFound()
+        view -->> act:6.6.1.3. Display error message
+else Unauthorized
+        sv -->> be_ctrl:6.6.2. Throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl:6.6.2.1. Return statusCode 403
+        fe_ctrl -->> view:6.6.2.2. Return Forbid()
+        view -->> act:6.6.2.3. Display error message
+else Valid report resolution request
+        sv -> sv++:6.6.3. Update course report fields
+        sv--
+
+opt Report is accepted
+        sv -> sv++:6.6.3.2. Call ApplyCoursePenaltyAsync()
+        sv--
+end
+
+    sv -> repo++:6.6.4. UpdateCourseReport(report)
+    repo -->> sv--:6.6.5. Return result
+
+    sv -> sv++:6.6.6. SaveReportChangesAsync()
+    sv -> repo++:6.6.7. SaveChangesAsync()
+    repo -> db++:6.6.8. Save changes to database
+
+alt Database Save Failure
+        db -->> repo:6.6.8.1. Throw DbUpdateException
+        repo -->> sv:6.6.8.1.1. Throw ReportException
+        sv -->> be_ctrl:6.6.8.1.2. Throw BadRequestException
+        be_ctrl -->> fe_ctrl:6.6.8.1.3. Return statusCode 400
+        fe_ctrl -->> view:6.6.8.1.4. Return BadRequest()
+        view -->> act:6.6.8.1.5. Display error popup
+else Database Save Success
+        db -->> repo--:6.6.8.2. Return numberOfRowsAffected
+        repo -->> sv--:6.6.8.2.1. Return numberOfRowsAffected
+        sv--
+
+opt Report is accepted and Course is Flagged
+            sv -> redis++:6.6.8.2.1.3. RemoveCacheAsync(cacheKey)
+            redis -->> sv--:6.6.8.2.1.3.1. Return result
+end
+
+        sv -> sv++:6.6.8.2.2. Call SendResolutionNotificationsAsync()
+        sv--
+
+        sv -->> be_ctrl--:6.6.8.2.3. Return true
+        be_ctrl -->> fe_ctrl--:6.6.8.2.4. Return statusCode 200
+        fe_ctrl -->> view--:6.6.8.2.5. Return Ok()
+
+        view -->> act--:6.6.8.2.6. Display success message
+end
+end
+end
+@enduml

@@ -12,7 +12,8 @@ class CouponController {
 
 %% ==================== BACKEND - DTOs ====================
 
-class CouponResponse {
+class CouponResponseDTO {
+    <<dto>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -29,6 +30,7 @@ class CouponResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -45,26 +47,28 @@ class Coupon {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICouponService {
-    <<interface>>
-    + GetAllAsync(userId: int, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponse~~ *
+    <<service interface>>
+    + GetAllAsync(userId: int, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponseDTO~~ *
 }
 
 class ICouponRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAllAsync(filterId: int?, isActive: bool?, type: string?, search: string?) Task~List~Coupon~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CouponService {
+    <<service>>
     - _couponRepository : ICouponRepository
     
-    + GetAllAsync(userId: int, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponse~~
+    + GetAllAsync(userId: int, isActive: bool?, type: string?, search: string?, isAdmin: bool) Task~List~CouponResponseDTO~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CouponRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAllAsync(filterId: int?, isActive: bool?, type: string?, search: string?) Task~List~Coupon~~
@@ -73,6 +77,7 @@ class CouponRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Coupons : DbSet~Coupon~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
@@ -91,8 +96,9 @@ CouponService ..|> ICouponService
 CouponRepository ..|> ICouponRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-CouponController ..> CouponResponse
-CouponService ..> CouponResponse
+CouponController ..> CouponResponseDTO
+CouponService ..> CouponResponseDTO
+CouponService ..> Coupon
 CouponRepository ..> Coupon
 
 %% ==================== STYLES ====================

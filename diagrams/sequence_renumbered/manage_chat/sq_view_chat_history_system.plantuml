@@ -1,0 +1,172 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Chat History (System)
+
+actor Staff as act
+participant "ChatIndexPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
+participant "ChatController" as fe_ctrl <<frontend controller>>
+participant "ChatController" as be_ctrl <<backend controller>>
+participant ":ChatService" as sv
+participant ":UserRepository" as user_repo
+participant ":ChatRepository" as repo
+participant ":IRedisService" as redis
+participant ":MessageDto" as msg_dto
+participant ":AppDbContext" as ctx
+database Database as db
+participant "ChatHub" as hub
+
+act++
+act->view++:1. Click on a chat room card
+view->view++:2. selectChat(chatId, name, avatar, isOnline)
+view--
+
+view->fe_ctrl++:3. GET /Chat/GetHistory?roomId={chatId}
+
+fe_ctrl -> fe_ctrl++:4. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:4.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:4.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page:4.2. Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--:4.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++:4.3. GET /api/Chat/history?roomId={chatId}
+    
+    be_ctrl->sv++:4.3.1. Call GetChatHistoryAsync(chatId, accountId)
+
+sv->sv++:4.3.2. Call HasAccessToChatAsync(accountId, chatId)
+sv->repo++:4.3.3. Call IsParticipantAsync(chatId, accountId)
+repo->ctx++:4.3.4. Call IsParticipantAsync(chatId, accountId)
+ctx->db++:4.3.5. Execute SELECT query
+
+db-->>ctx--:4.3.6. Return isParticipant
+ctx-->>repo--:4.3.7. Return isParticipant
+repo-->>sv--:4.3.8. Return isParticipant
+
+alt isParticipant == false
+    sv->user_repo++:4.3.8.1. Call GetRoleByAccountIdAsync(accountId)
+    user_repo->ctx++:4.3.8.1.1. Call GetRoleByAccountIdAsync(accountId)
+    ctx->db++:4.3.8.1.2. Execute SELECT query
+    
+    db-->>ctx--:4.3.8.1.3. Return role
+    ctx-->>user_repo--:4.3.8.1.4. Return role
+    user_repo-->>sv--:4.3.8.1.5. Return role
+    
+alt role == "admin" || role == "staff"
+        sv->repo++:4.3.8.1.5.1. Call HasActiveReportForChatAsync(chatId)
+        repo->ctx++:4.3.8.1.5.1.1. Call HasActiveReportForChatAsync(chatId)
+        ctx->db++:4.3.8.1.5.1.2. Execute SELECT query
+        
+        db-->>ctx--:4.3.8.1.5.1.3. Return hasActiveReport
+        ctx-->>repo--:4.3.8.1.5.1.4. Return hasActiveReport
+        repo-->>sv--:4.3.8.1.5.1.5. Return hasActiveReport
+end
+end
+
+sv-->>sv--:4.3.9. Return hasAccess
+
+alt hasAccess == false
+    sv-->>be_ctrl:4.3.9.1. Throw UnauthorizedAccessException
+    be_ctrl-->>fe_ctrl:4.3.9.1.1. Return statusCode 403 (Forbidden)
+    fe_ctrl-->>view:4.3.9.1.2. Return statusCode 403 (Forbidden)
+    view-->>act:4.3.9.1.3. Display permission error message
+else hasAccess == true
+    sv->sv++:4.3.9.2. Call MarkChatAsReadAsync(chatId, accountId)
+    sv->repo++:4.3.9.2.1. Call MarkAsReadAsync(chatId, accountId)
+    repo->ctx++:4.3.9.2.2. Call MarkAsReadAsync(chatId, accountId)
+    ctx-->>repo--:4.3.9.2.3. Return success
+    repo-->>sv--:4.3.9.2.4. Return success
+    
+    sv->repo++:4.3.9.2.5. Call SaveChangesAsync()
+    repo->ctx++:4.3.9.2.6. Call SaveChangesAsync()
+    ctx->db++:4.3.9.2.7. Save changes (Execute UPDATE statement)
+    
+alt Database Save Failure
+        db-->>ctx:4.3.9.2.7.1. Throw DbUpdateException
+        ctx-->>repo:4.3.9.2.7.1.1. Throw DbUpdateException
+        repo-->>sv:4.3.9.2.7.1.2. Throw DbUpdateException
+        sv-->>be_ctrl:4.3.9.2.7.1.3. Throw DbUpdateException
+        be_ctrl-->>fe_ctrl:4.3.9.2.7.1.4. Return statusCode 500 (InternalServerError)
+        fe_ctrl-->>view:4.3.9.2.7.1.5. Return JSON error
+        view-->>act:4.3.9.2.7.1.6. Display database error message
+else Database Save Success
+        db-->>ctx--:4.3.9.2.7.2. Return result
+        ctx-->>repo--:4.3.9.2.7.2.1. Return result
+        repo-->>sv--:4.3.9.2.7.2.2. Return result
+        
+        sv->redis++:4.3.9.2.7.2.3. Call ClearUnreadCountAsync(accountId, chatId)
+        redis-->>sv--:4.3.9.2.7.2.4. Return
+        sv-->>sv--:4.3.9.2.7.2.5. Return true
+        
+        sv->repo++:4.3.9.2.7.2.6. Call GetParticipantAsync(chatId, accountId)
+        repo->ctx++:4.3.9.2.7.2.7. Call GetParticipantAsync(chatId, accountId)
+        ctx->db++:4.3.9.2.7.2.8. Execute SELECT query
+        db-->>ctx--:4.3.9.2.7.2.9. Return ChatParticipant
+        ctx-->>repo--:4.3.9.2.7.2.10. Return ChatParticipant
+        repo-->>sv--:4.3.9.2.7.2.11. Return ChatParticipant
+        
+        sv->repo++:4.3.9.2.7.2.12. Call GetMessagesByChatIdAsync(chatId)
+        repo->ctx++:4.3.9.2.7.2.13. Call GetMessagesByChatIdAsync(chatId)
+        ctx->db++:4.3.9.2.7.2.14. Execute SELECT query
+        db-->>ctx--:4.3.9.2.7.2.15. Return messages list
+        ctx-->>repo--:4.3.9.2.7.2.16. Return messages list
+        repo-->>sv--:4.3.9.2.7.2.17. Return messages list
+        
+        sv->sv++:4.3.9.2.7.2.18. Filter messages sent after ClearedAt
+        sv--
+        
+        sv->msg_dto++:4.3.9.2.7.2.19. Call MessageDto()
+        msg_dto-->>sv--:4.3.9.2.7.2.20. Return MessageDto list
+        
+        sv-->>be_ctrl--:4.3.9.2.7.2.21. Return MessageDto list
+        be_ctrl-->>fe_ctrl--:4.3.9.2.7.2.22. Return statusCode 200 (Ok)
+        fe_ctrl-->>view--:4.3.9.2.7.2.23. Return JSON messages
+        
+loop for each message m
+            view->view++:4.3.9.2.7.2.24. appendMessage(m)
+            view--
+end
+        view->view++:4.3.9.2.7.2.25. scrollToBottom()
+        view--
+        
+        view->hub++:4.3.9.2.7.2.26. Invoke MarkAsRead(chatId) via SignalR
+        hub-->>view--:4.3.9.2.7.2.27. Broadcast read receipt via SignalR
+        
+        view-->>act--:4.3.9.2.7.2.28. Display chat messages in panel
+end
+end
+end
+
+@enduml

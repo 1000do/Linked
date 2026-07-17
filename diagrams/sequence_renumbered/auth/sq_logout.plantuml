@@ -1,0 +1,77 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Logout
+actor "User/Instructor/Staff/Admin" as act
+
+participant "NavbarView" as view
+participant "HomeIndexView" as home_view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant "AuthController" as be_ctrl <<backend controller>>
+participant ":IAuthService" as sv
+participant ":IUserRepository" as u_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click "Logout" button
+view->fe_ctrl++:2. POST /Account/Logout
+deactivate view
+
+fe_ctrl->be_ctrl++:3. POST /api/auth/logout
+
+be_ctrl->be_ctrl++:4. Extract accountId from User claims
+be_ctrl--
+
+opt accountId is valid
+    be_ctrl->sv++:4.1. Call LogoutAsync(accountId)
+    sv->u_repo++:4.1.1. Call RevokeRefreshTokenAsync(accountId)
+    u_repo->ctx++:4.1.2. Set RefreshToken = null
+    ctx-->>u_repo--:4.1.3. Return result
+    
+    u_repo->ctx++:4.1.4. Call SaveChangesAsync()
+    ctx->db++:4.1.5. Save changes to database
+    db-->>ctx--:4.1.6. Return numberOfRowsAffected
+    ctx-->>u_repo--:4.1.7. Return numberOfRowsAffected
+    
+    u_repo-->>sv--:4.1.8. Return numberOfRowsAffected
+    sv-->>be_ctrl--:4.1.9. Return result
+end
+
+be_ctrl->be_ctrl++:5. Clear API cookies (AccessToken, RefreshToken)
+be_ctrl--
+
+be_ctrl-->>fe_ctrl--:6. Return statusCode 200
+
+fe_ctrl->fe_ctrl++:7. Delete FE cookies (AccessToken, RefreshToken, UserName, AvatarUrl, UserRole, UserId)
+fe_ctrl--
+
+fe_ctrl -->> home_view--:8. Redirect to Home Index page
+activate home_view
+home_view -->> act--:9. Display homepage in logged-out state
+@enduml

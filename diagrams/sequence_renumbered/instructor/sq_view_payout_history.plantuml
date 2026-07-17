@@ -1,0 +1,101 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Payout History
+
+actor Instructor as act
+participant "EaringInstructorPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as app_view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":IInstructorService" as sv
+participant ":IInstructorRepository" as repo
+participant ":InstructorPayoutDto" as dto
+participant ":InstructorPayoutPagedViewModel" as vm
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view ++:1. Click "Payout History" tab or navigate to Earnings page
+view -> fe_ctrl ++:2. GET /Transaction/Instructor?tab=po
+
+fe_ctrl -> fe_ctrl ++:3. Validate actor's authentication and authorization
+fe_ctrl --
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act --:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> fe_ctrl ++:3.3. Check Cookies["InstructorApprovalStatus"]
+    fe_ctrl --
+    
+alt Status != "Approved"
+        fe_ctrl -->> app_view:3.3.1. Redirect to ApplicationStatusPage
+        activate app_view
+        app_view -->> act --:3.3.1.1. Display application status
+else Status == "Approved"
+        
+        fe_ctrl -> be_ctrl ++:3.3.2. GET /api/instructor/payouts?page=1&pageSize=20
+        be_ctrl -> sv ++:3.3.2.1. Call GetPayoutsAsync(...)
+        sv -> repo ++:3.3.2.2. Call GetPayoutsAsync(...)
+        
+        repo -> repo ++:3.3.2.3. Apply default sorting (date_desc) and pagination
+        repo --
+        
+        repo -> ctx ++:3.3.2.4. Query InstructorPayouts
+        ctx -> db ++:3.3.2.5. Execute query with Skip() and Take()
+        db -->> ctx --:3.3.2.6. Return payouts list and total count
+        ctx -->> repo --:3.3.2.7. Return payouts list and count
+        
+        repo -> dto ++:3.3.2.8. Call InstructorPayoutDto()
+        dto -->> repo --:3.3.2.9. Return InstructorPayoutDto object
+        
+        repo -->> sv --:3.3.2.10. Return PagedResult<InstructorPayoutDto>
+        sv -->> be_ctrl --:3.3.2.11. Return PagedResult<InstructorPayoutDto>
+        be_ctrl -->> fe_ctrl --:3.3.2.12. Return statusCode 200
+        
+        fe_ctrl -> vm ++:3.3.2.13. Call InstructorPayoutPagedViewModel()
+        vm -->> fe_ctrl --:3.3.2.14. Return InstructorPayoutPagedViewModel object
+        
+        fe_ctrl -->> view --:3.3.2.15. Return View(vm)
+        
+alt vm.Items.Count == 0
+            view -->> act:3.3.2.15.1. Display empty message "No payouts found"
+else vm.Items.Count > 0
+            view -->> act --:3.3.2.15.2. Display list of payouts
+end
+end
+end
+@enduml
