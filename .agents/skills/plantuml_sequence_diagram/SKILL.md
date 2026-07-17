@@ -65,6 +65,13 @@ Every `.plantuml` file must start with standard styling and settings for a clean
 @startuml 
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
