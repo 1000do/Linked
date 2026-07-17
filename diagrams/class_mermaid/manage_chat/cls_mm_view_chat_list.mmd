@@ -38,6 +38,7 @@ class ChatListDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Chat {
+    <<entity>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string
@@ -48,6 +49,7 @@ class Chat {
 }
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + Role : string
@@ -58,6 +60,7 @@ class ChatParticipant {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -76,6 +79,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -83,6 +87,7 @@ class User {
 }
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + Role : string?
     + DisplayName : string
@@ -95,27 +100,36 @@ class Manager {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + GetMyChatsAsync(accountId: int) Task~List~ChatListDto~~ *
+}
+
+class IRedisService {
+    <<service interface>>
+    + GetUnreadCountAsync(accountId: int, chatId: int) Task~int~ *
+    + IsUserOnlineAsync(accountId: int) Task~bool~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + GetParticipantsByAccountIdAsync(accountId: int) Task~List~ChatParticipant~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _repo : IChatRepository
+    - _redisService : IRedisService
     + GetMyChatsAsync(accountId: int) Task~List~ChatListDto~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetParticipantsByAccountIdAsync(accountId: int) Task~List~ChatParticipant~~
 }
@@ -123,6 +137,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Users : DbSet~User~
     + Managers : DbSet~Manager~
@@ -141,6 +156,7 @@ Chat *-- ChatParticipant
 ChatParticipant --> Account
 BackendController --> IChatService
 ChatService --> IChatRepository
+ChatService --> IRedisService
 ChatRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===

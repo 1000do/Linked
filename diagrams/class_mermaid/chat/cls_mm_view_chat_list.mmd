@@ -41,6 +41,7 @@ class ChatListDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + Role : string
@@ -51,6 +52,7 @@ class ChatParticipant {
 }
 
 class Chat {
+    <<entity>>
     + ChatId : int
     + ChatName : string?
     + ChatType : string
@@ -63,12 +65,12 @@ class Chat {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + GetMyChatsAsync(accountId: int) Task~List~ChatListDto~~ *
 }
 
 class IRedisService {
-    <<interface>>
+    <<service interface>>
     + GetUnreadCountAsync(accountId: int, chatId: int) Task~int~ *
     + IsUserOnlineAsync(accountId: int) Task~bool~ *
 }
@@ -76,13 +78,14 @@ class IRedisService {
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + GetParticipantsByAccountIdAsync(accountId: int) Task~List~ChatParticipant~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _chatRepository : IChatRepository
     - _redisService : IRedisService
     + GetMyChatsAsync(accountId: int) Task~List~ChatListDto~~
@@ -91,6 +94,7 @@ class ChatService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetParticipantsByAccountIdAsync(accountId: int) Task~List~ChatParticipant~~
 }
@@ -98,6 +102,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + ChatParticipants : DbSet~ChatParticipant~
     + Chats : DbSet~Chat~
 }

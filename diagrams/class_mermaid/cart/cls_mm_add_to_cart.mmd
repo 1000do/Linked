@@ -21,6 +21,7 @@ class CartControllerBE["CartController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CartItem {
+    <<entity>>
     + Id : int
     + UserId : int?
     + CourseId : int?
@@ -31,6 +32,7 @@ class CartItem {
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -64,26 +66,26 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICartService {
-    <<interface>>
+    <<service interface>>
     + AddToCartAsync(userId: int, courseId: int) Task *
 }
 
 class IAuthService {
-    <<interface>>
+    <<service interface>>
     + IsEmailVerifiedAsync(userId: int) Task~bool~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class ICartRepository {
-    <<interface>>
+    <<repository interface>>
     + IsCourseInCartAsync(userId: int, courseId: int) Task~bool~ *
     + AddCartItemAsync(item: CartItem) Task *
     + SaveChangesAsync() Task~int~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(courseId: int) Task~Course?~ *
     + IsEnrolledAsync(userId: int, courseId: int) Task~bool~ *
 }
@@ -91,6 +93,7 @@ class ICourseRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CartService {
+    <<service>>
     - _repo : ICartRepository
     - _courseRepo : ICourseRepository
     + AddToCartAsync(userId: int, courseId: int) Task
@@ -99,6 +102,7 @@ class CartService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CartRepository {
+    <<repository>>
     - _context : AppDbContext
     + IsCourseInCartAsync(userId: int, courseId: int) Task~bool~
     + AddCartItemAsync(item: CartItem) Task
@@ -106,6 +110,7 @@ class CartRepository {
 }
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetByIdAsync(courseId: int) Task~Course?~
     + IsEnrolledAsync(userId: int, courseId: int) Task~bool~
@@ -114,6 +119,7 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CartItems : DbSet~CartItem~
     + Courses : DbSet~Course~
     + SaveChangesAsync(cancellationToken: CancellationToken) Task~int~

@@ -497,4 +497,63 @@ public class CartServiceTests
         fixedCoupon.IsEligible.Should().BeTrue();
         fixedCoupon.ConditionMessage.Should().Be("Off $5.00");
     }
+
+    [Fact]
+    public async Task GetCartSummaryAsync_WithNullNavigationsAndCourse_HandlesGracefully()
+    {
+        //Arrange 1
+        int userId = 1;
+        string couponCode = "COUPON";
+        var cartItems = new List<CartItem>
+        {
+            // Covers Course = null in line 153, 211, 234
+            new CartItem 
+            { 
+                CourseId = 0, 
+                Price = null, 
+                Course = null 
+            },
+            // Covers Instructor = null, Price = null (Course.Price used), CourseThumbnailUrl = null
+            new CartItem 
+            { 
+                CourseId = 1, 
+                Price = null, 
+                Course = new Course 
+                { 
+                    CourseId = 1,
+                    Title = null, 
+                    CourseThumbnailUrl = null, 
+                    Price = 10m,
+                    Instructor = null,
+                    CouponId = 1
+                } 
+            },
+            // Covers InstructorNavigation = null, Course.Price = null (fallback to 0m)
+            new CartItem 
+            { 
+                CourseId = 2, 
+                Price = null, 
+                Course = new Course 
+                { 
+                    CourseId = 2,
+                    Instructor = new Instructor { InstructorNavigation = null },
+                    CouponId = 1
+                } 
+            }
+        };
+        var coupon = new Coupon { CouponId = 1, CouponCode = "COUPON", IsActive = true, MinOrderValue = 0m, CouponType = "fixed", DiscountValue = 5m };
+        var availableCoupon = new Coupon { CouponId = 1, CouponCode = "COUPON", IsActive = true, MinOrderValue = 0m, CouponType = "fixed", DiscountValue = 5m, Courses = new List<Course>() };
+        
+        //Arrange 2
+        _cartRepo.GetCartItemsWithDetailsAsync(userId).Returns(cartItems);
+        _couponRepo.GetByCodeAsync("COUPON").Returns(coupon);
+        _couponRepo.GetActiveAvailableCouponsAsync(Arg.Any<DateTime>()).Returns(new List<Coupon> { availableCoupon });
+        
+        //Act
+        var result = await _sut.GetCartSummaryAsync(userId, couponCode);
+        
+        //Assert
+        result.Should().NotBeNull();
+        result.Items.Count.Should().Be(3);
+    }
 }

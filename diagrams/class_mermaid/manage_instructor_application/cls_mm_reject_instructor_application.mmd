@@ -28,6 +28,7 @@ class UpdateApprovalStatusDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Instructor {
+    <<entity>>
     + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
@@ -45,6 +46,7 @@ class Instructor {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -52,6 +54,7 @@ class User {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -72,19 +75,19 @@ class Account {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IInstructorApprovalService {
-    <<interface>>
+    <<service interface>>
     + ApproveOrRejectAsync(dto: UpdateApprovalStatusDto) Task~bool~ *
 }
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task~bool~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IInstructorRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Instructor?~ *
     + Update(instructor: Instructor) void *
     + SaveChangesAsync() Task~int~ *
@@ -93,6 +96,7 @@ class IInstructorRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class InstructorApprovalService {
+    <<service>>
     - _repo : IInstructorRepository
     - _notiService : INotificationService
     + ApproveOrRejectAsync(dto: UpdateApprovalStatusDto) Task~bool~
@@ -101,6 +105,7 @@ class InstructorApprovalService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetByIdAsync(id: int) Task~Instructor?~
     + Update(instructor: Instructor) void
@@ -110,6 +115,7 @@ class InstructorRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Instructors : DbSet~Instructor~
     + Users : DbSet~User~
     + Accounts : DbSet~Account~

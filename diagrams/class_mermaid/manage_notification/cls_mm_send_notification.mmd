@@ -40,7 +40,6 @@ class NotificationViewModel {
 class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
-    - _chatService : IChatService
     + GetMyNotifications(page: int, pageSize: int) Task~IActionResult~
     + GetAllNotifications(page: int, pageSize: int) Task~IActionResult~
     + MarkAllAsRead() Task~IActionResult~
@@ -89,6 +88,7 @@ class NotificationAdminResponseDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification {
+    <<entity>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -103,6 +103,7 @@ class Notification {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -125,6 +126,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -132,6 +134,7 @@ class User {
 }
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + Role : string?
     + DisplayName : string
@@ -144,7 +147,7 @@ class Manager {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~ *
     + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~ *
     + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task~bool~ *
@@ -158,15 +161,10 @@ class INotificationService {
     + SendAdvancedAsync(dto: NotificationAdvancedDto, senderId: int, senderRole: string) Task~int~ *
 }
 
-class IChatService {
-    <<interface>>
-    + GetTotalUnreadCountAsync(accountId: int) Task~int~ *
-}
-
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
     + GetByIdAsync(id: int) Task~Notification?~ *
     + AddAsync(notification: Notification) Task *
@@ -183,7 +181,7 @@ class INotificationRepository {
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByEmailAsync(email: string) Task~Account?~ *
     + GetRoleByAccountIdAsync(accountId: int) Task~string~ *
     + GetAllUserIdsAsync() Task~List~int~~ *
@@ -195,6 +193,7 @@ class IUserRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
+    <<service>>
     - _repo : INotificationRepository
     - _userRepo : IUserRepository
     - _hubContext : IHubContext~NotificationHub~
@@ -214,6 +213,7 @@ class NotificationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
     + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
@@ -231,6 +231,7 @@ class NotificationRepository {
 }
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetAccountByEmailAsync(email: string) Task~Account?~
     + GetRoleByAccountIdAsync(accountId: int) Task~string~
@@ -243,6 +244,7 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Users : DbSet~User~
     + Managers : DbSet~Manager~
@@ -261,7 +263,6 @@ Account *-- Notification
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendController --> INotificationService
-BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationService --> IUserRepository
 NotificationRepository --> AppDbContext
