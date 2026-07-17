@@ -33,7 +33,7 @@ class PdfTextExtractor(ITextExtractor):
                 text = page.get_text().strip()
                 if text:
                     has_native_text = True
-                    all_text.append(f"Page {idx+1}: {text}")
+                    all_text.append(text)
             
             doc.close()
 
@@ -71,7 +71,7 @@ class PdfTextExtractor(ITextExtractor):
                             page_texts.append(t)
                             all_confidences.append(float(prob))
                 if page_texts:
-                    all_text.append(f"Page {idx+1}: " + " ".join(page_texts))
+                    all_text.append(" ".join(page_texts))
             
             confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
             processing_time = time.time() - start_time

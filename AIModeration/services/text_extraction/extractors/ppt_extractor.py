@@ -27,7 +27,7 @@ class PowerPointTextExtractor(ITextExtractor):
                     if hasattr(shape, "text") and shape.text.strip():
                         slide_texts.append(shape.text.strip())
                 if slide_texts:
-                    all_text.append(f"Slide {slide_idx+1}: " + " ".join(slide_texts))
+                    all_text.append(" ".join(slide_texts))
             
             confidence = 1.0 if all_text else 0.0
             processing_time = time.time() - start_time

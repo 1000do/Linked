@@ -30,7 +30,7 @@ class ExcelTextExtractor(ITextExtractor):
                         if cell and str(cell).strip():
                             sheet_texts.append(str(cell).strip())
                 if sheet_texts:
-                    all_text.append(f"Sheet {sheet}: " + " ".join(sheet_texts))
+                    all_text.append(" ".join(sheet_texts))
             
             confidence = 1.0 if all_text else 0.0
             processing_time = time.time() - start_time
