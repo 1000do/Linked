@@ -108,9 +108,7 @@ else Validation passed
         sv-->>be_ctrl--: Return success result
         be_ctrl-->>fe_ctrl--: Return statusCode 200
         
-        deactivate view
-        fe_ctrl-->>view--: Return JSON with success = true
-        activate view
+        fe_ctrl-->>view: Return JSON with success = true
         view-->>act--: Render updated account status & flag count
     end
 end

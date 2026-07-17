@@ -98,8 +98,7 @@ u_repo-->>sv--: Return success
 sv-->>be_ctrl--: Return success result
 be_ctrl-->>fe_ctrl--: Return statusCode 200
 
-deactivate view
-fe_ctrl-->>view--: Return JSON with success = true
-activate view
+fe_ctrl-->>view: Return JSON with success = true
+deactivate fe_ctrl
 view-->>act--: Display success toast and reload table
 @enduml

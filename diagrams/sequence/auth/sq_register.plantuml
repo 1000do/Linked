@@ -92,6 +92,7 @@ else Valid ModelState and email domain
             be_ctrl-->>fe_ctrl: Return statusCode 400
             fe_ctrl-->>view: Return statusCode 400
             view-->>act: Display error message
+            deactivate view
         else numberOfRowsAffected > 0
             repo-->>sv--: Return true
             sv-->>be_ctrl--: Return "Success"

@@ -170,9 +170,9 @@ else Both requests are successful
     vm_page-->>fe_ctrl--: Return AdminAccountDetailPageViewModel object
 
     fe_ctrl-->>view: Return statusCode 200
+    deactivate fe_ctrl
     view-->>act: Display Account Detail page
+    deactivate view
 end
-deactivate fe_ctrl
-deactivate view
 deactivate act
 @enduml

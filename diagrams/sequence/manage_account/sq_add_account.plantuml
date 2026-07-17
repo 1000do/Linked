@@ -97,6 +97,7 @@ else Validation passed
             be_ctrl-->>fe_ctrl: Return statusCode 400
             fe_ctrl-->>view: Return JSON with success = false
             view-->>act: Display error toast message
+            deactivate view
         else Save successful
             db-->>ctx--: Return numberOfRowsAffected
             ctx-->>u_repo--: Return numberOfRowsAffected
