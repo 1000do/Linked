@@ -1,0 +1,117 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Flag Account for Violation
+actor Admin as act
+
+participant "AdminAccountView" as view
+participant "AdminAccountController" as fe_ctrl <<frontend controller>>
+participant "AdminAccountController" as be_ctrl <<backend controller>>
+participant ":FlagAccountFERequestDTO" as fe_req
+participant ":FlagAccountRequestDTO" as be_req
+participant ":IAdminAccountService" as sv
+participant ":Lockout" as lockout_ett
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lockout_repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant ":INotificationService" as noti
+
+act++
+act->view++:1. Click "Flag Account" button & enter Reason
+view->fe_ctrl++:2. POST /AdminAccount/Flag/{id}
+
+fe_ctrl->fe_req++:3. Call FlagAccountFERequestDTO()
+fe_req-->>fe_ctrl--:4. Return FlagAccountFERequestDTO object
+
+fe_ctrl->fe_ctrl++:5. Validate request model
+fe_ctrl--
+
+alt Validation failed
+    fe_ctrl-->>view:5.1. Return JSON with success = false
+    view-->>act:5.1.1. Display error toast message
+else Validation passed
+    fe_ctrl->be_ctrl++:5.2. POST /api/admin/accounts/{id}/flag
+    
+    be_ctrl->be_req++:5.2.1. Call FlagAccountRequestDTO()
+    be_req-->>be_ctrl--:5.2.2. Return FlagAccountRequestDTO object
+    
+    be_ctrl->sv++:5.2.3. Call FlagAccountAsync(id, reason)
+    sv->u_repo++:5.2.4. Call GetAccountByIdAsync(id)
+    u_repo->ctx++:5.2.5. Query Account
+    ctx->db++:5.2.6. Execute query
+    db-->>ctx--:5.2.7. Return result
+    ctx-->>u_repo--:5.2.8. Return Account entity
+    u_repo-->>sv--:5.2.9. Return Account entity
+    
+alt Account not found
+        sv-->>be_ctrl:5.2.9.1. Return error result
+        be_ctrl-->>fe_ctrl:5.2.9.1.1. Return statusCode 404
+        fe_ctrl-->>view:5.2.9.1.2. Return JSON with success = false
+        view-->>act:5.2.9.1.3. Display error toast message
+else Account is already banned or flags >= 3
+        sv-->>be_ctrl:5.2.9.2. Return error result
+        be_ctrl-->>fe_ctrl:5.2.9.2.1. Return statusCode 400
+        fe_ctrl-->>view:5.2.9.2.2. Return JSON with success = false
+        view-->>act:5.2.9.2.3. Display error toast message
+else Account eligible for flagging
+        sv->sv++:5.2.9.3. Increment flags, update AccountStatus
+        sv--
+        
+opt newFlags >= 3
+            sv->lockout_ett++:5.2.9.3.1. Call Lockout()
+            lockout_ett-->>sv--:5.2.9.3.1.1. Return Lockout entity
+            
+            sv->lockout_repo++:5.2.9.3.1.2. Call AddAsync(lockout)
+            lockout_repo->ctx++:5.2.9.3.1.3. Add Lockout entity (30 days)
+            ctx-->>lockout_repo--:5.2.9.3.1.4. Return tracking state
+            lockout_repo-->>sv--:5.2.9.3.1.5. Return success
+end
+        
+        sv->u_repo++:5.2.9.4. Call SaveChangesAsync()
+        u_repo->ctx++:5.2.9.5. Commit tracked changes
+        ctx->db++:5.2.9.6. Save changes to database
+        db-->>ctx--:5.2.9.7. Return result
+        ctx-->>u_repo--:5.2.9.8. Return numberOfRowsAffected
+        u_repo-->>sv--:5.2.9.9. Return success
+        
+opt Send Notification (Try-Catch)
+            sv->noti++:5.2.9.9.2. Call SendNotificationAsync(accountId, title, content)
+            noti-->>sv--:5.2.9.9.2.1. Completed
+end
+        
+        sv-->>be_ctrl--:5.2.9.10. Return success result
+        be_ctrl-->>fe_ctrl--:5.2.9.11. Return statusCode 200
+        
+        deactivate view
+        fe_ctrl-->>view--:5.2.9.12. Return JSON with success = true
+        activate view
+        view-->>act--:5.2.9.13. Render updated account status & flag count
+end
+end
+@enduml

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage User Report</li>
+    <li><b>Test requirement:</b> Tests for user reporting features including reporting course, reviews, viewing and managing reports</li>
+    <li><b>Number of TCs:</b> 55</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Report A Course</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Report Course Successfully</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Select a reason from the dropdown and input a description of at least 20 characters.<br>5. Click the 'Submit Report' button.</td>
+        <td>The system displays a success message regarding report submission.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Add another reason</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Click the 'Add another reason' button.</td>
+        <td>The system adds another reason dropdown and description field to the report course form.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Failed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Remove a reason</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Click 'Add another reason'.<br>5. Click the remove icon for the newly added reason field.</td>
+        <td>The system removes the reason dropdown and description field from the form.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Cancel reporting</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Click the 'Cancel' button.</td>
+        <td>The system closes the report course form.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Invalid form input - Description too short</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Select a reason and input a description of fewer than 20 characters.<br>5. Click the 'Submit Report' button.</td>
+        <td>The system displays a validation error message stating that the description must be at least 20 characters.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Unique Reasons - Duplicate reason selected</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Click 'Add another reason'.<br>5. Select the identical reason from both dropdowns and fill out the descriptions.<br>6. Click 'Submit Report'.</td>
+        <td>The system displays a validation error message preventing duplicate reasons from being submitted.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Session Invalid / Not Logged In</td>
+        <td>1. Access the Course Details page as an unauthenticated User (using a direct link if possible, or simulate session expiry).<br>2. Click the 'Report this course' button.</td>
+        <td>The system displays a 'Login Required' info popup and redirects the user to the login page upon confirmation.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Duplicate Pending Report</td>
+        <td>1. Login as an enrolled User.<br>2. Access the Course Details page.<br>3. Click the 'Report this course' button.<br>4. Select a reason that the user has already reported and is still pending.<br>5. Input a valid description and click 'Submit Report'.</td>
+        <td>The system displays a duplicate report error message and prevents submission.</td>
+        <td>User has already reported this course with the exact same reason and the report is still pending.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Failed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate database error (e.g. by intercepting backend API or temporarily stopping DB).<br>2. Login as an enrolled User.<br>3. Access the Course Details page.<br>4. Click the 'Report this course' button.<br>5. Select a reason and input a valid description.<br>6. Click 'Submit Report'.</td>
+        <td>The system displays an error popup regarding report submission failure.</td>
+        <td>User must be authenticated, enrolled in the course, and not the course owner.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Report A Review</td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Report Course Review Successfully</td>
+        <td>1. Login to the system.<br>2. Access the Course Details page.<br>3. Locate a course review in the reviews list and click the 'Report' button.<br>4. Select a violation reason from the dropdown and optionally input a description.<br>5. Click the 'Submit Report' button.</td>
+        <td>The system displays a success message regarding report submission.</td>
+        <td>User must be successfully authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Report Lesson Review Successfully</td>
+        <td>1. Login to the system as an enrolled user.<br>2. Access the Course Player (learning page).<br>3. Locate a lesson review and click the 'Report' button.<br>4. Select a violation reason from the dropdown and optionally input a description.<br>5. Click the 'Submit Report' button.</td>
+        <td>The system displays a success message regarding report submission.</td>
+        <td>User must be successfully authenticated and enrolled.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Cancel reporting</td>
+        <td>1. Login to the system.<br>2. Access the Course Details page.<br>3. Locate a course review and click the 'Report' button.<br>4. Click the 'Cancel' button.</td>
+        <td>The system closes the report review modal.</td>
+        <td>User must be successfully authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Session Invalid</td>
+        <td>1. Access the Course Details page as an unauthenticated user.<br>2. Locate a course review and click the 'Report' button.</td>
+        <td>The system displays a 'Login Required' info popup and redirects to the login page upon confirmation.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Duplicate Pending Report</td>
+        <td>1. Login to the system.<br>2. Access the Course Details page.<br>3. Locate a course review and click the 'Report' button.<br>4. Select a reason that was already reported by the user and is still pending.<br>5. Click 'Submit Report'.</td>
+        <td>The system displays a duplicate report error message and prevents submission.</td>
+        <td>User has already reported this review with the exact same reason and the report is still pending.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate database error.<br>2. Login to the system.<br>3. Access the Course Details page.<br>4. Locate a course review and click the 'Report' button.<br>5. Select a violation reason.<br>6. Click 'Submit Report'.</td>
+        <td>The system displays an error message regarding report submission failure and prevents submission.</td>
+        <td>User must be successfully authenticated.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View List of User Reports</td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>View List of User Reports Successfully & Default View</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.</td>
+        <td>The system displays the overall report statistics, main navigation tabs, and the paginated list of course reports by default with the 'Pending' status filter applied.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Failed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Empty Report List</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page for a category/status combination that has no reports.</td>
+        <td>The system displays a user-friendly empty state message in the list container instead of a blank table.</td>
+        <td>No reports exist for the selected report category and status.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Actor Switches Category Subtab</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Review Reports' tab, then click the 'Course Reviews' or 'Lesson Reviews' subtab.</td>
+        <td>The system displays the report list for the selected category/subtab without a full page reload.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Actor Navigates to Another Page</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page with enough reports to trigger pagination.<br>3. Click a pagination button (e.g. Next Page or Page 2).</td>
+        <td>The system displays the requested page of reports for the active category.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Status Badges Visibility</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Observe the list of reports.</td>
+        <td>The system displays visually distinct badges for each report's status (Pending, Resolved, Rejected, Escalated).</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Action Availability - Moderate vs Info</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Observe the action buttons for reports in 'Pending'/'Under Review' vs 'Resolved'/'Rejected' statuses.</td>
+        <td>Reports in Pending, Under Review, or Escalated statuses display a 'Moderate' action button. All other statuses display an 'Info' button.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Default View - Course Reviews Subtab</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Review Reports' tab.</td>
+        <td>The system defaults to selecting the 'Course Reviews' subtab and applying the 'Pending' status filter.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Session Invalid</td>
+        <td>1. Access the Report Center page as an unauthenticated user.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Report Center page.</td>
+        <td>The system redirects the actor to the home page or an access denied page.</td>
+        <td>Actor is authenticated but does not have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>Database Query Failure</td>
+        <td>1. Simulate database error.<br>2. Login with Staff or Admin role.<br>3. Access the Report Center page.</td>
+        <td>The system displays an error message regarding the data retrieval failure.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Report Detail</td>
+    </tr>
+
+    <tr>
+        <td>TC-026</td>
+        <td>View Report Detail Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' or 'Info' button on a report row.</td>
+        <td>The system displays a modal popup containing the report details (Reporter, Submitted At, Status, Reported Content, Reason, and Description).</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-027</td>
+        <td>View Resolved/Rejected Report Detail</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Filter by 'Resolved' or 'Rejected' status.<br>4. Click the 'Info' button on a resolved/rejected report row.</td>
+        <td>The system appends the Resolution Details (Moderator, Resolved At, Resolution Note) to the report details popup.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-028</td>
+        <td>Adaptive Detail Popup UI - Course vs Review</td>
+        <td>1. Login with Staff or Admin role.<br>2. Click the 'Moderate' button on a Course Report.<br>3. Close the modal, switch to Review Reports, and click 'Moderate' on a Review Report.</td>
+        <td>The system dynamically adjusts titles, fields, labels, and action terminologies in the popup depending on whether a course or a review is being viewed.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-029</td>
+        <td>Session Invalid</td>
+        <td>1. Access the Report Center page as an unauthenticated user (simulate session expiration while page is open).<br>2. Click on a report row.</td>
+        <td>The system displays an authentication error and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-030</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User role (simulate privilege loss).<br>2. Access the Report Center page (or click row via direct URL/API).</td>
+        <td>The system redirects the actor to the home page or access denied page.</td>
+        <td>Actor does not have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-031</td>
+        <td>Database Query Failure</td>
+        <td>1. Simulate database error.<br>2. Login with Staff or Admin role.<br>3. Access the Report Center page.<br>4. Click on a report row.</td>
+        <td>The system displays an error message regarding the data retrieval failure.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Filter Reports</td>
+    </tr>
+
+    <tr>
+        <td>TC-032</td>
+        <td>Filter Reports Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Select a filter criteria from the status dropdown (e.g., 'Resolved').</td>
+        <td>The system displays the paginated list of reports matching the active combination of report type and status.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-033</td>
+        <td>Empty Filter Result</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Select a filter criteria (e.g., 'Escalated' status) that has no matching reports.</td>
+        <td>The system displays an empty state message indicating that no reports were found.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-034</td>
+        <td>Independent Status Filters</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page (Course Reports tab).<br>3. Change the status filter to 'Resolved'.<br>4. Switch to the 'Review Reports' tab.</td>
+        <td>The 'Review Reports' tab displays its own independent status filter state (e.g., defaulting to 'Pending'), without inheriting 'Resolved' from the Course tab.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-035</td>
+        <td>Subtab Filter Retention</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page and switch to 'Review Reports' tab.<br>3. Ensure 'Course Reviews' subtab is selected. Change the status filter to 'Rejected'.<br>4. Switch to the 'Lesson Reviews' subtab.</td>
+        <td>The 'Lesson Reviews' subtab retains and applies the 'Rejected' status filter that was active on the 'Course Reviews' subtab.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-036</td>
+        <td>Session Invalid</td>
+        <td>1. Simulate session invalidation.<br>2. Select a filter criteria on the Report Center page.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-037</td>
+        <td>Unauthorized Access</td>
+        <td>1. Simulate privilege loss.<br>2. Select a filter criteria on the Report Center page.</td>
+        <td>The system redirects the actor to the home page or access denied page.</td>
+        <td>Actor does not have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-038</td>
+        <td>Database Query Failure</td>
+        <td>1. Simulate database error.<br>2. Login with Staff or Admin role.<br>3. Access the Report Center page.<br>4. Select a filter criteria.</td>
+        <td>The system displays an error message regarding the data retrieval failure.</td>
+        <td>Actor must be authenticated and have Staff or Admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Resolve Report</td>
+    </tr>
+
+    <tr>
+        <td>TC-039</td>
+        <td>Resolve Report Successfully & Implicit Refresh</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' button on a pending report row.<br>4. Select the 'Accept Report (Valid / Policy Violation)' status.<br>5. Enter moderation details.<br>6. Click 'Submit Decision'.</td>
+        <td>The system updates the report, applies penalties/notifications, displays a success confirmation message, and silently refreshes the report list and overall statistics.</td>
+        <td>Actor must be Staff or Admin. Selected report must be in a resolvable state.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-040</td>
+        <td>Select Non-resolved Status</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' button on a report row.<br>4. Select a status other than 'Accept Report' (e.g., Dismiss Report, Under Review).</td>
+        <td>The system automatically unchecks and disables the 'Flag Course / Remove content' checkbox.</td>
+        <td>Actor must be Staff or Admin. Selected report must be in a resolvable state.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-041</td>
+        <td>Toggle Content Removal Checkbox</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' button on a report row.<br>4. Select 'Accept Report' status.<br>5. Check the 'Flag Course / Remove content' checkbox.<br>6. Confirm the action on the secondary confirmation popup.</td>
+        <td>The system updates the checkbox state to checked.</td>
+        <td>Actor must be Staff or Admin. Selected report must be in a resolvable state.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-042</td>
+        <td>Cancel Content Removal</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' button on a report row.<br>4. Select 'Accept Report' status.<br>5. Check the 'Flag Course / Remove content' checkbox.<br>6. Click 'Cancel' on the secondary confirmation popup.</td>
+        <td>The system keeps the checkbox unchecked.</td>
+        <td>Actor must be Staff or Admin. Selected report must be in a resolvable state.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-043</td>
+        <td>Adaptive Moderation UI - Course vs Review</td>
+        <td>1. Login with Staff or Admin role.<br>2. Click the 'Moderate' button on a Course Report.<br>3. Observe the checkbox label ('Flag Course').<br>4. Close the modal, switch to Review Reports, and click 'Moderate' on a Review Report.<br>5. Observe the checkbox label ('Remove content').</td>
+        <td>The checkbox label adapts based on the report type.</td>
+        <td>Actor must be Staff or Admin. Reports must be available in both categories.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-044</td>
+        <td>Escalation Restriction - Staff vs Admin</td>
+        <td>1. Login with Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' button on a report row.<br>4. Open the status dropdown.</td>
+        <td>The 'Escalate to Senior Admin' option is not visible to the Admin actor.</td>
+        <td>Actor must be Admin.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-045</td>
+        <td>Action Limitations - Action Checkbox</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Report Center page.<br>3. Click the 'Moderate' button on a report row.<br>4. Select 'Dismiss Report' status.</td>
+        <td>The 'Flag Course / Remove content' checkbox is completely disabled and cannot be checked.</td>
+        <td>Actor must be Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-046</td>
+        <td>Staff Escalation Limitation</td>
+        <td>1. Login with Staff role.<br>2. Access the Report Center page.<br>3. Attempt to click 'Moderate' on an already 'Escalated' report.</td>
+        <td>The 'Moderate' button is replaced with 'Info' or is otherwise disabled for Staff users on Escalated reports.</td>
+        <td>Actor is Staff. An Escalated report exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-047</td>
+        <td>Session Invalid</td>
+        <td>1. Simulate session invalidation.<br>2. Click the 'Moderate' button and submit decision.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-048</td>
+        <td>Unauthorized Access</td>
+        <td>1. Simulate privilege loss.<br>2. Click the 'Moderate' button and submit decision.</td>
+        <td>The system redirects the actor to the home page or access denied page.</td>
+        <td>Actor does not have Staff or Admin role.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Failed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-049</td>
+        <td>Moderation Action Rejected</td>
+        <td>1. Login with Staff role.<br>2. Attempt to submit a moderation decision for an already 'Escalated' report (e.g. by intercepting the API request).</td>
+        <td>The server rejects the moderation action. The system displays an error popup with the failure message.</td>
+        <td>Actor is Staff but tries to perform an action requiring Admin via API.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-050</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate database error.<br>2. Login with Staff or Admin role.<br>3. Access the Report Center page.<br>4. Click the 'Moderate' button on a pending report row.<br>5. Enter moderation details and click 'Submit Decision'.</td>
+        <td>The system displays an error message regarding the data update failure.</td>
+        <td>Actor must be Staff or Admin. Selected report must be in a resolvable state.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-051</td>
+        <td>Course Strike 1-2 Warning Notification</td>
+        <td>1. Log in as an Instructor in a separate browser window (Session 1).<br>2. Log in as Admin in another browser window (Session 2).<br>3. In Session 2, navigate to Report Center and Moderate a course report belonging to the Instructor.<br>4. Select 'Accept Report' and check 'Flag Course'. Click 'Submit Decision'.<br>5. In Session 1 (Instructor), observe the UI.</td>
+        <td>The Instructor receives a real-time SignalR warning notification ('Course Violation Reminder' or 'Severe Violation Warning') on their UI.</td>
+        <td>Course has 0 or 1 existing flags. Instructor is actively logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-052</td>
+        <td>Course Strike 3 Permanent Archive and Lockout</td>
+        <td>1. Log in as an Instructor in Session 1.<br>2. Log in as Admin in Session 2.<br>3. In Session 2, Moderate a course report for a course that already has 2 flags.<br>4. Select 'Accept Report', check 'Flag Course', and submit.<br>5. In Session 1, attempt to edit the course or create a new course.</td>
+        <td>The Instructor receives a real-time SignalR notice regarding permanent discontinuation. The course status changes to 'Archived', and the Instructor is blocked from editing it. The Instructor account receives a 30-day lockout preventing course creation/editing.</td>
+        <td>Course has exactly 2 existing flags. Instructor is actively logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-053</td>
+        <td>Review Penalty 1 Warning Notification</td>
+        <td>1. Log in as a User (reviewer) in Session 1.<br>2. Log in as Admin in Session 2.<br>3. In Session 2, Moderate a review report for the User's review.<br>4. Select 'Accept Report', check 'Remove content', and submit.<br>5. In Session 1, observe the UI.</td>
+        <td>The User receives a real-time SignalR warning notification on their UI indicating their review was removed.</td>
+        <td>User has 0 existing strikes. User is actively logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-054</td>
+        <td>Review Penalty 2 Moderate Lockout</td>
+        <td>1. Log in as a User in Session 1.<br>2. Log in as Admin in Session 2.<br>3. In Session 2, Moderate a review report for the User who already has 1 strike.<br>4. Select 'Accept Report', check 'Remove content', and submit.<br>5. In Session 1, attempt to submit a new review.</td>
+        <td>The User receives a real-time SignalR notification. The User is prevented from submitting new reviews (7-day lockout enforced).</td>
+        <td>User has 1 existing strike. User is actively logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-055</td>
+        <td>Review Penalty 3 Severe Ban</td>
+        <td>1. Log in as a User in Session 1.<br>2. Log in as Admin in Session 2.<br>3. In Session 2, Moderate a review report for the User who already has 2 strikes.<br>4. Select 'Accept Report', check 'Remove content', and submit.<br>5. In Session 1, observe the UI.</td>
+        <td>The User's active session is forcefully terminated via SignalR, immediately redirecting them to the login page or displaying an account ban message. The account is banned for 30 days.</td>
+        <td>User has 2 existing strikes. User is actively logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+</table>
+</body>
+</html>

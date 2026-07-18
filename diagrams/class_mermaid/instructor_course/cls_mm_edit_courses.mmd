@@ -3,25 +3,23 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class InstructorCourseController {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + Edit(id: int) Task~IActionResult~
-    + Edit(id: int, model: EditCourseViewModel) Task~IActionResult~
+    + Editor(id: int) Task~IActionResult~
+    + UpdateDetails(model: UpdateCourseDetailsViewModel) Task~IActionResult~
     - GetCategoriesAsync() Task~List~CategoryViewModel~~
 }
 
-class EditCourseViewModel {
+class UpdateCourseDetailsViewModel {
     <<view model>>
     + CourseId : int
     + Title : string
-    + CategoryId : int
     + Description : string
     + Price : decimal
-    + CourseThumbnailUrl : string?
+    + CategoryId : int
     + WhatYouWillLearn : string
     + Requirements : string
-    + CouponId : int?
-    + AvailableCategories : List~CategoryViewModel~
+    + ThumbnailUrl : string
 }
 
 class CategoryViewModel {
@@ -32,7 +30,7 @@ class CategoryViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class CourseController {
+class CourseControllerBE["CourseController"] {
     <<backend controller>>
     - _courseQueryService : ICourseQueryService
     - _courseCommandService : ICourseCommandService
@@ -106,16 +104,6 @@ class Course {
     + UpdatedAt : DateTime?
     + CourseStatus : string?
     + CourseFlagCount : int?
-    + CourseAiIntegrations : ICollection~CourseAiIntegration~
-    + CartItems : ICollection~CartItem~
-    + Category : Category?
-    + Coupon : Coupon?
-    + Enrollments : ICollection~Enrollment~
-    + Instructor : Instructor?
-    + Lessons : ICollection~Lesson~
-    + OrderItems : ICollection~OrderItem~
-    + WishlistItems : ICollection~WishlistItem~
-    + CourseExt : CourseExt?
     + WhatYouWillLearn : string?
     + Requirements : string?
     + ModerationFeedback : string?
@@ -132,7 +120,6 @@ class Category {
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
     + CategoryStatus : string?
-    + Courses : ICollection~Course~
 }
 
 class Instructor {
@@ -151,9 +138,6 @@ class Instructor {
     + PayoutsEnabled : bool?
     + ChargesEnabled : bool?
     + StripeCountry : string?
-    + Courses : ICollection~Course~
-    + InstructorPayouts : ICollection~InstructorPayout~
-    + InstructorNavigation : User
 }
 
 class Coupon {
@@ -169,43 +153,42 @@ class Coupon {
     + UsageLimit : int?
     + UsedCount : int?
     + IsActive : bool?
-    + Courses : ICollection~Course~
-    + Manager : Manager?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseCommandService {
-    <<interface>>
+    <<service interface>>
     + UpdateCourseAsync(courseId: int, request: CourseUpdateRequest, instructorId: int) Task~CourseResponse~ *
 }
 
 class ICourseQueryService {
-    <<interface>>
+    <<service interface>>
     + GetCategoriesAsync() Task~IEnumerable~CategoryResponse~~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
     + Update(course: Course) void *
     + SaveChangesAsync() Task~int~ *
 }
 
 class IFileUploadService {
-    <<interface>>
+    <<service interface>>
     + UploadImageAsync(file: IFormFile) Task~string?~ *
     + DeleteFileAsync(url: string) Task~bool~ *
 }
 
 class IRedisService {
-    <<interface>>
-    + RemoveCacheAsync(key: string) void *
+    <<service interface>>
+    + RemoveCacheAsync(key: string) Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseCommandService {
+    <<service>>
     - _courseRepository : ICourseRepository
     - _uploadService : IFileUploadService
     - _redisService : IRedisService
@@ -216,6 +199,7 @@ class CourseCommandService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int) Task~Course?~
@@ -226,6 +210,7 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Categories : DbSet~Category~
     + Coupons : DbSet~Coupon~
     + Courses : DbSet~Course~
@@ -238,13 +223,12 @@ class AppDbContext {
 Instructor *-- Course
 
 %% === AGGREGATION (hollow diamond) ===
-EditCourseViewModel o-- CategoryViewModel
 Category o-- Course
 Course -- Coupon
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-CourseController --> ICourseCommandService
-CourseController --> ICourseQueryService
+CourseControllerBE --> ICourseCommandService
+CourseControllerBE --> ICourseQueryService
 CourseCommandService --> ICourseRepository
 CourseCommandService --> IFileUploadService
 CourseCommandService --> IRedisService
@@ -255,9 +239,9 @@ CourseCommandService ..|> ICourseCommandService
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-InstructorCourseController ..> CourseController
-InstructorCourseController ..> EditCourseViewModel
-CourseController ..> CourseUpdateRequest
+InstructorCourseControllerFE ..> CourseControllerBE
+InstructorCourseControllerFE ..> UpdateCourseDetailsViewModel
+CourseControllerBE ..> CourseUpdateRequest
 CourseCommandService ..> CourseUpdateRequest
 CourseCommandService ..> CourseResponse
 CourseCommandService ..> Course

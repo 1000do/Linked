@@ -1,0 +1,277 @@
+    classDiagram-v2
+    direction LR
+
+    %% ==================== FRONTEND ====================
+
+    class AdminFinanceControllerFE["AdminFinanceController"] {
+        <<frontend controller>>
+        + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
+    }
+
+    class AdminFinanceUnifiedVM {
+        <<view model>>
+        + Dashboard : FinanceDashboardVM
+        + Withdraw : WithdrawPageVM
+        + Transactions : TransactionPagedVM
+        + Payouts : PagedResult~PayoutDetailVM~
+        + Withdrawals : PagedResult~WithdrawalHistoryVM~
+        + PendingRefunds : PagedResult~RefundRequestVM~
+        + PayoutDays : string
+        + CourseRevenues : List~InstructorCourseRevenueResponse~
+        + YearlySummaries : Dictionary~int, FinancialSummaryVM~
+    }
+
+    class PayoutDetailVM {
+        <<view model>>
+        + PayoutId : int
+        + TransactionId : int
+        + InstructorName : string
+        + InstructorEmail : string
+        + CourseTitle : string
+        + TotalAmount : decimal
+        + InstructorReceived : decimal
+        + PlatformReceived : decimal
+        + TransferRate : decimal
+        + IsPaid : bool
+        + TransactionDate : DateTime?
+        + PayoutDate : DateTime
+        + PayoutStatus : string?
+        + StripeTransferId : string?
+        + StripePayoutId : string?
+        + PaidToBankAt : DateTime?
+    }
+
+    %% ==================== BACKEND ====================
+
+    class AdminFinanceControllerBE["AdminFinanceController"] {
+        <<backend controller>>
+        - _financeService : IAdminFinanceService
+        + GetPayouts(year: int?, month: int?, page: int, pageSize: int) Task~IActionResult~
+    }
+
+    class IAdminFinanceService {
+        <<service interface>>
+        + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~ *
+    }
+
+    class AdminFinanceService {
+        <<service>>
+        - _repo : IAdminFinanceRepository
+        + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~
+    }
+
+    class IAdminFinanceRepository {
+        <<repository interface>>
+        + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~Tuple~List~PayoutDetailProjection~, int~~ *
+    }
+
+    class AdminFinanceRepository {
+        <<repository>>
+        - _context : AppDbContext
+        + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~Tuple~List~PayoutDetailProjection~, int~~
+    }
+
+    class AppDbContext {
+        <<dbcontext>>
+        + InstructorPayouts : DbSet~InstructorPayout~
+    }
+
+    class PayoutDetailResponse {
+        <<dto>>
+        + PayoutId : int
+        + TransactionId : int
+        + InstructorName : string
+        + InstructorEmail : string
+        + CourseTitle : string
+        + TotalAmount : decimal
+        + InstructorReceived : decimal
+        + PlatformReceived : decimal
+        + TransferRate : decimal
+        + IsPaid : bool
+        + TransactionDate : DateTime?
+        + PayoutDate : DateTime
+        + PayoutStatus : string
+        + StripeTransferId : string?
+        + StripePayoutId : string?
+        + PaidToBankAt : DateTime?
+    }
+
+    class PayoutDetailProjection {
+        <<dto>>
+        + PayoutId : int
+        + TransactionId : int
+        + InstructorName : string
+        + InstructorEmail : string
+        + CourseTitle : string
+        + TotalAmount : decimal
+        + InstructorReceived : decimal
+        + TransferRate : decimal
+        + IsPaid : bool
+        + TransactionDate : DateTime?
+        + PayoutDate : DateTime
+        + PayoutStatus : string?
+        + StripeTransferId : string?
+        + StripePayoutId : string?
+        + PaidToBankAt : DateTime?
+    }
+
+    %% ==================== DOMAIN ENTITIES ====================
+
+    class InstructorPayout {
+        <<entity>>
+        + PayoutId : int
+        + TransactionId : int?
+        + InstructorId : int?
+        + PayoutAmount : decimal
+        + PayoutDate : DateTime
+        + IsPaid : bool
+        + PayoutStatus : string
+        + StripeTransferId : string?
+        + StripePayoutId : string?
+        + PaidToBankAt : DateTime?
+        + Transaction : Transaction?
+        + Instructor : Instructor?
+    }
+
+    class Transaction {
+        <<entity>>
+        + TransactionId : int
+        + OrderItemId : int?
+        + AccountFrom : int?
+        + AccountTo : int?
+        + Amount : decimal
+        + TransferRate : decimal
+        + StripeSessionId : string?
+        + StripePaymentintentId : string?
+        + Currency : string?
+        + TransactionsStatus : string?
+        + TransactionType : string?
+        + TransactionCreatedAt : DateTime?
+        + TransactionExt : TransactionExt?
+        + OrderItem : OrderItem?
+        + AccountFromNavigation : Account?
+        + AccountToNavigation : Account?
+        + InstructorPayouts : ICollection~InstructorPayout~
+    }
+
+    class OrderItem {
+        <<entity>>
+        + Id : int
+        + OrderId : int?
+        + CourseId : int?
+        + PurchasePrice : decimal
+        + CouponUsed : bool?
+        + OriginalPrice : decimal?
+        + CouponCode : string?
+        + CouponType : string?
+        + DiscountAmount : decimal
+        + Course : Course?
+        + Order : OrderInfo?
+        + Transactions : ICollection~Transaction~
+    }
+
+    class Course {
+        <<entity>>
+        + CourseId : int
+        + InstructorId : int?
+        + CategoryId : int?
+        + CouponId : int?
+        + Title : string
+        + Description : string?
+        + Price : decimal
+        + CourseThumbnailUrl : string?
+        + CreatedAt : DateTime?
+        + UpdatedAt : DateTime?
+        + CourseStatus : string?
+        + CourseFlagCount : int?
+        + WhatYouWillLearn : string?
+        + Requirements : string?
+        + ModerationFeedback : string?
+        + LastApprovedAt : DateTime?
+        + IsRemoved : bool
+        + ThreatLevel : AiThreatLevel
+        + CourseAiIntegrations : ICollection~CourseAiIntegration~
+        + FieldModerationFeedbacks : ICollection~CourseFieldModerationFeedback~
+        + CartItems : ICollection~CartItem~
+        + Category : Category?
+        + Coupon : Coupon?
+        + Enrollments : ICollection~Enrollment~
+        + Instructor : Instructor?
+        + Lessons : ICollection~Lesson~
+        + OrderItems : ICollection~OrderItem~
+        + WishlistItems : ICollection~WishlistItem~
+        + CourseExt : CourseExt?
+        + CourseQuizzes : ICollection~CourseQuiz~
+    }
+
+    class Instructor {
+        <<entity>>
+        + InstructorId : int
+        + ProfessionalTitle : string?
+        + ExpertiseCategories : string?
+        + LinkedinUrl : string?
+        + YoutubeUrl : string?
+        + FacebookUrl : string?
+        + DocumentUrl : string?
+        + ApprovalStatus : string?
+        + RejectionReason : string?
+        + StripeAccountId : string?
+        + StripeOnboardingStatus : string?
+        + PayoutsEnabled : bool?
+        + ChargesEnabled : bool?
+        + StripeCountry : string?
+        + Courses : ICollection~Course~
+        + InstructorPayouts : ICollection~InstructorPayout~
+        + Quizzes : ICollection~Quiz~
+        + InstructorNavigation : User
+    }
+
+    class User {
+        <<entity>>
+        + UserId : int
+        + FullName : string
+        + Bio : string?
+        + DateOfBirth : DateOnly?
+        + CartItems : ICollection~CartItem~
+        + Enrollments : ICollection~Enrollment~
+        + Instructor : Instructor?
+        + OrderInfos : ICollection~OrderInfo~
+        + UserNavigation : Account
+        + WishlistItems : ICollection~WishlistItem~
+        + QuizAttempts : ICollection~QuizAttempt~
+    }
+
+    %% ==================== RELATIONSHIPS ====================
+
+    %% === ASSOCIATION ===
+    AdminFinanceControllerBE --> IAdminFinanceService
+    AdminFinanceService --> IAdminFinanceRepository
+    AdminFinanceRepository --> AppDbContext
+    InstructorPayout -- Transaction
+    InstructorPayout -- Instructor
+    Transaction -- OrderItem
+    OrderItem -- Course
+    Instructor -- User
+
+    %% === REALIZATION ===
+    AdminFinanceService ..|> IAdminFinanceService
+    AdminFinanceRepository ..|> IAdminFinanceRepository
+
+    %% === DEPENDENCY ===
+    AdminFinanceControllerFE ..> AdminFinanceControllerBE
+    AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
+    AdminFinanceControllerFE ..> PayoutDetailVM
+    AdminFinanceControllerBE ..> PayoutDetailResponse
+    AdminFinanceService ..> PayoutDetailResponse
+    AdminFinanceService ..> PayoutDetailProjection
+    AdminFinanceRepository ..> InstructorPayout
+    AdminFinanceRepository ..> Transaction
+    AdminFinanceRepository ..> OrderItem
+    AdminFinanceRepository ..> Course
+    AdminFinanceRepository ..> Instructor
+    AdminFinanceRepository ..> User
+    AdminFinanceRepository ..> PayoutDetailProjection
+
+    %% ==================== STYLES ====================
+
+    classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

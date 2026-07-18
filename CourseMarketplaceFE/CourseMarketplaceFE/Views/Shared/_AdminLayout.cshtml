@@ -289,8 +289,17 @@
         document.addEventListener("DOMContentLoaded", () => {
             const ADMIN_LAYOUT_TOKEN = `@Html.Raw(token)`;
             window.ADMIN_LAYOUT_TOKEN = ADMIN_LAYOUT_TOKEN;
-            
+            if (!ADMIN_LAYOUT_TOKEN) {
+                localStorage.removeItem("AccountLocked");
+            }
             if (ADMIN_LAYOUT_TOKEN) {
+                if (localStorage.getItem("AccountLocked") === "true") {
+                    localStorage.removeItem("AccountLocked");
+                    const form = document.querySelector('form[action="/Account/Logout"]');
+                    if (form) { form.submit(); }
+                    return;
+                }
+
                 // Initialize unread badge and top notifications on load
                 loadAdminTopNotifications();
                 loadAdminUnreadChatsCount();
@@ -359,6 +368,22 @@
                             `
                         });
                     }
+                });
+
+                connection.on("AccountLockedOut", () => {
+                    localStorage.setItem("AccountLocked", "true");
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Account Locked',
+                        text: 'Your account has been locked due to a policy violation. You will be logged out automatically.',
+                        timer: 5000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false
+                    }).then(() => {
+                        document.querySelector('form[action="/Account/Logout"]').submit();
+                    });
                 });
 
                 connection.start().catch(err => console.error("Admin Notification Hub connection error: ", err));

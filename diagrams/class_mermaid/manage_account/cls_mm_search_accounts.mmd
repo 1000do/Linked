@@ -8,7 +8,8 @@ class AdminAccountControllerFE["AdminAccountController"] {
     + Index(keyword: string?, role: string?, page: int) Task~IActionResult~
 }
 
-class AccountListViewModel {
+class AdminAccountListViewModel {
+    <<view model>>
     + Keyword : string?
     + Role : string?
     + CurrentPage : int
@@ -27,14 +28,10 @@ class AdminAccountControllerBE["AdminAccountController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class PagedResult~T~ {
-    + Items : List~T~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-}
+
 
 class AdminAccountListDto {
+    <<dto>>
     + AccountId : int
     + Email : string
     + Username : string
@@ -45,6 +42,7 @@ class AdminAccountListDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string
@@ -56,18 +54,19 @@ class Account {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminAccountService {
-    <<interface>>
+    <<service interface>>
     + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~AdminAccountListDto~~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~Account~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AdminAccountService {
+    <<service>>
     - _userRepository : IUserRepository
     
     + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~AdminAccountListDto~~
@@ -76,6 +75,7 @@ class AdminAccountService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAccountsPagedAsync(keyword: string?, role: string?, page: int, pageSize: int) Task~PagedResult~Account~~
@@ -84,6 +84,7 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
@@ -93,7 +94,7 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION (hollow diamond) ===
-AccountListViewModel o-- AdminAccountListDto
+AdminAccountListViewModel o-- AdminAccountListDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 AdminAccountControllerBE --> IAdminAccountService
@@ -106,12 +107,9 @@ UserRepository ..|> IUserRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 AdminAccountControllerFE ..> AdminAccountControllerBE
-AdminAccountControllerFE ..> AccountListViewModel
-AdminAccountControllerBE ..> PagedResult~T~
+AdminAccountControllerFE ..> AdminAccountListViewModel
 AdminAccountControllerBE ..> AdminAccountListDto
-AdminAccountService ..> PagedResult~T~
 AdminAccountService ..> AdminAccountListDto
-UserRepository ..> PagedResult~T~
 UserRepository ..> Account
 
 %% ==================== STYLES ====================

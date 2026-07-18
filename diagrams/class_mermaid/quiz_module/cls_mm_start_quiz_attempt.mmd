@@ -1,0 +1,149 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuizAttemptControllerFE["QuizAttemptController"] {
+    <<frontend controller>>
+    + Take(quizId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuizAttemptControllerBE["QuizAttemptController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + GetQuizForStudent(quizId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuizForStudentResponse {
+    <<dto>>
+    + QuizId : int
+    + AttemptId : int
+    + Title : string
+    + Description : string?
+    + TimeLimitMinutes : int?
+    + PassingScore : int
+    + Questions : List~QuizQuestionForStudentResponse~
+}
+
+class QuizQuestionForStudentResponse {
+    <<dto>>
+    + QuestionId : int
+    + QuestionText : string
+    + QuestionType : QuizQuestionType
+    + Options : List~QuizOptionForStudentResponse~
+}
+
+class QuizOptionForStudentResponse {
+    <<dto>>
+    + OptionId : int
+    + OptionText : string
+    + OrderIndex : int
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Quiz {
+    <<entity>>
+    + QuizId : int
+    + InstructorId : int
+    + Title : string
+    + Description : string?
+    + TimeLimitMinutes : int?
+    + PassingScore : int
+    + TotalQuestions : int
+    + CourseId : int
+    + IsHidden : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+class QuizQuestion {
+    <<entity>>
+    + QuestionId : int
+    + CourseId : int
+    + LessonId : int
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + CreatedAt : DateTime?
+}
+
+class QuizOption {
+    <<entity>>
+    + OptionId : int
+    + QuestionId : int
+    + OptionText : string
+    + IsCorrect : bool
+    + OrderIndex : int
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<service interface>>
+    + GetQuizForStudentAsync(quizId: int, userId: int) Task~QuizForStudentResponse~ *
+}
+
+class IQuizRepository {
+    <<repository interface>>
+    + GetQuizWithQuestionsAsync(quizId: int) Task~Quiz?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    <<service>>
+    - _quizRepo : IQuizRepository
+    
+    + GetQuizForStudentAsync(quizId: int, userId: int) Task~QuizForStudentResponse~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetQuizWithQuestionsAsync(quizId: int) Task~Quiz?~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + Quizzes : DbSet~Quiz~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION & COMPOSITION ===
+QuizForStudentResponse *-- QuizQuestionForStudentResponse
+QuizQuestionForStudentResponse *-- QuizOptionForStudentResponse
+Quiz *-- QuizQuestion
+QuizQuestion *-- QuizOption
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+QuizAttemptControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY ===
+QuizAttemptControllerFE ..> QuizAttemptControllerBE
+QuizAttemptControllerBE ..> QuizForStudentResponse
+QuizService ..> QuizForStudentResponse
+QuizService ..> Quiz
+QuizRepository ..> Quiz
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

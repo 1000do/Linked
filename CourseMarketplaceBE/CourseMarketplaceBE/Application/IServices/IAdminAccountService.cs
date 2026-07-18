@@ -14,5 +14,6 @@ namespace CourseMarketplaceBE.Application.IServices
         Task<bool> UpdateStaffAsync(int id, UpdateStaffRequest request);
         Task<string?> ToggleBanAsync(int id, int adminId);
         Task<(bool Success, int CurrentFlags, string? NewStatus, string? ErrorMessage)> FlagAccountAsync(int id, string reason);
+        Task<(bool Success, int CurrentFlags, string? NewStatus, string? ErrorMessage)> UnflagAccountAsync(int id, string reason);
     }
 }

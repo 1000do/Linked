@@ -31,8 +31,8 @@ mainframe Delete Coupon
 actor Admin as act
 participant "CouponListView" as view
 participant "CouponController" as be_ctrl <<backend controller>>
-participant ":CouponService" as sv
-participant ":CouponRepository" as repo
+participant ":ICouponService" as sv
+participant ":ICouponRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -52,7 +52,11 @@ repo-->>sv--: Return Coupon entity
 sv->sv++: Validate coupon deletion request
 sv--
 
-alt Valid coupon deletion request
+alt Coupon not found
+    sv-->>be_ctrl: throw KeyNotFoundException
+    be_ctrl-->>view: Return statusCode 404
+    view-->>act: Display error message
+else Valid coupon deletion request
     sv->sv++: Set IsActive = false and EndDate = yesterday
     sv--
     
@@ -68,12 +72,8 @@ alt Valid coupon deletion request
     ctx-->>repo--: Return numberOfRowsAffected
     repo-->>sv--: Return success
     
-    sv-->>be_ctrl: Return result
-    be_ctrl-->>view: Return statusCode 200
-    view-->>act: Display success message
-else Coupon not found
-    sv-->>be_ctrl--: throw KeyNotFoundException
-    be_ctrl-->>view--: Return statusCode 404
-    view-->>act--: Display error message
+    sv-->>be_ctrl--: Return result
+    be_ctrl-->>view--: Return statusCode 200
+    view-->>act--: Display success message
 end
 @enduml

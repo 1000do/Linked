@@ -76,7 +76,7 @@ public class TransactionController : Controller
     {
         // Guard: Chỉ giảng viên đã duyệt mới được xem Earnings
         var approvalStatus = Request.Cookies["InstructorApprovalStatus"];
-        if (approvalStatus != "Approved") 
+        if (approvalStatus != "Approved")
             return RedirectToAction("ApplicationStatus", "Instructor");
 
         var vm = new InstructorFinancePageVM();
@@ -84,7 +84,7 @@ public class TransactionController : Controller
         vm.Transactions.PageSize = pageSize;
         vm.Payouts.Page = payoutPage;
         vm.Payouts.PageSize = payoutPageSize;
-        
+
         // Default to current UTC month/year if not provided
         int selectedYear = year ?? DateTime.UtcNow.Year;
         int selectedMonth = month ?? DateTime.UtcNow.Month;

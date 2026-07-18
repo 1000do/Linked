@@ -1,0 +1,132 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuizAttemptControllerFE["QuizAttemptController"] {
+    <<frontend controller>>
+    + Submit(payload: JsonElement) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuizAttemptControllerBE["QuizAttemptController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + SubmitAttempt(request: QuizAttemptSubmitRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuizAttemptSubmitRequest {
+    <<dto>>
+    + AttemptId : int
+    + Answers : List~AttemptAnswerRequest~
+}
+
+class AttemptAnswerRequest {
+    <<dto>>
+    + QuestionId : int
+    + SelectedOptionId : int?
+}
+
+class QuizAttemptResultResponse {
+    <<dto>>
+    + AttemptId : int
+    + Score : int
+    + IsPassed : bool
+    + TotalQuestions : int
+    + CorrectCount : int
+    + SubmittedAt : DateTime?
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class QuizAttempt {
+    <<entity>>
+    + AttemptId : int
+    + QuizId : int
+    + UserId : int
+    + StartedAt : DateTime?
+    + SubmittedAt : DateTime?
+    + Score : int
+    + IsPassed : bool
+}
+
+class QuizAttemptAnswer {
+    <<entity>>
+    + AnswerId : int
+    + AttemptId : int
+    + QuestionId : int
+    + SelectedOptionId : int?
+    + IsCorrect : bool
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<service interface>>
+    + SubmitAttemptAsync(request: QuizAttemptSubmitRequest, userId: int) Task~QuizAttemptResultResponse~ *
+}
+
+class IQuizRepository {
+    <<repository interface>>
+    + GetAttemptByIdAsync(attemptId: int) Task~QuizAttempt?~ *
+    + SaveAttemptAsync(attempt: QuizAttempt) Task~QuizAttempt~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    <<service>>
+    - _quizRepo : IQuizRepository
+    
+    + SubmitAttemptAsync(request: QuizAttemptSubmitRequest, userId: int) Task~QuizAttemptResultResponse~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetAttemptByIdAsync(attemptId: int) Task~QuizAttempt?~
+    + SaveAttemptAsync(attempt: QuizAttempt) Task~QuizAttempt~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + QuizAttempts : DbSet~QuizAttempt~
+    + QuizAttemptAnswers : DbSet~QuizAttemptAnswer~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === AGGREGATION & COMPOSITION ===
+QuizAttemptSubmitRequest *-- AttemptAnswerRequest
+QuizAttempt *-- QuizAttemptAnswer
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+QuizAttemptControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY ===
+QuizAttemptControllerFE ..> QuizAttemptControllerBE
+QuizAttemptControllerBE ..> QuizAttemptSubmitRequest
+QuizAttemptControllerBE ..> QuizAttemptResultResponse
+QuizService ..> QuizAttemptSubmitRequest
+QuizService ..> QuizAttemptResultResponse
+QuizService ..> QuizAttempt
+QuizRepository ..> QuizAttempt
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

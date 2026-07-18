@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,24 +36,23 @@ mainframe Edit Courses
 
 actor Instructor as act
 participant "CourseEditPage" as view
-participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
 participant ":CourseCommandService" as sv
-participant ":IRedisCacheService" as redis
-participant ":IReviewLockoutRepository" as lockout_repo
-participant ":IFileStorageService" as storage_sv
+participant ":IRedisService" as redis
+participant ":IFileUploadService" as storage_sv
 participant ":ICourseRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Modify course info and click Save
-view -> fe_ctrl++: POST /InstructorCourse/Update/{id}
+view -> fe_ctrl++: POST /InstructorCourse/UpdateDetails (UpdateCourseDetailsViewModel)
 fe_ctrl -> be_ctrl++: PUT /api/courses/{id}
 
-be_ctrl -> sv++: Call UpdateCourseAsync(id, request, instructorId)
+be_ctrl -> sv++: Call UpdateCourseAsync(courseId, request, instructorId)
 
-sv -> repo++: Call GetByIdAsync(id)
+sv -> repo++: Call GetByIdAsync(courseId)
 repo -> ctx++: Execute query
 ctx -> db++: Fetch course
 db -->> ctx--: Return query results
@@ -65,8 +71,8 @@ else Course Found
         fe_ctrl -->> view: Return JSON (success=false)
         view -->> act: Display unauthorized message
     else Is Course Owner
-        sv -> lockout_repo++: Call GetActiveLockoutAsync(instructorId, "instructor")
-        lockout_repo -->> sv--: Return activeLockout
+        sv -> sv++: Check Active Lockout
+        sv--
         
         alt Account is locked out
             sv -->> be_ctrl: throw BadRequestException
@@ -86,21 +92,23 @@ else Course Found
                 view -->> act: Display pending review message
             else Can Edit
                 opt Has New Thumbnail File
-                    sv -> storage_sv++: Call UploadFileAsync(ThumbnailFile)
+                    sv -> storage_sv++: Call UploadImageAsync(ThumbnailFile)
                     storage_sv -->> sv--: Return thumbnailUrl
                 end
                 
-                sv -> sv++: Call SanitizeHtml(description)
+                sv -> sv++: Sanitize HTML Description
                 sv--
                 
-                sv -> sv++: Update course properties and set Status=Pending
+                sv -> sv++: Update course properties and set Status=Draft if Published
                 sv--
                 
-                sv -> sv++: Call AddCourseFingerprintAsync(course)
+                sv -> sv++: Update Course Fingerprint
                 sv--
                 
                 sv -> repo++: Call Update(course)
-                repo -->> sv--: Return tracking state
+                repo -> ctx++: Update entity state
+                ctx -->> repo--: Return
+                repo -->> sv--: Return
                 
                 sv -> repo++: Call SaveChangesAsync()
                 repo -> ctx++: Save changes to database

@@ -3,9 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class ReviewControllerFE["ReviewController"] {
+class CourseControllerFE["CourseController"] {
     <<frontend controller>>
-    + GetCourseReviews(courseId: int) Task~IActionResult~
+    + GetReviews(id: int, page: int, pageSize: int, starFilter: int?) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -29,44 +29,51 @@ class ReviewResponse {
     <<dto>>
     + ReviewId : int
     + UserId : int
-    + UserName : string?
+    + UserFullName : string?
     + UserAvatarUrl : string?
     + Rating : int
-    + Content : string?
+    + Comment : string?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
     + IsInstructor : bool
-    + IsOwner : bool
+    + IsRemoved : bool
+    + LessonTitle : string?
+    + LessonId : int?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CourseReview {
     <<entity>>
-    + ReviewId : int
-    + UserId : int
-    + CourseId : int
-    + Rating : int
-    + Content : string?
+    + CourseReviewId : int
+    + EnrollmentId : int
+    + Rating : int?
+    + Comment : string?
+    + CourseReviewStatus : string?
+    + IsRemoved : bool?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
+    + AiThreatLevel : AiThreatLevel
+    + Enrollment : Enrollment?
+    + Reports : ICollection~Report~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IReviewService {
-    <<interface>>
+    <<service interface>>
     + GetCourseReviewsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~PagedResult~ReviewResponse~~ *
 }
 
 class IReviewRepository {
-    <<interface>>
-    + GetCourseReviewsWithDetailsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~Tuple~List~CourseReview~, int~~ *
+    <<repository interface>>
+    + GetCourseReviewsWithDetailsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~(List~CourseReview~ Items, int TotalCount)~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ReviewService {
+    <<service>>
     - _reviewRepo : IReviewRepository
     
     + GetCourseReviewsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~PagedResult~ReviewResponse~~
@@ -75,14 +82,16 @@ class ReviewService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ReviewRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetCourseReviewsWithDetailsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~Tuple~List~CourseReview~, int~~
+    + GetCourseReviewsWithDetailsAsync(courseId: int, page: int, pageSize: int, starFilter: int?) Task~(List~CourseReview~ Items, int TotalCount)~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReviews : DbSet~CourseReview~
 }
 
@@ -101,7 +110,7 @@ ReviewService ..|> IReviewService
 ReviewRepository ..|> IReviewRepository
 
 %% === DEPENDENCY ===
-ReviewControllerFE ..> ReviewControllerBE
+CourseControllerFE ..> ReviewControllerBE
 ReviewControllerBE ..> PagedResultReviewResponse
 ReviewService ..> PagedResultReviewResponse
 ReviewService ..> CourseReview

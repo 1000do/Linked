@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,17 +36,16 @@ mainframe Permanently delete learning materials
 
 actor Instructor as act
 participant "TrashBinPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
-participant ":IFileStorageService" as storage_sv
 participant ":IMaterialRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Click Permanently Delete
-view -> fe_ctrl++: DELETE /Lesson/PermanentDeleteMaterial/{materialId}
+view -> fe_ctrl++: DELETE /InstructorCourse/PermanentDeleteMaterial/{materialId}
 fe_ctrl -> be_ctrl++: DELETE /api/lessons/materials/{materialId}/permanent
 
 be_ctrl -> sv++: Call PermanentDeleteMaterialAsync(materialId, instructorId)
@@ -57,8 +63,8 @@ alt Material Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display material not found message
 else Material Found
-    sv -> repo++: Call GetTrashMaterialsAsync(instructorId)
-    repo -->> sv--: Return trash materials
+    sv -> sv++: Check ownership in user's trash
+    sv--
     
     alt Material not in user's trash
         sv -->> be_ctrl: throw UnauthorizedAccessException
@@ -66,16 +72,18 @@ else Material Found
         fe_ctrl -->> view: Return JSON (success=false)
         view -->> act: Display unauthorized message
     else Valid Ownership
-        sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+        sv -> sv++: Validate Instructor and Course State
         sv--
         
         opt Has CloudPublicId
-            sv -> storage_sv++: Call DeleteFileByPublicIdAsync(publicId, fileType)
-            storage_sv -->> sv--: Return result
+            sv -> sv++: Delete file from cloud storage
+            sv--
         end
         
         sv -> repo++: Call Delete(material)
-        repo -->> sv--: Return tracking state
+        repo -> ctx++: Delete entity state
+        ctx -->> repo--: Return
+        repo -->> sv--: Return
         
         sv -> repo++: Call SaveChangesAsync()
         repo -> ctx++: Save changes to database
@@ -94,7 +102,7 @@ else Material Found
             ctx -->> repo--: Return numberOfRowsAffected
             repo -->> sv--: Return numberOfRowsAffected
             
-            sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+            sv -> sv++: Call Cache Invalidation Logic
             sv--
             
             sv -->> be_ctrl--: Return success

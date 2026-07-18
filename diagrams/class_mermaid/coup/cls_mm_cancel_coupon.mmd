@@ -10,6 +10,7 @@ class CartControllerFE["CartController"] {
 }
 
 class CartViewModel {
+    <<view model>>
     + Subtotal : decimal
     + DiscountAmount : decimal
     + TotalAmount : decimal
@@ -29,7 +30,8 @@ class CartControllerBE["CartController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class CartSummaryResponse {
+class CartSummaryResponseDTO {
+    <<dto>>
     + Subtotal : decimal
     + DiscountAmount : decimal
     + TotalAmount : decimal
@@ -39,12 +41,14 @@ class CartSummaryResponse {
 }
 
 class CartItemDto {
+    <<dto>>
     + CourseId : int
     + Title : string
     + Price : decimal
 }
 
 class CouponDto {
+    <<dto>>
     + CouponCode : string
     + DiscountValue : decimal
     + CouponType : string
@@ -53,6 +57,7 @@ class CouponDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CartItem {
+    <<entity>>
     + CartItemId : int
     + UserId : int
     + CourseId : int
@@ -61,12 +66,14 @@ class CartItem {
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + Title : string
     + Price : decimal
 }
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + CouponCode : string
     + CouponType : string
@@ -82,38 +89,41 @@ class Coupon {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICartService {
-    <<interface>>
-    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponse~ *
+    <<service interface>>
+    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponseDTO~ *
 }
 
 class ICartRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCartItemsWithDetailsAsync(userId: int) Task~List~CartItem~~ *
 }
 
 class ICouponRepository {
-    <<interface>>
+    <<repository interface>>
     + GetActiveAvailableCouponsAsync(now: DateTime) Task~List~Coupon~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CartService {
+    <<service>>
     - _cartRepository : ICartRepository
     - _couponRepository : ICouponRepository
     
-    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponse~
+    + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponseDTO~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CartRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetCartItemsWithDetailsAsync(userId: int) Task~List~CartItem~~
 }
 
 class CouponRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetActiveAvailableCouponsAsync(now: DateTime) Task~List~Coupon~~
@@ -122,6 +132,7 @@ class CouponRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CartItems : DbSet~CartItem~
     + Coupons : DbSet~Coupon~
     + Courses : DbSet~Course~
@@ -138,8 +149,8 @@ CartItem -- Course
 %% === AGGREGATION (hollow diamond) ===
 CartViewModel o-- CartItemDto
 CartViewModel o-- CouponDto
-CartSummaryResponse o-- CartItemDto
-CartSummaryResponse o-- CouponDto
+CartSummaryResponseDTO o-- CartItemDto
+CartSummaryResponseDTO o-- CouponDto
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 CartControllerBE --> ICartService
@@ -156,8 +167,8 @@ CouponRepository ..|> ICouponRepository
 %% === DEPENDENCY (dashed arrows) ===
 CartControllerFE ..> CartControllerBE
 CartControllerFE ..> CartViewModel
-CartControllerBE ..> CartSummaryResponse
-CartService ..> CartSummaryResponse
+CartControllerBE ..> CartSummaryResponseDTO
+CartService ..> CartSummaryResponseDTO
 CartRepository ..> CartItem
 CouponRepository ..> Coupon
 

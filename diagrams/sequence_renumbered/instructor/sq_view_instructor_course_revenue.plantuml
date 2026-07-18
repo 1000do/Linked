@@ -1,0 +1,104 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor's Course Revenue
+
+actor "Instructor" as act
+participant "EarningsDashboard" as view
+participant "ApplicationStatusPage" as app_status_view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant ":AdminFinanceService" as finance_sv
+participant ":InstructorCourseRevenueResponse" as dto
+participant ":AdminFinanceRepository" as finance_repo
+participant ":AppDbContext" as ctx
+database Database as db
+act ++
+act -> view++:1. Access Earnings Dashboard
+view -> fe_tx_ctrl++:2. GET /Transaction/Instructor?year={y}&month={m}
+
+fe_tx_ctrl -> fe_tx_ctrl++:3. Validate actor's authentication and authorization
+fe_tx_ctrl--
+
+alt Session Invalid
+    fe_tx_ctrl -->> login_view++:3.1. Redirect to LoginPage
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_tx_ctrl -->> error_view++:3.2. Redirect to ErrorPage
+    error_view -->> act--:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_tx_ctrl -> fe_tx_ctrl++:3.3. Check Request.Cookies["InstructorApprovalStatus"]
+    fe_tx_ctrl--
+    
+alt Not Approved Instructor
+        fe_tx_ctrl -->> app_status_view++:3.3.1. Redirect to ApplicationStatus
+        app_status_view -->> act--:3.3.1.1. Display status
+else Approved Instructor
+        fe_tx_ctrl -> be_tx_ctrl++:3.3.2. GET /api/transactions/instructor/course-revenues
+        
+        be_tx_ctrl -> be_tx_ctrl++:3.3.2.1. Validate login session & Parse userId
+        be_tx_ctrl--
+        
+alt Invalid login session
+            be_tx_ctrl -->> fe_tx_ctrl:3.3.2.1.1. Return statusCode 401
+            fe_tx_ctrl -->> login_view++:3.3.2.1.1.1. Redirect to LoginPage
+            login_view -->> act--:3.3.2.1.1.2. Display login form
+else Valid Request
+            be_tx_ctrl -> finance_sv++:3.3.2.1.2. GetInstructorCourseRevenuesByInstructorAsync(userId, year, month)
+            finance_sv -> finance_repo++:3.3.2.1.2.1. GetInstructorCourseRevenuesByInstructorAsync(userId, year, month)
+            
+            finance_repo -> ctx++:3.3.2.1.2.2. Query Courses by InstructorId
+            ctx -> db++:3.3.2.1.2.3. Execute SELECT
+            db -->> ctx--:3.3.2.1.2.4. Return database record
+            
+            ctx -> db++:3.3.2.1.2.5. Query Transactions (succeeded or refund_pending)
+            db -->> ctx--:3.3.2.1.2.6. Return database record
+            ctx -->> finance_repo--:3.3.2.1.2.7. Return list of Raw entities
+            
+            finance_repo -> finance_repo:3.3.2.1.2.8. Calculate Monthly, Previous Month, Yearly, Lifetime Net Revenue
+            finance_repo -> finance_repo:3.3.2.1.2.9. Calculate Growth % / New Sales
+            
+            finance_repo -->> finance_sv--:3.3.2.1.2.10. Return List<InstructorCourseRevenueProjection>
+            
+            finance_sv -> dto++:3.3.2.1.2.11. Map to List<InstructorCourseRevenueResponse>
+            dto -->> finance_sv--:3.3.2.1.2.12. Return List<InstructorCourseRevenueResponse>
+            
+            finance_sv -->> be_tx_ctrl--:3.3.2.1.2.13. Return List<InstructorCourseRevenueResponse>
+            be_tx_ctrl -->> fe_tx_ctrl--:3.3.2.1.2.14. Return statusCode 200 (Data)
+            
+            fe_tx_ctrl -->> view--:3.3.2.1.2.15. Return View with InstructorFinancePageVM
+            view -->> act--:3.3.2.1.2.16. Display Earnings dashboard (Defaults to Learner Purchases tab)
+            
+            act -> view++:3.3.2.1.2.17. Click "Course Revenues" tab
+            view -->> act--:3.3.2.1.2.18. Display course revenue table \n(Course Title, Sales Qty, Monthly Rev, Yearly Rev, Lifetime Rev, Growth %)
+end
+end
+end
+
+@enduml

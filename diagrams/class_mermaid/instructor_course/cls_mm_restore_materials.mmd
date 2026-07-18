@@ -3,9 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LessonControllerFE["LessonController"] {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + RestoreMaterial(id: int) Task~IActionResult~
+    + RestoreMaterial(materialId: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -14,7 +14,7 @@ class LessonControllerBE["LessonController"] {
     <<backend controller>>
     - _lessonService : ILessonService
     
-    + RestoreMaterial(id: int) Task~IActionResult~
+    + RestoreMaterial(materialId: int) Task~IActionResult~
     - GetInstructorId() int
 }
 
@@ -23,68 +23,87 @@ class LessonControllerBE["LessonController"] {
 class LearningMaterial {
     <<entity>>
     + MaterialId : int
-    + LessonId : int
+    + LessonId : int?
     + Title : string
-    + MaterialType : string
-    + VideoUrl : string?
-    + Duration : int?
+    + Description : string?
+    + MaterialUrl : string?
+    + MaterialMetadata : MaterialMetadata?
+    + CloudPublicId : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + LearningStatus : string?
+    + ModerationFeedback : string?
     + IsRemoved : bool
-    + Lesson : Lesson?
+}
+
+class MaterialMetadata {
+    <<entity>>
+    + FileSize : long?
+    + FileType : string?
+    + FileExtension : string?
+    + Duration : int?
+    + PageCount : int?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ILessonService {
-    <<interface>>
+    <<service interface>>
     + RestoreMaterialAsync(materialId: int, instructorId: int) Task *
 }
 
-class ILessonRepository {
-    <<interface>>
-    + GetMaterialByIdAsync(id: int) Task~LearningMaterial?~ *
-    + UpdateMaterial(material: LearningMaterial) void *
+class IMaterialRepository {
+    <<repository interface>>
+    + GetByIdAsync(materialId: int) Task~LearningMaterial?~ *
+    + Update(material: LearningMaterial) void *
     + SaveChangesAsync() Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class LessonService {
-    - _lessonRepo : ILessonRepository
+    <<service>>
+    - _materialRepository : IMaterialRepository
     
     + RestoreMaterialAsync(materialId: int, instructorId: int) Task
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class LessonRepository {
+class MaterialRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetMaterialByIdAsync(id: int) Task~LearningMaterial?~
-    + UpdateMaterial(material: LearningMaterial) void
+    + GetByIdAsync(materialId: int) Task~LearningMaterial?~
+    + Update(material: LearningMaterial) void
     + SaveChangesAsync() Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + LearningMaterials : DbSet~LearningMaterial~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === AGGREGATION & COMPOSITION ===
+LearningMaterial *-- MaterialMetadata
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
 LessonControllerBE --> ILessonService
-LessonService --> ILessonRepository
-LessonRepository --> AppDbContext
+LessonService --> IMaterialRepository
+MaterialRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 LessonService ..|> ILessonService
-LessonRepository ..|> ILessonRepository
+MaterialRepository ..|> IMaterialRepository
 
-%% === DEPENDENCY (dashed arrows) ===
-LessonControllerFE ..> LessonControllerBE
+%% === DEPENDENCY ===
+InstructorCourseControllerFE ..> LessonControllerBE
 LessonService ..> LearningMaterial
-LessonRepository ..> LearningMaterial
+MaterialRepository ..> LearningMaterial
 
 %% ==================== STYLES ====================
 

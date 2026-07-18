@@ -1,0 +1,68 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Quiz List
+
+actor Instructor as act
+participant "QuizListPage" as view
+participant "QuizController" as fe_ctrl <<frontend controller>>
+participant "QuizController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":QuizSummaryResponse" as res
+participant ":IQuizRepository" as repo
+
+act ++
+act -> view++: Access quiz list page
+view -> fe_ctrl++: GET /Quiz/Index
+
+fe_ctrl -> be_ctrl++: GET /api/quizzes
+
+be_ctrl -> sv++: Call GetMyQuizzesAsync(instructorId)
+
+sv -> repo++: Call GetByInstructorAsync(instructorId)
+repo -->> sv--: Return List<Quiz>
+
+loop For each Quiz in list
+    sv -> res++: Call QuizSummaryResponse()
+    res -->> sv--: Return QuizSummaryResponse object
+end
+
+sv -->> be_ctrl--: Return List<QuizSummaryResponse>
+be_ctrl -->> fe_ctrl--: Return statusCode 200
+
+fe_ctrl -> fe_ctrl++: Parse JSON to List<QuizSummaryItem>
+fe_ctrl--
+
+fe_ctrl -->> view--: Return View with QuizListViewModel
+view -->> act--: Display quizzes

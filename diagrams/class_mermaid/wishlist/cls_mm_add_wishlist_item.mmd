@@ -16,6 +16,7 @@ class WishlistControllerBE["WishlistController"] {
     
     + CheckWishlist(courseId: int) Task~IActionResult~
     + AddToWishlist(courseId: int) Task~IActionResult~
+    + RemoveFromWishlist(courseId: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -28,6 +29,7 @@ class WishlistItem {
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + Title : string
     + Status : string
@@ -36,18 +38,18 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IWishlistService {
-    <<interface>>
+    <<service interface>>
     + IsInWishlistAsync(userId: int, courseId: int) Task~bool~ *
     + AddToWishlistAsync(userId: int, courseId: int) Task~bool~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(courseId: int) Task~Course?~ *
 }
 
 class IWishlistRepository {
-    <<interface>>
+    <<repository interface>>
     + ExistsAsync(userId: int, courseId: int) Task~bool~ *
     + AddAsync(newItem: WishlistItem) Task *
     + SaveChangesAsync() Task~int~ *
@@ -56,6 +58,7 @@ class IWishlistRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class WishlistService {
+    <<service>>
     - _wishlistRepository : IWishlistRepository
     - _courseRepository : ICourseRepository
     
@@ -66,12 +69,14 @@ class WishlistService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(courseId: int) Task~Course?~
 }
 
 class WishlistRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + ExistsAsync(userId: int, courseId: int) Task~bool~
@@ -82,9 +87,11 @@ class WishlistRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + WishlistItems : DbSet~WishlistItem~
     + Courses : DbSet~Course~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }

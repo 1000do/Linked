@@ -1,0 +1,108 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Profile (For Manager)
+
+
+actor Staff as act
+participant "DashboardPage" as portal
+participant "ProfilePage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminProfileController" as fe_ctrl <<frontend controller>>
+participant "AdminProfileController" as be_ctrl <<backend controller>>
+participant ":IManagerProfileService" as sv
+participant ":ManagerProfileResponse" as res
+participant ":IManagerRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> portal++: Click "View Profile"
+portal -> fe_ctrl++: GET /AdminProfile
+portal--
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/admin/profile (with AccessToken)
+    
+    be_ctrl -> be_ctrl++: Validate login session & Parse userId
+    be_ctrl--
+    
+    alt Invalid login session
+        be_ctrl -->> fe_ctrl: Return statusCode 401 (Unauthorized)
+        fe_ctrl -->> login_view++: Redirect to LoginPage
+        login_view -->> act--: Display login page
+    else Valid login session
+        be_ctrl -> sv++: GetProfileAsync(userId)
+        
+        sv -> repo++: GetManagerByIdAsync(userId)
+        repo -> ctx++: Fetch Manager with Account details
+        ctx -> db++: Query Managers and Accounts tables
+        db -->> ctx--: Return database record
+        ctx -->> repo--: Return Manager entity
+        repo -->> sv--: Return Manager entity
+        
+        sv -> sv++: Check manager != null
+        sv--
+        
+        alt manager == null
+            sv -->> be_ctrl: Return null
+            be_ctrl -->> fe_ctrl: Return statusCode 404 (NotFound)
+            fe_ctrl -->> login_view++: Redirect to LoginPage
+            login_view -->> act--: Display login page
+        else manager != null
+            sv -> res++: Call ManagerProfileResponse()
+            res -->> sv--: Return ManagerProfileResponse object
+            sv -->> be_ctrl--: Return ManagerProfileResponse DTO
+            be_ctrl -->> fe_ctrl--: Return statusCode 200 (parsed to AdminProfileViewModel)
+            
+            fe_ctrl -->> view++: Return View(profile)
+            deactivate fe_ctrl
+            view -->> act--: Display manager profile information
+        end
+    end
+end
+
+@enduml

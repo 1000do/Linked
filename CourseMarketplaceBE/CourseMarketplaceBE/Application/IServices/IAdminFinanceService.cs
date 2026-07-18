@@ -69,7 +69,7 @@ public interface IAdminFinanceService
     /// <summary>
     /// Lấy danh sách các yêu cầu hoàn tiền đang chờ duyệt.
     /// </summary>
-    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
+    Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
 
     /// <summary>
     /// Admin duyệt chấp nhận yêu cầu hoàn tiền (gọi Stripe refund thực tế).

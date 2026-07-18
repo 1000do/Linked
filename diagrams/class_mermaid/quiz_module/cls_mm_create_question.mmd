@@ -57,6 +57,7 @@ class QuizOptionResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class QuizQuestion {
+    <<entity>>
     + QuestionId : int
     + CourseId : int
     + LessonId : int
@@ -64,60 +65,54 @@ class QuizQuestion {
     + Explanation : string?
     + QuestionType : QuizQuestionType
     + CreatedAt : DateTime?
-    + Course : Course?
-    + Lesson : Lesson?
-    + QuizOptions : ICollection~QuizOption~
-    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
 }
 
 class QuizOption {
+    <<entity>>
     + OptionId : int
     + QuestionId : int
     + OptionText : string
     + IsCorrect : bool
     + OrderIndex : int
-    + QuizQuestion : QuizQuestion?
-    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuestionBankService {
-    <<interface>>
+    <<service interface>>
     + AddQuestionAsync(courseId: int, request: QuizAddQuestionRequest, instructorId: int) Task~QuizQuestionResponse~ *
 }
 
 class IQuestionBankRepository {
-    <<interface>>
+    <<repository interface>>
     + AddQuestionAsync(question: QuizQuestion) Task~QuizQuestion~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
 }
 
 class ILessonRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Lesson?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuestionBankService {
+    <<service>>
     - _questionBankRepository : IQuestionBankRepository
     - _courseRepository : ICourseRepository
     - _lessonRepository : ILessonRepository
     
     + AddQuestionAsync(courseId: int, request: QuizAddQuestionRequest, instructorId: int) Task~QuizQuestionResponse~
-    - ValidateQuizOptions(options: List~QuizOptionRequest~) void
-    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
-    - MapToResponse(q: QuizQuestion) QuizQuestionResponse
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuestionBankRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + AddQuestionAsync(question: QuizQuestion) Task~QuizQuestion~
@@ -126,6 +121,7 @@ class QuestionBankRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + QuizQuestions : DbSet~QuizQuestion~
     + QuizOptions : DbSet~QuizOption~
 }

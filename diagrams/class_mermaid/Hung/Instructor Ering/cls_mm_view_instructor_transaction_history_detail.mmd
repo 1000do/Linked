@@ -1,0 +1,233 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+class TransactionControllerFE["TransactionController"] {
+    <<frontend controller>>
+    + InstructorDetail(id: int) Task~IActionResult~
+}
+
+class TransactionDetailVM {
+    <<view model>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + StripePaymentIntentId : string?
+    + Date : DateTime?
+    + Status : string?
+    + Currency : string?
+    + BuyerName : string
+    + BuyerEmail : string
+    + CourseTitle : string
+    + CourseThumbnail : string?
+    + InstructorName : string
+    + InstructorEmail : string
+    + GrossAmount : decimal
+    + OriginalPrice : decimal
+    + DiscountAmount : decimal
+    + CouponUsed : bool
+    + CouponCode : string?
+    + CouponType : string?
+    + CouponDiscountValue : decimal?
+    + TransferRate : decimal
+    + InstructorPayout : decimal
+    + PlatformProfit : decimal
+    + IsPaid : bool
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== BACKEND ====================
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    + GetTransactionDetail(id: int) Task~IActionResult~
+}
+
+class ITransactionService {
+    <<service interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~*
+}
+
+class TransactionService {
+    <<service>>
+    - _repo : ITransactionRepository
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+class ITransactionRepository {
+    <<repository interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~*
+}
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+class TransactionDetailDto {
+    <<dto>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + StripePaymentIntentId : string?
+    + Date : DateTime?
+    + Status : string?
+    + Currency : string?
+    + BuyerName : string
+    + BuyerEmail : string
+    + CourseTitle : string
+    + CourseThumbnail : string?
+    + InstructorName : string
+    + InstructorEmail : string
+    + GrossAmount : decimal
+    + OriginalPrice : decimal
+    + DiscountAmount : decimal
+    + CouponUsed : bool
+    + CouponCode : string?
+    + CouponType : string?
+    + CouponDiscountValue : decimal?
+    + TransferRate : decimal
+    + InstructorPayout : decimal
+    + PlatformProfit : decimal
+    + IsPaid : bool
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== DATABASE ====================
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+}
+
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + AccountStatus : string?
+    + AuthProvider : string?
+    + IsVerified : bool
+}
+
+class User {
+    <<entity>>
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int?
+    + CourseId : int?
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Price : decimal
+    + CourseStatus : string?
+}
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ApprovalStatus : string?
+    + StripeAccountId : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+}
+
+class Coupon {
+    <<entity>>
+    + CouponId : int
+    + ManagerId : int?
+    + CouponCode : string
+    + CouponType : string?
+    + DiscountValue : decimal
+    + IsActive : bool?
+}
+
+class InstructorPayout {
+    <<entity>>
+    + PayoutId : int
+    + TransactionId : int?
+    + InstructorId : int?
+    + PayoutAmount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
+    + PayoutStatus : string
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+    + PaidToBankAt : DateTime?
+}
+
+class TransactionExt {
+    <<entity>>
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+%% ==================== RELATIONSHIPS ====================
+TransactionControllerFE ..> TransactionDetailVM
+TransactionControllerFE ..> TransactionControllerBE
+
+TransactionControllerBE --> ITransactionService
+TransactionControllerBE ..> TransactionDetailDto
+
+TransactionService ..|> ITransactionService
+TransactionService --> ITransactionRepository
+TransactionService ..> TransactionDetailDto
+
+TransactionRepository ..|> ITransactionRepository
+TransactionRepository --> AppDbContext
+TransactionRepository ..> TransactionDetailDto
+
+AppDbContext --> Transaction
+
+%% Entity Relationships
+Transaction -- Account
+Transaction -- OrderItem
+Transaction -- InstructorPayout
+Transaction -- TransactionExt
+Account -- User
+OrderItem -- Course
+Course -- Instructor
+Course -- Coupon
+Instructor -- User
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

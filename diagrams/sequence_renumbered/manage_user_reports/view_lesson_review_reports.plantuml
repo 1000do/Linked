@@ -1,0 +1,54 @@
+@startuml view_lesson_review_reports
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View List of Lesson Review Reports
+actor Staff as act
+
+participant "LessonReviewReportListView" as view
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++:1. Access "Lesson Review Reports" page
+view->be_ctrl++:2. GET /admin/moderation/reports/lesson-reviews?page={page}&pageSize={size}
+be_ctrl->sv++:3. GetAllLessonReviewReportsAsync(status, page, pageSize)
+sv->repo++:4. GetAllLessonReviewReportsAsync(status, page, pageSize)
+repo->ctx++:5. Query LessonReviewReport entities
+ctx->db++:6. Execute SQL query
+db-->>ctx:7. Return result set
+ctx-->>repo:8. (reports, totalCount)
+repo-->>sv:9. (reports, totalCount)
+sv-->>be_ctrl:10. PagedResult<LessonReviewReportDetailResponse>
+be_ctrl-->>view:11. JSON payload
+view-->>act:12. Render list UI
+act--
+@enduml

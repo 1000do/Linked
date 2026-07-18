@@ -1,0 +1,125 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminProfileControllerFE["AdminProfileController"] {
+    <<frontend controller>>
+    + Edit(model: UpdateAdminProfileViewModel) Task~IActionResult~
+}
+
+class UpdateAdminProfileViewModel {
+    <<view model>>
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + Bio : string?
+    + AvatarFile : IFormFile?
+}
+
+%% ==================== BACKEND ====================
+
+class AdminProfileControllerBE["AdminProfileController"] {
+    <<backend controller>>
+    - _profileService : IManagerProfileService
+    + UpdateProfile(request: UpdateManagerProfileRequest) Task~IActionResult~
+}
+
+class IManagerProfileService {
+    <<service interface>>
+    + UpdateProfileAsync(managerId: int, request: UpdateManagerProfileRequest) Task~bool~ *
+}
+
+class ManagerProfileService {
+    <<service>>
+    - _managerRepo : IManagerRepository
+    - _uploadService : IFileUploadService
+    + UpdateProfileAsync(managerId: int, request: UpdateManagerProfileRequest) Task~bool~
+}
+
+class IFileUploadService {
+    <<service interface>>
+    + UploadImageAsync(file: IFormFile) Task~string?~ *
+}
+
+class IManagerRepository {
+    <<repository interface>>
+    + UpdateManagerProfileAsync(managerId: int, displayName: string, fullName: string?, phoneNumber: string?, avatarUrl: string?, bio: string?) Task~bool~ *
+}
+
+class ManagerRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + UpdateManagerProfileAsync(managerId: int, displayName: string, fullName: string?, phoneNumber: string?, avatarUrl: string?, bio: string?) Task~bool~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Managers : DbSet~Manager~
+}
+
+class UpdateManagerProfileRequest {
+    <<dto>>
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + Bio : string?
+    + AvatarFile : IFormFile?
+}
+
+%% ==================== DOMAIN ENTITIES ====================
+
+class Manager {
+    <<entity>>
+    + ManagerId : int
+    + Role : string?
+    + DisplayName : string
+    + FullName : string?
+    + PhoneNumber : string?
+    + AvatarUrl : string?
+    + Bio : string?
+}
+
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === ASSOCIATION ===
+AdminProfileControllerBE --> IManagerProfileService
+ManagerProfileService --> IManagerRepository
+ManagerProfileService --> IFileUploadService
+ManagerRepository --> AppDbContext
+Manager -- Account
+
+%% === REALIZATION ===
+ManagerProfileService ..|> IManagerProfileService
+ManagerRepository ..|> IManagerRepository
+
+%% === DEPENDENCY ===
+AdminProfileControllerFE ..> AdminProfileControllerBE
+AdminProfileControllerFE ..> UpdateAdminProfileViewModel
+AdminProfileControllerBE ..> UpdateManagerProfileRequest
+ManagerProfileService ..> UpdateManagerProfileRequest
+ManagerRepository ..> Manager
+ManagerRepository ..> Account
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

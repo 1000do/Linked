@@ -68,8 +68,8 @@ else Valid actor's authentication and authorization
     else Status == "Approved"
         
         fe_ctrl -> be_ctrl ++: GET /api/transactions/instructor?page=1&pageSize=20
-        be_ctrl -> sv ++: Call GetInstructorTransactionsAsync(...)
-        sv -> repo ++: Call GetInstructorTransactionsAsync(...)
+        be_ctrl -> sv ++: GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month)
+        sv -> repo ++: GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month)
         
         repo -> repo ++: Apply default sorting (date_desc) and pagination
         repo --
@@ -79,20 +79,20 @@ else Valid actor's authentication and authorization
         db -->> ctx --: Return transactions list and total count
         ctx -->> repo --: Return transactions list and count
         
-        repo -> dto ++: Call TransactionListDto()
+        repo -> dto ++: TransactionListDto()
         dto -->> repo --: Return TransactionListDto object
         
         repo -->> sv --: Return PagedResult<TransactionListDto>
         sv -->> be_ctrl --: Return PagedResult<TransactionListDto>
         be_ctrl -->> fe_ctrl --: Return statusCode 200
         
-        fe_ctrl -> vm ++: Call InstructorFinancePageVM()
+        fe_ctrl -> vm ++: InstructorFinancePageVM()
         vm -->> fe_ctrl --: Return InstructorFinancePageVM object
         
         fe_ctrl -->> view --: Return View(vm)
         
         alt vm.Transactions.Items.Count == 0
-            view -->> act: Display empty message "No purchases recorded for this period."
+            view -->> act : Display empty message "No purchases recorded for this period."
         else vm.Transactions.Items.Count > 0
             view -->> act --: Display list of transactions
         end

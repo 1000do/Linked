@@ -27,42 +27,64 @@ class QuestionBankLessonSummaryResponse {
     + AvailableQuestionCount : int
 }
 
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + Title : string
+}
+
+class Lesson {
+    <<entity>>
+    + LessonId : int
+    + Title : string
+    + CourseId : int
+}
+
+class QuizQuestion {
+    <<entity>>
+    + QuestionId : int
+    + CourseId : int
+    + LessonId : int?
+}
+
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuestionBankService {
-    <<interface>>
+    <<service interface>>
     + GetLessonsSummaryByCourseAsync(courseId: int, instructorId: int) Task~List~QuestionBankLessonSummaryResponse~~ *
 }
 
 class ICourseRepository {
-    <<interface>>
-    + GetByIdAsync(id: int) Task~Course?~ *
+    <<repository interface>>
+    + GetByIdAsync(courseId: int) Task~Course?~ *
 }
 
 class ILessonRepository {
-    <<interface>>
-    + GetLessonsByCourseIdAsync(courseId: int) Task~List~Lesson~~ *
+    <<repository interface>>
+    + GetByCourseIdAsync(courseId: int) Task~List~Lesson~~ *
 }
 
 class IQuestionBankRepository {
-    <<interface>>
+    <<repository interface>>
     + GetQuestionsByCourseAsync(courseId: int) Task~List~QuizQuestion~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuestionBankService {
+    <<service>>
     - _questionBankRepository : IQuestionBankRepository
     - _courseRepository : ICourseRepository
     - _lessonRepository : ILessonRepository
     
     + GetLessonsSummaryByCourseAsync(courseId: int, instructorId: int) Task~List~QuestionBankLessonSummaryResponse~~
-    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === UNIDIRECTIONAL ASSOCIATION ===
 QuestionBankControllerBE --> IQuestionBankService
 QuestionBankService --> IQuestionBankRepository
 QuestionBankService --> ICourseRepository
@@ -71,10 +93,13 @@ QuestionBankService --> ILessonRepository
 %% === INTERFACE REALIZATION ===
 QuestionBankService ..|> IQuestionBankService
 
-%% === DEPENDENCY (dashed arrows) ===
+%% === DEPENDENCY ===
 QuestionBankControllerFE ..> QuestionBankControllerBE
 QuestionBankControllerBE ..> QuestionBankLessonSummaryResponse
 QuestionBankService ..> QuestionBankLessonSummaryResponse
+QuestionBankService ..> Course
+QuestionBankService ..> Lesson
+QuestionBankService ..> QuizQuestion
 
 %% ==================== STYLES ====================
 

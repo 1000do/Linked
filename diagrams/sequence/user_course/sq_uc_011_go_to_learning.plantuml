@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -34,8 +41,8 @@ participant "ErrorPage" as error_view
 participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "CoursePublicController" as be_ctrl <<backend controller>>
 participant ":CourseQueryService" as sv
-participant ":IRedisCacheService" as redis
 participant ":CourseDetailResponse" as res
+participant ":IRedisService" as redis
 participant ":ICourseRepository" as repo
 participant ":IInstructorRepository" as inst_repo
 participant ":ICartRepository" as cart_repo
@@ -76,14 +83,16 @@ else Valid actor's authentication and authorization
         alt Course Not Found
             sv -->> be_ctrl: throw KeyNotFoundException
             be_ctrl -->> fe_ctrl: Return statusCode 404
-            fe_ctrl -->> view: Return View("NotFound")
+            fe_ctrl -->> view: Return NotFound()
             view -->> act: Display course not found message
         else Course Found
-            sv -> repo++: Call GetCourseStatsAsync(id)
-            repo -->> sv--: Return stats
-            
+
             opt InstructorId HasValue
                 sv -> inst_repo++: Call GetStatsAsync(InstructorId)
+                inst_repo -> ctx++: Execute query
+                ctx -> db++: Fetch instructor stats
+                db -->> ctx--: Return query results
+                ctx -->> inst_repo--: Return instructor stats
                 inst_repo -->> sv--: Return instructor stats
             end
             
@@ -99,10 +108,18 @@ else Valid actor's authentication and authorization
     end
     
     sv -> cart_repo++: Call IsCourseInAnyCartAsync(id)
+    cart_repo -> ctx++: Execute query
+    ctx -> db++: Check cart status
+    db -->> ctx--: Return query results
+    ctx -->> cart_repo--: Return IsInAnyCart flag
     cart_repo -->> sv--: Return IsInAnyCart flag
     
     opt userId HasValue
         sv -> repo++: Call IsEnrolledAsync(userId, courseId)
+        repo -> ctx++: Execute query
+        ctx -> db++: Check enrollment
+        db -->> ctx--: Return query results
+        ctx -->> repo--: Return IsEnrolled flag
         repo -->> sv--: Return IsEnrolled flag
     end
     
@@ -110,7 +127,7 @@ else Valid actor's authentication and authorization
         alt Unauthorized Access (Not Owner and Not Admin/Staff)
             sv -->> be_ctrl: throw UnauthorizedAccessException
             be_ctrl -->> fe_ctrl: Return statusCode 403
-            fe_ctrl -->> view: Return View("AccessDenied")
+            fe_ctrl -->> view: Return Forbid()
             view -->> act: Display access denied message
         else Valid actor's authentication and authorization
             sv -->> be_ctrl: Return CourseDetailResponse object

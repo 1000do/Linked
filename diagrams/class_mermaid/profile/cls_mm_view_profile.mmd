@@ -3,14 +3,14 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class AccountControllerFE["AccountController"] {
+class AccountController {
     <<frontend controller>>
     + Profile() Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class ProfileControllerBE["ProfileController"] {
+class ProfileController {
     <<backend controller>>
     - _userProfileService : IUserProfileService
     
@@ -19,7 +19,8 @@ class ProfileControllerBE["ProfileController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class UserProfileResponse {
+class UserProfileResponseDTO {
+    <<dto>>
     + FullName : string?
     + Username : string
     + Email : string
@@ -32,6 +33,7 @@ class UserProfileResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string?
     + Username : string
@@ -45,26 +47,28 @@ class User {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IUserProfileService {
-    <<interface>>
-    + GetUserProfileAsync(userId: int) Task~UserProfileResponse?~ *
+    <<service interface>>
+    + GetUserProfileAsync(userId: int) Task~UserProfileResponseDTO?~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetUserByIdAsync(userId: int) Task~User?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class UserProfileService {
+    <<service>>
     - _userRepository : IUserRepository
     
-    + GetUserProfileAsync(userId: int) Task~UserProfileResponse?~
+    + GetUserProfileAsync(userId: int) Task~UserProfileResponseDTO?~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetUserByIdAsync(userId: int) Task~User?~
@@ -73,6 +77,7 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Users : DbSet~User~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
@@ -82,7 +87,7 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-ProfileControllerBE --> IUserProfileService
+ProfileController --> IUserProfileService
 UserProfileService --> IUserRepository
 UserRepository --> AppDbContext
 
@@ -91,9 +96,9 @@ UserProfileService ..|> IUserProfileService
 UserRepository ..|> IUserRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-AccountControllerFE ..> UserProfileResponse
-ProfileControllerBE ..> UserProfileResponse
-UserProfileService ..> UserProfileResponse
+AccountController ..> UserProfileResponseDTO
+ProfileController ..> UserProfileResponseDTO
+UserProfileService ..> UserProfileResponseDTO
 UserRepository ..> User
 
 %% ==================== STYLES ====================

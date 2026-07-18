@@ -1,0 +1,110 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Submit Quiz Attempt
+
+actor User as act
+participant "QuizLearningPage" as view
+participant "QuizAttemptController" as fe_ctrl <<frontend controller>>
+participant "QuizAttemptController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":IQuizRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Complete quiz and click Submit
+view -> fe_ctrl++:2. POST /QuizAttempt/Submit
+fe_ctrl -> be_ctrl++:3. POST /api/quiz-attempts/submit
+
+be_ctrl -> sv++:4. Call SubmitAttemptAsync(request, userId)
+
+sv -> repo++:5. Call GetAttemptByIdAsync(request.AttemptId)
+repo -> ctx++:6. Execute query
+ctx -> db++:7. Fetch quiz attempt
+db -->> ctx--:8. Return query results
+ctx -->> repo--:9. Return attempt entity
+repo -->> sv--:10. Return attempt entity
+
+alt Attempt Not Found
+    sv -->> be_ctrl:10.1. throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl:10.1.1. Return statusCode 404
+    fe_ctrl -->> view:10.1.2. Return JSON (success=false)
+    view -->> act:10.1.3. Display attempt not found message
+else Attempt Found
+alt Not Attempt Owner
+        sv -->> be_ctrl:10.2.1. throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl:10.2.1.1. Return statusCode 403
+        fe_ctrl -->> view:10.2.1.2. Return JSON (success=false)
+        view -->> act:10.2.1.3. Display unauthorized message
+else Is Attempt Owner
+alt Already Submitted
+            sv -->> be_ctrl:10.2.2.1. throw InvalidOperationException
+            be_ctrl -->> fe_ctrl:10.2.2.1.1. Return statusCode 400
+            fe_ctrl -->> view:10.2.2.1.2. Return JSON (success=false)
+            view -->> act:10.2.2.1.3. Display already submitted message
+else Not Yet Submitted
+            sv -> repo++:10.2.2.2. Call GetByIdAsync(attempt.QuizId)
+            repo -->> sv--:10.2.2.2.1. Return quiz entity
+            
+            sv -> sv++:10.2.2.2.2. Loop through submitted answers and score them
+            sv--
+            
+            sv -> sv++:10.2.2.2.3. Calculate total score and isPassed
+            sv--
+            
+            sv -> sv++:10.2.2.2.4. Update attempt.SubmittedAt, Score, IsPassed
+            sv--
+            
+            sv -> repo++:10.2.2.2.5. Call UpdateAttemptAsync(attempt)
+            repo -> ctx++:10.2.2.2.6. Save changes to database
+            ctx -> db++:10.2.2.2.7. Update QuizAttempt
+            
+alt Database Save Failure
+                db -->> ctx:10.2.2.2.7.1. throw DbUpdateException
+                ctx -->> repo:10.2.2.2.7.1.1. throw DbUpdateException
+                repo -->> sv:10.2.2.2.7.1.2. throw DbUpdateException
+                sv -->> be_ctrl:10.2.2.2.7.1.3. throw DbUpdateException
+                be_ctrl -->> fe_ctrl:10.2.2.2.7.1.4. Return statusCode 500
+                fe_ctrl -->> view:10.2.2.2.7.1.5. Return JSON (success=false)
+                view -->> act:10.2.2.2.7.1.6. Display server error message
+else Database Save Success
+                db -->> ctx--:10.2.2.2.7.2. Return returnCode
+                ctx -->> repo--:10.2.2.2.7.2.1. Return numberOfRowsAffected
+                repo -->> sv--:10.2.2.2.7.2.2. Return numberOfRowsAffected
+                
+                sv -> sv++:10.2.2.2.7.2.3. Map to QuizAttemptResultResponse
+                sv--
+                
+                sv -->> be_ctrl--:10.2.2.2.7.2.4. Return QuizAttemptResultResponse object
+                be_ctrl -->> fe_ctrl--:10.2.2.2.7.2.5. Return statusCode 200
+                fe_ctrl -->> view--:10.2.2.2.7.2.6. Return JSON (success=true, result)
+                view -->> act--:10.2.2.2.7.2.7. Display quiz result to student
+end
+end
+end
+end

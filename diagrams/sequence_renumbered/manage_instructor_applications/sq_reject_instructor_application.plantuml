@@ -1,0 +1,106 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Reject Instructor Application
+
+actor Staff as act
+participant "AdminApprovalIndexPage" as view
+participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminApprovalController" as be_ctrl <<backend controller>>
+participant ":IInstructorApprovalService" as sv
+participant ":INotificationService" as noti_sv
+participant ":IInstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Click "Reject" on an instructor application row
+view -> view++:2. Prompt dialog to enter rejection reason
+view --
+
+act -> view:3. Enter reason and confirm rejection
+view -> fe_ctrl++:4. POST /AdminApproval/Process?id={id}&status=Rejected&reason={reason}
+
+fe_ctrl -> fe_ctrl++:5. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:5.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:5.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:5.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:5.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++:5.3. POST /api/AdminApproval/process
+
+be_ctrl -> sv++:5.3.1. Call ApproveOrRejectAsync(dto)
+sv -> repo++:5.3.2. Call GetByIdAsync(dto.InstructorId)
+repo -> ctx++:5.3.3. Call GetByIdAsync(instructorId)
+ctx -> db++:5.3.4. Execute SELECT query
+
+db -->> ctx--:5.3.5. Return instructor entity
+ctx -->> repo--:5.3.6. Return instructor entity
+repo -->> sv--:5.3.7. Return instructor entity
+
+alt instructor == null
+    sv -->> be_ctrl:5.3.7.1. Return false
+    be_ctrl -->> fe_ctrl:5.3.7.1.1. Return statusCode 400
+    fe_ctrl -->> view:5.3.7.1.2. Return JSON (success=false, message)
+    view -->> act:5.3.7.1.3. Display error message
+else instructor exists
+    sv -> sv++:5.3.7.2. Call UpdateInstructorStatus(instructor, dto)
+    sv --
+    
+    sv -> repo++:5.3.7.2.1. Call Update(instructor)
+    
+    repo -> ctx++:5.3.7.2.2. Call SaveChangesAsync()
+    ctx -> db++:5.3.7.2.3. Save changes to database (Execute UPDATE)
+    db -->> ctx--:5.3.7.2.4. Return numberOfRowsAffected
+    ctx -->> repo--:5.3.7.2.5. Return numberOfRowsAffected
+    repo -->> sv--:5.3.7.2.6. Return numberOfRowsAffected
+    
+    sv -> sv++:5.3.7.2.7. Call SendApprovalResultNotificationAsync(instructorId, dto)
+    sv -> noti_sv++:5.3.7.2.8. Call SendNotificationAsync(instructorId, title, message, link)
+    noti_sv -->> sv--:5.3.7.2.9. Return result
+    sv --
+    
+    sv -->> be_ctrl--:5.3.7.2.10. Return true
+    be_ctrl -->> fe_ctrl--:5.3.7.2.11. Return statusCode 200
+    fe_ctrl -->> view--:5.3.7.2.12. Return JSON (success=true)
+    
+    view -> view++:5.3.7.2.13. Update row status / Remove row in DOM
+    view --
+    view -->> act--:5.3.7.2.14. Display rejection confirmation message
+end
+end
+
+@enduml

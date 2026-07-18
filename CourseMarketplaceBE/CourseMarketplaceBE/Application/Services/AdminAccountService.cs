@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using CourseMarketplaceBE.Hubs;
 
 namespace CourseMarketplaceBE.Application.Services
 {
@@ -21,6 +23,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IEnrollmentRepository _enrollmentRepository;
         private readonly IManagerRepository _managerRepository;
         private readonly INotificationService _notificationService;
+        private readonly IHubContext<NotificationHub> _hubContext;
 
         public AdminAccountService(
             IUserRepository userRepository,
@@ -31,7 +34,8 @@ namespace CourseMarketplaceBE.Application.Services
             ILockoutRepository lockoutRepository,
             IEnrollmentRepository enrollmentRepository,
             IManagerRepository managerRepository,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IHubContext<NotificationHub> hubContext)
         {
             _userRepository = userRepository;
             _reportRepository = reportRepository;
@@ -42,6 +46,7 @@ namespace CourseMarketplaceBE.Application.Services
             _enrollmentRepository = enrollmentRepository;
             _managerRepository = managerRepository;
             _notificationService = notificationService;
+            _hubContext = hubContext;
         }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<AdminAccountListDto>> GetAccountsPagedAsync(string? keyword, string? role, int page, int pageSize)
@@ -213,6 +218,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 account.AccountStatus = AccountStatus.Banned.ToValue();
                 await ApplySevereLockoutAsync(account.AccountId, 36500); // 100 years
+                await _hubContext.Clients.User(id.ToString()).SendAsync("AccountLockedOut");
             }
 
             await _userRepository.SaveChangesAsync();
@@ -239,6 +245,39 @@ namespace CourseMarketplaceBE.Application.Services
             await ProcessFlaggingStatusAsync(account, newFlags);
             await _userRepository.SaveChangesAsync();
             await SendFlaggingNotificationAsync(account.AccountId, newFlags, reason);
+
+            return (true, newFlags, account.AccountStatus, null);
+        }
+
+        public async Task<(bool Success, int CurrentFlags, string? NewStatus, string? ErrorMessage)> UnflagAccountAsync(int id, string reason)
+        {
+            var account = await _userRepository.GetAccountByIdAsync(id);
+            if (account == null)
+            {
+                return (false, 0, null, "Account not found.");
+            }
+
+            var currentFlags = account.AccountFlagCount ?? 0;
+            if (currentFlags <= 0)
+            {
+                return (false, currentFlags, account.AccountStatus, "Account has no flags to remove.");
+            }
+
+            var newFlags = currentFlags - 1;
+            account.AccountFlagCount = newFlags;
+
+            var oldStatus = account.AccountStatus;
+            await ProcessFlaggingStatusAsync(account, newFlags);
+            
+            // If the account was banned and now it's unbanned, we need to remove the lockout
+            if (oldStatus == AccountStatus.Banned.ToValue() && account.AccountStatus != AccountStatus.Banned.ToValue())
+            {
+                await RemoveLockoutsAsync(account.AccountId);
+                await _hubContext.Clients.User(account.AccountId.ToString()).SendAsync("AccountUnlocked");
+            }
+
+            await _userRepository.SaveChangesAsync();
+            await SendUnflaggingNotificationAsync(account.AccountId, newFlags, reason);
 
             return (true, newFlags, account.AccountStatus, null);
         }
@@ -303,6 +342,7 @@ namespace CourseMarketplaceBE.Application.Services
             if (isNewStatusBanned && !isOldStatusBanned)
             {
                 await ApplySevereLockoutAsync(account.AccountId, 36500); // 100 years
+                await _hubContext.Clients.User(account.AccountId.ToString()).SendAsync("AccountLockedOut");
             }
             else if (!isNewStatusBanned && isOldStatusBanned)
             {
@@ -324,6 +364,7 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 account.AccountStatus = AccountStatus.Banned.ToValue();
                 await ApplySevereLockoutAsync(account.AccountId, 30); // 30 days
+                await _hubContext.Clients.User(account.AccountId.ToString()).SendAsync("AccountLockedOut");
             }
         }
 
@@ -364,6 +405,22 @@ namespace CourseMarketplaceBE.Application.Services
             catch (Exception notiEx)
             {
                 Console.WriteLine($"Error sending notification: {notiEx.Message}");
+            }
+        }
+
+        private async Task SendUnflaggingNotificationAsync(int accountId, int flags, string reason)
+        {
+            string reasonStr = string.IsNullOrWhiteSpace(reason) ? "No reason specified" : reason;
+            string notiTitle = "Account Unflagged";
+            string notiContent = $"A flag on your account has been removed. Reason: {reasonStr}. Current flags: {flags}/3.";
+            
+            try
+            {
+                await _notificationService.SendNotificationAsync(accountId, notiTitle, notiContent, "/profile");
+            }
+            catch (Exception notiEx)
+            {
+                Console.WriteLine($"Error sending unflagging notification: {notiEx.Message}");
             }
         }
     }

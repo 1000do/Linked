@@ -3,9 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LessonControllerFE["LessonController"] {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + Delete(id: int) Task~IActionResult~
+    + RemoveLesson(lessonId: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -23,15 +23,15 @@ class LessonControllerBE["LessonController"] {
 class Lesson {
     <<entity>>
     + LessonId : int
-    + CourseId : int
+    + CourseId : int?
     + Title : string
     + Description : string?
-    + SortOrder : int
-    + IsPublished : bool
-    + IsRemoved : bool
+    + ThumbnailUrl : string?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
-    + Course : Course?
+    + LessonStatus : string?
+    + ModerationFeedback : string?
+    + IsRemoved : bool
 }
 
 class Course {
@@ -59,25 +59,26 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ILessonService {
-    <<interface>>
+    <<service interface>>
     + DeleteLessonAsync(lessonId: int, instructorId: int) Task *
 }
 
 class ILessonRepository {
-    <<interface>>
-    + GetByIdAsync(id: int) Task~Lesson?~ *
+    <<repository interface>>
+    + GetByIdAsync(lessonId: int) Task~Lesson?~ *
     + Update(lesson: Lesson) void *
     + SaveChangesAsync() Task~int~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class LessonService {
+    <<service>>
     - _lessonRepo : ILessonRepository
     - _courseRepo : ICourseRepository
     
@@ -87,14 +88,16 @@ class LessonService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class LessonRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetByIdAsync(id: int) Task~Lesson?~
+    + GetByIdAsync(lessonId: int) Task~Lesson?~
     + Update(lesson: Lesson) void
     + SaveChangesAsync() Task~int~
 }
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int) Task~Course?~
@@ -103,6 +106,7 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Lessons : DbSet~Lesson~
     + Courses : DbSet~Course~
 }
@@ -125,7 +129,7 @@ LessonRepository ..|> ILessonRepository
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-LessonControllerFE ..> LessonControllerBE
+InstructorCourseControllerFE ..> LessonControllerBE
 LessonService ..> Lesson
 LessonRepository ..> Lesson
 

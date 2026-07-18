@@ -1,0 +1,158 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add to Cart
+
+actor User as act
+participant "CourseDetailPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CartController" as be_ctrl <<backend controller>>
+participant ":IAuthService" as auth_sv
+participant ":ICartService" as sv
+participant ":CartItem" as cart_ett
+participant ":ICourseRepository" as courseRepo
+participant ":ICartRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click "Add to Cart" button
+view->fe_ctrl++:2. POST /Cart/AddToCartAjax?id={courseId}
+
+fe_ctrl -> fe_ctrl++:3. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_page:3.2. Redirect to ErrorPage
+    activate error_page
+    error_page -->> act--:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl->be_ctrl++:3.3. POST /api/cart/add/{courseId}
+    
+    be_ctrl->auth_sv++:3.3.1. Call IsEmailVerifiedAsync(userId)
+    auth_sv->ctx++:3.3.2. Call IsEmailVerifiedAsync(userId)
+    ctx->db++:3.3.3. Execute SELECT query
+    db-->>ctx--:3.3.4. Return verification status
+    ctx-->>auth_sv--:3.3.5. Return verification status
+    auth_sv-->>be_ctrl--:3.3.6. Return isVerified
+    
+alt isVerified == false
+        be_ctrl-->>fe_ctrl:3.3.6.1. Return statusCode 400 (BadRequest)
+        fe_ctrl-->>view:3.3.6.1.1. Return JSON (success = false, message = "Please verify your email address.")
+        view-->>act:3.3.6.1.2. Display email verification required message
+else isVerified == true
+        be_ctrl->sv++:3.3.6.2. Call AddToCartAsync(userId, courseId)
+        
+        sv->courseRepo++:3.3.6.2.1. Call GetByIdAsync(courseId)
+        courseRepo->ctx++:3.3.6.2.2. Call GetByIdAsync(courseId)
+        ctx->db++:3.3.6.2.3. Execute SELECT query
+        db-->>ctx--:3.3.6.2.4. Return Course entity
+        ctx-->>courseRepo--:3.3.6.2.5. Return Course entity
+        courseRepo-->>sv--:3.3.6.2.6. Return Course entity
+        
+        sv->courseRepo++:3.3.6.2.7. Call IsEnrolledAsync(userId, courseId)
+        courseRepo->ctx++:3.3.6.2.8. Call IsEnrolledAsync(userId, courseId)
+        ctx->db++:3.3.6.2.9. Execute SELECT query
+        db-->>ctx--:3.3.6.2.10. Return isEnrolled boolean
+        ctx-->>courseRepo--:3.3.6.2.11. Return result
+        courseRepo-->>sv--:3.3.6.2.12. Return result
+        
+        sv->repo++:3.3.6.2.13. Call IsCourseInCartAsync(userId, courseId)
+        repo->ctx++:3.3.6.2.14. Call IsCourseInCartAsync(userId, courseId)
+        ctx->db++:3.3.6.2.15. Execute SELECT query
+        db-->>ctx--:3.3.6.2.16. Return isInCart boolean
+        ctx-->>repo--:3.3.6.2.17. Return result
+        repo-->>sv--:3.3.6.2.18. Return result
+        
+        sv->sv++:3.3.6.2.19. Validate Add to Cart request
+        sv--
+        
+alt course == null || status != Published
+            sv-->>be_ctrl:3.3.6.2.19.1. throw InvalidOperationException("Course does not exist or is not published.")
+            be_ctrl-->>fe_ctrl:3.3.6.2.19.1.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:3.3.6.2.19.1.2. Return JSON (success = false)
+            view-->>act:3.3.6.2.19.1.3. Display course unavailable message
+else course.InstructorId == userId
+            sv-->>be_ctrl:3.3.6.2.19.2. throw InvalidOperationException("You cannot add your own course to the cart.")
+            be_ctrl-->>fe_ctrl:3.3.6.2.19.2.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:3.3.6.2.19.2.2. Return JSON (success = false)
+            view-->>act:3.3.6.2.19.2.3. Display instructor restriction message
+else isEnrolled == true
+            sv-->>be_ctrl:3.3.6.2.19.3. throw InvalidOperationException("You have already purchased this course.")
+            be_ctrl-->>fe_ctrl:3.3.6.2.19.3.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:3.3.6.2.19.3.2. Return JSON (success = false)
+            view-->>act:3.3.6.2.19.3.3. Display already purchased message
+else isInCart == true
+            sv-->>be_ctrl:3.3.6.2.19.4. throw InvalidOperationException("Course is already in the cart.")
+            be_ctrl-->>fe_ctrl:3.3.6.2.19.4.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:3.3.6.2.19.4.2. Return JSON (success = false)
+            view-->>act:3.3.6.2.19.4.3. Display already in cart message
+else Valid Add to Cart request
+            sv->cart_ett++:3.3.6.2.19.5. Call CartItem()
+            cart_ett-->>sv--:3.3.6.2.19.5.1. Return CartItem object
+            
+            sv->repo++:3.3.6.2.19.5.2. Call AddCartItemAsync(cartItem)
+            repo->ctx++:3.3.6.2.19.5.3. Call AddCartItemAsync(cartItem)
+            ctx-->>repo--:3.3.6.2.19.5.4. Return success
+            repo-->>sv--:3.3.6.2.19.5.5. Return success
+            
+            sv->repo++:3.3.6.2.19.5.6. Call SaveChangesAsync()
+            repo->ctx++:3.3.6.2.19.5.7. Call SaveChangesAsync()
+            ctx->db++:3.3.6.2.19.5.8. Save changes to database
+            
+alt Database Save Failure
+                db-->>ctx--:3.3.6.2.19.5.8.1. Throw DbUpdateException
+                ctx-->>repo--:3.3.6.2.19.5.8.1.1. Throw DbUpdateException
+                repo-->>sv--:3.3.6.2.19.5.8.1.2. Throw DbUpdateException
+                sv-->>be_ctrl:3.3.6.2.19.5.8.1.3. Throw DbUpdateException
+                be_ctrl-->>fe_ctrl:3.3.6.2.19.5.8.1.4. Return statusCode 500 (InternalServerError)
+                fe_ctrl-->>view:3.3.6.2.19.5.8.1.5. Return JSON (success = false)
+                view-->>act:3.3.6.2.19.5.8.1.6. Display system error message
+else Database Save Success
+                db-->>ctx--:3.3.6.2.19.5.8.2. Return result
+                ctx-->>repo--:3.3.6.2.19.5.8.2.1. Return result
+                repo-->>sv--:3.3.6.2.19.5.8.2.2. Return result
+                
+                sv-->>be_ctrl--:3.3.6.2.19.5.8.2.3. Return
+                be_ctrl-->>fe_ctrl--:3.3.6.2.19.5.8.2.4. Return statusCode 200 (Ok)
+                fe_ctrl-->>view--:3.3.6.2.19.5.8.2.5. Return JSON (success = true)
+                view->view++:3.3.6.2.19.5.8.2.6. Update cart badge count
+                view--
+                view-->>act--:3.3.6.2.19.5.8.2.7. Display success toast notification
+end
+end
+end
+end
+
+@enduml

@@ -1,0 +1,148 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorControllerFE["InstructorController"] {
+    <<frontend controller>>
+    + SetupPayout() Task~IActionResult~
+    + StripeReturn(instructorId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class InstructorControllerBE["InstructorController"] {
+    <<backend controller>>
+    - _instructorService : IInstructorService
+    
+    + SetupPayout() Task~IActionResult~
+    + StripeReturn(instructorId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class StripeSetupResponse {
+    <<dto>>
+    + OnboardingUrl : string
+    + StripeAccountId : string
+}
+
+class StripeConnectSetupResponse {
+    <<dto>>
+    + OnboardingUrl : string
+    + StripeAccountId : string
+}
+
+class StripeAccountStatusDto {
+    <<dto>>
+    + DetailsSubmitted : bool
+    + PayoutsEnabled : bool
+    + ChargesEnabled : bool
+}
+
+%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+
+class IInstructorService {
+    <<service interface>>
+    + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~ *
+    + VerifyStripeOnboardingAsync(instructorId: int) Task~string~ *
+}
+
+class IStripeConnectService {
+    <<service interface>>
+    + SetupExpressAccountAsync(userId: int, email: string, country: string, title: string, categories: string, existingStripeAccountId: string?) Task~StripeConnectSetupResponse~ *
+    + GetAccountStatusAsync(stripeAccountId: string) Task~StripeAccountStatusDto~ *
+}
+
+class IInstructorRepository {
+    <<repository interface>>
+    + GetByIdWithNavigationAsync(userId: int) Task~Instructor~ *
+    + GetByIdAsync(userId: int) Task~Instructor~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
+
+class InstructorService {
+    <<service>>
+    - _repo : IInstructorRepository
+    - _stripeConnect : IStripeConnectService
+    
+    + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~
+    + VerifyStripeOnboardingAsync(instructorId: int) Task~string~
+}
+
+class InstructorRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetByIdWithNavigationAsync(userId: int) Task~Instructor~
+    + GetByIdAsync(userId: int) Task~Instructor~
+    + SaveChangesAsync() Task~int~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Instructors : DbSet~Instructor~
+    + Users : DbSet~User~
+    + Accounts : DbSet~Account~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + ApprovalStatus : string?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + StripeCountry : string?
+}
+
+class User {
+    <<entity>>
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + IsVerified : bool
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+InstructorControllerFE ..> InstructorControllerBE
+
+InstructorControllerBE --> IInstructorService
+InstructorControllerBE ..> StripeSetupResponse
+
+InstructorService ..|> IInstructorService
+InstructorService --> IInstructorRepository
+InstructorService --> IStripeConnectService
+InstructorService ..> StripeSetupResponse
+
+IStripeConnectService ..> StripeConnectSetupResponse
+IStripeConnectService ..> StripeAccountStatusDto
+
+InstructorRepository ..|> IInstructorRepository
+InstructorRepository --> AppDbContext
+InstructorRepository ..> Instructor
+
+AppDbContext --> Instructor
+AppDbContext --> User
+AppDbContext --> Account
+
+Instructor -- User
+User -- Account
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

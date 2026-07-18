@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,52 +36,42 @@ mainframe Add Learning Materials
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
-participant ":IInstructorRepository" as inst_repo
-participant ":IFileStorageService" as storage_sv
+participant ":IFileUploadService" as storage_sv
 participant ":LearningMaterial" as ett
-participant ":IMaterialRepository" as repo
 participant ":ILessonRepository" as lesson_repo
-participant ":ICourseRepository" as course_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Click Add Material
-view -> fe_ctrl++: POST /Lesson/AddMaterial/{lessonId}
+view -> fe_ctrl++: POST /InstructorCourse/AddMaterial (AddMaterialViewModel)
 fe_ctrl -> be_ctrl++: POST /api/lessons/{lessonId}/materials
 
 be_ctrl -> sv++: Call AddMaterialToLessonAsync(lessonId, request, instructorId)
 
-sv -> sv++: Call SanitizeHtml(description)
+sv -> sv++: Sanitize HTML Description
 sv--
 
 sv -> lesson_repo++: Call GetByIdAsync(lessonId)
+lesson_repo -> ctx++: Execute query
+ctx -> db++: Fetch lesson with materials and course
+db -->> ctx--: Return query results
+ctx -->> lesson_repo--: Return lesson entity
 lesson_repo -->> sv--: Return lesson entity
 
-alt Lesson Not Found
+alt Lesson Not Found OR Not Owner
     sv -->> be_ctrl: throw Exception
-    be_ctrl -->> fe_ctrl: Return statusCode 404
+    be_ctrl -->> fe_ctrl: Return statusCode 404 / 403
     fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display lesson not found message
+    view -->> act: Display error message
 else Lesson Found
-    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    sv -> sv++: Validate Instructor and Course State (e.g., limit exceeded, duplicate title)
     sv--
     
-    sv -> inst_repo++: Call GetByIdAsync(instructorId)
-    inst_repo -->> sv--: Return instructor
-    
-    sv -> repo++: Call GetMaterialsByLessonIdAsync(lessonId)
-    repo -->> sv--: Return current materials
-    
-    alt Stripe not linked and limit exceeded
-        sv -->> be_ctrl: throw BadRequestException
-        be_ctrl -->> fe_ctrl: Return statusCode 400
-        fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display limit exceeded message
-    else Duplicate Title or Multiple Videos
+    alt Validation Failed
         sv -->> be_ctrl: throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
@@ -88,27 +85,27 @@ else Lesson Found
         sv -> ett++: Call LearningMaterial()
         ett -->> sv--: Return LearningMaterial entity
         
-        sv -> repo++: Call Add(material)
-        repo -->> sv--: Return tracking state
+        sv -> sv++: Append material to lesson entity
+        sv--
         
-        sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
+        sv -> lesson_repo++: Call SaveChangesAsync()
+        lesson_repo -> ctx++: Save changes to database
         ctx -> db++: Insert Material
         
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
-            ctx -->> repo: throw DbUpdateException
-            repo -->> sv: throw DbUpdateException
+            ctx -->> lesson_repo: throw DbUpdateException
+            lesson_repo -->> sv: throw DbUpdateException
             sv -->> be_ctrl: throw DbUpdateException
             be_ctrl -->> fe_ctrl: Return statusCode 500
             fe_ctrl -->> view: Return JSON (success=false)
             view -->> act: Display server error message
         else Database Save Success
             db -->> ctx--: Return returnCode
-            ctx -->> repo--: Return numberOfRowsAffected
-            repo -->> sv--: Return numberOfRowsAffected
+            ctx -->> lesson_repo--: Return numberOfRowsAffected
+            lesson_repo -->> sv--: Return numberOfRowsAffected
             
-            sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+            sv -> sv++: Call Cache Invalidation Logic
             sv--
             
             sv -->> be_ctrl--: Return MaterialResponse object

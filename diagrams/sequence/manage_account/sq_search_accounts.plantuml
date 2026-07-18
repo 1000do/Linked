@@ -32,8 +32,11 @@ actor Admin as act
 participant "AdminAccountView" as view
 participant "AdminAccountController" as fe_ctrl <<frontend controller>>
 participant "AdminAccountController" as be_ctrl <<backend controller>>
-participant ":AdminAccountService" as sv
-participant ":UserRepository" as u_repo
+participant ":AdminAccountListDto" as list_dto
+participant ":PagedResult" as paged_res
+participant ":AdminAccountListViewModel" as vm
+participant ":IAdminAccountService" as sv
+participant ":IUserRepository" as u_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -59,11 +62,17 @@ ctx-->>u_repo--: Return list of Accounts
 
 u_repo-->>sv--: Return items and totalCount
 
-sv->sv++: Map Account entities to AdminAccountListDto
-sv--
+sv->list_dto++: Call AdminAccountListDto()
+list_dto-->>sv--: Return AdminAccountListDto object
+
+sv->paged_res++: Call PagedResult()
+paged_res-->>sv--: Return PagedResult object
 
 sv-->>be_ctrl--: Return PagedResult object
 be_ctrl-->>fe_ctrl--: Return statusCode 200
+
+fe_ctrl->vm++: Call AdminAccountListViewModel()
+vm-->>fe_ctrl--: Return AdminAccountListViewModel object
 
 fe_ctrl->fe_ctrl++: Parse JSON and construct ViewModel
 fe_ctrl--

@@ -1,0 +1,93 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Add Lesson
+actor Instructor as act
+
+participant "LessonForm" as view
+
+participant "InstructorCourseController" as fe_ctrl
+participant "LessonController" as be_ctrl
+
+
+participant ":LessonService" as sv
+participant ":LessonResponse" as res
+participant ":Lesson" as ett
+
+participant ":LessonRepository" as repo
+participant ":AppDbContext" as ctx
+
+Database Database as db
+
+act++
+act->view++:1. Access add lesson form
+act->view:2. Enter lesson title and select course
+act->view:3. Click the "Add Lesson" button
+view->view++:4. Validate input
+view--
+group opt [Invalid input]
+    view-->>act:4.1. Display error message
+end
+
+view->fe_ctrl++:5. Send POST request with courseId and title
+fe_ctrl->fe_ctrl++:6. Create MultipartFormDataContent
+fe_ctrl--
+fe_ctrl->be_ctrl++:7. Send POST request to /lessons
+be_ctrl -> sv++:8. Call CreateLessonAsync()
+sv -> sv++:9. Call ValidateCourseOwnershipAsync()
+sv--
+
+sv -> ett++:10. Call Lesson()
+ett -->>sv--:11. Return Lesson object
+sv -> repo++:12. Call AddAsync()
+repo->ctx++:13. Call AddAsync()
+ctx-->>repo--:14. Return result
+repo -->> sv--:15. Return result
+sv -> repo++:16. Call SaveChangesAsync()
+repo->ctx++:17. Call SaveChangesAsync()
+ctx->db++:18. Save changes to Database
+db-->>ctx--:19. Return numberOfRowsAffected
+ctx-->>repo--:20. Return numberOfRowsAffected
+repo -->> sv--:21. Return numberOfRowsAffected
+sv->sv++:22. Check numberOfRowsAffected
+sv--
+alt numberOfRowsAffected > 0
+    sv -> res++:22.1. Call LessonResponse()
+    res -->> sv--:22.1.1. Return LessonResponse object
+    sv -->>  be_ctrl:22.1.2. Return LessonResponse object
+    be_ctrl -->> fe_ctrl:22.1.3. Return statusCode 201
+    fe_ctrl -->> view:22.1.4. Return JSON with success=true and lesson data
+    view -->> act:22.1.5. Display lesson added successfully message
+else numberOfRowsAffected = 0
+    sv-->>be_ctrl--:22.2. throw InvalidOperationException
+    be_ctrl -->> fe_ctrl--:22.2.1. Return statusCode 400
+    fe_ctrl -->> view--:22.2.2. Return JSON with success=false and error message
+    view -->> act --:22.2.3. Display error message
+end
+
+@enduml

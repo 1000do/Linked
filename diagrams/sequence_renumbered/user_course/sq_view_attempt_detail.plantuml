@@ -1,0 +1,73 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Attempt Detail
+
+actor User as act
+participant "QuizAttemptDetailPage" as view
+participant "QuizAttemptController" as fe_ctrl <<frontend controller>>
+participant "QuizAttemptController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":IQuizRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Click on specific attempt
+view -> fe_ctrl++:2. GET /QuizAttempt/Detail/{attemptId}
+fe_ctrl -> be_ctrl++:3. GET /api/quiz-attempts/detail/{attemptId}
+
+be_ctrl -> sv++:4. Call GetAttemptDetailAsync(attemptId, userId)
+
+sv -> repo++:5. Call GetAttemptByIdAsync(attemptId)
+repo -> ctx++:6. Execute query
+ctx -> db++:7. Fetch quiz attempt and answers
+db -->> ctx--:8. Return query results
+ctx -->> repo--:9. Return attempt entity
+repo -->> sv--:10. Return attempt entity
+
+alt Attempt Not Found
+    sv -->> be_ctrl:10.1. throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl:10.1.1. Return statusCode 404
+    fe_ctrl -->> view:10.1.2. Return JSON (success=false)
+    view -->> act:10.1.3. Display attempt not found message
+else Attempt Found
+alt Not Attempt Owner
+        sv -->> be_ctrl:10.2.1. throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl:10.2.1.1. Return statusCode 403
+        fe_ctrl -->> view:10.2.1.2. Return JSON (success=false)
+        view -->> act:10.2.1.3. Display unauthorized message
+else Is Attempt Owner
+        sv -> sv++:10.2.2. Map to QuizAttemptDetailResponse
+        sv--
+        
+        sv -->> be_ctrl--:10.2.2.1. Return QuizAttemptDetailResponse object
+        be_ctrl -->> fe_ctrl--:10.2.2.2. Return statusCode 200
+        fe_ctrl -->> view--:10.2.2.3. Return View(QuizAttemptDetailResponse)
+        view -->> act--:10.2.2.4. Display detailed attempt results
+end
+end
