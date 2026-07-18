@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,10 +36,9 @@ mainframe Add Lessons
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
-participant ":IInstructorRepository" as inst_repo
 participant ":Lesson" as ett
 participant ":ILessonRepository" as repo
 participant ":ICourseRepository" as course_repo
@@ -41,44 +47,39 @@ database Database as db
 
 act ++
 act -> view++: Click Add Lesson
-view -> fe_ctrl++: POST /Lesson/CreateLesson
+view -> fe_ctrl++: POST /InstructorCourse/AddLesson
 fe_ctrl -> be_ctrl++: POST /api/lessons
 
 be_ctrl -> sv++: Call CreateLessonAsync(request, instructorId)
 
 sv -> course_repo++: Call GetByIdAsync(courseId)
+course_repo -> ctx++: Execute query
+ctx -> db++: Fetch course
+db -->> ctx--: Return query results
+ctx -->> course_repo--: Return course entity
 course_repo -->> sv--: Return course entity
 
-alt Course Not Found
+alt Course Not Found OR Not Owner
     sv -->> be_ctrl: throw Exception
-    be_ctrl -->> fe_ctrl: Return statusCode 404
+    be_ctrl -->> fe_ctrl: Return statusCode 404 / 403
     fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display course not found message
-else Course Found
-    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    view -->> act: Display error message
+else Course Valid
+    sv -> sv++: Call Validation Logic
     sv--
     
-    sv -> inst_repo++: Call GetByIdAsync(instructorId)
-    inst_repo -->> sv--: Return instructor
-    
-    sv -> repo++: Call GetByCourseIdAsync(courseId)
-    repo -->> sv--: Return current lessons
-    
-    alt isStripeActive == false and currentLessons >= 5
+    alt Validation Failed (e.g. limit reached, duplicate title)
         sv -->> be_ctrl: throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display maximum lessons limit message
-    else Duplicate Title
-        sv -->> be_ctrl: throw BadRequestException
-        be_ctrl -->> fe_ctrl: Return statusCode 400
-        fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display duplicate title message
+        view -->> act: Display validation error message
     else Valid to Create
         sv -> ett++: Call Lesson()
         ett -->> sv--: Return Lesson entity
         
-        sv -> repo++: Call Add(lesson)
+        sv -> repo++: Call AddAsync(lesson)
+        repo -> ctx++: Add entity
+        ctx -->> repo--: Return
         repo -->> sv--: Return tracking state
         
         sv -> repo++: Call SaveChangesAsync()
@@ -98,7 +99,7 @@ else Course Found
             ctx -->> repo--: Return numberOfRowsAffected
             repo -->> sv--: Return numberOfRowsAffected
             
-            sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+            sv -> sv++: Call Cache Invalidation Logic
             sv--
             
             sv -->> be_ctrl--: Return LessonResponse object

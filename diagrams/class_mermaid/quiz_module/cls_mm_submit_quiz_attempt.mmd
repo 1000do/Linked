@@ -5,7 +5,7 @@ direction LR
 
 class QuizAttemptControllerFE["QuizAttemptController"] {
     <<frontend controller>>
-    + SubmitQuiz(request: SubmitQuizViewModel) Task~IActionResult~
+    + Submit(payload: JsonElement) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -21,25 +21,24 @@ class QuizAttemptControllerBE["QuizAttemptController"] {
 
 class QuizAttemptSubmitRequest {
     <<dto>>
-    + QuizId : int
-    + TimeTakenMinutes : int
-    + Answers : List~QuizAnswerSubmitRequest~
+    + AttemptId : int
+    + Answers : List~AttemptAnswerRequest~
 }
 
-class QuizAnswerSubmitRequest {
+class AttemptAnswerRequest {
     <<dto>>
     + QuestionId : int
-    + SelectedOptionIds : List~int~
-    + TextAnswer : string?
+    + SelectedOptionId : int?
 }
 
 class QuizAttemptResultResponse {
     <<dto>>
     + AttemptId : int
-    + TotalScore : decimal
+    + Score : int
     + IsPassed : bool
+    + TotalQuestions : int
     + CorrectCount : int
-    + IncorrectCount : int
+    + SubmittedAt : DateTime?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -49,41 +48,38 @@ class QuizAttempt {
     + AttemptId : int
     + QuizId : int
     + UserId : int
-    + AttemptDate : DateTime?
-    + TotalScore : decimal
+    + StartedAt : DateTime?
+    + SubmittedAt : DateTime?
+    + Score : int
     + IsPassed : bool
-    + TimeTakenMinutes : int?
-    + AttemptDetails : ICollection~QuizAttemptDetail~
 }
 
-class QuizAttemptDetail {
+class QuizAttemptAnswer {
     <<entity>>
-    + DetailId : int
+    + AnswerId : int
     + AttemptId : int
     + QuestionId : int
     + SelectedOptionId : int?
-    + TextAnswer : string?
-    + IsCorrect : bool?
-    + PointsEarned : decimal?
+    + IsCorrect : bool
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuizService {
-    <<interface>>
+    <<service interface>>
     + SubmitAttemptAsync(request: QuizAttemptSubmitRequest, userId: int) Task~QuizAttemptResultResponse~ *
 }
 
 class IQuizRepository {
-    <<interface>>
-    + GetQuizWithQuestionsAsync(quizId: int) Task~Quiz?~ *
-    + AddAttemptAsync(attempt: QuizAttempt) void *
-    + SaveChangesAsync() Task~int~ *
+    <<repository interface>>
+    + GetAttemptByIdAsync(attemptId: int) Task~QuizAttempt?~ *
+    + SaveAttemptAsync(attempt: QuizAttempt) Task~QuizAttempt~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuizService {
+    <<service>>
     - _quizRepo : IQuizRepository
     
     + SubmitAttemptAsync(request: QuizAttemptSubmitRequest, userId: int) Task~QuizAttemptResultResponse~
@@ -92,25 +88,26 @@ class QuizService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuizRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetQuizWithQuestionsAsync(quizId: int) Task~Quiz?~
-    + AddAttemptAsync(attempt: QuizAttempt) void
-    + SaveChangesAsync() Task~int~
+    + GetAttemptByIdAsync(attemptId: int) Task~QuizAttempt?~
+    + SaveAttemptAsync(attempt: QuizAttempt) Task~QuizAttempt~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + QuizAttempts : DbSet~QuizAttempt~
-    + QuizAttemptDetails : DbSet~QuizAttemptDetail~
+    + QuizAttemptAnswers : DbSet~QuizAttemptAnswer~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION & COMPOSITION ===
-QuizAttemptSubmitRequest *-- QuizAnswerSubmitRequest
-QuizAttempt *-- QuizAttemptDetail
+QuizAttemptSubmitRequest *-- AttemptAnswerRequest
+QuizAttempt *-- QuizAttemptAnswer
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
 QuizAttemptControllerBE --> IQuizService

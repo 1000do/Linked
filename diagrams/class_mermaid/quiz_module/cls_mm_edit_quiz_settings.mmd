@@ -5,10 +5,10 @@ direction LR
 
 class QuizControllerFE["QuizController"] {
     <<frontend controller>>
-    + Create(model: QuizCreateViewModel) Task~IActionResult~
+    + UpdateSettings(id: int, model: QuizUpdateViewModel) Task~IActionResult~
 }
 
-class QuizCreateViewModel {
+class QuizUpdateViewModel {
     <<view model>>
     + Title : string
     + Description : string?
@@ -16,6 +16,7 @@ class QuizCreateViewModel {
     + PassingScore : int
     + CourseId : int
     + TotalQuestions : int
+    + Distributions : List~QuizLessonDistributionItem~
 }
 
 class QuizLessonDistributionItem {
@@ -30,20 +31,20 @@ class QuizControllerBE["QuizController"] {
     <<backend controller>>
     - _quizService : IQuizService
     
-    + CreateQuiz(request: QuizCreateRequest) Task~IActionResult~
+    + UpdateQuizSettings(id: int, request: QuizUpdateRequest) Task~IActionResult~
     - GetInstructorId() int
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class QuizCreateRequest {
+class QuizUpdateRequest {
     <<dto>>
     + Title : string
     + Description : string?
     + TimeLimitMinutes : int?
     + PassingScore : int
-    + CourseId : int
     + TotalQuestions : int
+    + Distributions : List~QuizLessonDistributionRequest~
 }
 
 class QuizLessonDistributionRequest {
@@ -115,12 +116,13 @@ class Quiz {
 
 class IQuizService {
     <<service interface>>
-    + CreateQuizAsync(request: QuizCreateRequest, instructorId: int) Task~QuizDetailResponse~ *
+    + UpdateQuizSettingsAsync(quizId: int, request: QuizUpdateRequest, instructorId: int) Task~QuizDetailResponse~ *
 }
 
 class IQuizRepository {
     <<repository interface>>
-    + CreateAsync(quiz: Quiz) Task~Quiz~ *
+    + GetByIdAsync(quizId: int) Task~Quiz?~ *
+    + UpdateAsync(quiz: Quiz) Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
@@ -129,7 +131,7 @@ class QuizService {
     <<service>>
     - _quizRepo : IQuizRepository
     
-    + CreateQuizAsync(request: QuizCreateRequest, instructorId: int) Task~QuizDetailResponse~
+    + UpdateQuizSettingsAsync(quizId: int, request: QuizUpdateRequest, instructorId: int) Task~QuizDetailResponse~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
@@ -138,7 +140,8 @@ class QuizRepository {
     <<repository>>
     - _context : AppDbContext
     
-    + CreateAsync(quiz: Quiz) Task~Quiz~
+    + GetByIdAsync(quizId: int) Task~Quiz?~
+    + UpdateAsync(quiz: Quiz) Task
 }
 
 %% ==================== BACKEND - DbContext ====================
@@ -156,8 +159,8 @@ QuizService --> IQuizRepository
 QuizRepository --> AppDbContext
 
 %% === AGGREGATION & COMPOSITION ===
-QuizCreateViewModel *-- QuizLessonDistributionItem
-QuizCreateRequest *-- QuizLessonDistributionRequest
+QuizUpdateViewModel *-- QuizLessonDistributionItem
+QuizUpdateRequest *-- QuizLessonDistributionRequest
 QuizDetailResponse *-- QuizQuestionResponse
 QuizDetailResponse *-- QuizLessonDistributionResponse
 QuizQuestionResponse *-- QuizOptionResponse
@@ -168,9 +171,9 @@ QuizRepository ..|> IQuizRepository
 
 %% === DEPENDENCY ===
 QuizControllerFE ..> QuizControllerBE
-QuizControllerFE ..> QuizCreateViewModel
-QuizControllerBE ..> QuizCreateRequest
-QuizService ..> QuizCreateRequest
+QuizControllerFE ..> QuizUpdateViewModel
+QuizControllerBE ..> QuizUpdateRequest
+QuizService ..> QuizUpdateRequest
 QuizService ..> QuizDetailResponse
 QuizService ..> Quiz
 QuizRepository ..> Quiz

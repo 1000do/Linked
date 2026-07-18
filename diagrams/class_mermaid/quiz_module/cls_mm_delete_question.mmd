@@ -21,6 +21,7 @@ class QuestionBankControllerBE["QuestionBankController"] {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class QuizQuestion {
+    <<entity>>
     + QuestionId : int
     + CourseId : int
     + LessonId : int
@@ -28,52 +29,50 @@ class QuizQuestion {
     + Explanation : string?
     + QuestionType : QuizQuestionType
     + CreatedAt : DateTime?
-    + Course : Course?
-    + Lesson : Lesson?
-    + QuizOptions : ICollection~QuizOption~
-    + QuizAttemptAnswers : ICollection~QuizAttemptAnswer~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuestionBankService {
-    <<interface>>
-    + DeleteQuestionAsync(questionId: int, instructorId: int) Task~void~ *
+    <<service interface>>
+    + DeleteQuestionAsync(questionId: int, instructorId: int) Task *
 }
 
 class IQuestionBankRepository {
-    <<interface>>
+    <<repository interface>>
     + GetQuestionByIdAsync(questionId: int) Task~QuizQuestion?~ *
-    + DeleteQuestionAsync(questionId: int) Task~void~ *
+    + DeleteQuestionAsync(questionId: int) Task *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuestionBankService {
+    <<service>>
     - _questionBankRepository : IQuestionBankRepository
     - _courseRepository : ICourseRepository
     
-    + DeleteQuestionAsync(questionId: int, instructorId: int) Task~void~
-    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
+    + DeleteQuestionAsync(questionId: int, instructorId: int) Task
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuestionBankRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetQuestionByIdAsync(questionId: int) Task~QuizQuestion?~
-    + DeleteQuestionAsync(questionId: int) Task~void~
+    + DeleteQuestionAsync(questionId: int) Task
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + QuizQuestions : DbSet~QuizQuestion~
 }
 

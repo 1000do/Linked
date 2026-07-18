@@ -5,7 +5,7 @@ direction LR
 
 class QuizAttemptControllerFE["QuizAttemptController"] {
     <<frontend controller>>
-    + TakeQuiz(quizId: int) Task~IActionResult~
+    + Take(quizId: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -19,30 +19,30 @@ class QuizAttemptControllerBE["QuizAttemptController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class QuizStudentResponse {
+class QuizForStudentResponse {
     <<dto>>
     + QuizId : int
+    + AttemptId : int
     + Title : string
     + Description : string?
     + TimeLimitMinutes : int?
-    + PassingScore : int?
-    + MaxAttempts : int?
-    + Questions : List~QuizQuestionStudentResponse~
+    + PassingScore : int
+    + Questions : List~QuizQuestionForStudentResponse~
 }
 
-class QuizQuestionStudentResponse {
+class QuizQuestionForStudentResponse {
     <<dto>>
     + QuestionId : int
-    + Content : string
-    + QuestionType : string
-    + Points : decimal
-    + Options : List~QuizOptionStudentResponse~
+    + QuestionText : string
+    + QuestionType : QuizQuestionType
+    + Options : List~QuizOptionForStudentResponse~
 }
 
-class QuizOptionStudentResponse {
+class QuizOptionForStudentResponse {
     <<dto>>
     + OptionId : int
-    + Content : string
+    + OptionText : string
+    + OrderIndex : int
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -50,13 +50,13 @@ class QuizOptionStudentResponse {
 class Quiz {
     <<entity>>
     + QuizId : int
-    + CourseId : int
-    + LessonId : int?
+    + InstructorId : int
     + Title : string
     + Description : string?
     + TimeLimitMinutes : int?
-    + PassingScore : int?
-    + MaxAttempts : int?
+    + PassingScore : int
+    + TotalQuestions : int
+    + CourseId : int
     + IsHidden : bool
     + IsRemoved : bool
     + CreatedAt : DateTime?
@@ -66,43 +66,48 @@ class Quiz {
 class QuizQuestion {
     <<entity>>
     + QuestionId : int
-    + QuizId : int
-    + Content : string
-    + QuestionType : string
-    + Points : decimal
+    + CourseId : int
+    + LessonId : int
+    + QuestionText : string
+    + Explanation : string?
+    + QuestionType : QuizQuestionType
+    + CreatedAt : DateTime?
 }
 
 class QuizOption {
     <<entity>>
     + OptionId : int
     + QuestionId : int
-    + Content : string
+    + OptionText : string
     + IsCorrect : bool
+    + OrderIndex : int
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuizService {
-    <<interface>>
-    + GetQuizForStudentAsync(quizId: int, userId: int) Task~QuizStudentResponse~ *
+    <<service interface>>
+    + GetQuizForStudentAsync(quizId: int, userId: int) Task~QuizForStudentResponse~ *
 }
 
 class IQuizRepository {
-    <<interface>>
+    <<repository interface>>
     + GetQuizWithQuestionsAsync(quizId: int) Task~Quiz?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuizService {
+    <<service>>
     - _quizRepo : IQuizRepository
     
-    + GetQuizForStudentAsync(quizId: int, userId: int) Task~QuizStudentResponse~
+    + GetQuizForStudentAsync(quizId: int, userId: int) Task~QuizForStudentResponse~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuizRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetQuizWithQuestionsAsync(quizId: int) Task~Quiz?~
@@ -111,14 +116,15 @@ class QuizRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Quizzes : DbSet~Quiz~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION & COMPOSITION ===
-QuizStudentResponse *-- QuizQuestionStudentResponse
-QuizQuestionStudentResponse *-- QuizOptionStudentResponse
+QuizForStudentResponse *-- QuizQuestionForStudentResponse
+QuizQuestionForStudentResponse *-- QuizOptionForStudentResponse
 Quiz *-- QuizQuestion
 QuizQuestion *-- QuizOption
 
@@ -133,8 +139,8 @@ QuizRepository ..|> IQuizRepository
 
 %% === DEPENDENCY ===
 QuizAttemptControllerFE ..> QuizAttemptControllerBE
-QuizAttemptControllerBE ..> QuizStudentResponse
-QuizService ..> QuizStudentResponse
+QuizAttemptControllerBE ..> QuizForStudentResponse
+QuizService ..> QuizForStudentResponse
 QuizService ..> Quiz
 QuizRepository ..> Quiz
 

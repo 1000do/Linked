@@ -22,7 +22,7 @@ class CourseQuizControllerBE["CourseQuizController"] {
     - _quizService : IQuizService
     
     + AddQuizToCourse(courseId: int, request: AddQuizToCourseRequest) Task~IActionResult~
-    - GetCurrentUserId() int
+    - GetInstructorId() int
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -45,52 +45,65 @@ class CourseQuizResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CourseQuiz {
+    <<entity>>
     + CourseId : int
     + QuizId : int
     + OrderIndex : int
     + IsHidden : bool
-    + Course : Course?
-    + Quiz : Quiz?
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + Title : string
+}
+
+class Quiz {
+    <<entity>>
+    + QuizId : int
+    + Title : string
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuizService {
-    <<interface>>
+    <<service interface>>
     + AddQuizToCourseAsync(request: AddQuizToCourseRequest, instructorId: int) Task~CourseQuizResponse~ *
 }
 
 class IQuizRepository {
-    <<interface>>
-    + AddCourseQuizAsync(courseQuiz: CourseQuiz) Task~void~ *
+    <<repository interface>>
+    + AddCourseQuizAsync(courseQuiz: CourseQuiz) Task *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuizService {
+    <<service>>
     - _quizRepository : IQuizRepository
     - _courseRepository : ICourseRepository
     
     + AddQuizToCourseAsync(request: AddQuizToCourseRequest, instructorId: int) Task~CourseQuizResponse~
-    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuizRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + AddCourseQuizAsync(courseQuiz: CourseQuiz) Task~void~
+    + AddCourseQuizAsync(courseQuiz: CourseQuiz) Task
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseQuizzes : DbSet~CourseQuiz~
 }
 

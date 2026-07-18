@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -31,7 +38,7 @@ actor User as act
 participant "CourseDetailPage" as view
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
-participant "ReviewController" as fe_ctrl <<frontend controller>>
+participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "ReviewController" as be_ctrl <<backend controller>>
 participant ":ReviewService" as sv
 participant ":IReviewRepository" as repo
@@ -40,7 +47,7 @@ database Database as db
 
 act ++
 act -> view++: Click Delete on own review
-view -> fe_ctrl++: DELETE /Review/DeleteReview/{reviewId}
+view -> fe_ctrl++: POST /Course/DeleteReview (DeleteReviewRequest)
 
 fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
@@ -54,53 +61,98 @@ else Unauthorized Access
     activate error_view
     error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
-    fe_ctrl -> be_ctrl++: DELETE /api/reviews/{reviewId}
-    be_ctrl -> sv++: Call DeleteReviewAsync(userId, reviewId)
+    fe_ctrl -> be_ctrl++: DELETE /api/review/delete (request)
+    be_ctrl -> sv++: Call DeleteReviewAsync(userId, request)
     
-    sv -> repo++: Call GetByIdAsync(reviewId)
-    repo -> ctx++: Execute query
-    ctx -> db++: Fetch review
-    db -->> ctx--: Return query results
-    ctx -->> repo--: Return review entity
-    repo -->> sv--: Return review entity
-    
-    alt Review Not Found
-        sv -->> be_ctrl: throw KeyNotFoundException
-        be_ctrl -->> fe_ctrl: Return statusCode 404
-        fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display review not found message
-    else Review Found
-        alt Not Owner of Review
-            sv -->> be_ctrl: throw UnauthorizedAccessException
-            be_ctrl -->> fe_ctrl: Return statusCode 403
+    alt type == "lesson"
+        sv -> repo++: Call GetLessonReviewByIdAsync(reviewId)
+        repo -> ctx++: Execute query
+        ctx -> db++: Fetch review
+        db -->> ctx--: Return query results
+        ctx -->> repo--: Return lesson review entity
+        repo -->> sv--: Return lesson review entity
+        
+        alt Review == null OR Not Owner
+            sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
+            be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display unauthorized message
-        else Owner of Review
-            sv -> repo++: Call DeleteReviewAsync(review)
-            repo -->> sv--: Return result
+            view -->> act: Display error message
+        else Valid Review
+            sv -> repo++: Call HasPendingLessonReviewReportsAsync(reviewId)
+            repo -> ctx++: Execute query
+            ctx -> db++: Check reports
+            db -->> ctx--: Return query results
+            ctx -->> repo--: Return hasPending flag
+            repo -->> sv--: Return hasPending flag
             
-            sv -> repo++: Call SaveChangesAsync()
-            repo -> ctx++: Save changes to database
-            ctx -> db++: Delete Review
-            
-            alt Database Save Failure
-                db -->> ctx: throw DbUpdateException
-                ctx -->> repo: throw DbUpdateException
-                repo -->> sv: throw DbUpdateException
-                sv -->> be_ctrl: throw DbUpdateException
-                be_ctrl -->> fe_ctrl: Return statusCode 500
+            alt hasPending == true
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
                 fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display server error message
-            else Database Save Success
-                db -->> ctx--: Return returnCode
-                ctx -->> repo--: Return numberOfRowsAffected
-                repo -->> sv--: Return numberOfRowsAffected
-                
-                sv -->> be_ctrl--: Return success
-                be_ctrl -->> fe_ctrl--: Return statusCode 200
-                fe_ctrl -->> view--: Return JSON (success=true)
-                view -->> act--: Display review deleted successfully
+                view -->> act: Display moderation error message
+            else No pending reports
+                sv -> repo++: Call UpdateLessonReview(review)
+                repo -> ctx++: Update entity state (IsRemoved=true)
+                ctx -->> repo--: Return
+                repo -->> sv--: Return
             end
         end
+        
+    else type == "course" OR null
+        sv -> repo++: Call GetCourseReviewByIdAsync(reviewId)
+        repo -> ctx++: Execute query
+        ctx -> db++: Fetch review
+        db -->> ctx--: Return query results
+        ctx -->> repo--: Return course review entity
+        repo -->> sv--: Return course review entity
+        
+        alt Review == null OR Not Owner
+            sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
+            be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display error message
+        else Valid Review
+            sv -> repo++: Call HasPendingCourseReviewReportsAsync(reviewId)
+            repo -> ctx++: Execute query
+            ctx -> db++: Check reports
+            db -->> ctx--: Return query results
+            ctx -->> repo--: Return hasPending flag
+            repo -->> sv--: Return hasPending flag
+            
+            alt hasPending == true
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display moderation error message
+            else No pending reports
+                sv -> repo++: Call UpdateCourseReview(review)
+                repo -> ctx++: Update entity state (IsRemoved=true)
+                ctx -->> repo--: Return
+                repo -->> sv--: Return
+            end
+        end
+    end
+    
+    sv -> repo++: Call SaveChangesAsync()
+    repo -> ctx++: Save changes to database
+    ctx -> db++: Update Review
+    
+    alt Database Save Failure
+        db -->> ctx: throw DbUpdateException
+        ctx -->> repo: throw DbUpdateException
+        repo -->> sv: throw DbUpdateException
+        sv -->> be_ctrl: throw DbUpdateException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display server error message
+    else Database Save Success
+        db -->> ctx--: Return returnCode
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -->> be_ctrl--: Return success
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON (success=true)
+        view -->> act--: Display review deleted successfully
     end
 end

@@ -3,7 +3,7 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class ReviewControllerFE["ReviewController"] {
+class CourseControllerFE["CourseController"] {
     <<frontend controller>>
     + DeleteReview(reviewId: int, type: string) Task~IActionResult~
 }
@@ -15,6 +15,7 @@ class ReviewControllerBE["ReviewController"] {
     - _reviewService : IReviewService
     
     + DeleteReview(reviewId: int, type: string) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -22,39 +23,72 @@ class ReviewControllerBE["ReviewController"] {
 class DeleteReviewRequest {
     <<dto>>
     + ReviewId : int
-    + Type : string
+    + Type : string?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CourseReview {
     <<entity>>
-    + ReviewId : int
-    + UserId : int
-    + CourseId : int
-    + Rating : int
-    + Content : string?
+    + CourseReviewId : int
+    + EnrollmentId : int
+    + Rating : int?
+    + Comment : string?
+    + CourseReviewStatus : string?
+    + IsRemoved : bool?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
+    + AiThreatLevel : AiThreatLevel
+    + Enrollment : Enrollment?
+    + Reports : ICollection~Report~
+}
+
+class LessonReview {
+    <<entity>>
+    + LessonReviewId : int
+    + EnrollmentId : int
+    + LessonId : int
+    + Rating : int?
+    + Comment : string?
+    + LessonReviewStatus : string?
+    + IsRemoved : bool?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + AiThreatLevel : AiThreatLevel
+    + Enrollment : Enrollment?
+    + Lesson : Lesson?
+    + Reports : ICollection~Report~
+}
+
+class Enrollment {
+    <<entity>>
+    + EnrollmentId : int
+    + UserId : int?
+    + User : User?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IReviewService {
-    <<interface>>
+    <<service interface>>
     + DeleteReviewAsync(userId: int, request: DeleteReviewRequest) Task *
 }
 
 class IReviewRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCourseReviewByIdAsync(reviewId: int) Task~CourseReview?~ *
-    + DeleteCourseReviewAsync(review: CourseReview) void *
+    + GetLessonReviewByIdAsync(reviewId: int) Task~LessonReview?~ *
+    + HasPendingCourseReviewReportsAsync(reviewId: int) Task~bool~ *
+    + HasPendingLessonReviewReportsAsync(reviewId: int) Task~bool~ *
+    + UpdateCourseReview(review: CourseReview) void *
+    + UpdateLessonReview(review: LessonReview) void *
     + SaveChangesAsync() Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ReviewService {
+    <<service>>
     - _reviewRepo : IReviewRepository
     
     + DeleteReviewAsync(userId: int, request: DeleteReviewRequest) Task
@@ -63,17 +97,24 @@ class ReviewService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ReviewRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetCourseReviewByIdAsync(reviewId: int) Task~CourseReview?~
-    + DeleteCourseReviewAsync(review: CourseReview) void
+    + GetLessonReviewByIdAsync(reviewId: int) Task~LessonReview?~
+    + HasPendingCourseReviewReportsAsync(reviewId: int) Task~bool~
+    + HasPendingLessonReviewReportsAsync(reviewId: int) Task~bool~
+    + UpdateCourseReview(review: CourseReview) void
+    + UpdateLessonReview(review: LessonReview) void
     + SaveChangesAsync() Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReviews : DbSet~CourseReview~
+    + LessonReviews : DbSet~LessonReview~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -88,11 +129,13 @@ ReviewService ..|> IReviewService
 ReviewRepository ..|> IReviewRepository
 
 %% === DEPENDENCY ===
-ReviewControllerFE ..> ReviewControllerBE
+CourseControllerFE ..> ReviewControllerBE
 ReviewControllerBE ..> DeleteReviewRequest
 ReviewService ..> DeleteReviewRequest
 ReviewService ..> CourseReview
+ReviewService ..> LessonReview
 ReviewRepository ..> CourseReview
+ReviewRepository ..> LessonReview
 
 %% ==================== STYLES ====================
 

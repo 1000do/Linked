@@ -15,15 +15,10 @@ class CoursePublicController {
     - _courseQueryService : ICourseQueryService
     
     + GetAllCourses(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
-
-class PagedResultCourseResponse["PagedResult~CourseResponse~"] {
-    <<dto>>
-    + Items : List~CourseResponse~
-    + TotalCount : int
-}
 
 class CourseResponse {
     <<dto>>
@@ -87,41 +82,41 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseQueryService {
-    <<interface>>
-    + GetPublishedCoursesAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int, pageSize: int) Task~PagedResult~CourseResponse~~ *
+    <<service interface>>
+    + GetPublishedCoursesPagedAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?, userId: int?) Task~PagedResult~CourseResponse~~ *
 }
 
 class ICourseRepository {
-    <<interface>>
-    + GetPublishedCoursesAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int, pageSize: int) Task~PagedResult~CourseResponse~~ *
+    <<repository interface>>
+    + GetAllPublishedCoursesPagedAsync(search: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?) Task~(IEnumerable~Course~ Courses, int TotalCount)~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseQueryService {
+    <<service>>
     - _courseRepository : ICourseRepository
     
-    + GetPublishedCoursesAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int, pageSize: int) Task~PagedResult~CourseResponse~~
+    + GetPublishedCoursesPagedAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?, userId: int?) Task~PagedResult~CourseResponse~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetPublishedCoursesAsync(query: string?, category: string?, sort: string?, price: string?, rating: string?, page: int, pageSize: int) Task~PagedResult~CourseResponse~~
+    + GetAllPublishedCoursesPagedAsync(search: string?, category: string?, sort: string?, price: string?, rating: string?, page: int?, pageSize: int?) Task~(IEnumerable~Course~ Courses, int TotalCount)~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
 }
 
 %% ==================== RELATIONSHIPS ====================
-
-%% === AGGREGATION & COMPOSITION ===
-PagedResultCourseResponse *-- CourseResponse
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
 CoursePublicController --> ICourseQueryService
@@ -134,9 +129,8 @@ CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY ===
 CourseControllerFE ..> CoursePublicController
-CoursePublicController ..> PagedResultCourseResponse
-CourseQueryService ..> PagedResultCourseResponse
-CourseRepository ..> PagedResultCourseResponse
+CoursePublicController ..> CourseResponse
+CourseQueryService ..> CourseResponse
 CourseRepository ..> Course
 
 %% ==================== STYLES ====================

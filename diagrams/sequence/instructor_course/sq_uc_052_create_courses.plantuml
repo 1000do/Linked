@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,14 +36,13 @@ mainframe Create Courses
 
 actor Instructor as act
 participant "CourseFormPage" as view
-participant "CourseController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
 participant ":CourseCommandService" as sv
 participant ":IInstructorRepository" as inst_repo
-participant ":IReviewLockoutRepository" as lockout_repo
-participant ":IFileStorageService" as storage_sv
-participant ":Course" as ett
 participant ":ICourseRepository" as repo
+participant ":IFileUploadService" as storage_sv
+participant ":Course" as ett
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -48,6 +54,10 @@ fe_ctrl -> be_ctrl++: POST /api/courses
 be_ctrl -> sv++: Call CreateCourseAsync(request, instructorId)
 
 sv -> inst_repo++: Call GetByIdAsync(instructorId)
+inst_repo -> ctx++: Execute query
+ctx -> db++: Fetch instructor
+db -->> ctx--: Return query results
+ctx -->> inst_repo--: Return instructor entity
 inst_repo -->> sv--: Return instructor
 
 alt Instructor Not Approved
@@ -56,8 +66,8 @@ alt Instructor Not Approved
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display not approved error message
 else Instructor Approved
-    sv -> lockout_repo++: Call GetActiveLockoutAsync(instructorId, "instructor")
-    lockout_repo -->> sv--: Return activeLockout
+    sv -> sv++: Call Check Active Lockout
+    sv--
     
     alt Account is locked out
         sv -->> be_ctrl: throw BadRequestException
@@ -65,41 +75,53 @@ else Instructor Approved
         fe_ctrl -->> view: Return JSON (success=false)
         view -->> act: Display lockout restriction message
     else Account is active
-        opt Has Thumbnail File
-            sv -> storage_sv++: Call UploadFileAsync(ThumbnailFile)
-            storage_sv -->> sv--: Return thumbnailUrl
-        end
-        
-        sv -> ett++: Call Course()
-        ett -->> sv--: Return Course entity (Status=Pending)
-        
-        sv -> sv++: Call AddCourseFingerprintAsync(course)
+        sv -> sv++: Check instructor courses limit
         sv--
         
-        sv -> repo++: Call Add(course)
-        repo -->> sv--: Return tracking state
-        
-        sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Insert Course
-        
-        alt Database Save Failure
-            db -->> ctx: throw DbUpdateException
-            ctx -->> repo: throw DbUpdateException
-            repo -->> sv: throw DbUpdateException
-            sv -->> be_ctrl: throw DbUpdateException
-            be_ctrl -->> fe_ctrl: Return statusCode 500
+        alt Course Limit Reached (Stripe Not Linked & >= 2 Courses)
+            sv -->> be_ctrl: throw BadRequestException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display server error message
-        else Database Save Success
-            db -->> ctx--: Return returnCode
-            ctx -->> repo--: Return numberOfRowsAffected
-            repo -->> sv--: Return numberOfRowsAffected
+            view -->> act: Display limit reached message
+        else Limit Not Reached
+            opt Has Thumbnail File
+                sv -> storage_sv++: Call UploadImageAsync(ThumbnailFile)
+                storage_sv -->> sv--: Return thumbnailUrl
+            end
             
-            sv -->> be_ctrl--: Return CourseResponse object
-            be_ctrl -->> fe_ctrl--: Return statusCode 200
-            fe_ctrl -->> view--: Return JSON (success=true)
-            view -->> act--: Display course created successfully and redirect
+            sv -> ett++: Call Course()
+            ett -->> sv--: Return Course entity (Status=Pending)
+            
+            sv -> sv++: Generate Course Fingerprint
+            sv--
+            
+            sv -> repo++: Call AddAsync(course)
+            repo -> ctx++: Add entity
+            ctx -->> repo--: Return
+            repo -->> sv--: Return tracking state
+            
+            sv -> repo++: Call SaveChangesAsync()
+            repo -> ctx++: Save changes to database
+            ctx -> db++: Insert Course
+            
+            alt Database Save Failure
+                db -->> ctx: throw DbUpdateException
+                ctx -->> repo: throw DbUpdateException
+                repo -->> sv: throw DbUpdateException
+                sv -->> be_ctrl: throw DbUpdateException
+                be_ctrl -->> fe_ctrl: Return statusCode 500
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display server error message
+            else Database Save Success
+                db -->> ctx--: Return returnCode
+                ctx -->> repo--: Return numberOfRowsAffected
+                repo -->> sv--: Return numberOfRowsAffected
+                
+                sv -->> be_ctrl--: Return CourseResponse object
+                be_ctrl -->> fe_ctrl--: Return statusCode 200
+                fe_ctrl -->> view--: Return JSON (success=true)
+                view -->> act--: Display course created successfully and redirect
+            end
         end
     end
 end

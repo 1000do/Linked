@@ -5,7 +5,7 @@ direction LR
 
 class QuizControllerFE["QuizController"] {
     <<frontend controller>>
-    + DeleteQuiz(id: int) Task~IActionResult~
+    + Delete(id: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -23,13 +23,13 @@ class QuizControllerBE["QuizController"] {
 class Quiz {
     <<entity>>
     + QuizId : int
-    + CourseId : int
-    + LessonId : int?
+    + InstructorId : int
     + Title : string
     + Description : string?
     + TimeLimitMinutes : int?
-    + PassingScore : int?
-    + MaxAttempts : int?
+    + PassingScore : int
+    + TotalQuestions : int
+    + CourseId : int
     + IsHidden : bool
     + IsRemoved : bool
     + CreatedAt : DateTime?
@@ -39,20 +39,19 @@ class Quiz {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuizService {
-    <<interface>>
+    <<service interface>>
     + SoftDeleteQuizAsync(quizId: int, instructorId: int) Task *
 }
 
 class IQuizRepository {
-    <<interface>>
-    + GetByIdAsync(id: int) Task~Quiz?~ *
-    + Update(quiz: Quiz) void *
-    + SaveChangesAsync() Task~int~ *
+    <<repository interface>>
+    + SoftDeleteAsync(quizId: int) Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuizService {
+    <<service>>
     - _quizRepo : IQuizRepository
     
     + SoftDeleteQuizAsync(quizId: int, instructorId: int) Task
@@ -61,16 +60,16 @@ class QuizService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuizRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetByIdAsync(id: int) Task~Quiz?~
-    + Update(quiz: Quiz) void
-    + SaveChangesAsync() Task~int~
+    + SoftDeleteAsync(quizId: int) Task
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Quizzes : DbSet~Quiz~
 }
 

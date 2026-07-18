@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -32,20 +39,18 @@ participant "InstructorDashboardPage" as view
 participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
 participant ":CourseCommandService" as sv
-participant ":IRedisCacheService" as redis
-participant ":IReviewLockoutRepository" as lockout_repo
 participant ":ICourseRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Click Hide Course
-view -> fe_ctrl++: PATCH /InstructorCourse/UpdateStatus/{id}
+view -> fe_ctrl++: PATCH /InstructorCourse/UpdateCourseStatus/{courseId}
 fe_ctrl -> be_ctrl++: PATCH /api/courses/{id}/status
 
 be_ctrl -> sv++: Call UpdateCourseStatusAsync(id, "hidden", instructorId)
 
-sv -> sv++: Call ValidateCourseStatusUpdateAsync(id, "hidden", instructorId)
+
 sv -> repo++: Call GetByIdAsync(id)
 repo -> ctx++: Execute query
 ctx -> db++: Fetch course
@@ -54,59 +59,47 @@ ctx -->> repo--: Return course entity
 repo -->> sv--: Return course entity
 
 alt Course Not Found
-    sv -->> be_ctrl: throw KeyNotFoundException
+    sv -->> be_ctrl: throw Exception
     be_ctrl -->> fe_ctrl: Return statusCode 404
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display course not found message
 else Course Found
-    alt Not Course Owner
-        sv -->> be_ctrl: throw UnauthorizedAccessException
-        be_ctrl -->> fe_ctrl: Return statusCode 403
+    sv -> sv++: Validate Course Status Update (e.g. Owner, Lockout)
+    sv--
+
+    alt Validation Failed (e.g., Not Owner, Locked out)
+        sv -->> be_ctrl: throw Exception
+        be_ctrl -->> fe_ctrl: Return error status
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display unauthorized message
-    else Is Course Owner
-        sv -> lockout_repo++: Call GetActiveLockoutAsync(instructorId, "instructor")
-        lockout_repo -->> sv--: Return activeLockout
+        view -->> act: Display error message
+    else Is Course Owner and Valid
+        sv -> sv++: Set course.CourseStatus = "hidden"
+        sv--
         
-        alt Account is locked out
-            sv -->> be_ctrl: throw BadRequestException
-            be_ctrl -->> fe_ctrl: Return statusCode 400
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Update Course Status
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display lockout restriction message
-        else Account is active
-            sv -->> sv--: Return valid course entity
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return numberOfRowsAffected
             
-            sv -> sv++: Set course.CourseStatus = "hidden"
+            sv -> sv++: Call Cache Invalidation Logic
             sv--
             
-            sv -> repo++: Call Update(course)
-            repo -->> sv--: Return tracking state
-            
-            sv -> repo++: Call SaveChangesAsync()
-            repo -> ctx++: Save changes to database
-            ctx -> db++: Update Course Status
-            
-            alt Database Save Failure
-                db -->> ctx: throw DbUpdateException
-                ctx -->> repo: throw DbUpdateException
-                repo -->> sv: throw DbUpdateException
-                sv -->> be_ctrl: throw DbUpdateException
-                be_ctrl -->> fe_ctrl: Return statusCode 500
-                fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display server error message
-            else Database Save Success
-                db -->> ctx--: Return returnCode
-                ctx -->> repo--: Return numberOfRowsAffected
-                repo -->> sv--: Return numberOfRowsAffected
-                
-                sv -> redis++: Call RemoveCacheAsync(cacheKey)
-                redis -->> sv--: Return
-                
-                sv -->> be_ctrl--: Return success
-                be_ctrl -->> fe_ctrl--: Return statusCode 200
-                fe_ctrl -->> view--: Return JSON (success=true)
-                view -->> act--: Display course hidden successfully
-            end
+            sv -->> be_ctrl--: Return success
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display course hidden successfully
         end
     end
 end

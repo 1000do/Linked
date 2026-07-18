@@ -3,9 +3,20 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LessonControllerFE["LessonController"] {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + TrashMaterials() Task~IActionResult~
+    + Trash() Task~IActionResult~
+}
+
+class MaterialTrashViewModel {
+    <<viewmodel>>
+    + MaterialId : int
+    + Title : string
+    + LessonTitle : string?
+    + CourseTitle : string?
+    + DeletedAt : DateTime?
+    + FileType : string?
+    + CloudPublicId : string?
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -23,10 +34,12 @@ class LessonControllerBE["LessonController"] {
 class MaterialTrashResponse {
     <<dto>>
     + MaterialId : int
-    + LessonId : int
     + Title : string
-    + MaterialType : string
+    + LessonTitle : string?
+    + CourseTitle : string?
     + DeletedAt : DateTime?
+    + FileType : string?
+    + CloudPublicId : string?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -34,38 +47,53 @@ class MaterialTrashResponse {
 class LearningMaterial {
     <<entity>>
     + MaterialId : int
-    + LessonId : int
+    + LessonId : int?
     + Title : string
-    + MaterialType : string
-    + VideoUrl : string?
-    + Duration : int?
+    + Description : string?
+    + MaterialUrl : string?
+    + MaterialMetadata : MaterialMetadata?
+    + CloudPublicId : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + LearningStatus : string?
+    + ModerationFeedback : string?
     + IsRemoved : bool
-    + Lesson : Lesson?
+}
+
+class MaterialMetadata {
+    <<entity>>
+    + FileSize : long?
+    + FileType : string?
+    + FileExtension : string?
+    + Duration : int?
+    + PageCount : int?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ILessonService {
-    <<interface>>
-    + GetTrashMaterialsAsync(instructorId: int) Task~List~MaterialTrashResponse~~ *
+    <<service interface>>
+    + GetTrashMaterialsAsync(instructorId: int) Task~IEnumerable~MaterialTrashResponse~~ *
 }
 
-class ILessonRepository {
-    <<interface>>
+class IMaterialRepository {
+    <<repository interface>>
     + GetTrashMaterialsAsync(instructorId: int) Task~List~LearningMaterial~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class LessonService {
-    - _lessonRepo : ILessonRepository
+    <<service>>
+    - _materialRepository : IMaterialRepository
     
-    + GetTrashMaterialsAsync(instructorId: int) Task~List~MaterialTrashResponse~~
+    + GetTrashMaterialsAsync(instructorId: int) Task~IEnumerable~MaterialTrashResponse~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class LessonRepository {
+class MaterialRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetTrashMaterialsAsync(instructorId: int) Task~List~LearningMaterial~~
@@ -74,26 +102,31 @@ class LessonRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + LearningMaterials : DbSet~LearningMaterial~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === AGGREGATION & COMPOSITION ===
+LearningMaterial *-- MaterialMetadata
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
 LessonControllerBE --> ILessonService
-LessonService --> ILessonRepository
-LessonRepository --> AppDbContext
+LessonService --> IMaterialRepository
+MaterialRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 LessonService ..|> ILessonService
-LessonRepository ..|> ILessonRepository
+MaterialRepository ..|> IMaterialRepository
 
-%% === DEPENDENCY (dashed arrows) ===
-LessonControllerFE ..> LessonControllerBE
+%% === DEPENDENCY ===
+InstructorCourseControllerFE ..> LessonControllerBE
+InstructorCourseControllerFE ..> MaterialTrashViewModel
 LessonControllerBE ..> MaterialTrashResponse
 LessonService ..> MaterialTrashResponse
 LessonService ..> LearningMaterial
-LessonRepository ..> LearningMaterial
+MaterialRepository ..> LearningMaterial
 
 %% ==================== STYLES ====================
 

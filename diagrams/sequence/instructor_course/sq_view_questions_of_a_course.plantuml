@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -53,7 +60,7 @@ alt Lesson Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display lesson not found error message
 else Lesson Found
-    sv -> sv++: Call EnsureInstructorOwnsCourseAsync(lesson.CourseId, instructorId)
+    sv -> sv++: Validate Course Ownership
     sv--
     
     alt Unauthorized

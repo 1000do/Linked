@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -33,7 +40,7 @@ participant "InstructorController" as fe_ctrl <<frontend controller>>
 participant "InstructorController" as be_ctrl <<backend controller>>
 participant ":InstructorService" as sv
 participant ":InstructorPublicProfileDto" as res
-participant ":IUserRepository" as repo
+participant ":IInstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -50,25 +57,30 @@ db -->> ctx--: Return query results
 ctx -->> repo--: Return instructor entity
 repo -->> sv--: Return instructor entity
 
-alt Instructor Not Found or Not Approved
+alt Instructor == null OR ApprovalStatus != Approved
     sv -->> be_ctrl: Return null
     be_ctrl -->> fe_ctrl: Return statusCode 404
-    fe_ctrl -->> view: Redirect to HomePage
-    activate view
-    view -->> act: Display HomePage
-else Instructor Found
+    fe_ctrl -->> view: Redirect to HomePage / Show NotFound
+    view -->> act: Display NotFound message
+else Instructor Found and Approved
     sv -> repo++: Call GetStatsAsync(id)
+    repo -> ctx++: Execute query
+    ctx -> db++: Fetch stats
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return stats
     repo -->> sv--: Return instructor stats
     
     sv -> repo++: Call CountActiveCoursesAsync(id)
+    repo -> ctx++: Execute query
+    ctx -> db++: Count active courses
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return count
     repo -->> sv--: Return active courses count
     
-    sv -> sv++: Extract published courses
+    sv -> sv++: Select published courses
     sv--
     
-    sv -> repo++: Call CountInstructorReviewsAsync(id)
-    repo -->> sv--: Return total reviews
-    
+
     sv -> res++: Call InstructorPublicProfileDto()
     res -->> sv--: Return InstructorPublicProfileDto object
     

@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -47,11 +54,11 @@ fe_ctrl -> be_ctrl++: POST /api/courses/{courseId}/quizzes
 
 be_ctrl -> sv++: Call AddQuizToCourseAsync(request, instructorId)
 
-sv -> sv++: Call EnsureInstructorOwnsCourseAsync(request.CourseId, instructorId)
-sv--
-
 sv -> course_repo++: Call GetByIdAsync(request.CourseId)
 course_repo -->> sv--: Return course entity
+
+sv -> sv++: Validate Course Ownership
+sv--
 
 alt Course Not Found Or Unauthorized
     sv -->> be_ctrl: throw UnauthorizedAccessException
@@ -77,7 +84,7 @@ else Authorized
     else Database Save Success
         db -->> ctx--: Return returnCode
         ctx -->> repo--: Return numberOfRowsAffected
-        repo -->> sv--: Return void
+        repo -->> sv--: Return result
         
         sv -> res++: Call CourseQuizResponse()
         res -->> sv--: Return CourseQuizResponse object
