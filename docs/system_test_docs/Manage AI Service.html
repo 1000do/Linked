@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage AI Service</li>
+    <li><b>Test requirement:</b> Tests for managing AI moderation models, thresholds, and viewing activity logs</li>
+    <li><b>Number of TCs:</b> 44</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Add AI Model</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Add AI Model Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click the 'Add AI Model' button.<br>4. Fill in the model details.<br>5. Click the 'Add Model' button.<br>6. Confirm the action on the dialog.</td>
+        <td>The system persists the new model record, displays a success notification, and reloads the page with the newly added model at the top.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Cancel Confirmation</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click 'Add AI Model'.<br>4. Fill in the details.<br>5. Click 'Add Model'.<br>6. Click cancel on the confirmation dialog.</td>
+        <td>The dialog closes and the model is not added.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Invalid Form Input</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click 'Add AI Model'.<br>4. Leave required fields empty or input invalid data.<br>5. Click 'Add Model' and confirm.</td>
+        <td>The system displays a validation error message and prevents submission.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Session Invalid</td>
+        <td>1. Access the AI Service management page as an unauthenticated user (simulate session expiry).<br>2. Click 'Add AI Model'.</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the AI Service management page.</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate a database error.<br>2. Login as Admin.<br>3. Access the AI Service management page.<br>4. Click 'Add AI Model'.<br>5. Fill details and confirm.</td>
+        <td>The system displays an error message regarding the database save failure.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Update AI Model</td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Edit AI Model Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click the edit icon on a model entry.<br>4. Modify the model details.<br>5. Click 'Save Changes'.<br>6. Confirm the action.</td>
+        <td>The system updates the model record, displays a success notification, and reloads the page with the updated information.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Cancel Confirmation</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click the edit icon on a model.<br>4. Modify the details.<br>5. Click 'Save Changes'.<br>6. Click cancel on the dialog.</td>
+        <td>The dialog closes and no changes are made.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Invalid Form Input</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click edit on a model.<br>4. Clear required fields.<br>5. Click 'Save Changes' and confirm.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Session Invalid</td>
+        <td>1. Access the AI Service management page as an unauthenticated user.<br>2. Click the edit icon.</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the AI Service management page (via URL).</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Model Not Found</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Simulate another admin deleting the model.<br>4. Click edit icon and submit changes.</td>
+        <td>The system displays a model not found error message.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate a database error.<br>2. Login as Admin.<br>3. Access the AI Service management page.<br>4. Edit model and confirm.</td>
+        <td>The system displays an error message regarding the database save failure.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete AI Model</td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Toggle AI Model Status Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click the status toggle button on an active model.<br>4. Confirm the action.</td>
+        <td>The system updates the status to inactive, displays a success notification, and the UI reflects the new status.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Cancel Confirmation</td>
+        <td>1. Login as Admin.<br>2. Click the status toggle.<br>3. Click cancel on the confirmation dialog.</td>
+        <td>The status remains unchanged.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Session Invalid</td>
+        <td>1. Access the AI Service management page (unauthenticated).<br>2. Click the status toggle.</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the AI Service management page.</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Model Not Found</td>
+        <td>1. Login as Admin.<br>2. Simulate model deletion.<br>3. Click the status toggle.</td>
+        <td>The system displays a model not found error message.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate a database error.<br>2. Click the status toggle and confirm.</td>
+        <td>The system displays a database save failure error.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View AI Model Details</td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>View Model Details Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click the 'Details' icon on a model.</td>
+        <td>The system displays a popup with full model configuration details instantly.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Close Details Popup</td>
+        <td>1. Open the model details popup.<br>2. Click the 'Close' button.</td>
+        <td>The popup closes.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Session Invalid</td>
+        <td>1. Access the AI Service management page (unauthenticated).</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the AI Service management page.</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>Database Query Failed</td>
+        <td>1. Simulate a database error.<br>2. Login as Admin.<br>3. Access the AI Service management page.</td>
+        <td>The system displays a data retrieval error and the page fails to load the model list.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View AI Model List</td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>View AI Model List Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.</td>
+        <td>The system displays a paginated list of AI models, ordered by last modified date descending.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-026</td>
+        <td>Empty Model List</td>
+        <td>1. Login as Admin to a system with no AI models.<br>2. Access the AI Service management page.</td>
+        <td>The system displays an empty state message in the model list area.</td>
+        <td>No models exist in the database.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-027</td>
+        <td>Navigate Pages</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page with enough models to paginate.<br>3. Click the 'Next' pagination button.</td>
+        <td>The system displays the next page of AI models.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-028</td>
+        <td>Session Invalid</td>
+        <td>1. Access the AI Service management page (unauthenticated).</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-029</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the AI Service management page.</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-030</td>
+        <td>Database Query Failed</td>
+        <td>1. Simulate a database error.<br>2. Access the AI Service management page.</td>
+        <td>The system displays a data retrieval failure error.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Set Confidence Threshold</td>
+    </tr>
+
+    <tr>
+        <td>TC-031</td>
+        <td>Set Confidence Threshold Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Modify spam/toxicity threshold values.<br>4. Click 'Save Changes'.<br>5. Confirm the action.</td>
+        <td>The system updates the threshold configuration, displays a success notification, and the form shows the updated values.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-032</td>
+        <td>Default Threshold Values</td>
+        <td>1. Login as Admin in an environment without thresholds configured.<br>2. Access the AI Service management page.</td>
+        <td>The system populates the form with system default threshold values.</td>
+        <td>No configuration exists in the database.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-033</td>
+        <td>Cancel Confirmation</td>
+        <td>1. Modify thresholds.<br>2. Click 'Save Changes'.<br>3. Click cancel on the confirmation dialog.</td>
+        <td>The dialog closes and the thresholds are not saved.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-034</td>
+        <td>Invalid Form Input</td>
+        <td>1. Enter an out-of-range value (e.g., > 1.0 or < 0.01) for a threshold.<br>2. Click 'Save Changes' and confirm.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-035</td>
+        <td>Session Invalid</td>
+        <td>1. Access the AI Service management page as an unauthenticated user.</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-036</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the AI Service management page.</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-037</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate a database error.<br>2. Submit thresholds and confirm.</td>
+        <td>The system displays a database save failure error.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Activity Log</td>
+    </tr>
+
+    <tr>
+        <td>TC-038</td>
+        <td>View Activity Log Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the AI Service management page.<br>3. Click the 'AI Activity Logs' tab.</td>
+        <td>The system displays the activity log list for the course moderation subtab (default) in paginated form, ordered by creation date descending.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-039</td>
+        <td>Empty Logs</td>
+        <td>1. Login as Admin (in a system where no logs exist).<br>2. Access the 'AI Activity Logs' tab.</td>
+        <td>The system displays an empty state message.</td>
+        <td>No activity logs exist.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-040</td>
+        <td>Switch Category Subtab</td>
+        <td>1. Access the 'AI Activity Logs' tab.<br>2. Click the 'Review Moderation' subtab.</td>
+        <td>The system displays the logs for the selected category without a full page reload.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-041</td>
+        <td>Navigate Pages</td>
+        <td>1. Access the 'AI Activity Logs' tab (with many logs).<br>2. Click the 'Next' pagination button.</td>
+        <td>The system displays the next page of logs for the active category.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-042</td>
+        <td>Session Invalid</td>
+        <td>1. Access the 'AI Activity Logs' tab (unauthenticated).</td>
+        <td>The system displays an authentication error and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-043</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with a non-Admin role.<br>2. Access the 'AI Activity Logs' tab.</td>
+        <td>The system redirects to the home page or an access denied page.</td>
+        <td>User is not an Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-044</td>
+        <td>Database Query Failed</td>
+        <td>1. Simulate a database error.<br>2. Access the 'AI Activity Logs' tab.</td>
+        <td>The system displays a data retrieval failure error.</td>
+        <td>Actor must be authenticated as Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+</table>
+</body>
+</html>
