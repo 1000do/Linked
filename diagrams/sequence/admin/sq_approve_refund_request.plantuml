@@ -38,6 +38,7 @@ participant ":IAdminFinanceRepository" as finance_repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant ":IGiftRepository" as gift_repo
+participant ":ICourseRepository" as course_repo
 participant ":TransactionExt" as tx_ext_ett
 participant ":RefundResultResponse" as refund_res
 participant ":IPaymentGatewayService" as payment_gw
@@ -52,11 +53,11 @@ fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
-    fe_ctrl -->> login_view--: Redirect to LoginPage
+    fe_ctrl -->> login_view: Redirect to LoginPage
     activate login_view
     login_view -->> act--: Display login form
 else Unauthorized Access
-    fe_ctrl -->> error_view--: Redirect to ErrorPage
+    fe_ctrl -->> error_view: Redirect to ErrorPage
     activate error_view
     error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
@@ -134,7 +135,15 @@ else Valid actor's authentication and authorization
         finance_sv -> payment_gw++: RefundAsync(paymentIntentId, amount, reason)
         payment_gw -->> finance_sv--: Return refundId
 
-        finance_sv -> finance_sv: Update Transaction status, Negate amounts & Revoke enrollment
+        finance_sv -> course_repo++: GetActiveEnrollmentAsync(studentId, courseId)
+        course_repo -> ctx++: Query Enrollment
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Return database record
+        ctx -->> course_repo--: Return Enrollment entity
+        course_repo -->> finance_sv--: Return Enrollment entity
+
+        finance_sv -> finance_sv++: Update Transaction status, Negate amounts & Revoke enrollment
+        finance_sv--
 
         finance_sv -> finance_repo++: SaveChangesAsync()
         finance_repo -> ctx++: Save changes to database

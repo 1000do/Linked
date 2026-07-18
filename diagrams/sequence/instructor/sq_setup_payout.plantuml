@@ -1,198 +1,407 @@
 @startuml 
+
 <style>
+
     sequenceDiagram{
+
         actor{
+
             BackgroundColor white
+
             LineThickness 1.0
+
         }
+
         participant{
+
             BackgroundColor white
+
             RoundCorner 0
+
         }
+
         database{
+
             BackgroundColor white
+
         }
+
         groupHeader{
+
             BackgroundColor white
+
         }
+
         referenceHeader{
+
             BackgroundColor white
+
         }
+
         reference{
+
             BackgroundColor white
+
         }
+
     }
+
 </style>
 
+
+
 hide footbox
+
 mainframe Setup Payout
 
+
+
 actor Instructor as act
+
 participant "ApplicationStatusPage" as view
+
 participant "LoginPage" as login_view
+
 participant "ErrorPage" as error_view
+
 participant "InstructorController" as fe_ctrl <<frontend controller>>
+
 participant "InstructorController" as be_ctrl <<backend controller>>
+
 participant ":IInstructorService" as sv
+
 participant ":IStripeConnectService" as stripe
+
 participant ":StripeSetupResponse" as dto
+
 participant ":IInstructorRepository" as repo
+
 participant ":AppDbContext" as ctx
+
 database Database as db
 
+
+
 act ++
+
 act -> view ++: Click "Setup Payout" button
+
 view -> fe_ctrl ++: POST /Instructor/SetupPayout
 
+
+
 fe_ctrl -> fe_ctrl ++: Validate actor's authentication and authorization
+
 fe_ctrl --
 
+
+
 alt Session Invalid
+
     fe_ctrl -->> login_view: Redirect to LoginPage
+
     activate login_view
+
     login_view -->> act --: Display login form
+
 else Unauthorized Access
+
     fe_ctrl -->> error_view: Redirect to ErrorPage
+
     activate error_view
+
     error_view -->> act --: Display error message
+
 else Valid actor's authentication and authorization
+
     
+
     fe_ctrl -> be_ctrl ++: POST /api/instructor/setup-payout
+
     
+
     be_ctrl -> be_ctrl ++: Validate request and check Authorization
+
     be_ctrl --
+
     
+
     alt Unauthorized
+
         be_ctrl -->> fe_ctrl: Return statusCode 401
+
         fe_ctrl -->> login_view: Redirect to LoginPage
+
         activate login_view
+
         login_view -->> act: Display login form
+
         deactivate login_view
+
     else Valid Request
+
         
+
         be_ctrl -> sv ++: Call SetupStripePayoutAsync(userId)
+
         
+
         sv -> repo ++: Call GetByIdWithNavigationAsync(userId)
+
         repo -> ctx ++: Query Instructor
+
         ctx -> db ++: Execute query
+
         db -->> ctx --: Return database record
+
         ctx -->> repo --: Return data
+
         repo -->> sv --: Return Instructor entity
+
         
+
         sv -> sv ++: Check if ApprovalStatus == "Approved"
+
         sv --
+
         
+
         alt Not Approved
+
             sv -->> be_ctrl: throw InvalidOperationException
+
             be_ctrl -->> fe_ctrl: Return statusCode 400
+
             fe_ctrl -->> view: Redirect to ApplicationStatus (with Error)
+
             view -->> act: Display error message
+
         else Approved
+
             sv -> stripe ++: Call SetupExpressAccountAsync(...)
+
             stripe -->> sv --: Return StripeSetupResult (with URL & Account ID)
+
             
+
             sv -> sv ++: Update StripeAccountId & StripeOnboardingStatus = "Pending"
+
             sv --
+
             
+
             sv -> repo ++: Call SaveChangesAsync()
+
             repo -> ctx ++: Save changes to database
+
             ctx -> db ++: Execute UPDATE
+
             db -->> ctx --: Return numberOfRowsAffected
+
             ctx -->> repo --: Return numberOfRowsAffected
+
             repo -->> sv --: Return result
+
             
+
             sv -> dto ++: Call StripeSetupResponse()
+
             dto -->> sv --: Return StripeSetupResponse object
+
             
+
             sv -->> be_ctrl --: Return StripeSetupResponse DTO
+
             be_ctrl -->> fe_ctrl --: Return statusCode 200 (with URL)
+
             
+
             fe_ctrl -->> act: Redirect to Stripe Onboarding URL
+
         end
+
     end
+
 end
+
 deactivate fe_ctrl
+
 deactivate view
 
+
+
 act -> act: Complete verification & banking setup on Stripe website\n(Enter OTP, personal info, bank details)
+
 act -> fe_ctrl ++: Stripe automatically redirects back to Platform: GET /Instructor/StripeReturn?instructorId={id}
 
+
+
 fe_ctrl -> fe_ctrl ++: Validate actor's authentication and authorization
+
 fe_ctrl --
 
+
+
 alt Session Invalid
+
     fe_ctrl -->> login_view: Redirect to LoginPage
+
     activate login_view
+
     login_view -->> act: Display login form
+
     deactivate login_view
+
 else Unauthorized Access
+
     fe_ctrl -->> error_view: Redirect to ErrorPage
+
     activate error_view
+
     error_view -->> act: Display error message
+
     deactivate error_view
+
 else Valid actor's authentication and authorization
+
     
+
     fe_ctrl -> be_ctrl ++: GET /api/instructor/stripe-return?instructorId={id}
+
     
+
     be_ctrl -> be_ctrl ++: Validate request and check Authorization
+
     be_ctrl --
+
     
+
     alt Unauthorized
+
         be_ctrl -->> fe_ctrl: Return statusCode 401
+
         fe_ctrl -->> login_view: Redirect to LoginPage
+
         activate login_view
+
         login_view -->> act: Display login form
+
         deactivate login_view
+
     else Valid Request
+
         
+
         be_ctrl -> sv ++: Call VerifyStripeOnboardingAsync(instructorId)
+
         
+
         sv -> repo ++: Call GetByIdAsync(instructorId)
+
         repo -> ctx ++: Query Instructor
+
         ctx -> db ++: Execute query
+
         db -->> ctx --: Return database record
+
         ctx -->> repo --: Return data
+
         repo -->> sv --: Return Instructor entity
+
         
+
         sv -> stripe ++: Call GetAccountStatusAsync(StripeAccountId)
+
         stripe -->> sv --: Return AccountStatus (with DetailsSubmitted status)
+
         
+
+        sv -> sv ++: Check AccountStatus DetailsSubmitted
+
+        sv --
+
+        
+
         alt DetailsSubmitted == true (Success)
+
             sv -> sv ++: Update Instructor (PayoutsEnabled=true, ChargesEnabled=true, StripeOnboardingStatus="Active")
+
             sv --
+
             
+
             sv -> repo ++: Call SaveChangesAsync()
+
             repo -> ctx ++: Save changes to database
+
             ctx -> db ++: Execute UPDATE
+
             db -->> ctx --: Return numberOfRowsAffected
+
             ctx -->> repo --: Return numberOfRowsAffected
+
             repo -->> sv --: Return result
+
             
+
             sv -->> be_ctrl: Return "Active"
+
             be_ctrl -->> fe_ctrl: Return statusCode 200 (stripeStatus = "Active")
+
             
+
             fe_ctrl -> fe_ctrl ++: Set Cookie "UserRole" = "instructor"
+
             fe_ctrl --
+
             
+
             fe_ctrl -->> view ++: Redirect to ApplicationStatus (with SuccessMessage)
+
             view -->> act --: Display "Stripe setup is completed"
+
         else User Cancels (DetailsSubmitted == false)
+
             sv -> sv ++: Update Instructor (PayoutsEnabled=false, ChargesEnabled=false, StripeOnboardingStatus="Pending")
+
             sv --
+
             
+
             sv -> repo ++: Call SaveChangesAsync()
+
             repo -> ctx ++: Save changes to database
+
             ctx -> db ++: Execute UPDATE
+
             db -->> ctx --: Return numberOfRowsAffected
+
             ctx -->> repo --: Return numberOfRowsAffected
+
             repo -->> sv --: Return result
+
             
+
             sv -->> be_ctrl --: Return "Pending"
-            be_ctrl -->> fe_ctrl --: Return statusCode 200 (stripeStatus = "Pending")
+
+            be_ctrl -->> fe_ctrl-- : Return statusCode 200 (stripeStatus = "Pending")
+
             
+
             fe_ctrl -->> view ++: Redirect to ApplicationStatus (with ErrorMessage)
+
+            deactivate fe_ctrl
+
             view -->> act --: Display "Stripe setup is not completed"
+
         end
+
     end
+
 end
+
+
+
+deactivate act
+
 @enduml

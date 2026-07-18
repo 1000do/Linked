@@ -1,0 +1,132 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+
+hide footbox
+mainframe View Balance (For System)
+
+actor Admin as act
+participant "AdminFinanceDashboard" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
+participant ":AdminFinanceUnifiedVM" as view_model
+participant "AdminFinanceController" as be_ctrl <<backend controller>>
+participant ":IAdminFinanceService" as finance_sv
+participant ":IAdminFinanceRepository" as finance_repo
+participant ":FinancialSummaryResponse" as res_summary
+participant ":IStripeConnectService" as stripe_sv
+participant ":PlatformBalanceResponse" as res_balance
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> view++: Access Admin Finance Dashboard
+view -> fe_ctrl++: GET /AdminFinance
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> fe_ctrl++: Fetch dashboard data concurrently
+    fe_ctrl--
+    
+    par Summary Data
+        fe_ctrl -> be_ctrl++: GET /api/admin/finance/summary
+        be_ctrl -> finance_sv++: Call GetFinancialSummaryAsync(year, month)
+        
+        finance_sv -> finance_repo++: Call GetGrossRevenueAsync(year, month)
+        finance_repo -> ctx++: Aggregate Transactions (SUM)
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> finance_repo++: Call GetTotalPaidOutAsync(year, month)
+        finance_repo -> ctx++: Aggregate InstructorPayouts
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> finance_repo++: Call GetPendingEscrowAsync(year, month)
+        finance_repo -> ctx++: Aggregate InstructorPayouts
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> finance_repo++: Call GetTotalRefundedAsync(year, month)
+        finance_repo -> ctx++: Aggregate Transactions
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> res_summary++: Call FinancialSummaryResponse()
+        res_summary -->> finance_sv--: Return FinancialSummaryResponse object
+        
+        finance_sv -->> be_ctrl--: Return FinancialSummaryResponse object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+    else Stripe Gateway Balance
+        fe_ctrl -> be_ctrl++: GET /api/admin/finance/balance
+        be_ctrl -> finance_sv++: Call GetPlatformBalanceAsync()
+        finance_sv -> stripe_sv++: Call GetPlatformBalanceAsync()
+        
+        stripe_sv -> res_balance++: Call PlatformBalanceResponse()
+        res_balance -->> stripe_sv--: Return PlatformBalanceResponse object
+        
+        stripe_sv -->> finance_sv--: Return PlatformBalanceResponse object
+        finance_sv -->> be_ctrl--: Return PlatformBalanceResponse object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+    end
+    
+    fe_ctrl -> view_model++: Call AdminFinanceUnifiedVM()
+    view_model -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
+    
+    fe_ctrl -->> view--: Return View(vm)
+    
+    view -->> act--: Display Course Revenue, Splits, Stripe Gateway Balances, Config statuses, and Monthly Financial Performance chart
+end
+
+@enduml

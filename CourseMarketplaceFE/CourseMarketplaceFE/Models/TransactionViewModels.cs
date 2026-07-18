@@ -54,7 +54,7 @@ namespace CourseMarketplaceFE.Models
         public string InstructorName { get; set; } = "";
         public string InstructorEmail { get; set; } = "";
         public decimal GrossAmount { get; set; }
-        
+
         // ★ Mới thêm: Thông tin Coupon
         public decimal OriginalPrice { get; set; }
         public decimal DiscountAmount { get; set; }

@@ -83,19 +83,19 @@ class Transaction {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICheckoutService {
-    <<interface>>
+    <<service interface>>
     + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~ *
     + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task *
 }
 
 class ICheckoutRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~ *
     + SaveChangesAsync() Task~int~ *
 }
 
 class IPaymentGatewayService {
-    <<interface>>
+    <<service interface>>
     + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~ *
     + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~ *
 }
@@ -103,6 +103,7 @@ class IPaymentGatewayService {
 %% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class CheckoutService {
+    <<service>>
     - _repo : ICheckoutRepository
     - _paymentGateway : IPaymentGatewayService
     + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~
@@ -115,17 +116,20 @@ class CheckoutService {
 }
 
 class CheckoutRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~
     + SaveChangesAsync() Task~int~
 }
 
 class StripePaymentService {
+    <<service>>
     + CreatePaymentIntentAsync(...) Task~Tuple~
     + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
 }
 
 class AppDbContext {
+    <<dbcontext>>
     + Orders : DbSet~OrderInfo~
     + OrderItems : DbSet~OrderItem~
     + Transactions : DbSet~Transaction~

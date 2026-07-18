@@ -19,18 +19,19 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + SetPayoutDaysConfigAsync(payoutDays: string) Task *
 }
 
 class ISystemConfigRepository {
-    <<interface>>
+    <<repository interface>>
     + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE/REPO IMPLEMENTATIONS ====================
 
 class AdminFinanceService {
+    <<service>>
     - _repo : IAdminFinanceRepository
     - _paymentGateway : IPaymentGatewayService
     - _instructorRepo : IInstructorRepository
@@ -45,6 +46,7 @@ class AdminFinanceService {
 }
 
 class SystemConfigRepository {
+    <<repository>>
     - _context : AppDbContext
     + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~
 }
@@ -52,6 +54,7 @@ class SystemConfigRepository {
 %% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + SystemConfigs : DbSet~SystemConfig~
 }
 
@@ -74,6 +77,8 @@ class SystemConfig {
 AdminFinanceControllerBE --> IAdminFinanceService
 AdminFinanceService --> ISystemConfigRepository
 SystemConfigRepository --> AppDbContext
+
+AppDbContext --> SystemConfig
 
 %% === REALIZATION (hollow arrow) ===
 AdminFinanceService ..|> IAdminFinanceService

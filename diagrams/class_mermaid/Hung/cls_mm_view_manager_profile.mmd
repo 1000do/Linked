@@ -23,7 +23,7 @@ class AdminProfileViewModel {
     + Email : string
 }
 
-%% ==================== BACKEND - CONTROLLERS ====================
+%% ==================== BACKEND ====================
 
 class AdminProfileControllerBE["AdminProfileController"] {
     <<backend controller>>
@@ -31,7 +31,32 @@ class AdminProfileControllerBE["AdminProfileController"] {
     + GetProfile() Task~IActionResult~
 }
 
-%% ==================== BACKEND - DTOs ====================
+class IManagerProfileService {
+    <<service interface>>
+    + GetProfileAsync(managerId: int) Task~ManagerProfileResponse?~ *
+}
+
+class ManagerProfileService {
+    <<service>>
+    - _managerRepo : IManagerRepository
+    + GetProfileAsync(managerId: int) Task~ManagerProfileResponse?~
+}
+
+class IManagerRepository {
+    <<repository interface>>
+    + GetManagerByIdAsync(managerId: int) Task~Manager?~ *
+}
+
+class ManagerRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetManagerByIdAsync(managerId: int) Task~Manager?~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Managers : DbSet~Manager~
+}
 
 class ManagerProfileResponse {
     <<dto>>
@@ -48,41 +73,10 @@ class ManagerProfileResponse {
     + Email : string
 }
 
-%% ==================== BACKEND - SERVICES ====================
-
-class IManagerProfileService {
-    <<interface>>
-    + GetProfileAsync(managerId: int) Task~ManagerProfileResponse?~ *
-}
-
-class ManagerProfileService {
-    - _managerRepo : IManagerRepository
-    + GetProfileAsync(managerId: int) Task~ManagerProfileResponse?~
-}
-
-%% ==================== BACKEND - REPOSITORIES ====================
-
-class IManagerRepository {
-    <<interface>>
-    + GetManagerByIdAsync(managerId: int) Task~Manager?~ *
-}
-
-class ManagerRepository {
-    - _context : AppDbContext
-    + GetManagerByIdAsync(managerId: int) Task~Manager?~
-}
-
-%% ==================== BACKEND - DB CONTEXT ====================
-
-class AppDbContext {
-    + Managers : DbSet~Manager~
-    + Accounts : DbSet~Account~
-    + Lockouts : DbSet~Lockout~
-}
-
-%% ==================== BACKEND - ENTITIES ====================
+%% ==================== DOMAIN ENTITIES ====================
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + Role : string?
     + DisplayName : string
@@ -93,43 +87,55 @@ class Manager {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
+    + Username : string?
     + PasswordHash : string?
+    + PhoneNumber : string?
     + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
     + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
 }
 
 class Lockout {
+    <<entity>>
     + LockoutId : int
     + AccountId : int?
     + LockoutType : string?
+    + LockoutLevel : string?
     + LockoutStart : DateTime?
     + LockoutEnd : DateTime?
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === ASSOCIATION ===
 AdminProfileControllerBE --> IManagerProfileService
 ManagerProfileService --> IManagerRepository
 ManagerRepository --> AppDbContext
-AppDbContext --> Manager
-Manager --> Account : 1..1
-Account --> Lockout : 1..*
+Manager -- Account
+Account -- Lockout
 
 %% === REALIZATION ===
 ManagerProfileService ..|> IManagerProfileService
 ManagerRepository ..|> IManagerRepository
 
 %% === DEPENDENCY ===
+AdminProfileControllerFE ..> AdminProfileControllerBE
 AdminProfileControllerFE ..> AdminProfileViewModel
-AdminProfileControllerFE ..> AdminProfileControllerBE : API
 AdminProfileControllerBE ..> ManagerProfileResponse
-IManagerProfileService ..> ManagerProfileResponse
 ManagerProfileService ..> ManagerProfileResponse
-IManagerRepository ..> Manager
+ManagerProfileService ..> Manager
 ManagerRepository ..> Manager
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

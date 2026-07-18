@@ -5,7 +5,6 @@ direction LR
 
 class AdminProfileControllerFE["AdminProfileController"] {
     <<frontend controller>>
-    + Edit() Task~IActionResult~
     + Edit(model: UpdateAdminProfileViewModel) Task~IActionResult~
 }
 
@@ -18,7 +17,7 @@ class UpdateAdminProfileViewModel {
     + AvatarFile : IFormFile?
 }
 
-%% ==================== BACKEND - CONTROLLERS ====================
+%% ==================== BACKEND ====================
 
 class AdminProfileControllerBE["AdminProfileController"] {
     <<backend controller>>
@@ -26,7 +25,38 @@ class AdminProfileControllerBE["AdminProfileController"] {
     + UpdateProfile(request: UpdateManagerProfileRequest) Task~IActionResult~
 }
 
-%% ==================== BACKEND - DTOs ====================
+class IManagerProfileService {
+    <<service interface>>
+    + UpdateProfileAsync(managerId: int, request: UpdateManagerProfileRequest) Task~bool~ *
+}
+
+class ManagerProfileService {
+    <<service>>
+    - _managerRepo : IManagerRepository
+    - _uploadService : IFileUploadService
+    + UpdateProfileAsync(managerId: int, request: UpdateManagerProfileRequest) Task~bool~
+}
+
+class IFileUploadService {
+    <<service interface>>
+    + UploadImageAsync(file: IFormFile) Task~string?~ *
+}
+
+class IManagerRepository {
+    <<repository interface>>
+    + UpdateManagerProfileAsync(managerId: int, displayName: string, fullName: string?, phoneNumber: string?, avatarUrl: string?, bio: string?) Task~bool~ *
+}
+
+class ManagerRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + UpdateManagerProfileAsync(managerId: int, displayName: string, fullName: string?, phoneNumber: string?, avatarUrl: string?, bio: string?) Task~bool~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Managers : DbSet~Manager~
+}
 
 class UpdateManagerProfileRequest {
     <<dto>>
@@ -37,49 +67,10 @@ class UpdateManagerProfileRequest {
     + AvatarFile : IFormFile?
 }
 
-%% ==================== BACKEND - SERVICES ====================
-
-class IManagerProfileService {
-    <<interface>>
-    + UpdateProfileAsync(managerId: int, request: UpdateManagerProfileRequest) Task~bool~ *
-}
-
-class ManagerProfileService {
-    - _managerRepo : IManagerRepository
-    - _uploadService : IFileUploadService
-    + UpdateProfileAsync(managerId: int, request: UpdateManagerProfileRequest) Task~bool~
-}
-
-class IFileUploadService {
-    <<interface>>
-    + UploadImageAsync(file: IFormFile) Task~string?~ *
-}
-
-class FileUploadService {
-    + UploadImageAsync(file: IFormFile) Task~string?~
-}
-
-%% ==================== BACKEND - REPOSITORIES ====================
-
-class IManagerRepository {
-    <<interface>>
-    + UpdateManagerProfileAsync(managerId: int, displayName: string, fullName: string?, phoneNumber: string?, avatarUrl: string?, bio: string?) Task~bool~ *
-}
-
-class ManagerRepository {
-    - _context : AppDbContext
-    + UpdateManagerProfileAsync(managerId: int, displayName: string, fullName: string?, phoneNumber: string?, avatarUrl: string?, bio: string?) Task~bool~
-}
-
-%% ==================== BACKEND - DB CONTEXT ====================
-
-class AppDbContext {
-    + Managers : DbSet~Manager~
-}
-
-%% ==================== BACKEND - ENTITIES ====================
+%% ==================== DOMAIN ENTITIES ====================
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + Role : string?
     + DisplayName : string
@@ -89,28 +80,46 @@ class Manager {
     + Bio : string?
 }
 
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+}
+
 %% ==================== RELATIONSHIPS ====================
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === ASSOCIATION ===
 AdminProfileControllerBE --> IManagerProfileService
 ManagerProfileService --> IManagerRepository
 ManagerProfileService --> IFileUploadService
 ManagerRepository --> AppDbContext
-AppDbContext --> Manager
+Manager -- Account
 
 %% === REALIZATION ===
 ManagerProfileService ..|> IManagerProfileService
 ManagerRepository ..|> IManagerRepository
-FileUploadService ..|> IFileUploadService
 
 %% === DEPENDENCY ===
+AdminProfileControllerFE ..> AdminProfileControllerBE
 AdminProfileControllerFE ..> UpdateAdminProfileViewModel
-AdminProfileControllerFE ..> AdminProfileControllerBE : API
 AdminProfileControllerBE ..> UpdateManagerProfileRequest
-IManagerProfileService ..> UpdateManagerProfileRequest
 ManagerProfileService ..> UpdateManagerProfileRequest
-IManagerRepository ..> Manager
 ManagerRepository ..> Manager
+ManagerRepository ..> Account
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

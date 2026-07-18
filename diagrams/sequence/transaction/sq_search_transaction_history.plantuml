@@ -35,7 +35,6 @@ participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant ":TransactionPagedVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":ITransactionService" as sv
-participant ":TransactionListDto" as paged_dto
 participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -64,9 +63,6 @@ else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++: 7. GET /api/transactions/my?keyword=searchTerm
     be_ctrl -> sv++: 8. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
-    sv -> sv++: 9. Validate pagination parameters
-    sv--
-
     sv -> repo++: 10. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
     repo -> ctx++: 11. Calculate totalCount and query items with keyword filter
@@ -76,16 +72,13 @@ else Valid actor's authentication and authorization
 
     repo -->> sv--: 15. Return items and totalCount
 
-    sv -->> be_ctrl: 18. Return List<TransactionListDto>
-    deactivate sv
-    be_ctrl -->> fe_ctrl: 19. Return statusCode 200
-    deactivate be_ctrl
+    sv -->> be_ctrl--: 18. Return PagedResult<TransactionListDto> object
+    be_ctrl -->> fe_ctrl--: 19. Return statusCode 200
     
     fe_ctrl -> fe_ctrl++: 20. Deserialize JSON to TransactionPagedVM
     fe_ctrl--
     
-    fe_ctrl -->> view: 21. Return View(vm)
-    deactivate fe_ctrl
+    fe_ctrl -->> view--: 21. Return View(vm)
 
     view -> view++: 22. Check totalCount and keyword
     view--

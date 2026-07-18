@@ -1,16 +1,14 @@
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
 
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
-    - _api : ApiClient
-    - _jsonOpts : JsonSerializerOptions
     + RejectRefundDecision(transactionId: int, adminNote: string?) Task~IActionResult~
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND ====================
 
 class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
@@ -18,15 +16,51 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
     + RejectRefund(transactionId: int, request: RefundDecisionRequest) Task~IActionResult~
 }
 
-%% ==================== BACKEND - DTOs ====================
-
 class RefundDecisionRequest {
+    <<dto>>
     + AdminNote : string?
 }
 
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
+class IAdminFinanceService {
+    <<service interface>>
+    + RejectRefundAsync(transactionId: int, adminNote: string) Task *
+}
+
+class AdminFinanceService {
+    <<service>>
+    - _repo : IAdminFinanceRepository
+    - _notiService : INotificationService
+    + RejectRefundAsync(transactionId: int, adminNote: string) Task
+}
+
+class IAdminFinanceRepository {
+    <<repository interface>>
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class AdminFinanceRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~
+    + SaveChangesAsync() Task~int~
+}
+
+class INotificationService {
+    <<service interface>>
+    + SendNotificationAsync(receiverId: int, title: string, content: string, actionUrl: string?) Task *
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+    + TransactionExts : DbSet~TransactionExt~
+}
+
+%% ==================== DOMAIN ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
     + OrderItemId : int?
     + AccountFrom : int?
@@ -41,116 +75,42 @@ class Transaction {
     + TransactionCreatedAt : DateTime?
     + TransactionExt : TransactionExt?
     + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-    + AccountToNavigation : Account?
     + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 class TransactionExt {
+    <<entity>>
     + TransactionId : int
+    + Description : string?
+    + PaymentMethod : string?
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
-    + Transaction : Transaction
-}
-
-class Account {
-    + AccountId : int
-    + Email : string
-    + Username : string?
-    + PasswordHash : string?
-    + PhoneNumber : string?
-    + AccountStatus : string?
-    + AccountFlagCount : int?
-    + AccountLastLoginAt : DateTime?
-    + AuthProvider : string?
-    + AvatarUrl : string?
-    + RefreshToken : string?
-    + RefreshTokenExpiryTime : DateTime?
-    + IsVerified : bool
-    + AccountCreatedAt : DateTime?
-    + AccountUpdatedAt : DateTime?
-    + User : User?
-    + TransactionFroms : ICollection~Transaction~
-    + TransactionTos : ICollection~Transaction~
-}
-
-class User {
-    + UserId : int
-    + FullName : string
-    + Bio : string?
-    + DateOfBirth : DateOnly?
-    + Instructor : Instructor?
-    + UserNavigation : Account
-}
-
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class IAdminFinanceService {
-    <<interface>>
-    + RejectRefundAsync(transactionId: int, adminNote: string) Task *
-}
-
-class INotificationService {
-    <<interface>>
-    + SendNotificationAsync(receiverId: int, title: string, content: string, actionUrl: string?) Task *
-}
-
-%% ==================== BACKEND - REPOSITORY INTERFACES ====================
-
-class IAdminFinanceRepository {
-    <<interface>>
-    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~ *
-    + SaveChangesAsync() Task~int~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
-
-class AdminFinanceService {
-    - _repo : IAdminFinanceRepository
-    - _notiService : INotificationService
-    + RejectRefundAsync(transactionId: int, adminNote: string) Task
-}
-
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
-
-class AdminFinanceRepository {
-    - _context : AppDbContext
-    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~
-    + SaveChangesAsync() Task~int~
-}
-
-%% ==================== BACKEND - DbContext ====================
-
-class AppDbContext {
-    + Transactions : DbSet~Transaction~
-    + TransactionExts : DbSet~TransactionExt~
-    + Accounts : DbSet~Account~
-    + Users : DbSet~User~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION (hollow diamond) ===
-Transaction o-- TransactionExt
-Transaction o-- Account
-Account o-- User
-
-%% === UNIDIRECTIONAL ASSOCIATION ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE
+%% === ASSOCIATION ===
 AdminFinanceControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceService --> INotificationService
+
 AdminFinanceRepository --> AppDbContext
 
-%% === INTERFACE REALIZATION ===
+Transaction -- TransactionExt
+
+%% === REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
 %% === DEPENDENCY ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
+
 AdminFinanceControllerBE ..> RefundDecisionRequest
-AdminFinanceService ..> Transaction
+
 AdminFinanceRepository ..> Transaction
+AdminFinanceRepository ..> TransactionExt
 
 %% ==================== STYLES ====================
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -1,4 +1,4 @@
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -11,14 +11,33 @@ class AdminFinanceControllerFE["AdminFinanceController"] {
 class AdminFinanceUnifiedVM {
     <<view model>>
     + Dashboard : FinanceDashboardVM
-    + Withdraw : WithdrawPageVM
-    + Transactions : TransactionPagedVM
-    + Payouts : PagedResult~PayoutDetailVM~
-    + Withdrawals : PagedResult~WithdrawalHistoryVM~
-    + PendingRefunds : PagedResult~RefundRequestVM~
-    + PayoutDays : string
-    + CourseRevenues : List~InstructorCourseRevenueResponse~
-    + YearlySummaries : Dictionary~int,FinancialSummaryVM~
+}
+
+class FinanceDashboardVM {
+    <<view model>>
+    + Summary : FinancialSummaryVM
+    + Payouts : List~PayoutDetailVM~
+}
+
+class FinancialSummaryVM {
+    <<view model>>
+    + GrossRevenue : decimal
+    + TotalPaidOut : decimal
+    + PendingEscrow : decimal
+    + MaturedEscrow : decimal
+    + PlatformNetProfit : decimal
+}
+
+class PayoutDetailVM {
+    <<view model>>
+    + PayoutId : int
+    + TransactionId : int
+    + InstructorName : string
+    + CourseTitle : string
+    + TotalAmount : decimal
+    + InstructorReceived : decimal
+    + PayoutStatus : string
+    + PayoutDate : DateTime
 }
 
 %% ==================== BACKEND - CONTROLLERS ====================
@@ -26,17 +45,8 @@ class AdminFinanceUnifiedVM {
 class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
     - _financeService : IAdminFinanceService
-    - _instructorService : IInstructorService
     + GetFinancialSummary(year: int?, month: int?) Task~IActionResult~
     + GetPayouts(year: int?, month: int?, page: int, pageSize: int) Task~IActionResult~
-    + GetWithdrawalHistory(year: int?, month: int?, page: int, pageSize: int) Task~IActionResult~
-    + GetInstructorCourseRevenues(year: int, month: int) Task~IActionResult~
-}
-
-class TransactionControllerBE["TransactionController"] {
-    <<backend controller>>
-    - _transactionService : ITransactionService
-    + GetTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -48,230 +58,114 @@ class FinancialSummaryResponse {
     + PendingEscrow : decimal
     + MaturedEscrow : decimal
     + PlatformNetProfit : decimal
-    + CurrentTransferRate : decimal
-    + TotalTransactions : int
-    + TotalRefunded : decimal
 }
 
 class PayoutDetailResponse {
     <<dto>>
     + PayoutId : int
-    + TransactionId : int
     + InstructorName : string
-    + InstructorEmail : string
-    + CourseTitle : string
     + TotalAmount : decimal
     + InstructorReceived : decimal
-    + PlatformReceived : decimal
-    + TransferRate : decimal
-    + IsPaid : bool
     + PayoutStatus : string
-    + StripeTransferId : string?
-    + StripePayoutId : string?
-    + PaidToBankAt : DateTime?
-    + TransactionDate : DateTime?
     + PayoutDate : DateTime
-}
-
-class WithdrawalHistoryItem {
-    <<dto>>
-    + WithdrawalId : int
-    + ManagerName : string?
-    + Amount : decimal
-    + Currency : string
-    + StripePayoutId : string?
-    + Status : string
-    + Description : string?
-    + CreatedAt : DateTime
-    + ArrivedAt : DateTime?
-}
-
-class InstructorCourseRevenueResponse {
-    <<dto>>
-    + CourseId : int
-    + CourseTitle : string
-    + InstructorId : int
-    + InstructorName : string
-    + SalesCount : int
-    + MonthlyRevenue : decimal
-    + PreviousMonthRevenue : decimal
-    + YearlyRevenue : decimal
-    + LifetimeRevenue : decimal
-}
-
-class TransactionListDto {
-    <<dto>>
-    + TransactionId : int
-    + StripeSessionId : string?
-    + Date : DateTime?
-    + Amount : decimal
-    + Status : string?
-    + BuyerName : string
-    + CourseTitle : string
-    + InstructorName : string
-    + Currency : string?
-    + PayoutCurrency : string?
-    + RefundReason : string?
-    + RefundAdminNote : string?
-    + RefundRequestedAt : DateTime?
-    + IsGift : bool
-    + RecipientEmail : string?
-    + IsGiftClaimed : bool
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
-    + OrderItemId : int?
-    + AccountFrom : int?
-    + AccountTo : int?
     + Amount : decimal
-    + StripeSessionId : string?
-    + Currency : string?
     + TransactionsStatus : string?
     + TransactionCreatedAt : DateTime?
-    + TransactionExt : TransactionExt?
-    + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-}
-
-class PlatformWithdrawal {
-    + WithdrawalId : int
-    + ManagerId : int?
-    + Amount : decimal
-    + Currency : string
-    + StripePayoutId : string?
-    + Status : string
-    + Description : string?
-    + CreatedAt : DateTime
-    + ArrivedAt : DateTime?
 }
 
 class InstructorPayout {
+    <<entity>>
     + PayoutId : int
-    + TransactionId : int?
-    + InstructorId : int?
     + PayoutAmount : decimal
-    + IsPaid : bool
     + PayoutStatus : string?
-    + StripeTransferId : string?
-    + StripePayoutId : string?
-    + PaidToBankAt : DateTime?
     + PayoutDate : DateTime
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + GetFinancialSummaryAsync(year: int?, month: int?) Task~FinancialSummaryResponse~ *
     + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~ *
-    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~ *
-    + GetInstructorCourseRevenuesAsync(year: int, month: int) Task~List~InstructorCourseRevenueResponse~~ *
-}
-
-class ITransactionService {
-    <<interface>>
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IAdminFinanceRepository {
-    <<interface>>
+    <<repository interface>>
     + GetGrossRevenueAsync(year: int?, month: int?) Task~decimal~ *
-    + GetTotalRefundedAsync(year: int?, month: int?) Task~decimal~ *
-    + GetSucceededTransactionCountAsync(year: int?, month: int?) Task~int~ *
     + GetTotalPaidOutAsync(year: int?, month: int?) Task~decimal~ *
     + GetPendingEscrowAsync(year: int?, month: int?) Task~decimal~ *
     + GetMaturedEscrowAsync(year: int?, month: int?) Task~decimal~ *
-    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PayoutDetailProjection~,int~~ *
-    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~,int~~ *
-    + GetInstructorCourseRevenuesAsync(year: int, month: int) Task~List~InstructorCourseRevenueProjection~~ *
-}
-
-class ITransactionRepository {
-    <<interface>>
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~ *
+    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~(List~PayoutDetailProjection~, int)~ *
 }
 
 %% ==================== BACKEND - SERVICES ====================
 
 class AdminFinanceService {
+    <<service>>
     - _repo : IAdminFinanceRepository
     + GetFinancialSummaryAsync(year: int?, month: int?) Task~FinancialSummaryResponse~
     + GetInstructorPayoutsAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~PayoutDetailResponse~~
-    + GetWithdrawalHistoryAsync(year: int?, month: int?, page: int, pageSize: int) Task~PagedResult~WithdrawalHistoryItem~~
-    + GetInstructorCourseRevenuesAsync(year: int, month: int) Task~List~InstructorCourseRevenueResponse~
-}
-
-class TransactionService {
-    - _repo : ITransactionRepository
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
 }
 
 %% ==================== BACKEND - REPOSITORIES ====================
 
 class AdminFinanceRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetGrossRevenueAsync(year: int?, month: int?) Task~decimal~
-    + GetTotalRefundedAsync(year: int?, month: int?) Task~decimal~
-    + GetSucceededTransactionCountAsync(year: int?, month: int?) Task~int~
     + GetTotalPaidOutAsync(year: int?, month: int?) Task~decimal~
     + GetPendingEscrowAsync(year: int?, month: int?) Task~decimal~
     + GetMaturedEscrowAsync(year: int?, month: int?) Task~decimal~
-    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PayoutDetailProjection~,int~~
-    + GetWithdrawalsAsync(year: int?, month: int?, page: int, pageSize: int) Task~ValueTuple~List~PlatformWithdrawal~,int~~
-    + GetInstructorCourseRevenuesAsync(year: int, month: int) Task~List~InstructorCourseRevenueProjection~~
-}
-
-class TransactionRepository {
-    - _context : AppDbContext
-    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~
+    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~(List~PayoutDetailProjection~, int)~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Transactions : DbSet~Transaction~
-    + PlatformWithdrawals : DbSet~PlatformWithdrawal~
     + InstructorPayouts : DbSet~InstructorPayout~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE
-AdminFinanceControllerFE ..> TransactionControllerBE
+AdminFinanceUnifiedVM *-- FinanceDashboardVM
+FinanceDashboardVM *-- FinancialSummaryVM
+FinanceDashboardVM *-- PayoutDetailVM
+
 AdminFinanceControllerBE --> IAdminFinanceService
-TransactionControllerBE --> ITransactionService
 AdminFinanceService --> IAdminFinanceRepository
-TransactionService --> ITransactionRepository
 AdminFinanceRepository --> AppDbContext
-TransactionRepository --> AppDbContext
+
+AppDbContext --> Transaction
+AppDbContext --> InstructorPayout
 
 %% === INTERFACE REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
-TransactionService ..|> ITransactionService
 AdminFinanceRepository ..|> IAdminFinanceRepository
-TransactionRepository ..|> ITransactionRepository
 
 %% === DEPENDENCY ===
 AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
+
 AdminFinanceControllerBE ..> FinancialSummaryResponse
 AdminFinanceControllerBE ..> PayoutDetailResponse
-AdminFinanceControllerBE ..> WithdrawalHistoryItem
-AdminFinanceControllerBE ..> InstructorCourseRevenueResponse
-TransactionControllerBE ..> TransactionListDto
+
 IAdminFinanceService ..> FinancialSummaryResponse
 IAdminFinanceService ..> PayoutDetailResponse
-IAdminFinanceService ..> WithdrawalHistoryItem
-IAdminFinanceService ..> InstructorCourseRevenueResponse
-ITransactionService ..> TransactionListDto
-AdminFinanceRepository ..> PlatformWithdrawal
+
 AdminFinanceRepository ..> InstructorPayout
-TransactionRepository ..> Transaction
+AdminFinanceRepository ..> Transaction
 
 %% ==================== STYLES ====================
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

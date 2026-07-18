@@ -1,15 +1,10 @@
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
 
-class TransactionControllerFE["TransactionController"] {
-    <<frontend controller>>
-    + Detail(id: int) Task~IActionResult~
-}
-
 class TransactionDetailVM {
-    <<view model>>
+    <<viewModel>>
     + TransactionId : int
     + StripeSessionId : string?
     + StripePaymentIntentId : string?
@@ -34,19 +29,16 @@ class TransactionDetailVM {
     + PlatformProfit : decimal
     + IsPaid : bool
     + RefundReason : string?
-    + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + RefundAdminNote : string?
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
-
-class TransactionControllerBE["TransactionController"] {
-    <<backend controller>>
-    - _transactionService : ITransactionService
-    + GetTransactionDetail(id: int) Task~IActionResult~
+class TransactionControllerFE["TransactionController"] {
+    <<frontend controller>>
+    + Detail(id: int) Task~IActionResult~
 }
 
-%% ==================== BACKEND - DTOs ====================
+%% ==================== BACKEND ====================
 
 class TransactionDetailDto {
     <<dto>>
@@ -54,16 +46,16 @@ class TransactionDetailDto {
     + StripeSessionId : string?
     + StripePaymentIntentId : string?
     + Date : DateTime?
-    + Status : string?
     + Currency : string?
+    + Status : string?
     + BuyerName : string
     + BuyerEmail : string
     + CourseTitle : string
     + CourseThumbnail : string?
     + InstructorName : string
     + InstructorEmail : string
-    + GrossAmount : decimal
     + OriginalPrice : decimal
+    + GrossAmount : decimal
     + DiscountAmount : decimal
     + CouponUsed : bool
     + CouponCode : string?
@@ -78,37 +70,49 @@ class TransactionDetailDto {
     + RefundRequestedAt : DateTime?
 }
 
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Transaction {
-    + TransactionId : int
-    + OrderItemId : int?
-    + AccountFrom : int?
-    + AccountTo : int?
-    + Amount : decimal
-    + TransferRate : decimal
-    + StripeSessionId : string?
-    + StripePaymentintentId : string?
-    + Currency : string?
-    + TransactionsStatus : string?
-    + TransactionType : string?
-    + TransactionCreatedAt : DateTime?
-    + TransactionExt : TransactionExt?
-    + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-    + AccountToNavigation : Account?
-    + InstructorPayouts : ICollection~InstructorPayout~
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    + GetTransactionDetail(id: int) Task~IActionResult~
 }
 
-class TransactionExt {
-    + TransactionId : int
-    + RefundReason : string?
-    + RefundAdminNote : string?
-    + RefundRequestedAt : DateTime?
-    + Transaction : Transaction
+class ITransactionService {
+    <<interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
 }
+
+class TransactionService {
+    <<service>>
+    - _repo : ITransactionRepository
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+class ITransactionRepository {
+    <<interface>>
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+    + TransactionExts : DbSet~TransactionExt~
+    + OrderItems : DbSet~OrderItem~
+    + InstructorPayouts : DbSet~InstructorPayout~
+    + Accounts : DbSet~Account~
+    + Users : DbSet~User~
+    + Courses : DbSet~Course~
+}
+
+%% ==================== DOMAIN ENTITIES ====================
 
 class OrderItem {
+    <<entity>>
     + Id : int
     + OrderId : int?
     + CourseId : int?
@@ -124,6 +128,7 @@ class OrderItem {
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -144,7 +149,38 @@ class Course {
     + ThreatLevel : AiThreatLevel
 }
 
+class TransactionExt {
+    <<entity>>
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
+    + InstructorPayouts : ICollection~InstructorPayout~
+}
+
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -166,6 +202,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -175,6 +212,7 @@ class User {
 }
 
 class InstructorPayout {
+    <<entity>>
     + PayoutId : int
     + TransactionId : int?
     + InstructorId : int?
@@ -188,79 +226,48 @@ class InstructorPayout {
     + Transaction : Transaction?
 }
 
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class ITransactionService {
-    <<interface>>
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
-}
-
-%% ==================== BACKEND - REPOSITORY INTERFACES ====================
-
-class ITransactionRepository {
-    <<interface>>
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
-
-class TransactionService {
-    - _repo : ITransactionRepository
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
-}
-
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
-
-class TransactionRepository {
-    - _context : AppDbContext
-    + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
-}
-
-%% ==================== BACKEND - DbContext ====================
-
-class AppDbContext {
-    + Transactions : DbSet~Transaction~
-    + TransactionExts : DbSet~TransactionExt~
-    + OrderItems : DbSet~OrderItem~
-    + InstructorPayouts : DbSet~InstructorPayout~
-    + Accounts : DbSet~Account~
-    + Users : DbSet~User~
-    + Courses : DbSet~Course~
-}
-
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-Transaction *-- TransactionExt
-OrderItem *-- Transaction
-Transaction *-- InstructorPayout
-Account *-- User
-
-%% === AGGREGATION (hollow diamond) ===
-Course o-- OrderItem
-
-%% === UNIDIRECTIONAL ASSOCIATION ===
-TransactionControllerBE --> ITransactionService
-TransactionService --> ITransactionRepository
-TransactionRepository --> AppDbContext
-
-%% === INTERFACE REALIZATION ===
-TransactionService ..|> ITransactionService
-TransactionRepository ..|> ITransactionRepository
-
-%% === DEPENDENCY ===
-TransactionControllerFE ..> TransactionControllerBE
+%% UI to Services
 TransactionControllerFE ..> TransactionDetailVM
+TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerBE ..> TransactionDetailDto
+TransactionControllerBE --> ITransactionService
+TransactionService ..|> ITransactionService
+TransactionService --> ITransactionRepository
 ITransactionService ..> TransactionDetailDto
 TransactionService ..> TransactionDetailDto
+
+TransactionRepository ..|> ITransactionRepository
 ITransactionRepository ..> TransactionDetailDto
 TransactionRepository ..> TransactionDetailDto
-TransactionRepository ..> Transaction
+TransactionRepository --> AppDbContext
 
-%% === BIDIRECTIONAL ASSOCIATION ===
+%% Repository to Entities
+TransactionRepository ..> Transaction
+TransactionRepository ..> TransactionExt
+TransactionRepository ..> OrderItem
+TransactionRepository ..> InstructorPayout
+TransactionRepository ..> Account
+TransactionRepository ..> User
+TransactionRepository ..> Course
+
+%% AppDbContext to Entities
+AppDbContext --> Transaction
+AppDbContext --> TransactionExt
+AppDbContext --> OrderItem
+AppDbContext --> InstructorPayout
+AppDbContext --> Account
+AppDbContext --> User
+AppDbContext --> Course
+
+%% Entity Associations
+Transaction -- TransactionExt
+Transaction -- OrderItem
 Transaction -- Account
+Transaction -- InstructorPayout
 OrderItem -- Course
+Account -- User
 
 %% ==================== STYLES ====================
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

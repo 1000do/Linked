@@ -1,5 +1,4 @@
-```mermaid
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -45,24 +44,38 @@ class TransactionListItemVM {
     + IsGiftClaimed : bool
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND - CONTROLLERS ====================
 
 class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
     - _transactionService : ITransactionService
-    
     + GetInstructorTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
 }
 
-%% ==================== BACKEND - DTOs ====================
+%% ==================== BACKEND - SERVICES ====================
 
-class PagedResultTransactionListDto["PagedResult~TransactionListDto~"] {
-    <<dto>>
-    + Items : IEnumerable~TransactionListDto~
-    + TotalCount : int
-    + Page : int
-    + PageSize : int
-    + TotalPages : int
+class ITransactionService {
+    <<service interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~*
+}
+
+class TransactionService {
+    <<service>>
+    - _repo : ITransactionRepository
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
+}
+
+%% ==================== BACKEND - REPOSITORIES ====================
+
+class ITransactionRepository {
+    <<repository interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~*
+}
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~
 }
 
 class TransactionListDto {
@@ -85,95 +98,48 @@ class TransactionListDto {
     + IsGiftClaimed : bool
 }
 
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Transaction {
-    + TransactionId : int
-    + Amount : decimal
-    + Currency : string?
-    + TransactionsStatus : string?
-    + TransactionCreatedAt : DateTime?
-    + AccountFromNavigation : User?
-    + OrderItem : OrderItem?
-    + InstructorPayouts : ICollection~InstructorPayout~
-}
-
-class OrderItem {
-    + OrderItemId : int
-    + Course : Course?
-}
-
-class Course {
-    + CourseId : int
-    + Title : string?
-    + Instructor : Instructor?
-}
-
-class User {
-    + UserId : int
-    + FullName : string?
-    + Email : string?
-}
-
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class ITransactionService {
-    <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
-}
-
-class ITransactionRepository {
-    <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
-}
-
-%% ==================== BACKEND - IMPLEMENTATIONS ====================
-
-class TransactionService {
-    - _repo : ITransactionRepository
-    
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
-}
-
-class TransactionRepository {
-    - _context : AppDbContext
-    
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
-}
+%% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Transactions : DbSet~Transaction~
+}
+
+%% ==================== BACKEND - ENTITIES ====================
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
+TransactionControllerFE ..> InstructorFinancePageVM
 InstructorFinancePageVM *-- TransactionPagedVM
 TransactionPagedVM *-- TransactionListItemVM
-PagedResultTransactionListDto *-- TransactionListDto
-Transaction *-- OrderItem
-Transaction *-- User
 
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-TransactionControllerBE --> ITransactionService
-TransactionService --> ITransactionRepository
-TransactionRepository --> AppDbContext
-OrderItem --> Course
-
-%% === INTERFACE REALIZATION ===
-TransactionService ..|> ITransactionService
-TransactionRepository ..|> ITransactionRepository
-
-%% === DEPENDENCY (dashed arrows) ===
 TransactionControllerFE ..> TransactionControllerBE
-TransactionControllerFE ..> InstructorFinancePageVM
-TransactionControllerBE ..> PagedResultTransactionListDto
-TransactionService ..> PagedResultTransactionListDto
-TransactionRepository ..> PagedResultTransactionListDto
+TransactionControllerBE --> ITransactionService
+
+TransactionService ..|> ITransactionService
+TransactionService --> ITransactionRepository
+
+TransactionRepository ..|> ITransactionRepository
+TransactionRepository --> AppDbContext
 TransactionRepository ..> TransactionListDto
-TransactionRepository ..> Transaction
+
+AppDbContext --> Transaction
 
 %% ==================== STYLES ====================
-
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
-```

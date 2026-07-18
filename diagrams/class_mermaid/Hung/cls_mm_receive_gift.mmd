@@ -1,5 +1,4 @@
-```mermaid
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
@@ -8,6 +7,8 @@ class GiftControllerFE["GiftController"] {
     <<frontend controller>>
     + ClaimGiftAjax(token: string) Task~IActionResult~
 }
+
+
 
 %% ==================== BACKEND - CONTROLLER ====================
 
@@ -123,6 +124,7 @@ class ITransactionRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class GiftService {
+    <<service>>
     - _giftRepo : IGiftRepository
     - _courseRepo : ICourseRepository
     - _enrollmentRepo : IEnrollmentRepository
@@ -134,6 +136,7 @@ class GiftService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class GiftRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByTokenAsync(token: string) Task~Gift?~
@@ -142,12 +145,14 @@ class GiftRepository {
 }
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(courseId: int) Task~Course?~
 }
 
 class EnrollmentRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~
@@ -157,6 +162,7 @@ class EnrollmentRepository {
 }
 
 class TransactionRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + RejectPendingRefundForGiftClaimedAsync(orderItemId: int) Task~bool~
@@ -165,6 +171,7 @@ class TransactionRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Gifts : DbSet~Gift~
     + Courses : DbSet~Course~
     + Enrollments : DbSet~Enrollment~
@@ -199,8 +206,6 @@ TransactionRepository ..|> ITransactionRepository
 %% === DEPENDENCY ===
 GiftControllerFE ..> GiftControllerBE
 GiftControllerBE ..> GiftClaimRequest
-GiftService ..> Gift
-GiftService ..> Course
 GiftService ..> Enrollment
 GiftRepository ..> Gift
 CourseRepository ..> Course
@@ -209,4 +214,3 @@ EnrollmentRepository ..> Enrollment
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
-```

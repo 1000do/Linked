@@ -310,14 +310,9 @@ public class AdminFinanceRepository : IAdminFinanceRepository
 
     // ── Refund ──────────────────────────────────────────────────────────────
 
-    public async Task<(List<Transaction> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
+    public async Task<(List<TransactionListDto> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
     {
         var query = _context.Transactions
-            .Include(t => t.OrderItem)
-                .ThenInclude(oi => oi!.Course)
-            .Include(t => t.AccountFromNavigation)
-                .ThenInclude(a => a!.User)
-            .Include(t => t.TransactionExt)
             .Where(t => t.TransactionsStatus == "refund_pending");
 
         var totalCount = await query.CountAsync();
@@ -326,6 +321,24 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             .OrderByDescending(t => t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : (DateTime?)null)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(t => new TransactionListDto
+            {
+                TransactionId   = t.TransactionId,
+                StripeSessionId = t.StripeSessionId,
+                Date            = t.TransactionCreatedAt,
+                Amount          = t.Amount,
+                Currency        = t.Currency ?? "USD",
+                Status          = t.TransactionsStatus,
+                BuyerName       = t.AccountFromNavigation != null && t.AccountFromNavigation.User != null ? t.AccountFromNavigation.User.FullName ?? "N/A" : "N/A",
+                CourseTitle     = t.OrderItem != null && t.OrderItem.Course != null ? t.OrderItem.Course.Title ?? "N/A" : "N/A",
+                InstructorName  = t.OrderItem != null && t.OrderItem.Course != null && t.OrderItem.Course.Instructor != null && t.OrderItem.Course.Instructor.InstructorNavigation != null ? t.OrderItem.Course.Instructor.InstructorNavigation.FullName ?? "N/A" : "N/A",
+                RefundReason    = t.TransactionExt != null ? t.TransactionExt.RefundReason : null,
+                RefundAdminNote = t.TransactionExt != null ? t.TransactionExt.RefundAdminNote : null,
+                RefundRequestedAt = t.TransactionExt != null ? t.TransactionExt.RefundRequestedAt : null,
+                IsGift          = _context.Gifts.Any(g => g.OrderItemId == t.OrderItemId),
+                RecipientEmail  = _context.Gifts.Where(g => g.OrderItemId == t.OrderItemId).Select(g => g.RecipientEmail).FirstOrDefault(),
+                IsGiftClaimed   = _context.Gifts.Any(g => g.OrderItemId == t.OrderItemId && g.IsClaimed)
+            })
             .ToListAsync();
 
         return (items, totalCount);

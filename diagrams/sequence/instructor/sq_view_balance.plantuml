@@ -41,6 +41,10 @@ participant ":TransactionListDto" as tx_dto
 participant ":IInstructorService" as inst_sv
 participant ":IInstructorRepository" as inst_repo
 participant ":InstructorPayoutDto" as po_dto
+participant ":IAdminFinanceService" as fin_sv
+participant ":IAdminFinanceRepository" as fin_repo
+participant ":InstructorCourseRevenueProjection" as cr_proj
+participant ":InstructorCourseRevenueResponse" as cr_res
 participant ":InstructorFinancePageVM" as vm
 participant ":AppDbContext" as ctx
 database Database as db
@@ -71,11 +75,14 @@ else Valid actor's authentication and authorization
         app_view -->> act --: Display application status
     else Status == "Approved"
         
-        par Fetch Balance Data Concurrently
-            fe_ctrl -> be_tx_ctrl ++: GET /api/transactions/instructor?page=1&pageSize=100000
+        fe_ctrl -> fe_ctrl ++: Fetch balance data concurrently
+        fe_ctrl --
+        
+        par Fetch Transactions
+            fe_ctrl -> be_tx_ctrl ++: GET /api/transactions/instructor
             be_tx_ctrl -> tx_sv ++: Call GetInstructorTransactionsAsync(...)
             tx_sv -> tx_repo ++: Call GetInstructorTransactionsAsync(...)
-            tx_repo -> ctx ++: Query all Transactions
+            tx_repo -> ctx ++: Query transactions
             ctx -> db ++: Execute query
             db -->> ctx --: Return database records
             ctx -->> tx_repo --: Return data
@@ -85,12 +92,13 @@ else Valid actor's authentication and authorization
             
             tx_repo -->> tx_sv --: Return list
             tx_sv -->> be_tx_ctrl --: Return PagedResult<TransactionListDto>
-            be_tx_ctrl -->> fe_ctrl --: Return statusCode 200 (All Transactions)
+            be_tx_ctrl -->> fe_ctrl --: Return statusCode 200
             
-            fe_ctrl -> be_inst_ctrl ++: GET /api/instructor/payouts?page=1&pageSize=100000
+        else Fetch Payouts
+            fe_ctrl -> be_inst_ctrl ++: GET /api/instructor/payouts
             be_inst_ctrl -> inst_sv ++: Call GetPayoutsAsync(...)
             inst_sv -> inst_repo ++: Call GetPayoutsAsync(...)
-            inst_repo -> ctx ++: Query all InstructorPayouts
+            inst_repo -> ctx ++: Query payouts
             ctx -> db ++: Execute query
             db -->> ctx --: Return database records
             ctx -->> inst_repo --: Return data
@@ -100,12 +108,32 @@ else Valid actor's authentication and authorization
             
             inst_repo -->> inst_sv --: Return list
             inst_sv -->> be_inst_ctrl --: Return PagedResult<InstructorPayoutDto>
-            be_inst_ctrl -->> fe_ctrl --: Return statusCode 200 (All Payouts)
+            be_inst_ctrl -->> fe_ctrl --: Return statusCode 200
             
+        else Fetch Course Revenues
+            fe_ctrl -> be_tx_ctrl ++: GET /api/transactions/instructor/course-revenues
+            be_tx_ctrl -> fin_sv ++: Call GetInstructorCourseRevenuesByInstructorAsync()
+            fin_sv -> fin_repo ++: Call GetInstructorCourseRevenuesByInstructorAsync()
+            fin_repo -> ctx ++: Query course revenues
+            ctx -> db ++: Execute query
+            db -->> ctx --: Return database records
+            ctx -->> fin_repo --: Return data
+            
+            fin_repo -> cr_proj ++: Call InstructorCourseRevenueProjection()
+            cr_proj -->> fin_repo --: Return projection list
+            fin_repo -->> fin_sv --: Return projection list
+            
+            fin_sv -> cr_res ++: Call InstructorCourseRevenueResponse()
+            cr_res -->> fin_sv --: Return response list
+            
+            fin_sv -->> be_tx_ctrl --: Return list
+            be_tx_ctrl -->> fe_ctrl --: Return statusCode 200
+            
+        else Fetch Payout Days
             fe_ctrl -> be_inst_ctrl ++: GET /api/instructor/payout-days
-            be_inst_ctrl -> inst_sv ++: Call GetPayoutDaysDelay()
-            inst_sv -->> be_inst_ctrl --: Return days config (e.g. 14)
-            be_inst_ctrl -->> fe_ctrl --: Return statusCode 200 (Days delay)
+            be_inst_ctrl -> fin_sv ++: Call GetPayoutDaysConfigAsync()
+            fin_sv -->> be_inst_ctrl --: Return days config
+            be_inst_ctrl -->> fe_ctrl --: Return statusCode 200
         end
         
         fe_ctrl -> fe_ctrl ++: Compute Financial Metrics (Gross, Refunded, Net Earnings, Pending, Withdrawn)

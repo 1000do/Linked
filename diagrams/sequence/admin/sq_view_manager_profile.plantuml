@@ -1,6 +1,13 @@
 @startuml 
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -10,7 +17,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white   
+            BackgroundColor white
         }
         groupHeader{
             BackgroundColor white
@@ -43,7 +50,8 @@ view ++
 act -> view: Access the profile page
 view -> fe_ctrl++: GET /AdminProfile/Index
 
-fe_ctrl -> fe_ctrl: Validate active login session
+fe_ctrl -> fe_ctrl++: Validate active login session
+deactivate fe_ctrl
 alt Session Expired / Unauthorized Access
     fe_ctrl -->> login_view: Redirect to /Account/Login
     activate login_view
@@ -52,7 +60,8 @@ alt Session Expired / Unauthorized Access
 else Valid Session
     fe_ctrl -> be_ctrl++: GET /api/admin/profile
     
-    be_ctrl -> be_ctrl: Validate ClaimTypes.NameIdentifier
+    be_ctrl -> be_ctrl++: Validate ClaimTypes.NameIdentifier
+    deactivate be_ctrl
     
     alt Session Invalid
         be_ctrl -->> fe_ctrl: Return statusCode 401
@@ -68,6 +77,9 @@ else Valid Session
         ctx -> db++: Execute SELECT
         db -->> ctx--: Data
         
+        ctx -> ctx++: Check returned Data
+        deactivate ctx
+        
         alt Manager Profile Not Found
             ctx -->> manager_repo: null
             manager_repo -->> profile_sv: null
@@ -81,14 +93,10 @@ else Valid Session
             ctx -->> manager_repo--: Manager Entity
             manager_repo -->> profile_sv--: Manager Entity
             
-            profile_sv -> profile_sv: Retrieve account's active lockout history\n(From ManagerNavigation.Lockouts)
-            
-            profile_sv -> profile_sv: Map to ManagerProfileResponse
             profile_sv -->> be_ctrl--: Return ManagerProfileResponse
             
             be_ctrl -->> fe_ctrl--: Return statusCode 200 (ManagerProfileResponse)
             
-            fe_ctrl -> fe_ctrl: Deserialize to AdminProfileViewModel
             fe_ctrl -->> view--: Return View(AdminProfileViewModel)
             
             view -->> act--: Display manager profile details,\naccount information, and lockout status

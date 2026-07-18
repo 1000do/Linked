@@ -162,10 +162,7 @@ else Valid actor's authentication and authorization
                         db -->> enroll_repo--: Return result
                         enroll_repo -->> sv--: Return result
                         
-                        opt rejected == true
-                            sv -> sv++: NotifyAdminFinanceOfRefundRejectionAsync()
-                            sv--
-                        end
+
                         
                         sv -->> be_ctrl--: Return result
                         be_ctrl -->> fe_ctrl--: Return statusCode 200
