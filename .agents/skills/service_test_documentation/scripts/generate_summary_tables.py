@@ -3,13 +3,14 @@ import os
 import re
 
 def main():
-    if len(sys.argv) != 4:
-        print("Usage: python generate_summary_tables.py <md_path> <cs_tests_path> <html_report_path>")
+    if len(sys.argv) < 4:
+        print("Usage: python generate_summary_tables.py <md_path> <cs_tests_path> <html_report_path> [user_initials]")
         sys.exit(1)
         
     md_path = sys.argv[1]
     cs_tests_path = sys.argv[2]
     html_report_path = sys.argv[3]
+    user_initials = sys.argv[4] if len(sys.argv) > 4 else "AnHK"
     
     if not os.path.exists(md_path) or not os.path.exists(cs_tests_path) or not os.path.exists(html_report_path):
         print("One or more files do not exist.")
@@ -123,41 +124,41 @@ def main():
         html_table = f'''<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">{func}</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">{func}</td>
+    <td colspan="3">{func}</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">{func}</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">{user_initials}</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">{user_initials}</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">{loc}</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">{loc}</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">{test_req}</td>
+    <td colspan="18">{test_req}</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">{p_count}</td>
-    <td colspan="1" style="text-align: center;">{f_count}</td>
-    <td colspan="1" style="text-align: center;">{untested}</td>
+    <td colspan="3" style="text-align: center;">{f_count}</td>
+    <td colspan="6" style="text-align: center;">{untested}</td>
     <td colspan="1" style="text-align: center;">{n_count}</td>
     <td colspan="1" style="text-align: center;">{a_count}</td>
     <td colspan="1" style="text-align: center;">{b_count}</td>
-    <td colspan="1" style="text-align: center;">{total_test_cases}</td>
+    <td colspan="6" style="text-align: center;">{total_test_cases}</td>
   </tr>
 </table>'''
         

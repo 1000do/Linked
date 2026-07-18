@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, Arial, sans-serif;
+        font-size: 10pt;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px dotted black;
+        padding: 5px;
+        text-align: left;
+    }
+    th {
+        background-color: #1a237e; /* Dark blue background */
+        color: white;
+        font-weight: bold;
+        text-align: center;
+    }
+    td.no-col {
+        text-align: right;
+    }
+    a {
+        color: blue;
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<table>
+    <tr>
+        <th>No</th>
+        <th>Function Name</th>
+        <th>Sheet Name</th>
+        <th>Description</th>
+        <th>Pre-Condition</th>
+    </tr>
+    <tr>
+        <td class="no-col">1</td>
+        <td>Report A Course</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Allows a user to report a course for violations (e.g., misleading content, copyright violation, spam, adult content). The system allows adding multiple reasons, validates the input, and submits the report to the server for moderation.</td>
+        <td>Authenticated enrolled user (not owner/manager). Course is in a reportable state.</td>
+    </tr>
+    <tr>
+        <td class="no-col">2</td>
+        <td>Report A Review</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Allows a user to report a course or lesson review for violations such as spam, offensive content, or fake reviews. The system prompts the user to select a reason and optionally provide a description before submitting the report for moderation.</td>
+        <td>Authenticated user.</td>
+    </tr>
+    <tr>
+        <td class="no-col">3</td>
+        <td>View List of User Reports</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Displays reported courses, reported course reviews, and reported lesson reviews submitted by users. All category reports are accessible via tabs and subtabs; Actor can switch between category subtabs without a page reload.</td>
+        <td>Authenticated Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">4</td>
+        <td>View Report Detail</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Displays details and evidence of a reported violation.</td>
+        <td>Authenticated Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">5</td>
+        <td>Filter Reports</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Filters reports by type (Course, Review, Lesson) or status.</td>
+        <td>Authenticated Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">6</td>
+        <td>Resolve Report</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Resolves a report by taking moderation action (e.g., removing content) and updating status.</td>
+        <td>Authenticated Staff or Admin. Target report is in a resolvable state.</td>
+    </tr>
+</table>
+
+</body>
+</html>
