@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -43,58 +50,51 @@ fe_ctrl -> be_ctrl++: POST /api/quizzes
 
 be_ctrl -> sv++: Call CreateQuizAsync(request, instructorId)
 
-sv -> repo++: Call IsTitleUniqueAsync(request.Title, instructorId)
-repo -->> sv--: Return isUnique
+sv -> sv++: Validate quiz options and title uniqueness
+sv--
 
-alt Title Not Unique
+alt Validation Failed
     sv -->> be_ctrl: throw ArgumentException
     be_ctrl -->> fe_ctrl: Return statusCode 400
     fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display unique title error message
-else Title Unique
-    alt TotalQuestions <= 0
+    view -->> act: Display validation error message
+else Validation Passed
+    sv -> sv++: Validate quiz distributions
+    sv--
+    
+    alt Distributions Invalid
         sv -->> be_ctrl: throw ArgumentException
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display total questions error message
-    else Valid Questions
-        sv -> sv++: Call ValidateQuizDistributionsAsync(distributions, totalQuestions)
+        view -->> act: Display invalid distribution message
+    else Distributions Valid
+        sv -> sv++: Map request to Quiz entity
         sv--
         
-        alt Distributions Invalid
-            sv -->> be_ctrl: throw ArgumentException
-            be_ctrl -->> fe_ctrl: Return statusCode 400
+        sv -> repo++: Call CreateAsync(quiz)
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Insert Quiz and Distributions
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display invalid distribution message
-        else Distributions Valid
-            sv -> sv++: Map request to Quiz entity
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return createdQuiz
+            repo -->> sv--: Return createdQuiz
+            
+            sv -> sv++: Map to QuizDetailResponse
             sv--
             
-            sv -> repo++: Call CreateAsync(quiz)
-            repo -> ctx++: Save changes to database
-            ctx -> db++: Insert Quiz and Distributions
-            
-            alt Database Save Failure
-                db -->> ctx: throw DbUpdateException
-                ctx -->> repo: throw DbUpdateException
-                repo -->> sv: throw DbUpdateException
-                sv -->> be_ctrl: throw DbUpdateException
-                be_ctrl -->> fe_ctrl: Return statusCode 500
-                fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display server error message
-            else Database Save Success
-                db -->> ctx--: Return returnCode
-                ctx -->> repo--: Return createdQuiz
-                repo -->> sv--: Return createdQuiz
-                
-                sv -> sv++: Call MapToDetail(createdQuiz)
-                sv--
-                
-                sv -->> be_ctrl--: Return QuizDetailResponse object
-                be_ctrl -->> fe_ctrl--: Return statusCode 200
-                fe_ctrl -->> view--: Return JSON (success=true)
-                view -->> act--: Display quiz created successfully
-            end
+            sv -->> be_ctrl--: Return QuizDetailResponse object
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display quiz created successfully
         end
     end
 end

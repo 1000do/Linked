@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -51,40 +58,55 @@ db -->> ctx--: Return query results
 ctx -->> repo--: Return enrollment entity
 repo -->> sv--: Return enrollment entity
 
-alt Enrollment Not Found
-    sv -> course_repo++: Call GetByIdAsync(courseId)
-    course_repo -->> sv--: Return course entity
-    
-    alt Course Found and User is Instructor
+alt Enrollment == null
+    sv -> sv++: Check Instructor Bypass
+    sv--
+    alt Is Instructor
         sv -> course_repo++: Call GetCourseStatsAsync(courseId)
+        course_repo -> ctx++: Execute query
+        ctx -> db++: Fetch course stats
+        db -->> ctx--: Return query results
+        ctx -->> course_repo--: Return course stats
         course_repo -->> sv--: Return course stats
         
         sv -> res++: Call ProgressResponse()
         res -->> sv--: Return ProgressResponse object (mocked full progress)
         sv -->> be_ctrl: Return ProgressResponse object
-    else Course Not Found or User is Not Instructor
+    else Not Instructor
         sv -->> be_ctrl: Return null
     end
-else Enrollment Found
+else Enrollment != null
+    sv -> course_repo++: Call GetCourseStatsAsync(courseId)
+    course_repo -> ctx++: Execute query
+    ctx -> db++: Fetch course stats
+    db -->> ctx--: Return query results
+    ctx -->> course_repo--: Return course stats
+    course_repo -->> sv--: Return course stats
+
     sv -> repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
+    repo -> ctx++: Execute query
+    ctx -> db++: Fetch completed count
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return completed count
     repo -->> sv--: Return completed count
     
-    sv -> course_repo++: Call GetCourseStatsAsync(courseId)
-    course_repo -->> sv--: Return course stats
-    
-    sv -> repo++: Call GetLastAccessedMaterialIdAsync(enrollmentId)
-    repo -->> sv--: Return last accessed material id
+    sv -> repo++: Call GetCompletedMaterialIdsAsync(enrollmentId)
+    repo -> ctx++: Execute query
+    ctx -> db++: Fetch completed ids
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return completed ids
+    repo -->> sv--: Return completed material ids
     
     sv -> res++: Call ProgressResponse()
     res -->> sv--: Return ProgressResponse object
     sv -->> be_ctrl: Return ProgressResponse object
 end
 
-alt Progress Not Found
+alt Progress == null
     be_ctrl -->> fe_ctrl: Return statusCode 404
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display error message
-else Progress Found
+else Progress != null
     be_ctrl -->> fe_ctrl--: Return statusCode 200
     fe_ctrl -->> view--: Return JSON (success=true)
     view -->> act--: Display learning progress

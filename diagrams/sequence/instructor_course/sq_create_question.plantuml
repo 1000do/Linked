@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -47,8 +54,8 @@ fe_ctrl -> be_ctrl++: POST /api/QuestionBank/courses/{courseId}/questions
 
 be_ctrl -> sv++: Call AddQuestionAsync(courseId, request, instructorId)
 
-sv -> sv++: Call ValidateQuizOptions(request.Options)
-sv--
+    sv -> sv++: Validate Quiz Options
+    sv--
 
 alt Invalid Options
     sv -->> be_ctrl: throw ArgumentException
@@ -56,11 +63,11 @@ alt Invalid Options
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display validation error message
 else Valid Options
-    sv -> sv++: Call EnsureInstructorOwnsCourseAsync(courseId, instructorId)
-    sv--
-    
     sv -> course_repo++: Call GetByIdAsync(courseId)
     course_repo -->> sv--: Return course entity
+
+    sv -> sv++: Validate Course Ownership
+    sv--
     
     alt Course Not Found Or Unauthorized
         sv -->> be_ctrl: throw UnauthorizedAccessException

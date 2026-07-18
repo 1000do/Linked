@@ -3,18 +3,19 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LearningControllerFE["LearningController"] {
+class CourseControllerFE["CourseController"] {
     <<frontend controller>>
-    + Progress(courseId: int) Task~IActionResult~
+    + GetProgress(id: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class EnrollmentController {
+class EnrollmentControllerBE["EnrollmentController"] {
     <<backend controller>>
     - _enrollmentService : IEnrollmentService
     
     + GetProgress(courseId: int) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -27,17 +28,34 @@ class ProgressResponse {
     + CompletedMaterialIds : List~int~
 }
 
+class CourseStats {
+    <<dto>>
+    + CourseId : int
+    + TotalStudents : int
+    + RatingAverage : decimal
+    + TotalReviews : int
+    + TotalLessons : int
+    + TotalMaterials : int
+    + TotalVideoDuration : int
+}
+
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Enrollment {
     <<entity>>
     + EnrollmentId : int
-    + UserId : int
-    + CourseId : int
-    + EnrolledAt : DateTime?
+    + UserId : int?
+    + CourseId : int?
+    + Title : string?
+    + Description : string?
+    + CompletedDate : DateOnly?
+    + IsCompleted : bool?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
     + Course : Course?
     + User : User?
-    + LearnedMaterials : ICollection~LearnedMaterial~
+    + MaterialCompletions : ICollection~MaterialCompletion~
 }
 
 class Course {
@@ -65,24 +83,26 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IEnrollmentService {
-    <<interface>>
+    <<service interface>>
     + GetProgressAsync(userId: int, courseId: int) Task~ProgressResponse?~ *
 }
 
 class IEnrollmentRepository {
-    <<interface>>
+    <<repository interface>>
     + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~ *
+    + GetCompletedMaterialCountAsync(enrollmentId: int) Task~int~ *
+    + GetCompletedMaterialIdsAsync(enrollmentId: int) Task~List~int~~ *
 }
 
 class ICourseRepository {
-    <<interface>>
-    + GetByIdAsync(id: int) Task~Course?~ *
-    + GetCourseStatsAsync(courseId: int) Task~CourseStatsDto?~ *
+    <<repository interface>>
+    + GetCourseStatsAsync(courseId: int) Task~CourseStats?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class EnrollmentService {
+    <<service>>
     - _repo : IEnrollmentRepository
     - _courseRepo : ICourseRepository
     
@@ -92,21 +112,25 @@ class EnrollmentService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class EnrollmentRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~
+    + GetCompletedMaterialCountAsync(enrollmentId: int) Task~int~
+    + GetCompletedMaterialIdsAsync(enrollmentId: int) Task~List~int~~
 }
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetByIdAsync(id: int) Task~Course?~
-    + GetCourseStatsAsync(courseId: int) Task~CourseStatsDto?~
+    + GetCourseStatsAsync(courseId: int) Task~CourseStats?~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Enrollments : DbSet~Enrollment~
     + Courses : DbSet~Course~
 }
@@ -114,7 +138,7 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
-EnrollmentController --> IEnrollmentService
+EnrollmentControllerBE --> IEnrollmentService
 EnrollmentService --> IEnrollmentRepository
 EnrollmentService --> ICourseRepository
 EnrollmentRepository --> AppDbContext
@@ -126,13 +150,13 @@ EnrollmentRepository ..|> IEnrollmentRepository
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY ===
-LearningControllerFE ..> EnrollmentController
-EnrollmentController ..> ProgressResponse
+CourseControllerFE ..> EnrollmentControllerBE
+EnrollmentControllerBE ..> ProgressResponse
 EnrollmentService ..> ProgressResponse
 EnrollmentService ..> Enrollment
-EnrollmentService ..> Course
+EnrollmentService ..> CourseStats
 EnrollmentRepository ..> Enrollment
-CourseRepository ..> Course
+CourseRepository ..> CourseStats
 
 %% ==================== STYLES ====================
 

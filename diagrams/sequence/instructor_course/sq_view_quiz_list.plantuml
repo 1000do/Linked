@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -32,7 +39,7 @@ participant "QuizListPage" as view
 participant "QuizController" as fe_ctrl <<frontend controller>>
 participant "QuizController" as be_ctrl <<backend controller>>
 participant ":QuizService" as sv
-participant ":QuizListResponse" as res
+participant ":QuizSummaryResponse" as res
 participant ":IQuizRepository" as repo
 
 act ++
@@ -41,17 +48,17 @@ view -> fe_ctrl++: GET /Quiz/Index
 
 fe_ctrl -> be_ctrl++: GET /api/quizzes
 
-be_ctrl -> sv++: Call GetInstructorQuizzesAsync(instructorId)
+be_ctrl -> sv++: Call GetMyQuizzesAsync(instructorId)
 
-sv -> repo++: Call GetQuizzesByInstructorAsync(instructorId)
+sv -> repo++: Call GetByInstructorAsync(instructorId)
 repo -->> sv--: Return List<Quiz>
 
 loop For each Quiz in list
-    sv -> res++: Call QuizListResponse()
-    res -->> sv--: Return QuizListResponse object
+    sv -> res++: Call QuizSummaryResponse()
+    res -->> sv--: Return QuizSummaryResponse object
 end
 
-sv -->> be_ctrl--: Return List<QuizListResponse>
+sv -->> be_ctrl--: Return List<QuizSummaryResponse>
 be_ctrl -->> fe_ctrl--: Return statusCode 200
 
 fe_ctrl -> fe_ctrl++: Parse JSON to List<QuizSummaryItem>

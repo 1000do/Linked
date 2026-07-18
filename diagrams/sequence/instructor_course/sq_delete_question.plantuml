@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -54,11 +61,11 @@ alt Question Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display not found error message
 else Question Found
-    sv -> sv++: Call EnsureInstructorOwnsCourseAsync(question.CourseId, instructorId)
-    sv--
-    
     sv -> course_repo++: Call GetByIdAsync(courseId)
     course_repo -->> sv--: Return course entity
+
+    sv -> sv++: Validate Course Ownership
+    sv--
     
     alt Course Not Found Or Unauthorized
         sv -->> be_ctrl: throw UnauthorizedAccessException
@@ -72,7 +79,7 @@ else Question Found
         ctx -> db++: Query database
         db -->> ctx--: Return record
         
-        opt Question Exists in Context
+        alt Question Exists in Context
             repo -> ctx: Call Remove(question)
             repo -> ctx: Call SaveChangesAsync()
             ctx -> db++: Delete record from database
@@ -89,11 +96,13 @@ else Question Found
                 db -->> ctx--: Return returnCode
                 ctx -->> repo: Return numberOfRowsAffected
             end
+        else Question Not In Context
+            repo -> repo: Return
         end
         
-        repo -->> sv--: Return void
+        repo -->> sv--: Return result
         
-        sv -->> be_ctrl--: Return void
+        sv -->> be_ctrl--: Return result
         be_ctrl -->> fe_ctrl--: Return statusCode 204
         fe_ctrl -->> view--: Return JSON (success=true)
         view -->> act--: Display question deleted successfully

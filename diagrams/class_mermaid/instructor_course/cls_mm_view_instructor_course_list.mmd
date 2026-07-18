@@ -41,25 +41,21 @@ class CourseListViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class CourseController {
+class CourseControllerBE["CourseController"] {
     <<backend controller>>
     - _courseQueryService : ICourseQueryService
-    + GetInstructorCourses(page: int, pageSize: int, query: string?, status: string?) Task~IActionResult~
+    + GetMyCourses(search: string?, status: string?, page: int?, pageSize: int?) Task~IActionResult~
+    - GetInstructorId() int
 }
 
-class InstructorController {
+class InstructorControllerBE["InstructorController"] {
     <<backend controller>>
     - _instructorService : IInstructorService
-    + GetInstructorDashboardAsync() Task~IActionResult~
+    + GetDashboard() Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
-
-class PagedResultCourseResponse["PagedResult~CourseResponse~"] {
-    <<dto>>
-    + Items : List~CourseResponse~
-    + TotalCount : int
-}
 
 class CourseResponse {
     <<dto>>
@@ -96,16 +92,6 @@ class Course {
     + UpdatedAt : DateTime?
     + CourseStatus : string?
     + CourseFlagCount : int?
-    + CourseAiIntegrations : ICollection~CourseAiIntegration~
-    + CartItems : ICollection~CartItem~
-    + Category : Category?
-    + Coupon : Coupon?
-    + Enrollments : ICollection~Enrollment~
-    + Instructor : Instructor?
-    + Lessons : ICollection~Lesson~
-    + OrderItems : ICollection~OrderItem~
-    + WishlistItems : ICollection~WishlistItem~
-    + CourseExt : CourseExt?
     + WhatYouWillLearn : string?
     + Requirements : string?
     + ModerationFeedback : string?
@@ -134,32 +120,27 @@ class Enrollment {
     + EnrollDate : DateOnly?
     + LastAccessedAt : DateTime?
     + EnrollmentStatus : string?
-    + Course : Course?
-    + CourseReviews : ICollection~CourseReview~
-    + LessonReviews : ICollection~LessonReview~
-    + User : User?
-    + MaterialCompletions : ICollection~MaterialCompletion~
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseQueryService {
-    <<interface>>
-    + GetInstructorCoursesAsync(instructorId: int, page: int, pageSize: int, query: string, status: string) Task~PagedResult~CourseResponse~~ *
+    <<service interface>>
+    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) Task~PagedResult~CourseResponse~~ *
 }
 
 class IInstructorService {
-    <<interface>>
+    <<service interface>>
     + GetInstructorDashboardAsync(userId: int) Task~InstructorDashboardDto?~ *
 }
 
 class ICourseRepository {
-    <<interface>>
-    + GetInstructorCoursesAsync(...) Task~PagedResult~CourseResponse~~ *
+    <<repository interface>>
+    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) Task~(IEnumerable~Course~ Courses, int TotalCount)~ *
 }
 
 class IInstructorRepository {
-    <<interface>>
+    <<repository interface>>
     + GetDashboardDtoAsync(userId: int) Task~InstructorDashboardDto?~ *
     + GetEnrollmentGrowthAsync(instructorId: int) Task~double~ *
     + GetInstructorRankingPercentageAsync(instructorId: int) Task~int~ *
@@ -168,11 +149,13 @@ class IInstructorRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseQueryService {
+    <<service>>
     - _courseRepository : ICourseRepository
-    + GetInstructorCoursesAsync(...) Task~PagedResult~CourseResponse~~
+    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) Task~PagedResult~CourseResponse~~
 }
 
 class InstructorService {
+    <<service>>
     - _repo : IInstructorRepository
     + GetInstructorDashboardAsync(userId: int) Task~InstructorDashboardDto?~
 }
@@ -180,11 +163,13 @@ class InstructorService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
-    + GetInstructorCoursesAsync(...) Task~PagedResult~CourseResponse~~
+    + GetInstructorCoursesPagedAsync(instructorId: int, search: string?, status: string?, page: int?, pageSize: int?) Task~(IEnumerable~Course~ Courses, int TotalCount)~
 }
 
 class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetDashboardDtoAsync(userId: int) Task~InstructorDashboardDto?~
     + GetEnrollmentGrowthAsync(instructorId: int) Task~double~
@@ -194,6 +179,7 @@ class InstructorRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
     + InstructorStats : DbSet~InstructorStats~
     + Enrollments : DbSet~Enrollment~
@@ -202,13 +188,12 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === COMPOSITION & AGGREGATION ===
-InstructorStudioViewModel o-- CourseListViewModel
-PagedResultCourseResponse o-- CourseResponse
-Course -- Enrollment
+InstructorStudioViewModel *-- CourseListViewModel
+Course *-- Enrollment
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
-CourseController --> ICourseQueryService
-InstructorController --> IInstructorService
+CourseControllerBE --> ICourseQueryService
+InstructorControllerBE --> IInstructorService
 
 CourseQueryService --> ICourseRepository
 InstructorService --> IInstructorRepository
@@ -222,14 +207,13 @@ InstructorService ..|> IInstructorService
 CourseRepository ..|> ICourseRepository
 InstructorRepository ..|> IInstructorRepository
 
-%% === DEPENDENCY (dashed arrows) ===
-InstructorCourseControllerFE ..> CourseController
-InstructorCourseControllerFE ..> InstructorController
+%% === DEPENDENCY ===
+InstructorCourseControllerFE ..> CourseControllerBE
+InstructorCourseControllerFE ..> InstructorControllerBE
 InstructorCourseControllerFE ..> InstructorStudioViewModel
 
-CourseQueryService ..> PagedResultCourseResponse
+CourseQueryService ..> CourseResponse
 CourseRepository ..> Course
-CourseRepository ..> PagedResultCourseResponse
 
 InstructorService ..> InstructorDashboardDto
 InstructorRepository ..> InstructorDashboardDto

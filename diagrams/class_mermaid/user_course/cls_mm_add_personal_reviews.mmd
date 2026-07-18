@@ -3,9 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class ReviewControllerFE["ReviewController"] {
+class CourseControllerFE["CourseController"] {
     <<frontend controller>>
-    + SubmitReview(request: ReviewRequest) Task~IActionResult~
+    + SubmitReview(body: JsonElement, source: string) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -15,64 +15,103 @@ class ReviewControllerBE["ReviewController"] {
     - _reviewService : IReviewService
     
     + SubmitReview(request: ReviewRequest, source: string) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
 
 class ReviewRequest {
     <<dto>>
-    + Type : string
-    + TargetId : int
+    + CourseId : int
+    + LessonId : int?
     + Rating : int
-    + Content : string?
+    + Comment : string?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CourseReview {
     <<entity>>
-    + ReviewId : int
-    + UserId : int
-    + CourseId : int
-    + Rating : int
-    + Content : string?
+    + CourseReviewId : int
+    + EnrollmentId : int
+    + Rating : int?
+    + Comment : string?
+    + CourseReviewStatus : string?
+    + IsRemoved : bool?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
-    + Course : Course?
-    + User : User?
+    + AiThreatLevel : AiThreatLevel
+    + Enrollment : Enrollment?
+    + Reports : ICollection~Report~
 }
 
 class LessonReview {
     <<entity>>
-    + ReviewId : int
-    + UserId : int
+    + LessonReviewId : int
+    + EnrollmentId : int
     + LessonId : int
-    + Rating : int
-    + Content : string?
+    + Rating : int?
+    + Comment : string?
+    + LessonReviewStatus : string?
+    + IsRemoved : bool?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
+    + AiThreatLevel : AiThreatLevel
+    + Enrollment : Enrollment?
     + Lesson : Lesson?
+    + Reports : ICollection~Report~
+}
+
+class UserLockout {
+    <<entity>>
+    + LockoutId : int
+    + UserId : int
+    + LockoutType : string
+    + LockoutEnd : DateTime?
+    + Reason : string?
+    + CreatedAt : DateTime?
     + User : User?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IReviewService {
-    <<interface>>
+    <<service interface>>
     + SubmitReviewAsync(userId: int, request: ReviewRequest, requireCompletion: bool) Task *
 }
 
 class IReviewRepository {
-    <<interface>>
-    + AddCourseReviewAsync(review: CourseReview) void *
-    + AddLessonReviewAsync(review: LessonReview) void *
+    <<repository interface>>
+    + AddCourseReviewAsync(review: CourseReview) Task *
+    + AddLessonReviewAsync(review: LessonReview) Task *
     + SaveChangesAsync() Task~int~ *
+}
+
+class IEnrollmentRepository {
+    <<repository interface>>
+    + GetEnrollmentWithProgressAsync(userId: int, courseId: int) Task~Enrollment?~ *
+    + GetCompletedMaterialCountAsync(enrollmentId: int) Task~int~ *
+}
+
+class IUserLockoutRepository {
+    <<repository interface>>
+    + GetActiveLockoutAsync(userId: int, type: string) Task~UserLockout?~ *
+}
+
+class ICourseRepository {
+    <<repository interface>>
+    + GetCourseStatsAsync(courseId: int) Task~CourseStats?~ *
+    + IsOwnerAsync(userId: int, courseId: int) Task~bool~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ReviewService {
+    <<service>>
     - _reviewRepo : IReviewRepository
+    - _enrollmentRepo : IEnrollmentRepository
+    - _lockoutRepo : IUserLockoutRepository
+    - _courseRepo : ICourseRepository
     
     + SubmitReviewAsync(userId: int, request: ReviewRequest, requireCompletion: bool) Task
 }
@@ -80,18 +119,46 @@ class ReviewService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ReviewRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + AddCourseReviewAsync(review: CourseReview) void
-    + AddLessonReviewAsync(review: LessonReview) void
+    + AddCourseReviewAsync(review: CourseReview) Task
+    + AddLessonReviewAsync(review: LessonReview) Task
     + SaveChangesAsync() Task~int~
+}
+
+class EnrollmentRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetEnrollmentWithProgressAsync(userId: int, courseId: int) Task~Enrollment?~
+    + GetCompletedMaterialCountAsync(enrollmentId: int) Task~int~
+}
+
+class UserLockoutRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetActiveLockoutAsync(userId: int, type: string) Task~UserLockout?~
+}
+
+class CourseRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetCourseStatsAsync(courseId: int) Task~CourseStats?~
+    + IsOwnerAsync(userId: int, courseId: int) Task~bool~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CourseReviews : DbSet~CourseReview~
     + LessonReviews : DbSet~LessonReview~
+    + Enrollments : DbSet~Enrollment~
+    + UserLockouts : DbSet~UserLockout~
+    + Courses : DbSet~Course~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -99,20 +166,30 @@ class AppDbContext {
 %% === UNIDIRECTIONAL ASSOCIATION ===
 ReviewControllerBE --> IReviewService
 ReviewService --> IReviewRepository
+ReviewService --> IEnrollmentRepository
+ReviewService --> IUserLockoutRepository
+ReviewService --> ICourseRepository
 ReviewRepository --> AppDbContext
+EnrollmentRepository --> AppDbContext
+UserLockoutRepository --> AppDbContext
+CourseRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 ReviewService ..|> IReviewService
 ReviewRepository ..|> IReviewRepository
+EnrollmentRepository ..|> IEnrollmentRepository
+UserLockoutRepository ..|> IUserLockoutRepository
+CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY ===
-ReviewControllerFE ..> ReviewControllerBE
+CourseControllerFE ..> ReviewControllerBE
 ReviewControllerBE ..> ReviewRequest
 ReviewService ..> ReviewRequest
 ReviewService ..> CourseReview
 ReviewService ..> LessonReview
 ReviewRepository ..> CourseReview
 ReviewRepository ..> LessonReview
+ReviewService ..> UserLockout
 
 %% ==================== STYLES ====================
 

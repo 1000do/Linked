@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -72,15 +79,23 @@ else Valid actor's authentication and authorization
         be_ctrl -> sv++: Call EnrollFreeAsync(userId, courseId)
         
         sv -> course_repo++: Call GetByIdAsync(courseId)
+        course_repo -> ctx++: Execute query
+        ctx -> db++: Fetch course
+        db -->> ctx--: Return query results
+        ctx -->> course_repo--: Return course entity
         course_repo -->> sv--: Return course entity
         
-        alt Course Not Found, Not Published, Paid, or Owned By User
+        alt Course == null OR CourseStatus != Published OR Price > 0 OR InstructorId == userId
             sv -->> be_ctrl: throw InvalidOperationException
             be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success=false)
             view -->> act: Display enrollment error message
         else Valid Course
             sv -> course_repo++: Call IsEnrolledAsync(userId, courseId)
+            course_repo -> ctx++: Execute query
+            ctx -> db++: Check enrollment
+            db -->> ctx--: Return query results
+            ctx -->> course_repo--: Return IsEnrolled flag
             course_repo -->> sv--: Return IsEnrolled flag
             
             alt Already Enrolled
@@ -90,12 +105,18 @@ else Valid actor's authentication and authorization
                 view -->> act: Display already enrolled message
             else Not Enrolled
                 sv -> repo++: Call BeginTransactionAsync()
+                repo -> ctx++: Begin transaction
+                ctx -> db++: Begin db transaction
+                db -->> ctx--: Return result
+                ctx -->> repo--: Return transaction
                 repo -->> sv--: Return transaction
                 
                 sv -> ett++: Call Enrollment()
                 ett -->> sv--: Return Enrollment entity
                 
                 sv -> repo++: Call AddEnrollmentAsync(enrollment)
+                repo -> ctx++: Add entity
+                ctx -->> repo--: Return
                 repo -->> sv--: Return result
                 
                 sv -> repo++: Call SaveChangesAsync()
@@ -106,6 +127,8 @@ else Valid actor's authentication and authorization
                     db -->> ctx: throw DbUpdateException
                     ctx -->> repo: throw DbUpdateException
                     repo -->> sv: throw DbUpdateException
+                    sv -> sv++: Call transaction.RollbackAsync()
+                    sv--
                     sv -->> be_ctrl: throw DbUpdateException
                     be_ctrl -->> fe_ctrl: Return statusCode 500
                     fe_ctrl -->> view: Return JSON (success=false)
@@ -115,12 +138,17 @@ else Valid actor's authentication and authorization
                     ctx -->> repo--: Return numberOfRowsAffected
                     repo -->> sv--: Return numberOfRowsAffected
                     
-                    sv -> repo++: Call CommitAsync()
-                    repo -->> sv--: Return result
+                    sv -> sv++: Call transaction.CommitAsync()
+                    sv--
                     
-                    opt course has Instructor
+                    opt course.InstructorId HasValue
                         sv -> user_repo++: Call GetUserByIdAsync(userId)
+                        user_repo -> ctx++: Execute query
+                        ctx -> db++: Fetch user
+                        db -->> ctx--: Return query results
+                        ctx -->> user_repo--: Return user entity
                         user_repo -->> sv--: Return student entity
+                        
                         sv -> notif_sv++: Call SendNotificationAsync(InstructorId, content)
                         notif_sv -->> sv--: Return result
                     end

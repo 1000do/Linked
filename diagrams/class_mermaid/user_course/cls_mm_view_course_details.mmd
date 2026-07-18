@@ -15,6 +15,7 @@ class CoursePublicController {
     - _courseQueryService : ICourseQueryService
     
     + GetCourseDetails(id: int) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -81,36 +82,37 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseQueryService {
-    <<interface>>
+    <<service interface>>
     + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCourseWithDetailsAsync(courseId: int) Task~Course?~ *
-    + GetCourseStatsAsync(courseId: int) Task~CourseStatsDto?~ *
     + IsEnrolledAsync(userId: int, courseId: int) Task~bool~ *
+    + IsOwnerAsync(userId: int, courseId: int) Task~bool~ *
 }
 
 class IInstructorRepository {
-    <<interface>>
-    + GetStatsAsync(instructorId: int) Task~InstructorStatsDto?~ *
+    <<repository interface>>
+    + GetStatsAsync(userId: int) Task~InstructorStats?~ *
 }
 
 class ICartRepository {
-    <<interface>>
+    <<repository interface>>
     + IsCourseInAnyCartAsync(courseId: int) Task~bool~ *
 }
 
 class IRedisService {
-    <<interface>>
-    + GetCacheAsync~T~(key: string) Task~T?~ *
-    + SetCacheAsync~T~(key: string, value: T, expiration: TimeSpan) Task *
+    <<service interface>>
+    + GetCacheAsync(key: string) Task~T?~ *
+    + SetCacheAsync(key: string, value: T, expiry: TimeSpan?) Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseQueryService {
+    <<service>>
     - _courseRepository : ICourseRepository
     - _instructorRepository : IInstructorRepository
     - _cartRepository : ICartRepository
@@ -122,16 +124,32 @@ class CourseQueryService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetCourseWithDetailsAsync(courseId: int) Task~Course?~
-    + GetCourseStatsAsync(courseId: int) Task~CourseStatsDto?~
     + IsEnrolledAsync(userId: int, courseId: int) Task~bool~
+    + IsOwnerAsync(userId: int, courseId: int) Task~bool~
+}
+
+class InstructorRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetStatsAsync(userId: int) Task~InstructorStats?~
+}
+
+class CartRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + IsCourseInAnyCartAsync(courseId: int) Task~bool~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
 }
 
@@ -144,10 +162,14 @@ CourseQueryService --> IInstructorRepository
 CourseQueryService --> ICartRepository
 CourseQueryService --> IRedisService
 CourseRepository --> AppDbContext
+InstructorRepository --> AppDbContext
+CartRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 CourseQueryService ..|> ICourseQueryService
 CourseRepository ..|> ICourseRepository
+InstructorRepository ..|> IInstructorRepository
+CartRepository ..|> ICartRepository
 
 %% === DEPENDENCY ===
 CourseControllerFE ..> CoursePublicController

@@ -5,7 +5,33 @@ direction LR
 
 class QuizControllerFE["QuizController"] {
     <<frontend controller>>
-    + QuizList() Task~IActionResult~
+    + Index(searchTerm: string?, page: int) Task~IActionResult~
+}
+
+class QuizListViewModel {
+    <<view model>>
+    + TotalCount : int
+    + CurrentPage : int
+    + TotalPages : int
+    + FilterStatus : string?
+    + SearchTerm : string?
+    + Quizzes : List~QuizSummaryItem~
+    + AvailableCourses : List~CourseListViewModel~
+}
+
+class QuizSummaryItem {
+    <<view model>>
+    + QuizId : int
+    + Title : string
+    + Description : string?
+    + QuestionCount : int
+    + TimeLimitMinutes : int?
+    + PassingScore : int
+    + CourseTitle : string
+    + IsHidden : bool
+    + IsRemoved : bool
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -20,14 +46,21 @@ class QuizControllerBE["QuizController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class QuizListResponse {
+class QuizSummaryResponse {
     <<dto>>
     + QuizId : int
     + Title : string
+    + Description : string?
     + CourseId : int
-    + LessonId : int?
+    + CourseTitle : string
+    + TotalQuestions : int
+    + QuestionCount : int
+    + TimeLimitMinutes : int?
+    + PassingScore : int
     + IsHidden : bool
+    + IsRemoved : bool
     + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -35,75 +68,65 @@ class QuizListResponse {
 class Quiz {
     <<entity>>
     + QuizId : int
-    + CourseId : int
-    + LessonId : int?
+    + InstructorId : int
     + Title : string
     + Description : string?
     + TimeLimitMinutes : int?
-    + PassingScore : int?
-    + MaxAttempts : int?
+    + PassingScore : int
+    + TotalQuestions : int
+    + CourseId : int
     + IsHidden : bool
     + IsRemoved : bool
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
 }
 
-class Lesson {
-    <<entity>>
-    + LessonId : int
-    + Title : string
-}
-
-class Course {
-    <<entity>>
-    + CourseId : int
-    + Title : string
-}
-
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IQuizService {
-    <<interface>>
-    + GetMyQuizzesAsync(instructorId: int) Task~List~QuizListResponse~~ *
+    <<service interface>>
+    + GetMyQuizzesAsync(instructorId: int) Task~List~QuizSummaryResponse~~ *
 }
 
 class IQuizRepository {
-    <<interface>>
-    + GetInstructorQuizzesAsync(instructorId: int) Task~List~Quiz~~ *
+    <<repository interface>>
+    + GetByInstructorAsync(instructorId: int) Task~List~Quiz~~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class QuizService {
+    <<service>>
     - _quizRepo : IQuizRepository
     
-    + GetMyQuizzesAsync(instructorId: int) Task~List~QuizListResponse~~
+    + GetMyQuizzesAsync(instructorId: int) Task~List~QuizSummaryResponse~~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class QuizRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetInstructorQuizzesAsync(instructorId: int) Task~List~Quiz~~
+    + GetByInstructorAsync(instructorId: int) Task~List~Quiz~~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Quizzes : DbSet~Quiz~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION ===
-Lesson *-- Quiz
-Course *-- Quiz
-
 %% === UNIDIRECTIONAL ASSOCIATION ===
 QuizControllerBE --> IQuizService
 QuizService --> IQuizRepository
 QuizRepository --> AppDbContext
+
+%% === AGGREGATION & COMPOSITION ===
+QuizListViewModel *-- QuizSummaryItem
 
 %% === INTERFACE REALIZATION ===
 QuizService ..|> IQuizService
@@ -111,8 +134,9 @@ QuizRepository ..|> IQuizRepository
 
 %% === DEPENDENCY ===
 QuizControllerFE ..> QuizControllerBE
-QuizControllerBE ..> QuizListResponse
-QuizService ..> QuizListResponse
+QuizControllerFE ..> QuizListViewModel
+QuizControllerBE ..> QuizSummaryResponse
+QuizService ..> QuizSummaryResponse
 QuizService ..> Quiz
 QuizRepository ..> Quiz
 

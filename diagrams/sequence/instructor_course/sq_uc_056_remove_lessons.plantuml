@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,18 +36,17 @@ mainframe Remove Lessons
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
 participant ":ILessonRepository" as repo
-participant ":IMaterialRepository" as material_repo
 participant ":ICourseRepository" as course_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Click Delete Lesson
-view -> fe_ctrl++: DELETE /Lesson/DeleteLesson/{id}
+view -> fe_ctrl++: DELETE /InstructorCourse/RemoveLesson/{lessonId}
 fe_ctrl -> be_ctrl++: DELETE /api/lessons/{id}
 
 be_ctrl -> sv++: Call DeleteLessonAsync(id, instructorId)
@@ -58,37 +64,51 @@ alt Lesson Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display lesson not found message
 else Lesson Found
-    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    sv -> sv++: Validate Instructor and Course State
     sv--
     
-    sv -> material_repo++: Call GetMaterialsByLessonIdAsync(id)
-    material_repo -->> sv--: Return materials
-    
-    sv -> sv++: Soft delete all materials and move to trash
-    sv--
-    
-    sv -> sv++: Set lesson.IsRemoved = true
-    sv--
-    
-    sv -> repo++: Call SaveChangesAsync()
-    repo -> ctx++: Save changes to database
-    ctx -> db++: Update Lesson (Soft Delete)
-    db -->> ctx--: Return returnCode
-    ctx -->> repo--: Return numberOfRowsAffected
-    repo -->> sv--: Return numberOfRowsAffected
-    
-    opt Course is Published
-        sv -> sv++: Set course.CourseStatus = "draft"
+    alt Validation Failed
+        sv -->> be_ctrl: throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display error message
+    else Valid to Delete
+        sv -> sv++: Soft delete materials and move to trash
         sv--
-        sv -> course_repo++: Call SaveChangesAsync()
-        course_repo -->> sv--: Return result
+        
+        sv -> repo++: Call Update(lesson) (Set IsRemoved=true)
+        repo -> ctx++: Update entity state
+        ctx -->> repo--: Return
+        repo -->> sv--: Return
+        
+        opt Course is Published
+            sv -> sv++: Set course.CourseStatus = "draft"
+            sv--
+        end
+        
+        sv -> repo++: Call SaveChangesAsync()
+        repo -> ctx++: Save changes to database
+        ctx -> db++: Update Lesson (Soft Delete)
+        db -->> ctx--: Return returnCode
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> sv++: Check numberOfRowsAffected
+        sv--
+        
+        alt numberOfRowsAffected > 0
+            sv -> sv++: Call Cache Invalidation Logic
+            sv--
+            
+            sv -->> be_ctrl--: Return success
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display lesson removed successfully
+        else numberOfRowsAffected = 0
+            sv -->> be_ctrl--: throw InvalidOperationException
+            be_ctrl -->> fe_ctrl--: Return statusCode 400
+            fe_ctrl -->> view--: Return JSON (success=false)
+            view -->> act--: Display error message
+        end
     end
-    
-    sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
-    sv--
-    
-    sv -->> be_ctrl--: Return success
-    be_ctrl -->> fe_ctrl--: Return statusCode 200
-    fe_ctrl -->> view--: Return JSON (success=true)
-    view -->> act--: Display lesson removed successfully
 end

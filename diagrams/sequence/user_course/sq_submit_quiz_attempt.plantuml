@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -68,9 +75,8 @@ else Attempt Found
             fe_ctrl -->> view: Return JSON (success=false)
             view -->> act: Display already submitted message
         else Not Yet Submitted
-            sv -> repo++: Call GetByIdAsync(attempt.QuizId)
-            repo -->> sv--: Return quiz entity
-            
+            sv -> sv++: Fetch quiz details for scoring
+            sv--
             sv -> sv++: Loop through submitted answers and score them
             sv--
             
@@ -80,7 +86,7 @@ else Attempt Found
             sv -> sv++: Update attempt.SubmittedAt, Score, IsPassed
             sv--
             
-            sv -> repo++: Call UpdateAttemptAsync(attempt)
+            sv -> repo++: Call SaveAttemptAsync(attempt)
             repo -> ctx++: Save changes to database
             ctx -> db++: Update QuizAttempt
             

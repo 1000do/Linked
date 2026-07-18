@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -43,69 +50,35 @@ fe_ctrl -> be_ctrl++: DELETE /api/quizzes/{id}
 
 be_ctrl -> sv++: Call SoftDeleteQuizAsync(id, instructorId)
 
-sv -> repo++: Call GetByIdAsync(id)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch quiz
-db -->> ctx--: Return query results
-ctx -->> repo--: Return quiz entity
-repo -->> sv--: Return quiz entity
+sv -> sv++: Validate Ownership and Delete Conditions
+sv--
 
-alt Quiz Not Found
-    sv -->> be_ctrl: throw KeyNotFoundException
-    be_ctrl -->> fe_ctrl: Return statusCode 404
+alt Validation Failed
+    sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
+    be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
     fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display quiz not found message
-else Quiz Found
-    sv -> sv++: Call EnsureOwnership(quiz, instructorId)
-    sv--
+    view -->> act: Display validation error message
+else Can Delete
+    sv -> repo++: Call SoftDeleteAsync(id)
+    repo -> ctx++: Update IsRemoved = true
+    ctx -> db++: Update Quiz Record
     
-    alt Not Quiz Owner
-        sv -->> be_ctrl: throw UnauthorizedAccessException
-        be_ctrl -->> fe_ctrl: Return statusCode 403
+    alt Database Save Failure
+        db -->> ctx: throw DbUpdateException
+        ctx -->> repo: throw DbUpdateException
+        repo -->> sv: throw DbUpdateException
+        sv -->> be_ctrl: throw DbUpdateException
+        be_ctrl -->> fe_ctrl: Return statusCode 500
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display unauthorized message
-    else Is Quiz Owner
-        sv -> repo++: Call HasActiveAttemptsAsync(id)
-        repo -->> sv--: Return hasActiveAttempts
+        view -->> act: Display server error message
+    else Database Save Success
+        db -->> ctx--: Return returnCode
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return
         
-        alt hasActiveAttempts == true
-            sv -->> be_ctrl: throw InvalidOperationException
-            be_ctrl -->> fe_ctrl: Return statusCode 400
-            fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display active students error message
-        else No Active Attempts
-            sv -> repo++: Call IsQuizInEnrolledCourseAsync(id)
-            repo -->> sv--: Return isEnrolled
-            
-            alt isEnrolled == true
-                sv -->> be_ctrl: throw InvalidOperationException
-                be_ctrl -->> fe_ctrl: Return statusCode 400
-                fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display enrolled course error message
-            else Can Delete
-                sv -> repo++: Call SoftDeleteAsync(id)
-                repo -> ctx++: Update IsRemoved = true
-                ctx -> db++: Update Quiz Record
-                
-                alt Database Save Failure
-                    db -->> ctx: throw DbUpdateException
-                    ctx -->> repo: throw DbUpdateException
-                    repo -->> sv: throw DbUpdateException
-                    sv -->> be_ctrl: throw DbUpdateException
-                    be_ctrl -->> fe_ctrl: Return statusCode 500
-                    fe_ctrl -->> view: Return JSON (success=false)
-                    view -->> act: Display server error message
-                else Database Save Success
-                    db -->> ctx--: Return returnCode
-                    ctx -->> repo--: Return numberOfRowsAffected
-                    repo -->> sv--: Return numberOfRowsAffected
-                    
-                    sv -->> be_ctrl--: Return success
-                    be_ctrl -->> fe_ctrl--: Return statusCode 200
-                    fe_ctrl -->> view--: Return JSON (success=true)
-                    view -->> act--: Display quiz deleted successfully
-                end
-            end
-        end
+        sv -->> be_ctrl--: Return success
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON (success=true)
+        view -->> act--: Display quiz deleted successfully
     end
 end

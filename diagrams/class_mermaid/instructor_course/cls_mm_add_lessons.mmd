@@ -3,19 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LessonControllerFE["LessonController"] {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + Create(courseId: int) Task~IActionResult~
-    + Create(model: CreateLessonViewModel) Task~IActionResult~
-}
-
-class CreateLessonViewModel {
-    <<view model>>
-    + CourseId : int
-    + Title : string
-    + Description : string?
-    + SortOrder : int
-    + IsPublished : bool
+    + AddLesson(courseId: int, title: string) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -24,31 +14,49 @@ class LessonControllerBE["LessonController"] {
     <<backend controller>>
     - _lessonService : ILessonService
     
-    + CreateLesson(request: CreateLessonRequest) Task~IActionResult~
+    + CreateLesson(request: LessonCreateRequest) Task~IActionResult~
     - GetInstructorId() int
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class CreateLessonRequest {
+class LessonCreateRequest {
     <<dto>>
     + CourseId : int
     + Title : string
     + Description : string?
-    + SortOrder : int
-    + IsPublished : bool
+    + ThumbnailUrl : string?
+    + ThumbnailFile : IFormFile?
 }
 
-class LessonDto {
+class LessonResponse {
     <<dto>>
     + LessonId : int
-    + CourseId : int
+    + CourseId : int?
     + Title : string
     + Description : string?
-    + SortOrder : int
-    + IsPublished : bool
+    + ThumbnailUrl : string?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
+    + LessonStatus : string?
+    + CourseStatus : string?
+    + ModerationFeedback : string?
+    + LearningMaterials : List~MaterialResponse~
+}
+
+class MaterialResponse {
+    <<dto>>
+    + MaterialId : int
+    + LessonId : int?
+    + Title : string
+    + Description : string?
+    + MaterialUrl : string?
+    + MaterialMetadata : MaterialMetadata?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + LearningStatus : string?
+    + ModerationFeedback : string?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -56,17 +64,15 @@ class LessonDto {
 class Lesson {
     <<entity>>
     + LessonId : int
-    + CourseId : int
+    + CourseId : int?
     + Title : string
     + Description : string?
-    + SortOrder : int
-    + IsPublished : bool
-    + IsRemoved : bool
+    + ThumbnailUrl : string?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
-    + Course : Course?
-    + LearningMaterials : ICollection~LearningMaterial~
-    + Quizzes : ICollection~Quiz~
+    + LessonStatus : string?
+    + ModerationFeedback : string?
+    + IsRemoved : bool
 }
 
 class Course {
@@ -91,43 +97,63 @@ class Course {
     + ThreatLevel : AiThreatLevel
 }
 
+class LearningMaterial {
+    <<entity>>
+    + MaterialId : int
+    + LessonId : int?
+    + Title : string
+    + Description : string?
+    + MaterialUrl : string?
+    + MaterialMetadata : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + LearningStatus : string?
+    + ModerationFeedback : string?
+    + ThreatLevel : AiThreatLevel
+    + IsRemoved : bool
+}
+
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ILessonService {
-    <<interface>>
-    + CreateLessonAsync(request: CreateLessonRequest, instructorId: int) Task~LessonDto~ *
+    <<service interface>>
+    + CreateLessonAsync(request: LessonCreateRequest, instructorId: int) Task~LessonResponse~ *
 }
 
 class ILessonRepository {
-    <<interface>>
-    + AddAsync(lesson: Lesson) void *
+    <<repository interface>>
+    + AddAsync(lesson: Lesson) Task *
     + SaveChangesAsync() Task~int~ *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class LessonService {
+    <<service>>
     - _lessonRepo : ILessonRepository
     - _courseRepo : ICourseRepository
     
-    + CreateLessonAsync(request: CreateLessonRequest, instructorId: int) Task~LessonDto~
+    + CreateLessonAsync(request: LessonCreateRequest, instructorId: int) Task~LessonResponse~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class LessonRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + AddAsync(lesson: Lesson) void
+    + AddAsync(lesson: Lesson) Task
     + SaveChangesAsync() Task~int~
 }
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int) Task~Course?~
@@ -136,16 +162,20 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Lessons : DbSet~Lesson~
     + Courses : DbSet~Course~
+    + LearningMaterials : DbSet~LearningMaterial~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
+%% === AGGREGATION & COMPOSITION ===
+LessonResponse *-- MaterialResponse
 Course *-- Lesson
+Lesson *-- LearningMaterial
 
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === UNIDIRECTIONAL ASSOCIATION ===
 LessonControllerBE --> ILessonService
 LessonService --> ILessonRepository
 LessonService --> ICourseRepository
@@ -157,12 +187,11 @@ LessonService ..|> ILessonService
 LessonRepository ..|> ILessonRepository
 CourseRepository ..|> ICourseRepository
 
-%% === DEPENDENCY (dashed arrows) ===
-LessonControllerFE ..> LessonControllerBE
-LessonControllerFE ..> CreateLessonViewModel
-LessonControllerBE ..> CreateLessonRequest
-LessonService ..> CreateLessonRequest
-LessonService ..> LessonDto
+%% === DEPENDENCY ===
+InstructorCourseControllerFE ..> LessonControllerBE
+LessonControllerBE ..> LessonCreateRequest
+LessonService ..> LessonCreateRequest
+LessonService ..> LessonResponse
 LessonService ..> Lesson
 LessonRepository ..> Lesson
 

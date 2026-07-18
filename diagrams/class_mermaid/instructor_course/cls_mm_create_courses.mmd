@@ -3,24 +3,24 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class InstructorCourseController {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
     + Create() Task~IActionResult~
     + Create(model: CreateCourseViewModel) Task~IActionResult~
     - GetCategoriesAsync() Task~List~CategoryViewModel~~
-    - LoadStripeStatusAsync() void
-    - LoadTransferRateAsync() void
+    - LoadStripeStatusAsync() Task
+    - LoadTransferRateAsync() Task
 }
 
 class CreateCourseViewModel {
     <<view model>>
     + Title : string
     + CategoryId : int
-    + Description : string
+    + Description : string?
     + Price : decimal
-    + CourseThumbnailUrl : string
-    + WhatYouWillLearn : string
-    + Requirements : string
+    + CourseThumbnailUrl : string?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
     + CouponId : int?
     + AvailableCategories : List~CategoryViewModel~
 }
@@ -33,7 +33,7 @@ class CategoryViewModel {
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class CourseController {
+class CourseControllerBE["CourseController"] {
     <<backend controller>>
     - _courseQueryService : ICourseQueryService
     - _courseCommandService : ICourseCommandService
@@ -108,16 +108,6 @@ class Course {
     + UpdatedAt : DateTime?
     + CourseStatus : string?
     + CourseFlagCount : int?
-    + CourseAiIntegrations : ICollection~CourseAiIntegration~
-    + CartItems : ICollection~CartItem~
-    + Category : Category?
-    + Coupon : Coupon?
-    + Enrollments : ICollection~Enrollment~
-    + Instructor : Instructor?
-    + Lessons : ICollection~Lesson~
-    + OrderItems : ICollection~OrderItem~
-    + WishlistItems : ICollection~WishlistItem~
-    + CourseExt : CourseExt?
     + WhatYouWillLearn : string?
     + Requirements : string?
     + ModerationFeedback : string?
@@ -134,7 +124,6 @@ class Category {
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
     + CategoryStatus : string?
-    + Courses : ICollection~Course~
 }
 
 class Instructor {
@@ -153,9 +142,6 @@ class Instructor {
     + PayoutsEnabled : bool?
     + ChargesEnabled : bool?
     + StripeCountry : string?
-    + Courses : ICollection~Course~
-    + InstructorPayouts : ICollection~InstructorPayout~
-    + InstructorNavigation : User
 }
 
 class Coupon {
@@ -171,54 +157,53 @@ class Coupon {
     + UsageLimit : int?
     + UsedCount : int?
     + IsActive : bool?
-    + Courses : ICollection~Course~
-    + Manager : Manager?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseCommandService {
-    <<interface>>
+    <<service interface>>
     + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~ *
 }
 
 class ICourseQueryService {
-    <<interface>>
+    <<service interface>>
     + GetCategoriesAsync() Task~IEnumerable~CategoryResponse~~ *
 }
 
 class IInstructorRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Instructor?~ *
     + SaveChangesAsync() Task~int~ *
 }
 
 class ICourseRepository {
-    <<interface>>
-    + AddAsync(course: Course) void *
+    <<repository interface>>
+    + AddAsync(course: Course) Task *
     + SaveChangesAsync() Task~int~ *
 }
 
 class IFileUploadService {
-    <<interface>>
+    <<service interface>>
     + UploadImageAsync(file: IFormFile) Task~string?~ *
     + UploadVideoAsync(file: IFormFile) Task~string?~ *
 }
 
 class IContentHashService {
-    <<interface>>
+    <<service interface>>
     + ComputeCourseHashAsync(text: string) Task~string~ *
-    + SaveCourseHashesAsync(command: SaveCourseHashesCommand) void *
+    + SaveCourseHashesAsync(command: SaveCourseHashesCommand) Task *
 }
 
 class IRedisService {
-    <<interface>>
-    + RemoveCacheAsync(key: string) void *
+    <<service interface>>
+    + RemoveCacheAsync(key: string) Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseCommandService {
+    <<service>>
     - _courseRepository : ICourseRepository
     - _instructorRepository : IInstructorRepository
     - _uploadService : IFileUploadService
@@ -226,21 +211,23 @@ class CourseCommandService {
     - _contentHashService : IContentHashService
     
     + CreateCourseAsync(request: CourseCreateRequest, instructorId: int) Task~CourseResponse~
-    - UpdateCourseHashesAsync(course: Course) Task~void~
+    - UpdateCourseHashesAsync(course: Course) Task
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + AddAsync(course: Course) void
+    + AddAsync(course: Course) Task
     + SaveChangesAsync() Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Categories : DbSet~Category~
     + Coupons : DbSet~Coupon~
     + Courses : DbSet~Course~
@@ -249,17 +236,12 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-Instructor *-- Course
-
 %% === AGGREGATION (hollow diamond) ===
 CreateCourseViewModel o-- CategoryViewModel
-Category o-- Course
-Course -- Coupon
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-CourseController --> ICourseCommandService
-CourseController --> ICourseQueryService
+CourseControllerBE --> ICourseCommandService
+CourseControllerBE --> ICourseQueryService
 CourseCommandService --> ICourseRepository
 CourseCommandService --> IInstructorRepository
 CourseCommandService --> IFileUploadService
@@ -272,9 +254,9 @@ CourseCommandService ..|> ICourseCommandService
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-InstructorCourseController ..> CourseController
-InstructorCourseController ..> CreateCourseViewModel
-CourseController ..> CourseCreateRequest
+InstructorCourseControllerFE ..> CourseControllerBE
+InstructorCourseControllerFE ..> CreateCourseViewModel
+CourseControllerBE ..> CourseCreateRequest
 CourseCommandService ..> CourseCreateRequest
 CourseCommandService ..> CourseResponse
 CourseCommandService ..> Course
