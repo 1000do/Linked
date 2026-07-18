@@ -102,8 +102,6 @@ namespace CourseMarketplaceBE.Application.Services
 
                 if (finalUrls.Count < 1)
                     throw new InvalidOperationException("Please upload at least 1 document/certificate file.");
-                if (finalUrls.Count > 3)
-                    throw new InvalidOperationException("You can upload a maximum of 3 document/certificate files.");
 
                 existing.DocumentUrl = string.Join(";", finalUrls);
 
