@@ -3,42 +3,59 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LearningControllerFE["LearningController"] {
+class CourseControllerFE["CourseController"] {
     <<frontend controller>>
-    + Index(courseId: int) Task~IActionResult~
+    + Learn(id: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class EnrollmentController {
+class CoursePublicController {
     <<backend controller>>
-    - _enrollmentService : IEnrollmentService
+    - _courseQueryService : ICourseQueryService
     
-    + GetProgress(courseId: int) Task~IActionResult~
+    + GetCourseDetails(id: int) Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class ProgressResponse {
+class CourseDetailResponse {
     <<dto>>
-    + EnrollmentId : int
-    + LearnedMaterialCount : int
-    + TotalMaterialCount : int
-    + CompletedMaterialIds : List~int~
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CourseStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + InstructorName : string?
+    + TotalStudents : int
+    + RatingAverage : decimal
+    + CategoryName : string?
+    + InstructorAvatarUrl : string?
+    + InstructorBio : string?
+    + InstructorProfessionalTitle : string?
+    + InstructorReviewCount : int
+    + InstructorStudentsCount : int
+    + InstructorCoursesCount : int
+    + IsEnrolled : bool
+    + IsOwner : bool
+    + TotalReviews : int
+    + LastApprovedAt : DateTime?
+    + AppliedCouponCode : string?
+    + AppliedCouponType : string?
+    + AppliedCouponValue : decimal?
+    + IsRemoved : bool
+    + IsInAnyCart : bool
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
-
-class Enrollment {
-    <<entity>>
-    + EnrollmentId : int
-    + UserId : int
-    + CourseId : int
-    + EnrolledAt : DateTime?
-    + Course : Course?
-    + User : User?
-    + LearnedMaterials : ICollection~LearnedMaterial~
-}
 
 class Course {
     <<entity>>
@@ -64,75 +81,102 @@ class Course {
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
-class IEnrollmentService {
-    <<interface>>
-    + GetProgressAsync(userId: int, courseId: int) Task~ProgressResponse?~ *
-}
-
-class IEnrollmentRepository {
-    <<interface>>
-    + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~ *
+class ICourseQueryService {
+    <<service interface>>
+    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~ *
 }
 
 class ICourseRepository {
-    <<interface>>
-    + GetByIdAsync(id: int) Task~Course?~ *
-    + GetCourseStatsAsync(courseId: int) Task~CourseStatsDto?~ *
+    <<repository interface>>
+    + GetCourseWithDetailsAsync(courseId: int) Task~Course?~ *
+    + IsEnrolledAsync(userId: int, courseId: int) Task~bool~ *
+    + IsOwnerAsync(userId: int, courseId: int) Task~bool~ *
+}
+
+class IInstructorRepository {
+    <<repository interface>>
+    + GetStatsAsync(userId: int) Task~InstructorStats?~ *
+}
+
+class ICartRepository {
+    <<repository interface>>
+    + IsCourseInAnyCartAsync(courseId: int) Task~bool~ *
+}
+
+class IRedisService {
+    <<service interface>>
+    + GetCacheAsync(key: string) Task~T?~ *
+    + SetCacheAsync(key: string, value: T, expiry: TimeSpan?) Task *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
-class EnrollmentService {
-    - _repo : IEnrollmentRepository
-    - _courseRepo : ICourseRepository
+class CourseQueryService {
+    <<service>>
+    - _courseRepository : ICourseRepository
+    - _instructorRepository : IInstructorRepository
+    - _cartRepository : ICartRepository
+    - _redisService : IRedisService
     
-    + GetProgressAsync(userId: int, courseId: int) Task~ProgressResponse?~
+    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
-class EnrollmentRepository {
+class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~
+    + GetCourseWithDetailsAsync(courseId: int) Task~Course?~
+    + IsEnrolledAsync(userId: int, courseId: int) Task~bool~
+    + IsOwnerAsync(userId: int, courseId: int) Task~bool~
 }
 
-class CourseRepository {
+class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetByIdAsync(id: int) Task~Course?~
-    + GetCourseStatsAsync(courseId: int) Task~CourseStatsDto?~
+    + GetStatsAsync(userId: int) Task~InstructorStats?~
+}
+
+class CartRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + IsCourseInAnyCartAsync(courseId: int) Task~bool~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
-    + Enrollments : DbSet~Enrollment~
+    <<dbcontext>>
     + Courses : DbSet~Course~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION ===
-EnrollmentController --> IEnrollmentService
-EnrollmentService --> IEnrollmentRepository
-EnrollmentService --> ICourseRepository
-EnrollmentRepository --> AppDbContext
+CoursePublicController --> ICourseQueryService
+CourseQueryService --> ICourseRepository
+CourseQueryService --> IInstructorRepository
+CourseQueryService --> ICartRepository
+CourseQueryService --> IRedisService
 CourseRepository --> AppDbContext
+InstructorRepository --> AppDbContext
+CartRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
-EnrollmentService ..|> IEnrollmentService
-EnrollmentRepository ..|> IEnrollmentRepository
+CourseQueryService ..|> ICourseQueryService
 CourseRepository ..|> ICourseRepository
+InstructorRepository ..|> IInstructorRepository
+CartRepository ..|> ICartRepository
 
 %% === DEPENDENCY ===
-LearningControllerFE ..> EnrollmentController
-EnrollmentController ..> ProgressResponse
-EnrollmentService ..> ProgressResponse
-EnrollmentService ..> Enrollment
-EnrollmentService ..> Course
-EnrollmentRepository ..> Enrollment
+CourseControllerFE ..> CoursePublicController
+CoursePublicController ..> CourseDetailResponse
+CourseQueryService ..> CourseDetailResponse
 CourseRepository ..> Course
+CourseQueryService ..> Course
 
 %% ==================== STYLES ====================
 

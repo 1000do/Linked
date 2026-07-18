@@ -36,9 +36,9 @@ participant ":AdminFinanceUnifiedVM" as view_model
 participant "AdminFinanceController" as be_ctrl <<backend controller>>
 participant ":IAdminFinanceService" as finance_sv
 participant ":IAdminFinanceRepository" as finance_repo
-participant ":FinancialSummaryVM" as res_summary
+participant ":FinancialSummaryResponse" as res_summary
 participant ":IStripeConnectService" as stripe_sv
-participant ":PlatformBalanceVM" as res_balance
+participant ":PlatformBalanceResponse" as res_balance
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -58,47 +58,67 @@ else Unauthorized Access
     error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
     
+    fe_ctrl -> fe_ctrl++: Fetch dashboard data concurrently
+    fe_ctrl--
+    
     par Summary Data
         fe_ctrl -> be_ctrl++: GET /api/admin/finance/summary
-        be_ctrl -> finance_sv++: GetFinancialSummaryAsync()
-        finance_sv -> finance_repo++: GetFinancialSummaryAsync()
-        finance_repo -> ctx++: Query Transactions & Courses
-        ctx -> db++: Execute SELECT
-        db -->> ctx--: Return data
-        ctx -->> finance_repo--: Return data
+        be_ctrl -> finance_sv++: Call GetFinancialSummaryAsync(year, month)
         
-        finance_repo -> res_summary++: Call FinancialSummaryVM()
-        res_summary -->> finance_repo--: Return FinancialSummaryVM object
+        finance_sv -> finance_repo++: Call GetGrossRevenueAsync(year, month)
+        finance_repo -> ctx++: Aggregate Transactions (SUM)
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
         
-        finance_repo -->> finance_sv--: Return FinancialSummaryVM object
-        finance_sv -->> be_ctrl--: Return FinancialSummaryVM object
+        finance_sv -> finance_repo++: Call GetTotalPaidOutAsync(year, month)
+        finance_repo -> ctx++: Aggregate InstructorPayouts
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> finance_repo++: Call GetPendingEscrowAsync(year, month)
+        finance_repo -> ctx++: Aggregate InstructorPayouts
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> finance_repo++: Call GetTotalRefundedAsync(year, month)
+        finance_repo -> ctx++: Aggregate Transactions
+        ctx -> db++: Execute SELECT SUM
+        db -->> ctx--: Return scalar
+        ctx -->> finance_repo--: Return decimal
+        finance_repo -->> finance_sv--: Return decimal
+        
+        finance_sv -> res_summary++: Call FinancialSummaryResponse()
+        res_summary -->> finance_sv--: Return FinancialSummaryResponse object
+        
+        finance_sv -->> be_ctrl--: Return FinancialSummaryResponse object
         be_ctrl -->> fe_ctrl--: Return statusCode 200
         
     else Stripe Gateway Balance
         fe_ctrl -> be_ctrl++: GET /api/admin/finance/balance
-        be_ctrl -> finance_sv++: GetPlatformBalanceAsync()
-        finance_sv -> stripe_sv++: GetPlatformBalanceAsync()
+        be_ctrl -> finance_sv++: Call GetPlatformBalanceAsync()
+        finance_sv -> stripe_sv++: Call GetPlatformBalanceAsync()
         
-        stripe_sv -> res_balance++: Call PlatformBalanceVM()
-        res_balance -->> stripe_sv--: Return PlatformBalanceVM object
+        stripe_sv -> res_balance++: Call PlatformBalanceResponse()
+        res_balance -->> stripe_sv--: Return PlatformBalanceResponse object
         
-        stripe_sv -->> finance_sv--: Return PlatformBalanceVM object
-        finance_sv -->> be_ctrl--: Return PlatformBalanceVM object
+        stripe_sv -->> finance_sv--: Return PlatformBalanceResponse object
+        finance_sv -->> be_ctrl--: Return PlatformBalanceResponse object
         be_ctrl -->> fe_ctrl--: Return statusCode 200
-else Main Thread Return
-        fe_ctrl -> fe_ctrl++: Deserialize JSON responses
-        fe_ctrl--
         
-        fe_ctrl -> view_model++: Call AdminFinanceUnifiedVM()
-        view_model -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
-        
-        fe_ctrl -> fe_ctrl++: Map parsed data to AdminFinanceUnifiedVM
-        fe_ctrl--
-        
-        fe_ctrl -->> view--: Return View(vm)
-        
-        view -->> act--: Display Course Revenue, Splits, Stripe Gateway Balances, Config statuses, and Monthly Financial Performance chart
     end
+    
+    fe_ctrl -> view_model++: Call AdminFinanceUnifiedVM()
+    view_model -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
+    
+    fe_ctrl -->> view--: Return View(vm)
+    
+    view -->> act--: Display Course Revenue, Splits, Stripe Gateway Balances, Config statuses, and Monthly Financial Performance chart
 end
 
 @enduml

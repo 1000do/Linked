@@ -3,19 +3,26 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class InstructorCourseController {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + Hide(id: int) Task~IActionResult~
+    + UpdateCourseStatus(courseId: int, status: string) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class CourseController {
+class CourseControllerBE["CourseController"] {
     <<backend controller>>
     - _courseCommandService : ICourseCommandService
     
-    + HideCourse(id: int) Task~IActionResult~
+    + UpdateCourseStatus(id: int, request: UpdateStatusRequest) Task~IActionResult~
     - GetInstructorId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class UpdateStatusRequest {
+    <<dto>>
+    + Status : string
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -45,45 +52,46 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseCommandService {
-    <<interface>>
-    + HideCourseAsync(courseId: int, instructorId: int) Task *
+    <<service interface>>
+    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) Task *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
-    + Update(course: Course) void *
     + SaveChangesAsync() Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseCommandService {
+    <<service>>
     - _courseRepository : ICourseRepository
     
-    + HideCourseAsync(courseId: int, instructorId: int) Task
+    + UpdateCourseStatusAsync(courseId: int, status: string, instructorId: int) Task
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int) Task~Course?~
-    + Update(course: Course) void
     + SaveChangesAsync() Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-CourseController --> ICourseCommandService
+CourseControllerBE --> ICourseCommandService
 CourseCommandService --> ICourseRepository
 CourseRepository --> AppDbContext
 
@@ -92,7 +100,8 @@ CourseCommandService ..|> ICourseCommandService
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-InstructorCourseController ..> CourseController
+InstructorCourseControllerFE ..> CourseControllerBE
+CourseControllerBE ..> UpdateStatusRequest
 CourseCommandService ..> Course
 CourseRepository ..> Course
 

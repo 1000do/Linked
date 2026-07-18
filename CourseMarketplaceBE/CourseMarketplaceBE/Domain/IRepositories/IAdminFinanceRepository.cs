@@ -76,7 +76,7 @@ public interface IAdminFinanceRepository
     /// <summary>
     /// Lấy danh sách các giao dịch có yêu cầu hoàn tiền đang chờ duyệt (status = 'refund_pending').
     /// </summary>
-    Task<(List<Domain.Entities.Transaction> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
+    Task<(List<CourseMarketplaceBE.Application.DTOs.TransactionListDto> Items, int TotalCount)> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10);
 
     /// <summary>
     /// Lấy Transaction entity đầy đủ kèm InstructorPayouts + OrderItem → Course → Enrollment.

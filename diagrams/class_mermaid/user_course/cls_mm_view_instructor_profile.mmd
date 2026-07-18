@@ -60,26 +60,28 @@ class Instructor {
     + StripeCountry : string?
     + Courses : ICollection~Course~
     + InstructorPayouts : ICollection~InstructorPayout~
+    + Quizzes : ICollection~Quiz~
     + InstructorNavigation : User
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IInstructorService {
-    <<interface>>
+    <<service interface>>
     + GetPublicProfileAsync(instructorId: int) Task~InstructorPublicProfileDto?~ *
 }
 
 class IInstructorRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdWithNavigationAsync(instructorId: int) Task~Instructor?~ *
-    + GetStatsAsync(instructorId: int) Task~InstructorStatsDto?~ *
+    + GetStatsAsync(userId: int) Task~InstructorStats?~ *
     + CountActiveCoursesAsync(instructorId: int) Task~int~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class InstructorService {
+    <<service>>
     - _repo : IInstructorRepository
     
     + GetPublicProfileAsync(instructorId: int) Task~InstructorPublicProfileDto?~
@@ -88,16 +90,18 @@ class InstructorService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdWithNavigationAsync(instructorId: int) Task~Instructor?~
-    + GetStatsAsync(instructorId: int) Task~InstructorStatsDto?~
+    + GetStatsAsync(userId: int) Task~InstructorStats?~
     + CountActiveCoursesAsync(instructorId: int) Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Instructors : DbSet~Instructor~
 }
 

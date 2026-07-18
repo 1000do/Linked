@@ -1,0 +1,156 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+hide footbox
+mainframe Gift Courses
+
+actor User as act
+participant "GiftSetupPage" as view
+participant "GiftCheckoutPage" as r_view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "GiftController" as fe_ctrl <<frontend controller>>
+participant ":PublicCourseViewModel" as view_model
+participant "GiftController" as be_ctrl <<backend controller>>
+participant ":ICourseQueryService" as course_sv
+participant ":IGiftService" as sv
+participant ":CourseDetailResponse" as res
+participant ":ICourseRepository" as repo
+participant ":IUserRepository" as user_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> view++: Fill in Gift details (Recipient Email, Name, Theme, Message)
+act -> view: Click "Proceed to Payment" button
+
+view -> view++: Validate form inputs
+view--
+opt Invalid form inputs (A.5)
+    view -->> act: Highlight invalid fields and display inline error messages
+end
+
+view -> fe_ctrl++: POST /Gift/Setup (FormData)
+view--
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> fe_ctrl++: Validate ModelState
+    fe_ctrl--
+    
+    alt Invalid ModelState
+        fe_ctrl -> be_ctrl++: GET /api/gift/course/{courseId}
+        be_ctrl -> course_sv++: GetCourseWithDetailsAsync(courseId, userId, role)
+        course_sv -> repo++: GetCourseWithDetailsAsync(courseId)
+        repo -> ctx++: Query course details from database
+        ctx -> db++: Execute query
+        db -->> ctx--: Return data
+        ctx -->> repo--: Return Course entity or null
+        repo -->> course_sv--: Return Course entity or null
+        course_sv -> res++: Call CourseDetailResponse(...)
+        res -->> course_sv--: Return CourseDetailResponse object
+        course_sv -->> be_ctrl--: Return CourseDetailResponse object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+        fe_ctrl -> view_model++: Call PublicCourseViewModel()
+        view_model -->> fe_ctrl--: Return PublicCourseViewModel object
+        
+        fe_ctrl -->> view: Return View(GiftSetupViewModel)
+        activate view
+        view -->> act--: Display error message
+    else Valid ModelState
+        fe_ctrl -> be_ctrl++: GET /api/gift/check-recipient?email={recipientEmail}&courseId={courseId}
+        be_ctrl -> sv++: IsRecipientEnrolledAsync(recipientEmail, courseId)
+    
+        sv -> user_repo++: GetAccountByEmailAsync(recipientEmail)
+        user_repo -> ctx++: Query account by email from database
+        ctx -> db++: Execute query
+        db -->> ctx--: Return data
+        ctx -->> user_repo--: Return Account entity or null
+        user_repo -->> sv--: Return Account entity or null
+    
+        opt Account found
+            sv -> repo++: IsEnrolledAsync(accountId, courseId)
+            repo -> ctx++: Check enrollment existence in database
+            ctx -> db++: Execute query
+            db -->> ctx--: Return data
+            ctx -->> repo--: Return boolean
+            repo -->> sv--: Return boolean
+        end
+    
+        sv -->> be_ctrl--: Return boolean
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        
+        fe_ctrl -> fe_ctrl++: Check recipient enrollment status
+        fe_ctrl--
+        
+        alt Recipient Already Enrolled (A.6 / EX-6)
+            fe_ctrl -> be_ctrl++: GET /api/gift/course/{courseId}
+            be_ctrl -> course_sv++: GetCourseWithDetailsAsync(courseId, userId, role)
+            course_sv -> repo++: GetCourseWithDetailsAsync(courseId)
+            repo -> ctx++: Query course details from database
+            ctx -> db++: Execute query
+            db -->> ctx--: Return data
+            ctx -->> repo--: Return Course entity or null
+            repo -->> course_sv--: Return Course entity or null
+            course_sv -> res++: Call CourseDetailResponse(...)
+            res -->> course_sv--: Return CourseDetailResponse object
+            course_sv -->> be_ctrl--: Return CourseDetailResponse object
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            
+            fe_ctrl -> view_model++: Call PublicCourseViewModel()
+            view_model -->> fe_ctrl--: Return PublicCourseViewModel object
+            
+            fe_ctrl -->> view: Return View(GiftSetupViewModel)
+            activate view
+            view -->> act--: Display error message
+        else Recipient Not Enrolled
+            fe_ctrl -->> r_view--: Redirect to Gift Checkout page with gift details parameters
+            activate r_view
+            r_view -->> act--: Display Gift Checkout page
+        end
+    end
+end
+
+@enduml

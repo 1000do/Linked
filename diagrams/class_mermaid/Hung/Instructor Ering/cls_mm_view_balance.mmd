@@ -1,0 +1,265 @@
+classDiagram
+direction LR
+
+class TransactionControllerFE["TransactionController"] {
+    <<frontend controller>>
+    - _api : ApiClient
+    + Instructor(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
+}
+
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    - _financeService : IAdminFinanceService
+    + GetInstructorTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
+    + GetInstructorCourseRevenues(year: int, month: int) Task~IActionResult~
+}
+
+class InstructorControllerBE["InstructorController"] {
+    <<backend controller>>
+    - _instructorService : IInstructorService
+    + GetPayouts(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
+    + GetPayoutDays(financeService: IAdminFinanceService) Task~IActionResult~
+}
+
+class ITransactionService {
+    <<service interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
+}
+
+class TransactionService {
+    <<service>>
+    - _repo : ITransactionRepository
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
+}
+
+class IInstructorService {
+    <<service interface>>
+    + GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~InstructorPayoutDto~~ *
+}
+
+class InstructorService {
+    <<service>>
+    - _repo : IInstructorRepository
+    + GetPayoutsAsync(userId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~InstructorPayoutDto~~
+}
+
+class IAdminFinanceService {
+    <<service interface>>
+    + GetPayoutDaysConfigAsync() Task~string~ *
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueResponse~~ *
+}
+
+class AdminFinanceService {
+    <<service>>
+    - _repo : IAdminFinanceRepository
+    - _configRepo : ISystemConfigRepository
+    + GetPayoutDaysConfigAsync() Task~string~
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueResponse~~
+}
+
+class ISystemConfigRepository {
+    <<repository interface>>
+    + GetValueAsync(key: string) Task~string~ *
+}
+
+class SystemConfigRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetValueAsync(key: string) Task~string~
+}
+
+class ITransactionRepository {
+    <<repository interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~(List~TransactionListDto~, int)~ *
+}
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~(List~TransactionListDto~, int)~
+}
+
+class IInstructorRepository {
+    <<repository interface>>
+    + GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~InstructorPayoutDto~~ *
+}
+
+class InstructorRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetPayoutsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~InstructorPayoutDto~~
+}
+
+class IAdminFinanceRepository {
+    <<repository interface>>
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~ *
+}
+
+class AdminFinanceRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+    + InstructorPayouts : DbSet~InstructorPayout~
+    + SystemConfigs : DbSet~SystemConfig~
+}
+
+class InstructorFinancePageVM {
+    <<view model>>
+    + Transactions : TransactionPagedVM
+    + Payouts : InstructorPayoutPagedViewModel
+    + CourseRevenues : List~InstructorCourseRevenueResponse~
+}
+
+class InstructorCourseRevenueResponse {
+    <<dto>>
+    + CourseId : int
+    + CourseTitle : string
+    + SalesCount : int
+    + TotalRevenue : decimal
+}
+
+class TransactionPagedVM {
+    <<view model>>
+    + Items : List~TransactionListItemVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class InstructorPayoutPagedViewModel {
+    <<view model>>
+    + Items : List~InstructorPayoutViewModel~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class InstructorPayoutViewModel {
+    <<view model>>
+    + PayoutId : int
+    + Amount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
+    + CourseTitle : string
+    + TotalAmount : decimal
+    + PayoutStatus : string?
+    + PaidToBankAt : DateTime?
+    + StripeTransferId : string?
+    + StripePayoutId : string?
+}
+
+class TransactionListItemVM {
+    <<view model>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
+}
+
+class TransactionListDto {
+    <<dto>>
+    + TransactionId : int
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+}
+
+class InstructorPayoutDto {
+    <<dto>>
+    + PayoutId : int
+    + Amount : decimal
+    + PayoutDate : DateTime
+    + IsPaid : bool
+    + CourseTitle : string
+    + TotalAmount : decimal
+    + PayoutStatus : string?
+}
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransactionsStatus : string?
+}
+
+class InstructorPayout {
+    <<entity>>
+    + PayoutId : int
+    + TransactionId : int?
+    + InstructorId : int?
+    + PayoutAmount : decimal
+    + IsPaid : bool
+    + PayoutStatus : string
+}
+
+TransactionControllerFE ..> TransactionControllerBE
+TransactionControllerFE ..> InstructorControllerBE
+TransactionControllerFE ..> InstructorFinancePageVM
+
+TransactionControllerBE --> ITransactionService
+TransactionControllerBE --> IAdminFinanceService
+
+InstructorControllerBE --> IInstructorService
+InstructorControllerBE --> IAdminFinanceService
+
+TransactionService ..|> ITransactionService
+TransactionService --> ITransactionRepository
+
+InstructorService ..|> IInstructorService
+InstructorService --> IInstructorRepository
+
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceService --> ISystemConfigRepository
+AdminFinanceService --> IAdminFinanceRepository
+
+SystemConfigRepository ..|> ISystemConfigRepository
+
+TransactionRepository ..|> ITransactionRepository
+InstructorRepository ..|> IInstructorRepository
+AdminFinanceRepository ..|> IAdminFinanceRepository
+
+TransactionRepository --> AppDbContext
+InstructorRepository --> AppDbContext
+SystemConfigRepository --> AppDbContext
+AdminFinanceRepository --> AppDbContext
+
+TransactionRepository ..> TransactionListDto
+InstructorRepository ..> InstructorPayoutDto
+
+InstructorFinancePageVM --> InstructorCourseRevenueResponse
+InstructorFinancePageVM --> TransactionPagedVM
+InstructorFinancePageVM --> InstructorPayoutPagedViewModel
+
+TransactionPagedVM --> TransactionListItemVM
+InstructorPayoutPagedViewModel --> InstructorPayoutViewModel
+
+AppDbContext ..> Transaction
+AppDbContext ..> InstructorPayout
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

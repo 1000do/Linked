@@ -1,0 +1,85 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Questions of a Course
+
+actor Instructor as act
+participant "QuestionBankPage" as view
+participant "QuestionBankController" as fe_ctrl <<frontend controller>>
+participant "QuestionBankController" as be_ctrl <<backend controller>>
+participant ":QuestionBankService" as sv
+participant ":QuizQuestionResponse" as res
+participant ":ILessonRepository" as lesson_repo
+participant ":IQuestionBankRepository" as repo
+
+act ++
+act -> view++: Select a lesson
+view -> fe_ctrl++: GET /QuestionBank/GetQuestions?lessonId={lessonId}
+
+fe_ctrl -> be_ctrl++: GET /api/QuestionBank/lessons/{lessonId}/questions
+
+be_ctrl -> sv++: Call GetQuestionsByLessonAsync(lessonId, instructorId)
+
+sv -> lesson_repo++: Call GetByIdAsync(lessonId)
+lesson_repo -->> sv--: Return lesson entity
+
+alt Lesson Not Found
+    sv -->> be_ctrl: throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display lesson not found error message
+else Lesson Found
+    sv -> sv++: Validate Course Ownership
+    sv--
+    
+    alt Unauthorized
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display unauthorized error message
+    else Authorized
+        sv -> repo++: Call GetQuestionsByLessonAsync(lessonId)
+        repo -->> sv--: Return List<QuizQuestion>
+        
+        loop For each QuizQuestion in list
+            sv -> res++: Call MapToResponse(q)
+            res -->> sv--: Return QuizQuestionResponse object
+        end
+        
+        sv -->> be_ctrl--: Return List<QuizQuestionResponse>
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return JSON (success=true)
+        view -->> act--: Display questions
+    end
+end

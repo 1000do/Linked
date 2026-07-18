@@ -1,0 +1,310 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class AdminFinanceControllerFE["AdminFinanceController"] {
+    <<frontend controller>>
+    + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
+}
+
+class AdminFinanceUnifiedVM {
+    <<view model>>
+    + Transactions : TransactionPagedVM
+}
+
+class TransactionPagedVM {
+    <<view model>>
+    + Items : List~TransactionListItemVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class TransactionListItemVM {
+    <<view model>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    + GetTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class TransactionListDto {
+    <<dto>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+    + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+}
+
+class TransactionExt {
+    <<entity>>
+    + TransactionId : int
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int?
+    + CourseId : int?
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+    + Course : Course?
+}
+
+class Course {
+    <<entity>>
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+    + Instructor : Instructor?
+}
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+    + InstructorNavigation : User
+}
+
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + Username : string?
+    + PasswordHash : string?
+    + PhoneNumber : string?
+    + AccountStatus : string?
+    + AccountFlagCount : int?
+    + AccountLastLoginAt : DateTime?
+    + AuthProvider : string?
+    + AvatarUrl : string?
+    + RefreshToken : string?
+    + RefreshTokenExpiryTime : DateTime?
+    + IsVerified : bool
+    + AccountCreatedAt : DateTime?
+    + AccountUpdatedAt : DateTime?
+    + User : User?
+}
+
+class User {
+    <<entity>>
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class Gift {
+    <<entity>>
+    + GiftId : int
+    + OrderItemId : int
+    + SenderId : int?
+    + RecipientEmail : string
+    + RecipientName : string?
+    + GiftMessage : string?
+    + CardTheme : string?
+    + RedemptionToken : string
+    + IsClaimed : bool
+    + ClaimedByUserId : int?
+    + ClaimedAt : DateTime?
+    + DeliveryStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + Sender : Account?
+    + ClaimedByUser : User?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class ITransactionService {
+    <<service interface>>
+    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~ *
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class ITransactionRepository {
+    <<repository interface>>
+    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class TransactionService {
+    <<service>>
+    - _repo : ITransactionRepository
+    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetTransactionsAsync(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+    + TransactionExts : DbSet~TransactionExt~
+    + OrderItems : DbSet~OrderItem~
+    + Accounts : DbSet~Account~
+    + Users : DbSet~User~
+    + Courses : DbSet~Course~
+    + Instructors : DbSet~Instructor~
+    + Gifts : DbSet~Gift~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === COMPOSITION (filled diamond) ===
+AdminFinanceUnifiedVM *-- TransactionPagedVM
+TransactionPagedVM *-- TransactionListItemVM
+Transaction *-- TransactionExt
+OrderItem *-- Gift
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerBE --> ITransactionService
+TransactionService --> ITransactionRepository
+TransactionRepository --> AppDbContext
+
+AppDbContext --> Transaction
+AppDbContext --> TransactionExt
+AppDbContext --> OrderItem
+AppDbContext --> Account
+AppDbContext --> User
+AppDbContext --> Course
+AppDbContext --> Instructor
+AppDbContext --> Gift
+
+%% === INTERFACE REALIZATION ===
+TransactionService ..|> ITransactionService
+TransactionRepository ..|> ITransactionRepository
+
+%% === DEPENDENCY ===
+AdminFinanceControllerFE ..> TransactionControllerBE
+AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
+AdminFinanceControllerFE ..> TransactionPagedVM
+
+TransactionControllerBE ..> TransactionListDto
+ITransactionService ..> TransactionListDto
+TransactionService ..> TransactionListDto
+
+ITransactionRepository ..> TransactionListDto
+TransactionRepository ..> TransactionListDto
+
+TransactionRepository ..> Transaction
+TransactionRepository ..> TransactionExt
+TransactionRepository ..> OrderItem
+TransactionRepository ..> Course
+TransactionRepository ..> Instructor
+TransactionRepository ..> Account
+TransactionRepository ..> User
+TransactionRepository ..> Gift
+
+%% === BIDIRECTIONAL ASSOCIATION ===
+Transaction -- OrderItem
+Transaction -- Account
+OrderItem -- Course
+Course -- Instructor
+Instructor -- User
+Account -- User
+Gift -- Account
+Gift -- User
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

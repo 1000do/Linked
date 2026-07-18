@@ -3,19 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class LessonControllerFE["LessonController"] {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
-    + UpdateMaterial(id: int) Task~IActionResult~
-    + UpdateMaterial(model: UpdateMaterialViewModel) Task~IActionResult~
-}
-
-class UpdateMaterialViewModel {
-    <<view model>>
-    + LessonId : int
-    + Title : string
-    + MaterialType : string
-    + VideoUrl : string?
-    + Duration : int?
+    + UpdateMaterialDetails(materialId: int, requestBody: object) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -24,31 +14,31 @@ class LessonControllerBE["LessonController"] {
     <<backend controller>>
     - _lessonService : ILessonService
     
-    + UpdateMaterial(request: UpdateMaterialRequest) Task~IActionResult~
+    + UpdateMaterialDetails(materialId: int, request: MaterialUpdateRequest) Task~IActionResult~
     - GetInstructorId() int
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class UpdateMaterialRequest {
+class MaterialUpdateRequest {
     <<dto>>
-    + LessonId : int
     + Title : string
-    + MaterialType : string
-    + VideoUrl : string?
-    + Duration : int?
-    + File : IFormFile?
+    + Description : string?
 }
 
-class LearningMaterialDto {
+class MaterialResponse {
     <<dto>>
     + MaterialId : int
-    + LessonId : int
+    + LessonId : int?
     + Title : string
-    + MaterialType : string
-    + VideoUrl : string?
-    + Duration : int?
-    + IsRemoved : bool
+    + Description : string?
+    + MaterialUrl : string?
+    + MaterialMetadata : MaterialMetadata?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + LearningStatus : string?
+    + ModerationFeedback : string?
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
@@ -56,98 +46,86 @@ class LearningMaterialDto {
 class LearningMaterial {
     <<entity>>
     + MaterialId : int
-    + LessonId : int
-    + Title : string
-    + MaterialType : string
-    + VideoUrl : string?
-    + Duration : int?
-    + IsRemoved : bool
-    + Lesson : Lesson?
-    + LearnedMaterials : ICollection~LearnedMaterial~
-}
-
-class Lesson {
-    <<entity>>
-    + LessonId : int
-    + CourseId : int
+    + LessonId : int?
     + Title : string
     + Description : string?
-    + SortOrder : int
-    + IsPublished : bool
-    + IsRemoved : bool
+    + MaterialUrl : string?
+    + MaterialMetadata : MaterialMetadata?
+    + CloudPublicId : string?
     + CreatedAt : DateTime?
     + UpdatedAt : DateTime?
-    + LearningMaterials : ICollection~LearningMaterial~
+    + LearningStatus : string?
+    + ModerationFeedback : string?
+}
+
+class MaterialMetadata {
+    <<entity>>
+    + FileSize : long?
+    + FileType : string?
+    + FileExtension : string?
+    + Duration : int?
+    + PageCount : int?
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ILessonService {
-    <<interface>>
-    + UpdateMaterialAsync(request: UpdateMaterialRequest, instructorId: int) Task~LearningMaterialDto~ *
+    <<service interface>>
+    + UpdateMaterialDetailsAsync(materialId: int, request: MaterialUpdateRequest, instructorId: int) Task~MaterialResponse~ *
 }
 
 class ILessonRepository {
-    <<interface>>
-    + GetByIdAsync(id: int) Task~Lesson?~ *
-    + UpdateMaterialAsync(material: LearningMaterial) void *
+    <<repository interface>>
+    + GetByIdAsync(lessonId: int) Task~Lesson?~ *
     + SaveChangesAsync() Task~int~ *
-}
-
-class IFileUploadService {
-    <<interface>>
-    + UploadVideoAsync(file: IFormFile) Task~string?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class LessonService {
+    <<service>>
     - _lessonRepo : ILessonRepository
-    - _uploadService : IFileUploadService
     
-    + UpdateMaterialAsync(request: UpdateMaterialRequest, instructorId: int) Task~LearningMaterialDto~
+    + UpdateMaterialDetailsAsync(materialId: int, request: MaterialUpdateRequest, instructorId: int) Task~MaterialResponse~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class LessonRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetByIdAsync(id: int) Task~Lesson?~
-    + UpdateMaterialAsync(material: LearningMaterial) void
+    + GetByIdAsync(lessonId: int) Task~Lesson?~
     + SaveChangesAsync() Task~int~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
-    + Lessons : DbSet~Lesson~
+    <<dbcontext>>
     + LearningMaterials : DbSet~LearningMaterial~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
-Lesson *-- LearningMaterial
+%% === AGGREGATION & COMPOSITION ===
+LearningMaterial *-- MaterialMetadata
+MaterialResponse *-- MaterialMetadata
 
-%% === AGGREGATION (hollow diamond) ===
-
-%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+%% === UNIDIRECTIONAL ASSOCIATION ===
 LessonControllerBE --> ILessonService
 LessonService --> ILessonRepository
-LessonService --> IFileUploadService
 LessonRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 LessonService ..|> ILessonService
 LessonRepository ..|> ILessonRepository
 
-%% === DEPENDENCY (dashed arrows) ===
-LessonControllerFE ..> LessonControllerBE
-LessonControllerFE ..> UpdateMaterialViewModel
-LessonControllerBE ..> UpdateMaterialRequest
-LessonService ..> UpdateMaterialRequest
-LessonService ..> LearningMaterialDto
+%% === DEPENDENCY ===
+InstructorCourseControllerFE ..> LessonControllerBE
+LessonControllerBE ..> MaterialUpdateRequest
+LessonService ..> MaterialUpdateRequest
+LessonService ..> MaterialResponse
 LessonService ..> LearningMaterial
 LessonRepository ..> LearningMaterial
 

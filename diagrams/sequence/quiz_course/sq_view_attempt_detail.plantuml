@@ -1,0 +1,80 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Attempt Detail
+
+actor User as act
+participant "QuizAttemptDetailPage" as view
+participant "QuizAttemptController" as fe_ctrl <<frontend controller>>
+participant "QuizAttemptController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":IQuizRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click on specific attempt
+view -> fe_ctrl++: GET /QuizAttempt/Detail/{attemptId}
+fe_ctrl -> be_ctrl++: GET /api/quiz-attempts/detail/{attemptId}
+
+be_ctrl -> sv++: Call GetAttemptDetailAsync(attemptId, userId)
+
+sv -> repo++: Call GetAttemptByIdAsync(attemptId)
+repo -> ctx++: Execute query
+ctx -> db++: Fetch quiz attempt and answers
+db -->> ctx--: Return query results
+ctx -->> repo--: Return attempt entity
+repo -->> sv--: Return attempt entity
+
+alt Attempt Not Found
+    sv -->> be_ctrl: throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl: Return statusCode 404
+    fe_ctrl -->> view: Return JSON (success=false)
+    view -->> act: Display attempt not found message
+else Attempt Found
+    alt Not Attempt Owner
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display unauthorized message
+    else Is Attempt Owner
+        sv -> sv++: Map to QuizAttemptDetailResponse
+        sv--
+        
+        sv -->> be_ctrl--: Return QuizAttemptDetailResponse object
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return View(QuizAttemptDetailResponse)
+        view -->> act--: Display detailed attempt results
+    end
+end

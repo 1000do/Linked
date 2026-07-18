@@ -1,0 +1,145 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class TransactionControllerFE["TransactionController"] {
+    <<frontend controller>>
+    + Instructor(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
+}
+
+class InstructorFinancePageVM {
+    <<view model>>
+    + Transactions : TransactionPagedVM
+    + Payouts : InstructorPayoutPagedViewModel
+    + CourseRevenues : List~InstructorCourseRevenueResponse~
+}
+
+class TransactionPagedVM {
+    <<view model>>
+    + Items : List~TransactionListItemVM~
+    + TotalCount : int
+    + Page : int
+    + PageSize : int
+    + TotalPages : int
+}
+
+class TransactionListItemVM {
+    <<view model>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
+}
+
+%% ==================== BACKEND - CONTROLLERS ====================
+
+class TransactionControllerBE["TransactionController"] {
+    <<backend controller>>
+    - _transactionService : ITransactionService
+    + GetInstructorTransactions(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~IActionResult~
+}
+
+%% ==================== BACKEND - SERVICES ====================
+
+class ITransactionService {
+    <<service interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~*
+}
+
+class TransactionService {
+    <<service>>
+    - _repo : ITransactionRepository
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
+}
+
+%% ==================== BACKEND - REPOSITORIES ====================
+
+class ITransactionRepository {
+    <<repository interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~*
+}
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~
+}
+
+class TransactionListDto {
+    <<dto>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
+}
+
+%% ==================== BACKEND - DB CONTEXT ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+}
+
+%% ==================== BACKEND - ENTITIES ====================
+
+class Transaction {
+    <<entity>>
+    + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
+    + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+TransactionControllerFE ..> InstructorFinancePageVM
+InstructorFinancePageVM *-- TransactionPagedVM
+TransactionPagedVM *-- TransactionListItemVM
+
+TransactionControllerFE ..> TransactionControllerBE
+TransactionControllerBE --> ITransactionService
+
+TransactionService ..|> ITransactionService
+TransactionService --> ITransactionRepository
+
+TransactionRepository ..|> ITransactionRepository
+TransactionRepository --> AppDbContext
+TransactionRepository ..> TransactionListDto
+
+AppDbContext --> Transaction
+
+%% ==================== STYLES ====================
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

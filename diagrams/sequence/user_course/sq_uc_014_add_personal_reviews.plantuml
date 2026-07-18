@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -28,84 +35,90 @@ hide footbox
 mainframe Add Personal Reviews
 
 actor User as act
-participant "CourseLearnPage" as view
-participant "ReviewController" as fe_ctrl <<frontend controller>>
+participant "CourseDetailPage" as view
+participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "ReviewController" as be_ctrl <<backend controller>>
 participant ":ReviewService" as sv
-participant ":Review" as ett
-participant ":IReviewLockoutRepository" as lockout_repo
+participant ":IUserLockoutRepository" as lockout_repo
+participant ":ICourseRepository" as course_repo
 participant ":IEnrollmentRepository" as enroll_repo
 participant ":IReviewRepository" as repo
+participant ":INotificationService" as notif_sv
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
-act -> view++: Submit a review
-view -> fe_ctrl++: POST /Review/SubmitReview
-fe_ctrl -> be_ctrl++: POST /api/reviews
+act -> view++: Click "Write a Review" and Submit
+view -> fe_ctrl++: POST /Course/SubmitReview (ReviewRequest)
 
-be_ctrl -> sv++: Call SubmitReviewAsync(userId, request, requireCompletion)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-sv -> lockout_repo++: Call GetActiveLockoutAsync(userId, "review")
-lockout_repo -->> sv--: Return activeLockout
-
-alt Account is locked out
-    sv -->> be_ctrl: throw BadRequestException
-    be_ctrl -->> fe_ctrl: Return statusCode 400
-    fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display lockout restriction message
-else Account is active
-    sv -> sv++: Check if user is course owner
-    sv--
+alt Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: POST /api/review/submit
+    be_ctrl -> sv++: Call SubmitReviewAsync(userId, request, requireCompletion)
     
-    alt User is Owner
-        sv -> sv++: Call GetOrCreateOwnerEnrollmentAsync(userId, courseId)
-        sv--
-    else User is Student
-        sv -> enroll_repo++: Call GetEnrollmentWithProgressAsync(userId, courseId)
-        enroll_repo -->> sv--: Return enrollment
-        
-        alt Enrollment Not Found
-            sv -->> be_ctrl: throw InvalidOperationException
-            be_ctrl -->> fe_ctrl: Return statusCode 400
-            fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display not enrolled message
-        else Enrolled
-            alt requireCompletion == true
-                alt IsCompleted != true
-                    sv -->> be_ctrl: throw InvalidOperationException
-                    be_ctrl -->> fe_ctrl: Return statusCode 400
-                    fe_ctrl -->> view: Return JSON (success=false)
-                    view -->> act: Display completion required message
-                end
-            else requireCompletion == false
-                sv -> enroll_repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
-                enroll_repo -->> sv--: Return completed count
-                
-                alt learnedCount < 3
-                    sv -->> be_ctrl: throw InvalidOperationException
-                    be_ctrl -->> fe_ctrl: Return statusCode 400
-                    fe_ctrl -->> view: Return JSON (success=false)
-                    view -->> act: Display minimum lessons required message
-                end
-            end
-        end
-    end
+    sv -> lockout_repo++: Call GetActiveLockoutAsync(userId, "review")
+    lockout_repo -> ctx++: Execute query
+    ctx -> db++: Fetch lockout
+    db -->> ctx--: Return query results
+    ctx -->> lockout_repo--: Return lockout entity
+    lockout_repo -->> sv--: Return lockout entity
     
-    sv -> repo++: Call GetEnrolledUserRecentReviewAsync(enrollmentId)
-    repo -->> sv--: Return recentReview
-    
-    alt Submitted within 5 minutes
+    alt Active Lockout Exists
         sv -->> be_ctrl: throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display rate limit message
-    else Can submit review
-        sv -> ett++: Call Review()
-        ett -->> sv--: Return Review entity
+        view -->> act: Display restriction message
+    else No Active Lockout
+        sv -> course_repo++: Call IsOwnerAsync(userId, courseId)
+        course_repo -> ctx++: Execute query
+        ctx -> db++: Check owner
+        db -->> ctx--: Return query results
+        ctx -->> course_repo--: Return IsOwner flag
+        course_repo -->> sv--: Return IsOwner flag
         
-        sv -> repo++: Call AddReviewAsync(review)
-        repo -->> sv--: Return result
+        alt Is Owner
+            sv -> enroll_repo++: Call GetEnrollmentWithProgressAsync(userId, courseId)
+            enroll_repo -> ctx++: Execute query
+            ctx -> db++: Fetch enrollment
+            db -->> ctx--: Return query results
+            ctx -->> enroll_repo--: Return enrollment entity
+            enroll_repo -->> sv--: Return enrollment entity
+            
+
+        else Not Owner
+            sv -> enroll_repo++: Call GetEnrollmentWithProgressAsync(userId, courseId)
+            enroll_repo -> ctx++: Execute query
+            ctx -> db++: Fetch enrollment
+            db -->> ctx--: Return query results
+            ctx -->> enroll_repo--: Return enrollment entity
+            enroll_repo -->> sv--: Return enrollment entity
+            
+            alt Enrollment == null OR (requireCompletion == true AND Not Completed)
+                sv -->> be_ctrl: throw InvalidOperationException
+                be_ctrl -->> fe_ctrl: Return statusCode 400
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display requirement error message
+            else Enrollment Valid
+                opt requireCompletion == false
+                    sv -> enroll_repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
+                    enroll_repo -->> sv--: Return learnedCount
+                end
+            end
+        end
+        
+        alt LessonId HasValue
+            sv -> repo++: Call AddLessonReviewAsync(newLessonReview)
+            repo -> ctx++: Add entity
+            ctx -->> repo--: Return
+            repo -->> sv--: Return result
+        else CourseId Only
+            sv -> repo++: Call AddCourseReviewAsync(newCourseReview)
+            repo -> ctx++: Add entity
+            ctx -->> repo--: Return
+            repo -->> sv--: Return result
+        end
         
         sv -> repo++: Call SaveChangesAsync()
         repo -> ctx++: Save changes to database
@@ -124,10 +137,10 @@ else Account is active
             ctx -->> repo--: Return numberOfRowsAffected
             repo -->> sv--: Return numberOfRowsAffected
             
-            sv -->> be_ctrl--: Return success
+            sv -->> be_ctrl--: Return result
             be_ctrl -->> fe_ctrl--: Return statusCode 200
             fe_ctrl -->> view--: Return JSON (success=true)
-            view -->> act--: Display review submitted successfully
+            view -->> act--: Display review success message
         end
     end
 end

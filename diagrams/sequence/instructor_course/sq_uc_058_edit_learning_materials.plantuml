@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,59 +36,48 @@ mainframe Edit Learning Materials
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
-participant ":IFileStorageService" as storage_sv
-participant ":IMaterialRepository" as repo
+participant ":ILessonRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Edit Material and click Save
-view -> fe_ctrl++: POST /Lesson/UpdateMaterial/{materialId}
+view -> fe_ctrl++: POST /InstructorCourse/UpdateMaterialDetails (requestBody)
 fe_ctrl -> be_ctrl++: PUT /api/lessons/materials/{materialId}
 
 be_ctrl -> sv++: Call UpdateMaterialDetailsAsync(materialId, request, instructorId)
 
-sv -> repo++: Call GetMaterialByIdAsync(materialId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch material
-db -->> ctx--: Return query results
-ctx -->> repo--: Return material entity
-repo -->> sv--: Return material entity
+sv -> sv++: Sanitize HTML Description
+sv--
 
-alt Material Not Found
+sv -> sv++: Retrieve material and its lesson
+sv--
+
+alt Material Not Found OR Lesson Not Found
     sv -->> be_ctrl: throw Exception
     be_ctrl -->> fe_ctrl: Return statusCode 404
     fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display material not found message
-else Material Found
-    sv -> sv++: Call ValidateInstructorAndCourseStateAsync()
+    view -->> act: Display not found message
+else Found
+    sv -> sv++: Validate Instructor and Course State
     sv--
     
-    sv -> repo++: Call GetMaterialsByLessonIdAsync(lessonId)
-    repo -->> sv--: Return current materials
-    
-    alt Duplicate Title or Multiple Videos
-        sv -->> be_ctrl: throw BadRequestException
-        be_ctrl -->> fe_ctrl: Return statusCode 400
+    alt Validation Failed (e.g., Unauthorized)
+        sv -->> be_ctrl: throw Exception
+        be_ctrl -->> fe_ctrl: Return statusCode 403
         fe_ctrl -->> view: Return JSON (success=false)
         view -->> act: Display validation error message
     else Valid
-        sv -> sv++: Call SanitizeHtml(description)
-        sv--
-        
-        opt Has New MaterialFile
-            sv -> storage_sv++: Call UploadVideoAsync(MaterialFile)
-            storage_sv -->> sv--: Return uploadedUrl
-        end
-        
         sv -> sv++: Update material properties
         sv--
         
-        sv -> repo++: Call Update(material)
-        repo -->> sv--: Return tracking state
+        opt Course is Published
+            sv -> sv++: Set course.CourseStatus = "draft"
+            sv--
+        end
         
         sv -> repo++: Call SaveChangesAsync()
         repo -> ctx++: Save changes to database
@@ -100,7 +96,7 @@ else Material Found
             ctx -->> repo--: Return numberOfRowsAffected
             repo -->> sv--: Return numberOfRowsAffected
             
-            sv -> sv++: Call InvalidateCourseCacheAsync(courseId)
+            sv -> sv++: Call Cache Invalidation Logic
             sv--
             
             sv -->> be_ctrl--: Return MaterialResponse object

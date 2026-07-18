@@ -41,71 +41,73 @@ participant ":AppDbContext" as ctx
 participant ":TransactionDetailDto" as dto
 database Database as db
 
-act ++
-list_view ++
+activate act
+activate list_view
 
-act -> list_view: 1. Click "View Detail" button next to a transaction record
-list_view -> fe_ctrl++: 2. GET /Transaction/HistoryDetail/{id}
+act -> list_view: Click "View Detail" button next to a transaction record
+list_view -> fe_ctrl++: GET /Transaction/HistoryDetail/{id}
 
-fe_ctrl -> fe_ctrl++: 3. Validate actor's authentication and authorization
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
-    fe_ctrl -->> login_view: 3.1. Redirect to LoginPage
-    activate login_view
-    login_view -->> act--: 3.2. Display login form
+    fe_ctrl -->> login_view++: Redirect to LoginPage
+    login_view -->> act--: Display login form
 else Unauthorized Access
-    fe_ctrl -->> error_view: 3.3. Redirect to ErrorPage
-    activate error_view
-    error_view -->> act--: 3.4. Display error message
+    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
     
-    fe_ctrl -> be_ctrl++: 4. GET /api/transactions/{id}
+    fe_ctrl -> be_ctrl++: GET /api/transactions/{id}
+    be_ctrl -> sv++: GetTransactionDetailAsync(id)
+    sv -> repo++: GetTransactionDetailAsync(id)
+    repo -> ctx++: Query transaction details
+    ctx -> db++: Execute SELECT with JOINs (Courses, Users, OrderItems)
+    db -->> ctx--: Return query result
     
-    be_ctrl -> sv++: 5. GetTransactionDetailAsync(id)
+    ctx -> ctx++: Check if query result is null
+    ctx--
     
-    sv -> repo++: 6. GetTransactionDetailAsync(id)
-    
-    repo -> ctx++: 7. Query transaction details
-    ctx -> db++: 8. Execute SELECT with JOINs (Courses, Users, OrderItems)
-    db -->> ctx--: 9. Return record
-    
-    ctx -> dto++: 10. Call TransactionDetailDto(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
-    dto -->> ctx--: 11. Return TransactionDetailDto object
-    
-    ctx -->> repo--: 12. Return TransactionDetailDto
-    repo -->> sv--: 13. Return TransactionDetailDto
-    
-    sv -->> be_ctrl--: 14. Return TransactionDetailDto
-    
-    be_ctrl -> be_ctrl++: 15. Check if detail is null
-    be_ctrl--
-    
-    alt Transaction Not Found
-        be_ctrl -->> fe_ctrl: 15.1. Return 404 NotFound
-        fe_ctrl -->> list_view: 15.2. Redirect to History list (TempData["Error"])
-        list_view -->> act--: 15.3. Display "Transaction not found" message
-    else Transaction Found (Normal Flow)
-        be_ctrl -->> fe_ctrl--: 15.4. Return 200 OK (ApiResponse<TransactionDetailDto>)
-        
-        fe_ctrl -> vm++: 15.5. Call TransactionDetailVM(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
-        vm -->> fe_ctrl--: 15.6. Return TransactionDetailVM object
-        
-        fe_ctrl -->> view++: 15.7. Return View(TransactionDetailVM)
-        deactivate fe_ctrl
+    alt Database Query Failure (Not Found)
+        ctx -->> repo: Return null
+        repo -->> sv: Return null
+        sv -->> be_ctrl: Return null
+        be_ctrl -->> fe_ctrl: Return 404 NotFound
+        fe_ctrl -->> list_view: Redirect to History list (TempData["Error"])
+        list_view -->> act: Display "Transaction not found" message
         deactivate list_view
+    else Database Query Success
+        ctx -> dto++: Call TransactionDetailDto(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
+        dto -->> ctx--: Return TransactionDetailDto object
         
-        view -> view++: 16. Render transaction receipt
+        ctx -->> repo--: Return TransactionDetailDto
+        repo -->> sv--: Return TransactionDetailDto
+        sv -->> be_ctrl--: Return TransactionDetailDto
+        
+        be_ctrl -->> fe_ctrl--: Return 200 OK (ApiResponse<TransactionDetailDto>)
+        
+        fe_ctrl -> vm++: Call TransactionDetailVM(TransactionId, Status, BuyerName, CourseTitle, GrossAmount, ...)
+        vm -->> fe_ctrl--: Return TransactionDetailVM object
+        
+        fe_ctrl -->> view++: Return View(TransactionDetailVM)
+        deactivate fe_ctrl
+        
+        view -> view++: Render transaction receipt
         view--
         
         alt Refunded Transaction
-            view -->> act: 16.1. Display refund notification banner (Reason, Admin Note)
+            view -->> act: Display refund notification banner (Reason, Admin Note)
         else Normal Transaction
-            view -->> act--: 16.2. Display detailed financial breakdown, purchaser info, and course details
+            view -->> act--: Display detailed financial breakdown, purchaser info, and course details
         end
     end
+    deactivate ctx
+    deactivate repo
+    deactivate sv
+    deactivate be_ctrl
 end
 
+deactivate view
 deactivate act
 
 @enduml

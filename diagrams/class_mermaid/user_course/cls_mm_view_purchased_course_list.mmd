@@ -3,9 +3,9 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class EnrollmentControllerFE["EnrollmentController"] {
+class CourseControllerFE["CourseController"] {
     <<frontend controller>>
-    + Index() Task~IActionResult~
+    + MyCourses() Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
@@ -15,6 +15,7 @@ class EnrollmentControllerBE["EnrollmentController"] {
     - _enrollmentService : IEnrollmentService
     
     + GetMyCourses() Task~IActionResult~
+    - GetUserId() int?
 }
 
 %% ==================== BACKEND - DTOs ====================
@@ -37,11 +38,18 @@ class EnrolledCourseDto {
 class Enrollment {
     <<entity>>
     + EnrollmentId : int
-    + UserId : int
-    + CourseId : int
-    + EnrolledAt : DateTime?
+    + UserId : int?
+    + CourseId : int?
+    + Title : string?
+    + Description : string?
+    + CompletedDate : DateOnly?
+    + IsCompleted : bool?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
     + Course : Course?
     + User : User?
+    + MaterialCompletions : ICollection~MaterialCompletion~
 }
 
 class Course {
@@ -69,19 +77,27 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IEnrollmentService {
-    <<interface>>
+    <<service interface>>
     + GetMyEnrolledCoursesAsync(userId: int) Task~List~EnrolledCourseDto~~ *
 }
 
 class IEnrollmentRepository {
-    <<interface>>
-    + GetUserEnrollmentsAsync(userId: int) Task~List~Enrollment~~ *
+    <<repository interface>>
+    + GetMyEnrolledCoursesAsync(userId: int) Task~List~Enrollment~~ *
+    + GetCompletedMaterialCountAsync(enrollmentId: int) Task~int~ *
+}
+
+class ICourseRepository {
+    <<repository interface>>
+    + GetCourseStatsAsync(courseId: int) Task~CourseStats?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class EnrollmentService {
+    <<service>>
     - _repo : IEnrollmentRepository
+    - _courseRepo : ICourseRepository
     
     + GetMyEnrolledCoursesAsync(userId: int) Task~List~EnrolledCourseDto~~
 }
@@ -89,15 +105,26 @@ class EnrollmentService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class EnrollmentRepository {
+    <<repository>>
     - _context : AppDbContext
     
-    + GetUserEnrollmentsAsync(userId: int) Task~List~Enrollment~~
+    + GetMyEnrolledCoursesAsync(userId: int) Task~List~Enrollment~~
+    + GetCompletedMaterialCountAsync(enrollmentId: int) Task~int~
+}
+
+class CourseRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetCourseStatsAsync(courseId: int) Task~CourseStats?~
 }
 
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Enrollments : DbSet~Enrollment~
+    + Courses : DbSet~Course~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -105,19 +132,23 @@ class AppDbContext {
 %% === UNIDIRECTIONAL ASSOCIATION ===
 EnrollmentControllerBE --> IEnrollmentService
 EnrollmentService --> IEnrollmentRepository
+EnrollmentService --> ICourseRepository
 EnrollmentRepository --> AppDbContext
+CourseRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 EnrollmentService ..|> IEnrollmentService
 EnrollmentRepository ..|> IEnrollmentRepository
+CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY ===
-EnrollmentControllerFE ..> EnrollmentControllerBE
+CourseControllerFE ..> EnrollmentControllerBE
 EnrollmentControllerBE ..> EnrolledCourseDto
 EnrollmentService ..> EnrolledCourseDto
 EnrollmentService ..> Enrollment
 EnrollmentRepository ..> Enrollment
 EnrollmentRepository ..> Course
+CourseRepository ..> Course
 
 %% ==================== STYLES ====================
 

@@ -3,14 +3,14 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class InstructorCourseController {
+class InstructorCourseControllerFE["InstructorCourseController"] {
     <<frontend controller>>
     + Delete(id: int) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class CourseController {
+class CourseControllerBE["CourseController"] {
     <<backend controller>>
     - _courseCommandService : ICourseCommandService
     
@@ -45,12 +45,12 @@ class Course {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICourseCommandService {
-    <<interface>>
+    <<service interface>>
     + DeleteCourseAsync(courseId: int, instructorId: int) Task *
 }
 
 class ICourseRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int) Task~Course?~ *
     + Update(course: Course) void *
     + SaveChangesAsync() Task~int~ *
@@ -59,6 +59,7 @@ class ICourseRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CourseCommandService {
+    <<service>>
     - _courseRepository : ICourseRepository
     
     + DeleteCourseAsync(courseId: int, instructorId: int) Task
@@ -67,6 +68,7 @@ class CourseCommandService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CourseRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int) Task~Course?~
@@ -77,13 +79,14 @@ class CourseRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-CourseController --> ICourseCommandService
+CourseControllerBE --> ICourseCommandService
 CourseCommandService --> ICourseRepository
 CourseRepository --> AppDbContext
 
@@ -92,7 +95,7 @@ CourseCommandService ..|> ICourseCommandService
 CourseRepository ..|> ICourseRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-InstructorCourseController ..> CourseController
+InstructorCourseControllerFE ..> CourseControllerBE
 CourseCommandService ..> Course
 CourseRepository ..> Course
 

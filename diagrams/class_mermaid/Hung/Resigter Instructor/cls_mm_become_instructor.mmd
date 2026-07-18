@@ -1,0 +1,151 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class InstructorControllerFE["InstructorController"] {
+    <<frontend controller>>
+    + Apply() Task~IActionResult~
+    + Apply(model: InstructorApplyViewModel) Task~IActionResult~
+    - LoadEmailVerifiedAsync() Task
+    - LoadStripeCountriesAsync() Task~List~
+    - LoadCategoriesAsync() Task~List~
+}
+
+class InstructorApplyViewModel {
+    <<viewmodel>>
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentFile : IFormFile?
+    + DocumentFiles : List~IFormFile~?
+    + ExistingDocumentUrl : string?
+    + ExistingDocumentUrls : List~string~?
+    + RetainedDocumentUrls : List~string~?
+    + IsResubmit : bool
+    + RejectionReason : string?
+    + StripeCountry : string
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class InstructorControllerBE["InstructorController"] {
+    <<backend controller>>
+    - _instructorService : IInstructorService
+    
+    + Apply(request: InstructorApplicationRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class InstructorApplicationRequest {
+    <<dto>>
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentFile : IFormFile?
+    + DocumentFiles : List~IFormFile~?
+    + RetainedDocumentUrls : List~string~?
+    + StripeCountry : string
+}
+
+%% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
+
+class IInstructorService {
+    <<service interface>>
+    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~ *
+}
+
+class IFileUploadService {
+    <<service interface>>
+    + UploadImageAsync(file: IFormFile) Task~string~ *
+}
+
+class IInstructorRepository {
+    <<repository interface>>
+    + GetByIdAsync(userId: int) Task~Instructor~ *
+    + AddAsync(instructor: Instructor) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class IUserRepository {
+    <<repository interface>>
+    + GetAccountByIdAsync(accountId: int) Task~Account~ *
+}
+
+%% ==================== BACKEND - IMPLEMENTATIONS ====================
+
+class InstructorService {
+    <<service>>
+    - _repo : IInstructorRepository
+    - _uploadService : IFileUploadService
+    - _userRepo : IUserRepository
+    
+    + SubmitApplicationAsync(userId: int, request: InstructorApplicationRequest) Task~string~
+}
+
+class InstructorRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetByIdAsync(userId: int) Task~Instructor~
+    + AddAsync(instructor: Instructor) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class AppDbContext {
+    <<dbcontext>>
+    + Instructors : DbSet~Instructor~
+    + Accounts : DbSet~Account~
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string
+    + ExpertiseCategories : string
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string
+    + ApprovalStatus : string
+    + StripeCountry : string
+}
+
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + IsVerified : bool
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+InstructorControllerFE ..> InstructorApplyViewModel
+InstructorControllerFE ..> InstructorControllerBE
+
+InstructorControllerBE --> IInstructorService
+InstructorControllerBE ..> InstructorApplicationRequest
+
+InstructorService ..|> IInstructorService
+InstructorService --> IInstructorRepository
+InstructorService --> IFileUploadService
+InstructorService --> IUserRepository
+InstructorService ..> InstructorApplicationRequest
+InstructorService ..> Instructor
+
+InstructorRepository ..|> IInstructorRepository
+InstructorRepository --> AppDbContext
+InstructorRepository ..> Instructor
+
+AppDbContext --> Instructor
+AppDbContext --> Account
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

@@ -33,11 +33,11 @@ participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
 participant "InstructorTransactionDetailPage" as detail_view
 participant "TransactionController" as fe_tx_ctrl <<frontend controller>>
+participant ":TransactionDetailVM" as view_model
 participant "TransactionController" as be_tx_ctrl <<backend controller>>
 participant ":ITransactionService" as tx_sv
-participant ":ITransactionRepository" as tx_repo
 participant ":TransactionDetailDto" as res_dto
-participant ":TransactionDetailVM" as view_model
+participant ":ITransactionRepository" as tx_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -53,16 +53,18 @@ fe_tx_ctrl--
 alt Session Invalid
     fe_tx_ctrl -->> login_view: Redirect to LoginPage
     activate login_view
-    login_view -->> act--: Display login form
+    login_view -->> act: Display login form
+    deactivate login_view
 else Unauthorized Access
     fe_tx_ctrl -->> error_view: Redirect to ErrorPage
     activate error_view
-    error_view -->> act--: Display error message
+    error_view -->> act: Display error message
+    deactivate error_view
 else Valid actor's authentication and authorization
     fe_tx_ctrl -> be_tx_ctrl++: GET /api/transactions/{id}
     be_tx_ctrl -> tx_sv++: GetTransactionDetailAsync(id)
 
-    tx_sv -> tx_sv++: Validate transaction ID (id <= 0)
+    tx_sv -> tx_sv++: Validate transaction ID
     tx_sv--
 
     alt Invalid Transaction ID
@@ -80,13 +82,9 @@ else Valid actor's authentication and authorization
         db -->> ctx--: Return data
         ctx -->> tx_repo--: Return mapped data
         
-        tx_repo -> res_dto++: Call TransactionDetailDto()
-        res_dto -->> tx_repo--: Return TransactionDetailDto object
-        
-        tx_repo -->> tx_sv--: Return TransactionDetailDto object
-        tx_sv -->> be_tx_ctrl--: Return TransactionDetailDto object
-        
         alt Transaction not found (Null)
+            tx_repo -->> tx_sv: Return null
+            tx_sv -->> be_tx_ctrl: Return null
             be_tx_ctrl -->> fe_tx_ctrl: Return statusCode 404
             
             fe_tx_ctrl -->> view: Redirect to InstructorFinancePage
@@ -94,13 +92,16 @@ else Valid actor's authentication and authorization
             view -->> act: Display error message
             deactivate view
         else Transaction found
+            tx_repo -> res_dto++: Call TransactionDetailDto()
+            res_dto -->> tx_repo--: Return TransactionDetailDto object
+            
+            tx_repo -->> tx_sv--: Return TransactionDetailDto object
+            tx_sv -->> be_tx_ctrl--: Return TransactionDetailDto object
+            
             be_tx_ctrl -->> fe_tx_ctrl--: Return statusCode 200
             
             fe_tx_ctrl -> fe_tx_ctrl++: Deserialize JSON to TransactionDetailVM
             fe_tx_ctrl--
-            
-            fe_tx_ctrl -> view_model++: Call TransactionDetailVM()
-            view_model -->> fe_tx_ctrl--: Return TransactionDetailVM object
             
             alt Invalid Transaction Data
                 fe_tx_ctrl -->> view: Redirect to InstructorFinancePage
@@ -108,7 +109,12 @@ else Valid actor's authentication and authorization
                 view -->> act: Display error message
                 deactivate view
             else Valid Transaction Data
-                fe_tx_ctrl -->> detail_view++: Return View(parsed.Data)
+                fe_tx_ctrl -> view_model++: Call TransactionDetailVM()
+                view_model -->> fe_tx_ctrl--: Return TransactionDetailVM object
+                
+                fe_tx_ctrl -->> detail_view: Return View(parsed.Data)
+                fe_tx_ctrl--
+                activate detail_view
                 detail_view -->> act--: Display Transaction details page
             end
         end
