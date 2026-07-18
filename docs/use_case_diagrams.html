@@ -1,0 +1,801 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Use Case Diagrams</title>
+<style>
+    body {
+        font-family: 'Times New Roman', serif;
+    }
+    h3 {
+        font-size: 13pt;
+        font-weight: bold;
+        color: black;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+</style>
+</head>
+<body>
+<h3>3.1 Register</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 6. Class Diagram of Register</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 7. Sequence Diagram of Register</p>
+<h3>3.2 View Course List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 8. Class Diagram of View Course List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 9. Sequence Diagram of View Course List</p>
+<h3>3.3 View Course Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 10. Class Diagram of View Course Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 11. Sequence Diagram of View Course Detail</p>
+<h3>3.4 Search Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 12. Class Diagram of Search Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 13. Sequence Diagram of Search Courses</p>
+<h3>3.5 Filter Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 14. Class Diagram of Filter Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 15. Sequence Diagram of Filter Courses</p>
+<h3>3.6 Sort Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 16. Class Diagram of Sort Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 17. Sequence Diagram of Sort Courses</p>
+<h3>3.7 View Instructor Profile</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 18. Class Diagram of View Instructor Profile</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 19. Sequence Diagram of View Instructor Profile</p>
+<h3>3.8 View review list</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 20. Class Diagram of View review list</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 21. Sequence Diagram of View review list</p>
+<h3>3.9 Report A Review</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 22. Class Diagram of Report A Review</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 23. Sequence Diagram of Report A Review</p>
+<h3>3.10 View Learning Progress</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 24. Class Diagram of View Learning Progress</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 25. Sequence Diagram of View Learning Progress</p>
+<h3>3.11 Go To Learning</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 26. Class Diagram of Go To Learning</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 27. Sequence Diagram of Go To Learning</p>
+<h3>3.12 View purchased course list</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 28. Class Diagram of View purchased course list</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 29. Sequence Diagram of View purchased course list</p>
+<h3>3.13 Enroll courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 30. Class Diagram of Enroll courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 31. Sequence Diagram of Enroll courses</p>
+<h3>3.14 Add personal reviews</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 32. Class Diagram of Add personal reviews</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 33. Sequence Diagram of Add personal reviews</p>
+<h3>3.15 Report A Course</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 34. Class Diagram of Report A Course</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 35. Sequence Diagram of Report A Course</p>
+<h3>3.16 Delete personal reviews</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 36. Class Diagram of Delete personal reviews</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 37. Sequence Diagram of Delete personal reviews</p>
+<h3>3.17 Gift Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 38. Class Diagram of Gift Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 39. Sequence Diagram of Gift Courses</p>
+<h3>3.18 Pay for a gift</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 40. Class Diagram of Pay for a gift</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 41. Sequence Diagram of Pay for a gift</p>
+<h3>3.19 Receive a gift</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 42. Class Diagram of Receive a gift</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 43. Sequence Diagram of Receive a gift</p>
+<h3>3.20 Start Quiz Attempt</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 44. Class Diagram of Start Quiz Attempt</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 45. Sequence Diagram of Start Quiz Attempt</p>
+<h3>3.21 Submit Quiz Attempt</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 46. Class Diagram of Submit Quiz Attempt</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 47. Sequence Diagram of Submit Quiz Attempt</p>
+<h3>3.22 View Attempt Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 48. Class Diagram of View Attempt Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 49. Sequence Diagram of View Attempt Detail</p>
+<h3>3.23 View Quiz History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 50. Class Diagram of View Quiz History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 51. Sequence Diagram of View Quiz History</p>
+<h3>3.24 Login</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 52. Class Diagram of Login</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 53. Sequence Diagram of Login</p>
+<h3>3.25 Login with Google</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 54. Class Diagram of Login with Google</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 55. Sequence Diagram of Login with Google</p>
+<h3>3.26 Verify Email</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 56. Class Diagram of Verify Email</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 57. Sequence Diagram of Verify Email</p>
+<h3>3.27 Change Password</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 58. Class Diagram of Change Password</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 59. Sequence Diagram of Change Password</p>
+<h3>3.28 Update Personal Info</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 60. Class Diagram of Update Personal Info</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 61. Sequence Diagram of Update Personal Info</p>
+<h3>3.29 View Profile</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 62. Class Diagram of View Profile</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 63. Sequence Diagram of View Profile</p>
+<h3>3.30 Add wishlist items</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 64. Class Diagram of Add wishlist items</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 65. Sequence Diagram of Add wishlist items</p>
+<h3>3.31 View Wishlist</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 66. Class Diagram of View Wishlist</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 67. Sequence Diagram of View Wishlist</p>
+<h3>3.32 Delete Wishlist Items</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 68. Class Diagram of Delete Wishlist Items</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 69. Sequence Diagram of Delete Wishlist Items</p>
+<h3>3.33 View Notification list</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 70. Class Diagram of View Notification list</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 71. Sequence Diagram of View Notification list</p>
+<h3>3.34 View Notification Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 72. Class Diagram of View Notification Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 73. Sequence Diagram of View Notification Detail</p>
+<h3>3.35 Mark As Read</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 74. Class Diagram of Mark As Read</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 75. Sequence Diagram of Mark As Read</p>
+<h3>3.36 Delete Notifications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 76. Class Diagram of Delete Notifications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 77. Sequence Diagram of Delete Notifications</p>
+<h3>3.37 Add to cart</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 78. Class Diagram of Add to cart</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 79. Sequence Diagram of Add to cart</p>
+<h3>3.38 View Cart items</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 80. Class Diagram of View Cart items</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 81. Sequence Diagram of View Cart items</p>
+<h3>3.39 Checkout</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 82. Class Diagram of Checkout</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 83. Sequence Diagram of Checkout</p>
+<h3>3.40 Delete cart items</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 84. Class Diagram of Delete cart items</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 85. Sequence Diagram of Delete cart items</p>
+<h3>3.41 Apply Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 86. Class Diagram of Apply Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 87. Sequence Diagram of Apply Coupons</p>
+<h3>3.42 Cancel Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 88. Class Diagram of Cancel Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 89. Sequence Diagram of Cancel Coupons</p>
+<h3>3.43 View Transaction List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 90. Class Diagram of View Transaction List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 91. Sequence Diagram of View Transaction List</p>
+<h3>3.44 Search Transaction History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 92. Class Diagram of Search Transaction History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 93. Sequence Diagram of Search Transaction History</p>
+<h3>3.45 Request Refund</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 94. Class Diagram of Request Refund</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 95. Sequence Diagram of Request Refund</p>
+<h3>3.46 View Transaction Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 96. Class Diagram of View Transaction Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 97. Sequence Diagram of View Transaction Detail</p>
+<h3>3.47 Forget Password</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 98. Class Diagram of Forget Password</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 99. Sequence Diagram of Forget Password</p>
+<h3>3.48 View Chat List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 100. Class Diagram of View Chat List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 101. Sequence Diagram of View Chat List</p>
+<h3>3.49 Delete Chats</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 102. Class Diagram of Delete Chats</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 103. Sequence Diagram of Delete Chats</p>
+<h3>3.50 Send Messages</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 104. Class Diagram of Send Messages</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 105. Sequence Diagram of Send Messages</p>
+<h3>3.51 View Chat History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 106. Class Diagram of View Chat History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 107. Sequence Diagram of View Chat History</p>
+<h3>3.52 Search Chat History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 108. Class Diagram of Search Chat History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 109. Sequence Diagram of Search Chat History</p>
+<h3>3.53 Logout</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 110. Class Diagram of Logout</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 111. Sequence Diagram of Logout</p>
+<h3>3.54 Become An Instructor</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 112. Class Diagram of Become An Instructor</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 113. Sequence Diagram of Become An Instructor</p>
+<h3>3.55 Setup Payout</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 114. Class Diagram of Setup Payout</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 115. Sequence Diagram of Setup Payout</p>
+<h3>3.56 Create Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 116. Class Diagram of Create Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 117. Sequence Diagram of Create Courses</p>
+<h3>3.57 Edit Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 118. Class Diagram of Edit Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 119. Sequence Diagram of Edit Courses</p>
+<h3>3.58 Publish Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 120. Class Diagram of Publish Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 121. Sequence Diagram of Publish Courses</p>
+<h3>3.59 Add Lessons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 122. Class Diagram of Add Lessons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 123. Sequence Diagram of Add Lessons</p>
+<h3>3.60 Remove Lessons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 124. Class Diagram of Remove Lessons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 125. Sequence Diagram of Remove Lessons</p>
+<h3>3.61 Add Learning Materials</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 126. Class Diagram of Add Learning Materials</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 127. Sequence Diagram of Add Learning Materials</p>
+<h3>3.62 Edit Learning Materials</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 128. Class Diagram of Edit Learning Materials</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 129. Sequence Diagram of Edit Learning Materials</p>
+<h3>3.63 Remove Learning Materials</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 130. Class Diagram of Remove Learning Materials</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 131. Sequence Diagram of Remove Learning Materials</p>
+<h3>3.64 Assign Quiz To Course</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 132. Class Diagram of Assign Quiz To Course</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 133. Sequence Diagram of Assign Quiz To Course</p>
+<h3>3.65 View Instructor's Course List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 134. Class Diagram of View Instructor's Course List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 135. Sequence Diagram of View Instructor's Course List</p>
+<h3>3.66 Remove Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 136. Class Diagram of Remove Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 137. Sequence Diagram of Remove Courses</p>
+<h3>3.67 Hide courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 138. Class Diagram of Hide courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 139. Sequence Diagram of Hide courses</p>
+<h3>3.68 View list of removed learning materials</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 140. Class Diagram of View list of removed learning materials</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 141. Sequence Diagram of View list of removed learning materials</p>
+<h3>3.69 Restore learning materials</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 142. Class Diagram of Restore learning materials</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 143. Sequence Diagram of Restore learning materials</p>
+<h3>3.70 Permanently delete learning materials</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 144. Class Diagram of Permanently delete learning materials</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 145. Sequence Diagram of Permanently delete learning materials</p>
+<h3>3.71 View Question Bank</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 146. Class Diagram of View Question Bank</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 147. Sequence Diagram of View Question Bank</p>
+<h3>3.72 View Course Questions</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 148. Class Diagram of View Course Questions</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 149. Sequence Diagram of View Course Questions</p>
+<h3>3.73 Create Question</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 150. Class Diagram of Create Question</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 151. Sequence Diagram of Create Question</p>
+<h3>3.74 Edit Question</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 152. Class Diagram of Edit Question</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 153. Sequence Diagram of Edit Question</p>
+<h3>3.75 Delete Question</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 154. Class Diagram of Delete Question</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 155. Sequence Diagram of Delete Question</p>
+<h3>3.76 View Quiz List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 156. Class Diagram of View Quiz List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 157. Sequence Diagram of View Quiz List</p>
+<h3>3.77 Create Quiz</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 158. Class Diagram of Create Quiz</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 159. Sequence Diagram of Create Quiz</p>
+<h3>3.78 Delete Quiz</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 160. Class Diagram of Delete Quiz</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 161. Sequence Diagram of Delete Quiz</p>
+<h3>3.79 Edit Quiz Settings</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 162. Class Diagram of Edit Quiz Settings</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 163. Sequence Diagram of Edit Quiz Settings</p>
+<h3>3.80 View Balance</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 164. Class Diagram of View Balance</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 165. Sequence Diagram of View Balance</p>
+<h3>3.81 View Instructor's Transaction History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 166. Class Diagram of View Instructor's Transaction History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 167. Sequence Diagram of View Instructor's Transaction History</p>
+<h3>3.82 View Payout History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 168. Class Diagram of View Payout History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 169. Sequence Diagram of View Payout History</p>
+<h3>3.83 Sort Instructor's Transaction History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 170. Class Diagram of Sort Instructor's Transaction History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 171. Sequence Diagram of Sort Instructor's Transaction History</p>
+<h3>3.84 Filter Instructor's Transaction History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 172. Class Diagram of Filter Instructor's Transaction History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 173. Sequence Diagram of Filter Instructor's Transaction History</p>
+<h3>3.85 Filter Payout History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 174. Class Diagram of Filter Payout History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 175. Sequence Diagram of Filter Payout History</p>
+<h3>3.86 Sort Payout History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 176. Class Diagram of Sort Payout History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 177. Sequence Diagram of Sort Payout History</p>
+<h3>3.87 View Instructor's Course Revenue</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 178. Class Diagram of View Instructor's Course Revenue</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 179. Sequence Diagram of View Instructor's Course Revenue</p>
+<h3>3.88 View Instructor's Transaction History Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 180. Class Diagram of View Instructor's Transaction History Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 181. Sequence Diagram of View Instructor's Transaction History Detail</p>
+<h3>3.89 View Profile</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 182. Class Diagram of View Profile</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 183. Sequence Diagram of View Profile</p>
+<h3>3.90 Edit Profile</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 184. Class Diagram of Edit Profile</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 185. Sequence Diagram of Edit Profile</p>
+<h3>3.91 View Notification List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 186. Class Diagram of View Notification List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 187. Sequence Diagram of View Notification List</p>
+<h3>3.92 Send Notifications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 188. Class Diagram of Send Notifications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 189. Sequence Diagram of Send Notifications</p>
+<h3>3.93 View Notification Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 190. Class Diagram of View Notification Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 191. Sequence Diagram of View Notification Detail</p>
+<h3>3.94 Search Notifications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 192. Class Diagram of Search Notifications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 193. Sequence Diagram of Search Notifications</p>
+<h3>3.95 Sort Notifications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 194. Class Diagram of Sort Notifications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 195. Sequence Diagram of Sort Notifications</p>
+<h3>3.96 Filter Notifications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 196. Class Diagram of Filter Notifications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 197. Sequence Diagram of Filter Notifications</p>
+<h3>3.97 View Chat List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 198. Class Diagram of View Chat List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 199. Sequence Diagram of View Chat List</p>
+<h3>3.98 Delete Chats</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 200. Class Diagram of Delete Chats</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 201. Sequence Diagram of Delete Chats</p>
+<h3>3.99 Send Messages</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 202. Class Diagram of Send Messages</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 203. Sequence Diagram of Send Messages</p>
+<h3>3.100 View Chat History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 204. Class Diagram of View Chat History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 205. Sequence Diagram of View Chat History</p>
+<h3>3.101 Search Chat History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 206. Class Diagram of Search Chat History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 207. Sequence Diagram of Search Chat History</p>
+<h3>3.102 View Course Moderation List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 208. Class Diagram of View Course Moderation List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 209. Sequence Diagram of View Course Moderation List</p>
+<h3>3.103 Search Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 210. Class Diagram of Search Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 211. Sequence Diagram of Search Courses</p>
+<h3>3.104 Sort Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 212. Class Diagram of Sort Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 213. Sequence Diagram of Sort Courses</p>
+<h3>3.105 Filter Courses</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 214. Class Diagram of Filter Courses</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 215. Sequence Diagram of Filter Courses</p>
+<h3>3.106 Approve Course Submission</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 216. Class Diagram of Approve Course Submission</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 217. Sequence Diagram of Approve Course Submission</p>
+<h3>3.107 Reject Course Submission</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 218. Class Diagram of Reject Course Submission</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 219. Sequence Diagram of Reject Course Submission</p>
+<h3>3.108 Flag Course for Content Violation</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 220. Class Diagram of Flag Course for Content Violation</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 221. Sequence Diagram of Flag Course for Content Violation</p>
+<h3>3.109 View Instructor Applications Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 222. Class Diagram of View Instructor Applications Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 223. Sequence Diagram of View Instructor Applications Detail</p>
+<h3>3.110 View Instructor Applications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 224. Class Diagram of View Instructor Applications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 225. Sequence Diagram of View Instructor Applications</p>
+<h3>3.111 Approve Instructor Application</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 226. Class Diagram of Approve Instructor Application</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 227. Sequence Diagram of Approve Instructor Application</p>
+<h3>3.112 Reject Instructor Application</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 228. Class Diagram of Reject Instructor Application</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 229. Sequence Diagram of Reject Instructor Application</p>
+<h3>3.113 Search Instructor Applications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 230. Class Diagram of Search Instructor Applications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 231. Sequence Diagram of Search Instructor Applications</p>
+<h3>3.114 Filter Instructor Applications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 232. Class Diagram of Filter Instructor Applications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 233. Sequence Diagram of Filter Instructor Applications</p>
+<h3>3.115 Sort Instructor Applications</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 234. Class Diagram of Sort Instructor Applications</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 235. Sequence Diagram of Sort Instructor Applications</p>
+<h3>3.116 View List of User Reports</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 236. Class Diagram of View List of User Reports</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 237. Sequence Diagram of View List of User Reports</p>
+<h3>3.117 View Report Detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 238. Class Diagram of View Report Detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 239. Sequence Diagram of View Report Detail</p>
+<h3>3.118 Filter Reports</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 240. Class Diagram of Filter Reports</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 241. Sequence Diagram of Filter Reports</p>
+<h3>3.119 Resolve Report</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 242. Class Diagram of Resolve Report</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 243. Sequence Diagram of Resolve Report</p>
+<h3>3.120 View AI Model List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 244. Class Diagram of View AI Model List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 245. Sequence Diagram of View AI Model List</p>
+<h3>3.121 Add AI Model</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 246. Class Diagram of Add AI Model</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 247. Sequence Diagram of Add AI Model</p>
+<h3>3.122 View AI Model Details</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 248. Class Diagram of View AI Model Details</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 249. Sequence Diagram of View AI Model Details</p>
+<h3>3.123 Update AI Model</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 250. Class Diagram of Update AI Model</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 251. Sequence Diagram of Update AI Model</p>
+<h3>3.124 Delete AI Model</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 252. Class Diagram of Delete AI Model</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 253. Sequence Diagram of Delete AI Model</p>
+<h3>3.125 Set Confidence Threshold</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 254. Class Diagram of Set Confidence Threshold</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 255. Sequence Diagram of Set Confidence Threshold</p>
+<h3>3.126 View Activity Log</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 256. Class Diagram of View Activity Log</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 257. Sequence Diagram of View Activity Log</p>
+<h3>3.127 View Account List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 258. Class Diagram of View Account List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 259. Sequence Diagram of View Account List</p>
+<h3>3.128 Create Accounts</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 260. Class Diagram of Create Accounts</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 261. Sequence Diagram of Create Accounts</p>
+<h3>3.129 Update Accounts</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 262. Class Diagram of Update Accounts</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 263. Sequence Diagram of Update Accounts</p>
+<h3>3.130 Delete Accounts</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 264. Class Diagram of Delete Accounts</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 265. Sequence Diagram of Delete Accounts</p>
+<h3>3.131 Filter Accounts</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 266. Class Diagram of Filter Accounts</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 267. Sequence Diagram of Filter Accounts</p>
+<h3>3.132 Search Accounts</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 268. Class Diagram of Search Accounts</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 269. Sequence Diagram of Search Accounts</p>
+<h3>3.133 Flag Accounts for Violation</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 270. Class Diagram of Flag Accounts for Violation</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 271. Sequence Diagram of Flag Accounts for Violation</p>
+<h3>3.134 View Account Details</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 272. Class Diagram of View Account Details</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 273. Sequence Diagram of View Account Details</p>
+<h3>3.135 View Balance</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 274. Class Diagram of View Balance</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 275. Sequence Diagram of View Balance</p>
+<h3>3.136 View Instructor Payout</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 276. Class Diagram of View Instructor Payout</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 277. Sequence Diagram of View Instructor Payout</p>
+<h3>3.137 View Funds Withdrawal History</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 278. Class Diagram of View Funds Withdrawal History</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 279. Sequence Diagram of View Funds Withdrawal History</p>
+<h3>3.138 View List of Refund Requests</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 280. Class Diagram of View List of Refund Requests</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 281. Sequence Diagram of View List of Refund Requests</p>
+<h3>3.139 Approve Refund Request</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 282. Class Diagram of Approve Refund Request</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 283. Sequence Diagram of Approve Refund Request</p>
+<h3>3.140 Reject Refund Request</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 284. Class Diagram of Reject Refund Request</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 285. Sequence Diagram of Reject Refund Request</p>
+<h3>3.141 View Transaction List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 286. Class Diagram of View Transaction List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 287. Sequence Diagram of View Transaction List</p>
+<h3>3.142 Search Transactions</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 288. Class Diagram of Search Transactions</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 289. Sequence Diagram of Search Transactions</p>
+<h3>3.143 Filter Transactions</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 290. Class Diagram of Filter Transactions</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 291. Sequence Diagram of Filter Transactions</p>
+<h3>3.144 Sort Transactions</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 292. Class Diagram of Sort Transactions</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 293. Sequence Diagram of Sort Transactions</p>
+<h3>3.145 Set Transfer Rate</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 294. Class Diagram of Set Transfer Rate</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 295. Sequence Diagram of Set Transfer Rate</p>
+<h3>3.146 Set Payout Schedule of Instructor</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 296. Class Diagram of Set Payout Schedule of Instructor</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 297. Sequence Diagram of Set Payout Schedule of Instructor</p>
+<h3>3.147 Withdraw Funds</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 298. Class Diagram of Withdraw Funds</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 299. Sequence Diagram of Withdraw Funds</p>
+<h3>3.148 Filter Financial Dashboard By Period</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 300. Class Diagram of Filter Financial Dashboard By Period</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 301. Sequence Diagram of Filter Financial Dashboard By Period</p>
+<h3>3.149 View transaction detail</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 302. Class Diagram of View transaction detail</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 303. Sequence Diagram of View transaction detail</p>
+<h3>3.150 View Coupons List</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 304. Class Diagram of View Coupons List</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 305. Sequence Diagram of View Coupons List</p>
+<h3>3.151 Add Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 306. Class Diagram of Add Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 307. Sequence Diagram of Add Coupons</p>
+<h3>3.152 Edit Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 308. Class Diagram of Edit Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 309. Sequence Diagram of Edit Coupons</p>
+<h3>3.153 Delete Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 310. Class Diagram of Delete Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 311. Sequence Diagram of Delete Coupons</p>
+<h3>3.154 Search Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 312. Class Diagram of Search Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 313. Sequence Diagram of Search Coupons</p>
+<h3>3.155 Sort Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 314. Class Diagram of Sort Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 315. Sequence Diagram of Sort Coupons</p>
+<h3>3.156 Filter Coupons</h3>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">a. Class Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 316. Class Diagram of Filter Coupons</p>
+<p style="font-size: 12pt; font-weight: normal; color: black; margin-top: 10px; margin-bottom: 5px; mso-outline-level: body-text;">b. Sequence Diagram</p>
+<p style="font-size: 13pt; text-decoration: underline; font-style: italic; text-align: center; color: #1155cc; margin-top: 5px; margin-bottom: 15px; mso-outline-level: body-text;">Figure 317. Sequence Diagram of Filter Coupons</p>
+</body>
+</html>
