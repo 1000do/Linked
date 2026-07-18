@@ -68,8 +68,8 @@ alt Status != "Approved"
 else Status == "Approved"
         
         fe_ctrl -> be_ctrl ++:3.3.2. GET /api/transactions/instructor?page=1&pageSize=20
-        be_ctrl -> sv ++:3.3.2.1. Call GetInstructorTransactionsAsync(...)
-        sv -> repo ++:3.3.2.2. Call GetInstructorTransactionsAsync(...)
+        be_ctrl -> sv ++:3.3.2.1. GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month)
+        sv -> repo ++:3.3.2.2. GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month)
         
         repo -> repo ++:3.3.2.3. Apply default sorting (date_desc) and pagination
         repo --
@@ -79,20 +79,20 @@ else Status == "Approved"
         db -->> ctx --:3.3.2.6. Return transactions list and total count
         ctx -->> repo --:3.3.2.7. Return transactions list and count
         
-        repo -> dto ++:3.3.2.8. Call TransactionListDto()
+        repo -> dto ++:3.3.2.8. TransactionListDto()
         dto -->> repo --:3.3.2.9. Return TransactionListDto object
         
         repo -->> sv --:3.3.2.10. Return PagedResult<TransactionListDto>
         sv -->> be_ctrl --:3.3.2.11. Return PagedResult<TransactionListDto>
         be_ctrl -->> fe_ctrl --:3.3.2.12. Return statusCode 200
         
-        fe_ctrl -> vm ++:3.3.2.13. Call InstructorFinancePageVM()
+        fe_ctrl -> vm ++:3.3.2.13. InstructorFinancePageVM()
         vm -->> fe_ctrl --:3.3.2.14. Return InstructorFinancePageVM object
         
         fe_ctrl -->> view --:3.3.2.15. Return View(vm)
         
 alt vm.Transactions.Items.Count == 0
-            view -->> act:3.3.2.15.1. Display empty message "No purchases recorded for this period."
+            view -->> act :3.3.2.15.1. Display empty message "No purchases recorded for this period."
 else vm.Transactions.Items.Count > 0
             view -->> act --:3.3.2.15.2. Display list of transactions
 end

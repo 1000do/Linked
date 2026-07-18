@@ -40,9 +40,7 @@ participant ":IAdminFinanceRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant ":WithdrawalHistoryItem" as res
-participant ":PagedResult<WithdrawalHistoryItem>" as paged_item
-participant ":ApiResponse" as api_resp
-participant ":PagedResult<WithdrawalHistoryVM>" as paged_vm
+participant ":WithdrawalHistoryVM" as view_model
 
 act ++
 act -> view++:1. Click "Manager Bank Withdrawals" tab
@@ -97,24 +95,18 @@ opt hasChanges == true
             repo -->> sv--:5.3.4.2.3.1.5. Return numberOfRowsAffected
 end
 
-        sv -> res++:5.3.4.2.4. Call WithdrawalHistoryItem()
-        res -->> sv--:5.3.4.2.5. Return WithdrawalHistoryItem object
+        sv -> res++:5.3.4.2.4. Call WithdrawalHistoryItem() (via IMapper)
+        res -->> sv--:5.3.4.2.5. Return List<WithdrawalHistoryItem>
 
-        sv -> paged_item++:5.3.4.2.6. Call PagedResult<WithdrawalHistoryItem>()
-        paged_item -->> sv--:5.3.4.2.7. Return PagedResult<WithdrawalHistoryItem> object
+        sv -->> be_ctrl--:5.3.4.2.6. Return List<WithdrawalHistoryItem>
 
-        sv -->> be_ctrl--:5.3.4.2.8. Return PagedResult<WithdrawalHistoryItem> object
+        be_ctrl -->> fe_ctrl--:5.3.4.2.7. Return statusCode 200
 
-        be_ctrl -> api_resp++:5.3.4.2.9. Call ApiResponse.SuccessResponse()
-        api_resp -->> be_ctrl--:5.3.4.2.10. Return ApiResponse object
+        fe_ctrl -> view_model++:5.3.4.2.8. Call WithdrawalHistoryVM() (Deserialize JSON)
+        view_model -->> fe_ctrl--:5.3.4.2.9. Return List<WithdrawalHistoryVM>
 
-        be_ctrl -->> fe_ctrl--:5.3.4.2.11. Return statusCode 200 with ApiResponse
-
-        fe_ctrl -> paged_vm++:5.3.4.2.12. Call PagedResult<WithdrawalHistoryVM>() (Deserialize JSON)
-        paged_vm -->> fe_ctrl--:5.3.4.2.13. Return PagedResult<WithdrawalHistoryVM> object
-
-        fe_ctrl -->> view--:5.3.4.2.14. Return statusCode 200
-        view -->> act--:5.3.4.2.15. Display withdrawal history table
+        fe_ctrl -->> view--:5.3.4.2.10. Return statusCode 200
+        view -->> act--:5.3.4.2.11. Display withdrawal history table
 end
 end
 @enduml

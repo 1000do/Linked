@@ -1,0 +1,67 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Quiz History
+
+actor User as act
+participant "QuizHistoryPage" as view
+participant "QuizAttemptController" as fe_ctrl <<frontend controller>>
+participant "QuizAttemptController" as be_ctrl <<backend controller>>
+participant ":QuizService" as sv
+participant ":QuizAttemptSummaryResponse" as res
+participant ":IQuizRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. View Quiz History
+view -> fe_ctrl++:2. GET /QuizAttempt/History/{quizId}
+fe_ctrl -> be_ctrl++:3. GET /api/quiz-attempts/history/{quizId}
+
+be_ctrl -> sv++:4. Call GetMyQuizAttemptsAsync(quizId, userId, request)
+
+sv -> repo++:5. Call GetAttemptsByQuizAndUserAsync(quizId, userId, request.Page, request.PageSize)
+repo -> ctx++:6. Execute query
+ctx -> db++:7. Fetch user quiz attempts
+db -->> ctx--:8. Return query results
+ctx -->> repo--:9. Return attempts and totalCount
+repo -->> sv--:10. Return (attempts, totalCount)
+
+sv -> res++:11. Call QuizAttemptSummaryResponse() (via IMapper)
+res -->> sv--:12. Return List<QuizAttemptSummaryResponse>
+
+sv -->> be_ctrl--:13. Return List<QuizAttemptSummaryResponse>
+be_ctrl -->> fe_ctrl--:14. Return statusCode 200
+fe_ctrl -->> view--:15. Return View(List<QuizAttemptSummaryResponse>)
+view -->> act--:16. Display quiz history list

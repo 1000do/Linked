@@ -35,7 +35,6 @@ participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant ":TransactionPagedVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":ITransactionService" as sv
-participant ":PagedResult" as paged_dto
 participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -62,38 +61,29 @@ else Valid actor's authentication and authorization
 fe_ctrl -> be_ctrl++:3.3.2. GET /api/transactions/my
 be_ctrl -> sv++:3.3.3. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
-sv -> sv++:3.3.4. Validate pagination parameters
-sv--
+sv -> repo++:3.3.4. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
-sv -> repo++:3.3.5. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+repo -> ctx++:3.3.5. Calculate totalCount and query items
+ctx -> db++:3.3.6. Execute query
+db -->> ctx--:3.3.7. Return data
+ctx -->> repo--:3.3.8. Return items and totalCount
 
-repo -> ctx++:3.3.6. Calculate totalCount and query items
-ctx -> db++:3.3.7. Execute query
-db -->> ctx--:3.3.8. Return data
-ctx -->> repo--:3.3.9. Return items and totalCount
+repo -->> sv--:3.3.9. Return items and totalCount
 
-repo -->> sv--:3.3.10. Return items and totalCount
-
-    sv -> paged_dto++:3.3.11. Call PagedResult(items, totalCount, page, pageSize)
-    paged_dto -->> sv--:3.3.12. Return PagedResult object
+    sv -->> be_ctrl--:3.3.10. Return PagedResult<TransactionListDto> object
+    be_ctrl -->> fe_ctrl--:3.3.11. Return statusCode 200
     
-    sv -->> be_ctrl:3.3.13. Return PagedResult object
-    deactivate sv
-    be_ctrl -->> fe_ctrl:3.3.14. Return statusCode 200
-    deactivate be_ctrl
-    
-    fe_ctrl -> fe_ctrl++:3.3.15. Deserialize JSON to TransactionPagedVM
+    fe_ctrl -> fe_ctrl++:3.3.12. Deserialize JSON to TransactionPagedVM
     fe_ctrl--
     
-    fe_ctrl -->> view:3.3.16. Return View(vm)
-    deactivate fe_ctrl
+    fe_ctrl -->> view--:3.3.13. Return View(vm)
 
-    view -> view++:3.3.17. Check totalCount
+    view -> view++:3.3.14. Check totalCount
     view--
 alt Transaction history is empty (totalCount == 0)
-        view -->> act:3.3.17.1. Display empty history card with "No transactions found" message
+        view -->> act:3.3.14.1. Display empty history card with "No transactions found" message
 else Has transactions
-        view -->> act--:3.3.17.2. Display list of transactions and total purchases metric
+        view -->> act--:3.3.14.2. Display list of transactions and total purchases metric
 end
 end
 
