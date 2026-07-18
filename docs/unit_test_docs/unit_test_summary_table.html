@@ -171,7 +171,16 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td></tr>
 <tr><td style='text-align:center;'>19</td>
-<td>StartCourseModerationAsync</td>
+<td>AddToCartAsync</td>
+<td style='text-align:center;'>6</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>6</td></tr>
+<tr><td style='text-align:center;'>20</td>
+<td>RemoveFromCartAsync</td>
 <td style='text-align:center;'>2</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -179,17 +188,17 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td></tr>
-<tr><td style='text-align:center;'>20</td>
-<td>GetCourseForModerationAsync</td>
-<td style='text-align:center;'>3</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>3</td></tr>
 <tr><td style='text-align:center;'>21</td>
-<td>UpdateCourseStatusAndClearCacheAsync</td>
+<td>GetCartSummaryAsync</td>
+<td style='text-align:center;'>12</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>12</td></tr>
+<tr><td style='text-align:center;'>22</td>
+<td>GetMyChatsAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -197,17 +206,8 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
-<tr><td style='text-align:center;'>22</td>
-<td>ExtractPlainTextForModerationResponse</td>
-<td style='text-align:center;'>4</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>4</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>4</td></tr>
 <tr><td style='text-align:center;'>23</td>
-<td>GetModerationThresholdsAsync</td>
+<td>SearchChatsAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -216,34 +216,34 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>24</td>
-<td>AssignAIModeratorsToCourseAsync</td>
-<td style='text-align:center;'>2</td>
+<td>GetChatHistoryAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td></tr>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>25</td>
-<td>PrepareForCourseAIModeration</td>
-<td style='text-align:center;'>2</td>
+<td>SaveMessageAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td>
-<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>26</td>
-<td>GetCourseModerationModelsAsync</td>
-<td style='text-align:center;'>2</td>
+<td>DeleteMessageAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td></tr>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>27</td>
-<td>GetModelConfigPathsAsync</td>
+<td>GetOrCreateChatAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -252,34 +252,34 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>28</td>
-<td>UpdateCourseAIIntegrationsAsync</td>
-<td style='text-align:center;'>4</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>3</td>
-<td style='text-align:center;'>4</td>
+<td>HasAccessToChatAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>7</td></tr>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>29</td>
-<td>SaveCourseAiIntegrationChangesAsync</td>
-<td style='text-align:center;'>2</td>
+<td>GetParticipantIdsAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>2</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>30</td>
-<td>GetCourseMaterialIdsAsync</td>
-<td style='text-align:center;'>3</td>
+<td>GrantAdminAccessAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>2</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>4</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>31</td>
-<td>ResolveCourseAIModerationResult</td>
+<td>ClearChatHistoryAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -288,34 +288,34 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>32</td>
-<td>EvaluateModerationFeedback</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>4</td>
+<td>MarkChatAsReadAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>6</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>33</td>
-<td>LogCourseAiModeration</td>
-<td style='text-align:center;'>3</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td>
+<td>SubmitReportAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>3</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>34</td>
-<td>HandleCourseModerationWithAIAsync</td>
-<td style='text-align:center;'>3</td>
+<td>GetTotalUnreadCountAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>3</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>35</td>
-<td>CreateModerationRequests</td>
+<td>LogActionAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -324,7 +324,7 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>36</td>
-<td>GetAllMaterialEmbeddingsAsync</td>
+<td>CreateSupportRequestAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -333,25 +333,34 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>37</td>
-<td>SaveMaterialEmbeddingsAsync</td>
-<td style='text-align:center;'>8</td>
+<td>AcceptSupportRequestAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>4</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>8</td></tr>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>38</td>
-<td>PersistPendingMaterialEmbeddingsAsync</td>
-<td style='text-align:center;'>10</td>
+<td>GetPendingRequestsAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>10</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>39</td>
-<td>PrepareMaterialEmbeddingsAsync</td>
+<td>StartCourseModerationAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>40</td>
+<td>GetCourseForModerationAsync</td>
 <td style='text-align:center;'>3</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -359,53 +368,44 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>3</td></tr>
-<tr><td style='text-align:center;'>40</td>
-<td>ProcessCourseStrikeAsync</td>
-<td style='text-align:center;'>7</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>7</td></tr>
 <tr><td style='text-align:center;'>41</td>
-<td>ProcessReviewStrikeAsync</td>
-<td style='text-align:center;'>7</td>
+<td>UpdateCourseStatusAndClearCacheAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>3</td>
-<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>7</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>42</td>
-<td>NotifyStudentsAboutInstructorSuspensionAsync</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
+<td>ExtractPlainTextForModerationResponse</td>
 <td style='text-align:center;'>4</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>5</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td></tr>
 <tr><td style='text-align:center;'>43</td>
-<td>GetAllCourseReportsAsync</td>
-<td style='text-align:center;'>2</td>
+<td>GetModerationThresholdsAsync</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td>
-<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td></tr>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>44</td>
-<td>GetAllCourseReviewReportsAsync</td>
+<td>AssignAIModeratorsToCourseAsync</td>
 <td style='text-align:center;'>2</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td></tr>
 <tr><td style='text-align:center;'>45</td>
-<td>GetAllLessonReviewReportsAsync</td>
+<td>PrepareForCourseAIModeration</td>
 <td style='text-align:center;'>2</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -414,88 +414,88 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td></tr>
 <tr><td style='text-align:center;'>46</td>
-<td>GetReportStatsAsync</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td></tr>
-<tr><td style='text-align:center;'>47</td>
-<td>ResolveCourseReportAsync</td>
-<td style='text-align:center;'>13</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>7</td>
-<td style='text-align:center;'>6</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>13</td></tr>
-<tr><td style='text-align:center;'>48</td>
-<td>ResolveCourseReviewReportAsync</td>
-<td style='text-align:center;'>12</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>7</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>12</td></tr>
-<tr><td style='text-align:center;'>49</td>
-<td>ResolveLessonReviewReportAsync</td>
-<td style='text-align:center;'>12</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>7</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>12</td></tr>
-<tr><td style='text-align:center;'>50</td>
-<td>ResolveLinkActionAsync</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td></tr>
-<tr><td style='text-align:center;'>51</td>
-<td>ValidateReportResolutionAccessAsync</td>
+<td>GetCourseModerationModelsAsync</td>
 <td style='text-align:center;'>2</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>47</td>
+<td>GetModelConfigPathsAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>48</td>
+<td>UpdateCourseAIIntegrationsAsync</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>7</td></tr>
+<tr><td style='text-align:center;'>49</td>
+<td>SaveCourseAiIntegrationChangesAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>50</td>
+<td>GetCourseMaterialIdsAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td></tr>
+<tr><td style='text-align:center;'>51</td>
+<td>ResolveCourseAIModerationResult</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>52</td>
-<td>CreateCourseReportAsync</td>
-<td style='text-align:center;'>13</td>
+<td>EvaluateModerationFeedback</td>
+<td style='text-align:center;'>5</td>
 <td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>9</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>13</td></tr>
+<td style='text-align:center;'>6</td></tr>
 <tr><td style='text-align:center;'>53</td>
-<td>CreateCourseReviewReportAsync</td>
-<td style='text-align:center;'>8</td>
+<td>LogCourseAiModeration</td>
+<td style='text-align:center;'>3</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
-<td style='text-align:center;'>1</td>
-<td style='text-align:center;'>5</td>
 <td style='text-align:center;'>2</td>
-<td style='text-align:center;'>8</td></tr>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td></tr>
 <tr><td style='text-align:center;'>54</td>
-<td>CreateLessonReviewReportAsync</td>
-<td style='text-align:center;'>8</td>
+<td>HandleCourseModerationWithAIAsync</td>
+<td style='text-align:center;'>3</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td>
-<td style='text-align:center;'>5</td>
-<td style='text-align:center;'>2</td>
-<td style='text-align:center;'>8</td></tr>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>3</td></tr>
 <tr><td style='text-align:center;'>55</td>
-<td>GetMyCourseReportsAsync</td>
+<td>CreateModerationRequests</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -504,7 +504,7 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>56</td>
-<td>GetMyReviewReportsAsync</td>
+<td>GetAllMaterialEmbeddingsAsync</td>
 <td style='text-align:center;'>1</td>
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>0</td>
@@ -513,6 +513,312 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>1</td></tr>
 <tr><td style='text-align:center;'>57</td>
+<td>SaveMaterialEmbeddingsAsync</td>
+<td style='text-align:center;'>8</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>8</td></tr>
+<tr><td style='text-align:center;'>58</td>
+<td>PersistPendingMaterialEmbeddingsAsync</td>
+<td style='text-align:center;'>10</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>10</td></tr>
+<tr><td style='text-align:center;'>59</td>
+<td>PrepareMaterialEmbeddingsAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td></tr>
+<tr><td style='text-align:center;'>60</td>
+<td>GetPendingListAsync</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>4</td></tr>
+<tr><td style='text-align:center;'>61</td>
+<td>ApproveOrRejectAsync</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td></tr>
+<tr><td style='text-align:center;'>62</td>
+<td>GetDetailAsync</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td></tr>
+<tr><td style='text-align:center;'>63</td>
+<td>ProcessCourseStrikeAsync</td>
+<td style='text-align:center;'>7</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>7</td></tr>
+<tr><td style='text-align:center;'>64</td>
+<td>ProcessReviewStrikeAsync</td>
+<td style='text-align:center;'>7</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>7</td></tr>
+<tr><td style='text-align:center;'>65</td>
+<td>NotifyStudentsAboutInstructorSuspensionAsync</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>5</td></tr>
+<tr><td style='text-align:center;'>66</td>
+<td>GetNotificationsForUserAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>67</td>
+<td>GetAllNotificationsAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>68</td>
+<td>GetAllNotificationsForAdminAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>3</td></tr>
+<tr><td style='text-align:center;'>69</td>
+<td>GetUnreadCountAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>70</td>
+<td>SearchEmailsAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>71</td>
+<td>SendNotificationAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>3</td></tr>
+<tr><td style='text-align:center;'>72</td>
+<td>SendAdvancedAsync</td>
+<td style='text-align:center;'>13</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>13</td></tr>
+<tr><td style='text-align:center;'>73</td>
+<td>SendBulkNotificationsAsync</td>
+<td style='text-align:center;'>4</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>4</td></tr>
+<tr><td style='text-align:center;'>74</td>
+<td>DeleteNotificationAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td></tr>
+<tr><td style='text-align:center;'>75</td>
+<td>MarkAsReadAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>3</td></tr>
+<tr><td style='text-align:center;'>76</td>
+<td>MarkAllAsReadAsync</td>
+<td style='text-align:center;'>3</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>3</td></tr>
+<tr><td style='text-align:center;'>77</td>
+<td>GetAllCourseReportsAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>78</td>
+<td>GetAllCourseReviewReportsAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>79</td>
+<td>GetAllLessonReviewReportsAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>80</td>
+<td>GetReportStatsAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>81</td>
+<td>ResolveCourseReportAsync</td>
+<td style='text-align:center;'>13</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>7</td>
+<td style='text-align:center;'>6</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>13</td></tr>
+<tr><td style='text-align:center;'>82</td>
+<td>ResolveCourseReviewReportAsync</td>
+<td style='text-align:center;'>12</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>7</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>12</td></tr>
+<tr><td style='text-align:center;'>83</td>
+<td>ResolveLessonReviewReportAsync</td>
+<td style='text-align:center;'>12</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>7</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>12</td></tr>
+<tr><td style='text-align:center;'>84</td>
+<td>ResolveLinkActionAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>85</td>
+<td>ValidateReportResolutionAccessAsync</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td></tr>
+<tr><td style='text-align:center;'>86</td>
+<td>CreateCourseReportAsync</td>
+<td style='text-align:center;'>13</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>9</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>13</td></tr>
+<tr><td style='text-align:center;'>87</td>
+<td>CreateCourseReviewReportAsync</td>
+<td style='text-align:center;'>8</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>8</td></tr>
+<tr><td style='text-align:center;'>88</td>
+<td>CreateLessonReviewReportAsync</td>
+<td style='text-align:center;'>8</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>5</td>
+<td style='text-align:center;'>2</td>
+<td style='text-align:center;'>8</td></tr>
+<tr><td style='text-align:center;'>89</td>
+<td>GetMyCourseReportsAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>90</td>
+<td>GetMyReviewReportsAsync</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>0</td>
+<td style='text-align:center;'>1</td></tr>
+<tr><td style='text-align:center;'>91</td>
 <td>GetReportsOnMyCourseAsync</td>
 <td style='text-align:center;'>2</td>
 <td style='text-align:center;'>0</td>
@@ -522,6 +828,6 @@ th { background-color: #000080; color: white; font-weight: bold; text-align: cen
 <td style='text-align:center;'>0</td>
 <td style='text-align:center;'>2</td></tr>
 <tr class='sub-total'><td colspan='2' style='text-align:center;'>Sub total</td>
-<td>217</td><td>0</td><td>5</td>
-<td>101</td><td>93</td><td>23</td><td>222</td></tr>
+<td>304</td><td>0</td><td>5</td>
+<td>143</td><td>124</td><td>37</td><td>309</td></tr>
 </table></body></html>
