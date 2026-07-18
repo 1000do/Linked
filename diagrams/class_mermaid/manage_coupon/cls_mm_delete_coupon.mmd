@@ -13,6 +13,7 @@ class CouponController {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -29,12 +30,12 @@ class Coupon {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICouponService {
-    <<interface>>
+    <<service interface>>
     + SoftDeleteAsync(id: int, userId: int, isAdmin: bool) Task~bool~ *
 }
 
 class ICouponRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByIdAsync(id: int, filterId: int?) Task~Coupon?~ *
     + Update(coupon: Coupon) void *
     + SaveChangesAsync() Task~int~ *
@@ -43,6 +44,7 @@ class ICouponRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CouponService {
+    <<service>>
     - _couponRepository : ICouponRepository
     
     + SoftDeleteAsync(id: int, userId: int, isAdmin: bool) Task~bool~
@@ -51,6 +53,7 @@ class CouponService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CouponRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByIdAsync(id: int, filterId: int?) Task~Coupon?~
@@ -61,8 +64,10 @@ class CouponRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Coupons : DbSet~Coupon~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
@@ -79,6 +84,7 @@ CouponService ..|> ICouponService
 CouponRepository ..|> ICouponRepository
 
 %% === DEPENDENCY (dashed arrows) ===
+CouponService ..> Coupon
 CouponRepository ..> Coupon
 
 %% ==================== STYLES ====================

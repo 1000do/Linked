@@ -96,6 +96,7 @@ class AvailableCouponDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class CartItem {
+    <<entity>>
     + Id : int
     + UserId : int?
     + CourseId : int?
@@ -106,6 +107,7 @@ class CartItem {
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -137,6 +139,7 @@ class Course {
 }
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -155,24 +158,20 @@ class Coupon {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICartService {
-    <<interface>>
+    <<service interface>>
     + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponse~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class ICartRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCartItemsWithDetailsAsync(userId: int) Task~List~CartItem~~ *
 }
 
-class ICourseRepository {
-    <<interface>>
-    + IsEnrolledAsync(userId: int, courseId: int) Task~bool~ *
-}
 
 class ICouponRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByCodeAsync(code: string) Task~Coupon?~ *
     + GetActiveAvailableCouponsAsync(now: DateTime) Task~List~Coupon~~ *
 }
@@ -180,8 +179,8 @@ class ICouponRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CartService {
+    <<service>>
     - _repo : ICartRepository
-    - _courseRepo : ICourseRepository
     - _couponRepo : ICouponRepository
     + GetCartSummaryAsync(userId: int, couponCode: string?) Task~CartSummaryResponse~
 }
@@ -189,6 +188,7 @@ class CartService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CartRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetCartItemsWithDetailsAsync(userId: int) Task~List~CartItem~~
 }
@@ -196,6 +196,7 @@ class CartRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + CartItems : DbSet~CartItem~
     + Courses : DbSet~Course~
     + Coupons : DbSet~Coupon~
@@ -206,7 +207,6 @@ class AppDbContext {
 %% === UNIDIRECTIONAL ASSOCIATION ===
 CartControllerBE --> ICartService
 CartService --> ICartRepository
-CartService --> ICourseRepository
 CartService --> ICouponRepository
 CartRepository --> AppDbContext
 

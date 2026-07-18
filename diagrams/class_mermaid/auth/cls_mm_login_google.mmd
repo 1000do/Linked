@@ -9,6 +9,7 @@ class AccountController {
 }
 
 class GoogleLoginViewModel {
+    <<view model>>
     + IdToken : string
 }
 
@@ -18,16 +19,18 @@ class AuthController {
     <<backend controller>>
     - _authService : IAuthService
     
-    + GoogleLogin(request: GoogleLoginRequest) Task~IActionResult~
+    + GoogleLogin(request: GoogleLoginRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class GoogleLoginRequest {
+class GoogleLoginRequestDTO {
+    <<dto>>
     + IdToken : string
 }
 
-class LoginResponse {
+class LoginResponseDTO {
+    <<dto>>
     + AccessToken : string
     + RefreshToken : string
     + UserName : string
@@ -40,6 +43,7 @@ class LoginResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + PasswordHash : string?
@@ -52,6 +56,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + AccountId : int
     + Username : string
@@ -61,6 +66,7 @@ class User {
 }
 
 class Lockout {
+    <<entity>>
     + LockoutId : int
     + AccountId : int
     + LockoutType : string
@@ -73,48 +79,49 @@ class Lockout {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAuthService {
-    <<interface>>
-    + GoogleLoginAsync(request: GoogleLoginRequest) Task~LoginResponse?~ *
+    <<service interface>>
+    + GoogleLoginAsync(request: GoogleLoginRequestDTO) Task~LoginResponseDTO?~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByEmailAsync(email: string) Task~Account?~ *
     + RegisterUserAsync(account: Account, user: User) Task~bool~ *
-    + UpdateLastLoginAsync(accountId: int) Task~void~ *
+    + UpdateLastLoginAsync(accountId: int) Task~int~ *
     + GetRoleByAccountIdAsync(accountId: int) Task~string~ *
-    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~void~ *
-    + SaveChangesAsync() Task~int~ *
+    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~int~ *
 }
 
 class ILockoutRepository {
-    <<interface>>
+    <<repository interface>>
     + GetActiveLockoutAsync(accountId: int, lockoutType: string) Task~Lockout?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AuthService {
+    <<service>>
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     
-    + GoogleLoginAsync(request: GoogleLoginRequest) Task~LoginResponse?~
+    + GoogleLoginAsync(request: GoogleLoginRequestDTO) Task~LoginResponseDTO?~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAccountByEmailAsync(email: string) Task~Account?~
     + RegisterUserAsync(account: Account, user: User) Task~bool~
-    + UpdateLastLoginAsync(accountId: int) Task~void~
+    + UpdateLastLoginAsync(accountId: int) Task~int~
     + GetRoleByAccountIdAsync(accountId: int) Task~string~
-    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~void~
-    + SaveChangesAsync() Task~int~
+    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~int~
 }
 
 class LockoutRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetActiveLockoutAsync(accountId: int, lockoutType: string) Task~Lockout?~
@@ -123,11 +130,13 @@ class LockoutRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Lockouts : DbSet~Lockout~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -151,10 +160,10 @@ LockoutRepository ..|> ILockoutRepository
 %% === DEPENDENCY (dashed arrows) ===
 AccountController ..> AuthController
 AccountController ..> GoogleLoginViewModel
-AuthController ..> GoogleLoginRequest
-AuthController ..> LoginResponse
-AuthService ..> GoogleLoginRequest
-AuthService ..> LoginResponse
+AuthController ..> GoogleLoginRequestDTO
+AuthController ..> LoginResponseDTO
+AuthService ..> GoogleLoginRequestDTO
+AuthService ..> LoginResponseDTO
 AuthService ..> Account
 AuthService ..> User
 UserRepository ..> Account

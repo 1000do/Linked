@@ -12,6 +12,7 @@ namespace CourseMarketplaceFE.Controllers;
 /// Không cần Session, không cần AddDistributedMemoryCache().
 /// ApiClient tự động gắn Bearer Token của user đang login khi gọi BE.
 /// </summary>
+[Authorize(Roles = "user,instructor")]
 public class CartController : Controller
 {
     private readonly ApiClient _api;

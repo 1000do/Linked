@@ -1,0 +1,74 @@
+@startuml view_report_detail
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Report Detail
+actor Staff as act
+
+participant "Reports" as view
+participant "AdminModerationController" as fe_ctrl
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++:1. Access "Report Center" page
+view->fe_ctrl++:2. GET /AdminModeration/Reports
+fe_ctrl->be_ctrl++:3. GET /api/admin/moderation/reports/stats
+be_ctrl->sv++:4. GetReportStatsAsync()
+sv->repo++:5. GetAllCourseReportsAsync("pending", 1, 100000)
+repo->ctx++:6. Query CourseReport entities
+ctx->db++:7. Execute SQL query
+db-->>ctx:8. Return result set
+ctx-->>repo:9. Return reports
+repo-->>sv:10. Return reports
+sv->repo++:11. GetAllCourseReviewReportsAsync("pending", 1, 100000)
+repo->ctx++:12. Query CourseReviewReport entities
+ctx->db++:13. Execute SQL query
+db-->>ctx:14. Return result set
+ctx-->>repo:15. Return reports
+repo-->>sv:16. Return reports
+sv->repo++:17. GetAllLessonReviewReportsAsync("pending", 1, 100000)
+repo->ctx++:18. Query LessonReviewReport entities
+ctx->db++:19. Execute SQL query
+db-->>ctx:20. Return result set
+ctx-->>repo:21. Return reports
+repo-->>sv:22. Return reports
+sv-->>be_ctrl--:23. Return ReportStatsResponse
+be_ctrl-->>fe_ctrl--:24. Return JSON stats
+fe_ctrl-->>view--:25. Return ReportStatsViewModel
+view-->>act:26. Render Reports page with stats
+
+act->view++:27. Click "Moderate" button on a report row
+view->view++:28. Call moderateCourseReport(reportId, courseTitle, courseId)
+view--
+view-->>act:29. Display moderation modal with report detail
+act--
+@enduml

@@ -1,0 +1,79 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe View Instructor Profile
+actor Guest as act
+
+participant "Instructor/Profile.cshtml" as view
+participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":InstructorService" as sv
+participant ":InstructorRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click on instructor's name/profile link
+view->fe_ctrl++:2. Send GET /Instructor/Profile/{id}
+
+fe_ctrl->be_ctrl++:3. Send GET /api/instructor/public/{id}
+
+be_ctrl->sv++:4. Call GetPublicProfileAsync(id)
+
+sv->repo++:5. Call GetByIdWithNavigationAsync(id)
+repo->ctx++:6. Query Instructor joined with User details
+ctx->db++:7. Execute SELECT query
+db-->>ctx--:8. Return data
+ctx-->>repo--:9. Return data
+repo-->>sv--:10. Return Instructor entity
+
+sv->repo++:11. Call GetStatsAsync(id)
+repo->ctx++:12. Query Transactions and Reviews
+ctx->db++:13. Execute aggregation query
+db-->>ctx--:14. Return stats
+ctx-->>repo--:15. Return stats DTO
+repo-->>sv--:16. Return stats DTO
+
+sv->repo++:17. Call CountActiveCoursesAsync(id)
+repo->ctx++:18. Query published courses count
+ctx->db++:19. Execute COUNT query
+db-->>ctx--:20. Return count
+ctx-->>repo--:21. Return count
+repo-->>sv--:22. Return count
+
+sv->sv++:23. Assemble InstructorPublicProfileDto
+sv--
+
+sv-->>be_ctrl--:24. Return InstructorPublicProfileDto
+be_ctrl-->>fe_ctrl--:25. Return statusCode 200 (Ok) with Profile JSON
+
+fe_ctrl-->>view--:26. Return View(vm)
+view->view++:27. Render profile details
+view--
+view-->>act--:28. Display Instructor Public Profile page
+@enduml

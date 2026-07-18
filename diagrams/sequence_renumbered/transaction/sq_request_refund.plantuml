@@ -1,0 +1,159 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white   
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Request Refund
+
+actor User as act
+participant "PurchaseHistoryPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_ctrl <<backend controller>>
+participant ":IAdminFinanceService" as sv
+participant ":IAdminFinanceRepository" as repo
+participant ":INotificationService" as noti
+participant ":AppDbContext" as ctx
+participant ":TransactionExt" as ext_ent
+participant ":RefundResultDto" as res_dto
+database Database as db
+
+act ++
+view ++
+
+act -> view:1. Click "Refund Request" button next to eligible transaction
+view -->> act:2. Display confirmation modal for refund reason
+
+act -> view:3. Enter reason and click "Submit Request" button
+
+view -> fe_ctrl++:4. POST /Transaction/RequestRefund(transactionId, reason)
+
+fe_ctrl -> fe_ctrl++:5. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:5.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:5.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:5.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:5.2.1. Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> fe_ctrl++:5.3. Validate reason
+    fe_ctrl--
+    
+alt Missing Refund Reason
+        fe_ctrl -->> view:5.3.1. Return JSON (success=false, message="Refund reason cannot be empty")
+        view -->> act:5.3.1.1. Display validation alert "You must enter a refund reason!"
+else Reason Valid
+        fe_ctrl -> be_ctrl++:5.3.2. POST /api/transactions/{id}/request-refund
+        
+        be_ctrl -> sv++:5.3.2.1. RequestRefundAsync(transactionId, studentId, reason)
+        
+        sv -> repo++:5.3.2.2. GetTransactionWithFullGraphAsync(transactionId)
+        repo -> ctx++:5.3.2.3. Query transaction
+        ctx -> db++:5.3.2.4. Execute SELECT
+        db -->> ctx--:5.3.2.5. Return record
+        ctx -->> repo--:5.3.2.6. Return Transaction entity
+        repo -->> sv--:5.3.2.7. Return Transaction entity
+        
+        sv -> sv++:5.3.2.8. Validate ownership, status, 14-day window, gift claimed status
+        sv--
+        
+        sv -> repo++:5.3.2.9. GetRefundEligibilityMetricsAsync(transactionId, studentId, courseId)
+        repo -> ctx++:5.3.2.10. Calculate eligibility metrics
+        ctx -> db++:5.3.2.11. Execute aggregation queries
+        db -->> ctx--:5.3.2.12. Return metrics data
+        ctx -->> repo--:5.3.2.13. Return RefundEligibilityMetrics
+        repo -->> sv--:5.3.2.14. Return RefundEligibilityMetrics
+        
+        sv -> sv++:5.3.2.15. Evaluate metrics against auto-rejection rules
+        sv--
+        
+alt Auto-Rejection Triggered
+            sv -> ext_ent++:5.3.2.15.1. Call TransactionExt(TransactionId, RefundReason, RefundRequestedAt, RefundAdminNote)
+            ext_ent -->> sv--:5.3.2.15.1.1. Return TransactionExt object
+            
+            sv -> repo++:5.3.2.15.1.2. SaveChangesAsync()
+            repo -> ctx++:5.3.2.15.1.3. SaveChangesAsync()
+            ctx -> db++:5.3.2.15.1.4. Save changes to database
+            db -->> ctx--:5.3.2.15.1.5. Return numberOfRowsAffected
+            ctx -->> repo--:5.3.2.15.1.6. Return numberOfRowsAffected
+            repo -->> sv--:5.3.2.15.1.7. Return numberOfRowsAffected
+            
+            sv -> res_dto++:5.3.2.15.1.8. Call RefundResultDto(IsAutoRejected=true, RejectReason)
+            res_dto -->> sv--:5.3.2.15.1.9. Return RefundResultDto object
+            
+            sv -->> be_ctrl:5.3.2.15.1.10. Return RefundResultDto object
+else Validation Passed (Normal Flow)
+            sv -> sv++:5.3.2.15.2. Update TransactionsStatus to "refund_pending"
+            sv--
+            
+            sv -> ext_ent++:5.3.2.15.2.1. Call TransactionExt(TransactionId, RefundReason, RefundRequestedAt)
+            ext_ent -->> sv--:5.3.2.15.2.2. Return TransactionExt object
+            
+            sv -> repo++:5.3.2.15.2.3. SaveChangesAsync()
+            repo -> ctx++:5.3.2.15.2.4. SaveChangesAsync()
+            ctx -> db++:5.3.2.15.2.5. Save changes to database
+            db -->> ctx--:5.3.2.15.2.6. Return numberOfRowsAffected
+            ctx -->> repo--:5.3.2.15.2.7. Return numberOfRowsAffected
+            repo -->> sv--:5.3.2.15.2.8. Return numberOfRowsAffected
+            
+            sv -> noti++:5.3.2.15.2.9. SendNotificationAsync(AdminId, "New Refund Request")
+            noti -->> sv--:5.3.2.15.2.10. Return result
+            
+            sv -> res_dto++:5.3.2.15.2.11. Call RefundResultDto(IsAutoRejected=false)
+            res_dto -->> sv--:5.3.2.15.2.12. Return RefundResultDto object
+            
+            sv -->> be_ctrl:5.3.2.15.2.13. Return RefundResultDto object
+end
+        deactivate sv
+        
+        be_ctrl -->> fe_ctrl:5.3.2.16. Return statusCode 200 (ApiResponse)
+        deactivate be_ctrl
+        
+        fe_ctrl -->> view:5.3.2.17. Return JSON (RefundResultDto data)
+        deactivate fe_ctrl
+        
+        view -> view++:5.3.2.18. Check autoRejected flag
+        view--
+        
+alt Auto-Rejection Triggered
+            view -->> act:5.3.2.18.1. Display rejection message with abstract reason
+else Validation Passed (Normal Flow)
+            view -->> act:5.3.2.18.2. Display success message
+            view -> view++:5.3.2.18.2.1. Reload page to display updated transaction status
+            view--
+            view -->> act--:5.3.2.18.2.2. Reloaded Purchase History Page
+end
+end
+end
+
+deactivate act
+
+@enduml

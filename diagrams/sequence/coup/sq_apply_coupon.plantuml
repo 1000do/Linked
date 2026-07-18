@@ -1,0 +1,120 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Apply Coupon
+actor User as act
+
+participant "CartView" as view
+participant "CartController" as fe_ctrl <<frontend controller>>
+participant "CartController" as be_ctrl <<backend controller>>
+participant ":CartSummaryResponseDTO" as res
+participant ":ICartService" as sv
+participant ":ICartRepository" as cart_repo
+participant ":ICouponRepository" as coupon_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++: Enter coupon code and click "Apply"
+view->fe_ctrl++: POST /Cart/ApplyCoupon
+
+fe_ctrl->fe_ctrl++: Save coupon code to cookie
+fe_ctrl--
+
+fe_ctrl-->>view--: Return statusCode 302
+view->fe_ctrl++: GET /Cart
+
+fe_ctrl->be_ctrl++: GET /api/cart/summary?couponCode=...
+
+be_ctrl->sv++: Call GetCartSummaryAsync(userId, couponCode)
+
+sv->cart_repo++: Call GetCartItemsWithDetailsAsync(userId)
+cart_repo->ctx++: Query CartItems and Course details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>cart_repo--: Return list
+cart_repo-->>sv--: Return list
+
+sv->coupon_repo++: Call GetByCodeAsync(code)
+coupon_repo->ctx++: Query Coupon details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>coupon_repo--: Return coupon
+coupon_repo-->>sv--: Return coupon
+
+sv->sv++: Validate coupon
+sv--
+
+alt Coupon is valid and eligible
+    sv->sv++: Calculate DiscountAmount based on CouponType
+    sv--
+    
+    sv->coupon_repo++: Call GetActiveAvailableCouponsAsync(now)
+    coupon_repo->ctx++: Query active coupons
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
+    ctx-->>coupon_repo--: Return list
+    coupon_repo-->>sv--: Return list
+    
+    sv->res++: Call CartSummaryResponseDTO()
+    res-->>sv--: Return CartSummaryResponseDTO object
+    
+    sv-->>be_ctrl: Return CartSummaryResponseDTO object
+    be_ctrl-->>fe_ctrl: Return statusCode 200
+    
+    fe_ctrl->fe_ctrl++: Set success message
+    fe_ctrl--
+    
+    fe_ctrl-->>view: Return statusCode 200
+    view-->>act: Display discount and updated totals
+else Coupon is invalid or expired
+    sv-->>be_ctrl--: throw InvalidOperationException
+    be_ctrl-->>fe_ctrl--: Return statusCode 400
+    
+    fe_ctrl->fe_ctrl++: Remove invalid coupon from cookie
+    fe_ctrl--
+    
+    fe_ctrl->be_ctrl++: GET /api/cart/summary (Retry without coupon)
+    
+    be_ctrl->sv++: Call GetCartSummaryAsync(...)
+    sv->sv++: Fetch items and calculate totals
+    sv--
+    
+    sv->res++: Call CartSummaryResponseDTO()
+    res-->>sv--: Return CartSummaryResponseDTO object
+    
+    sv-->>be_ctrl--: Return CartSummaryResponseDTO object
+    be_ctrl-->>fe_ctrl--: Return statusCode 200
+    
+    fe_ctrl->fe_ctrl++: Set error message
+    fe_ctrl--
+    
+    fe_ctrl-->>view--: Return statusCode 200
+    view-->>act--: Display error message
+end
+@enduml

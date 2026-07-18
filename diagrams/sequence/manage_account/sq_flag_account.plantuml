@@ -32,22 +32,34 @@ actor Admin as act
 participant "AdminAccountView" as view
 participant "AdminAccountController" as fe_ctrl <<frontend controller>>
 participant "AdminAccountController" as be_ctrl <<backend controller>>
-participant ":AdminAccountService" as sv
-participant ":UserRepository" as u_repo
-participant ":LockoutRepository" as lockout_repo
+participant ":FlagAccountFERequestDTO" as fe_req
+participant ":FlagAccountRequestDTO" as be_req
+participant ":IAdminAccountService" as sv
+participant ":Lockout" as lockout_ett
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lockout_repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant ":NotificationService" as noti
+participant ":INotificationService" as noti
 
 act++
 act->view++: Click "Flag Account" button & enter Reason
 view->fe_ctrl++: POST /AdminAccount/Flag/{id}
 
+fe_ctrl->fe_req++: Call FlagAccountFERequestDTO()
+fe_req-->>fe_ctrl--: Return FlagAccountFERequestDTO object
+
 fe_ctrl->fe_ctrl++: Validate request model
 fe_ctrl--
 
-alt Validation passed
+alt Validation failed
+    fe_ctrl-->>view: Return JSON with success = false
+    view-->>act: Display error toast message
+else Validation passed
     fe_ctrl->be_ctrl++: POST /api/admin/accounts/{id}/flag
+    
+    be_ctrl->be_req++: Call FlagAccountRequestDTO()
+    be_req-->>be_ctrl--: Return FlagAccountRequestDTO object
     
     be_ctrl->sv++: Call FlagAccountAsync(id, reason)
     sv->u_repo++: Call GetAccountByIdAsync(id)
@@ -57,11 +69,24 @@ alt Validation passed
     ctx-->>u_repo--: Return Account entity
     u_repo-->>sv--: Return Account entity
     
-    alt Account eligible for flagging
+    alt Account not found
+        sv-->>be_ctrl: Return error result
+        be_ctrl-->>fe_ctrl: Return statusCode 404
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    else Account is already banned or flags >= 3
+        sv-->>be_ctrl: Return error result
+        be_ctrl-->>fe_ctrl: Return statusCode 400
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    else Account eligible for flagging
         sv->sv++: Increment flags, update AccountStatus
         sv--
         
         opt newFlags >= 3
+            sv->lockout_ett++: Call Lockout()
+            lockout_ett-->>sv--: Return Lockout entity
+            
             sv->lockout_repo++: Call AddAsync(lockout)
             lockout_repo->ctx++: Add Lockout entity (30 days)
             ctx-->>lockout_repo--: Return tracking state
@@ -80,23 +105,11 @@ alt Validation passed
             noti-->>sv--: Completed
         end
         
-        sv-->>be_ctrl: Return result
-        be_ctrl-->>fe_ctrl: Return statusCode 200
+        sv-->>be_ctrl--: Return success result
+        be_ctrl-->>fe_ctrl--: Return statusCode 200
+        
         fe_ctrl-->>view: Return JSON with success = true
-        view-->>act: Render updated account status & flag count
-    else Account is already banned or flags >= 3
-        sv-->>be_ctrl: Return result
-        be_ctrl-->>fe_ctrl: Return statusCode 400
-        fe_ctrl-->>view: Return JSON with success = false
-        view-->>act: Display error toast message
-    else Account not found
-        sv-->>be_ctrl--: Return result
-        be_ctrl-->>fe_ctrl--: Return statusCode 404
-        fe_ctrl-->>view: Return JSON with success = false
-        view-->>act: Display error toast message
+        view-->>act--: Render updated account status & flag count
     end
-else Validation failed
-    fe_ctrl-->>view--: Return JSON with success = false
-    view-->>act--: Display error toast message
 end
 @enduml

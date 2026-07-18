@@ -1,0 +1,81 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class QuestionBankControllerFE["QuestionBankController"] {
+    <<frontend controller>>
+    + CourseLessonsSummary(courseId: int) Task~IActionResult~
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class QuestionBankControllerBE["QuestionBankController"] {
+    <<backend controller>>
+    - _questionBankService : IQuestionBankService
+    
+    + GetLessonsSummaryByCourse(courseId: int) Task~ActionResult~List~QuestionBankLessonSummaryResponse~~~
+    - GetCurrentUserId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class QuestionBankLessonSummaryResponse {
+    <<dto>>
+    + LessonId : int
+    + Title : string
+    + AvailableQuestionCount : int
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuestionBankService {
+    <<interface>>
+    + GetLessonsSummaryByCourseAsync(courseId: int, instructorId: int) Task~List~QuestionBankLessonSummaryResponse~~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+class ILessonRepository {
+    <<interface>>
+    + GetLessonsByCourseIdAsync(courseId: int) Task~List~Lesson~~ *
+}
+
+class IQuestionBankRepository {
+    <<interface>>
+    + GetQuestionsByCourseAsync(courseId: int) Task~List~QuizQuestion~~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuestionBankService {
+    - _questionBankRepository : IQuestionBankRepository
+    - _courseRepository : ICourseRepository
+    - _lessonRepository : ILessonRepository
+    
+    + GetLessonsSummaryByCourseAsync(courseId: int, instructorId: int) Task~List~QuestionBankLessonSummaryResponse~~
+    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+QuestionBankControllerBE --> IQuestionBankService
+QuestionBankService --> IQuestionBankRepository
+QuestionBankService --> ICourseRepository
+QuestionBankService --> ILessonRepository
+
+%% === INTERFACE REALIZATION ===
+QuestionBankService ..|> IQuestionBankService
+
+%% === DEPENDENCY (dashed arrows) ===
+QuestionBankControllerFE ..> QuestionBankControllerBE
+QuestionBankControllerBE ..> QuestionBankLessonSummaryResponse
+QuestionBankService ..> QuestionBankLessonSummaryResponse
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

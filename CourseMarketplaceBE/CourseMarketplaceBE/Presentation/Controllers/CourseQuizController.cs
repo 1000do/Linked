@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
-/// <summary>Instructor gán và quản lý quiz trong một course cụ thể.</summary>
+/// <summary>Instructor gÃ¡n vÃ  quáº£n lÃ½ quiz trong má»™t course cá»¥ thá»ƒ.</summary>
 [ApiController]
 [Route("api/courses/{courseId:int}/quizzes")]
 public class CourseQuizController : ControllerBase
@@ -28,10 +28,10 @@ public class CourseQuizController : ControllerBase
         return id;
     }
 
-    // ── GET api/courses/{courseId}/quizzes ────────────────────────────────────
+    // â”€â”€ GET api/courses/{courseId}/quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpGet]
-    [Authorize(Roles = "instructor")]
+    [Authorize(Roles = "instructor,admin,staff")]
     public async Task<IActionResult> GetCourseQuizzes(int courseId)
     {
         try
@@ -44,7 +44,7 @@ public class CourseQuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── POST api/courses/{courseId}/quizzes ───────────────────────────────────
+    // â”€â”€ POST api/courses/{courseId}/quizzes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpPost]
     [Authorize(Roles = "instructor")]
@@ -53,7 +53,7 @@ public class CourseQuizController : ControllerBase
         try
         {
             Console.WriteLine($"[DEBUG] AddQuizToCourse - Route courseId: {courseId}, Request CourseId: {request.CourseId}, QuizId: {request.QuizId}");
-            request.CourseId = courseId; // Override từ route
+            request.CourseId = courseId; // Override tá»« route
             var instructorId = GetInstructorId();
             var result = await _quizService.AddQuizToCourseAsync(request, instructorId);
             return StatusCode(201, ApiResponse<object>.SuccessResponse(result, "Quiz added to course."));
@@ -64,7 +64,7 @@ public class CourseQuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── DELETE api/courses/{courseId}/quizzes/{quizId} ────────────────────────
+    // â”€â”€ DELETE api/courses/{courseId}/quizzes/{quizId} â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpDelete("{quizId:int}")]
     [Authorize(Roles = "instructor")]
@@ -82,7 +82,7 @@ public class CourseQuizController : ControllerBase
         catch (Exception ex) { return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message)); }
     }
 
-    // ── PATCH api/courses/{courseId}/quizzes/{quizId}/hide ────────────────────
+    // â”€â”€ PATCH api/courses/{courseId}/quizzes/{quizId}/hide â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [HttpPatch("{quizId:int}/hide")]
     [Authorize(Roles = "instructor")]

@@ -329,6 +329,67 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.Should().HaveCount(2);
         }
 
+        // DeleteMessageAsync
+        [Fact]
+        public async Task DeleteMessageAsync_MessageNotFound_ThrowsKeyNotFoundException()
+        {
+            //Arrange 1
+            int messageId = 1;
+            int accountId = 1;
+
+            //Arrange 2
+            _chatRepoMock.GetMessageByIdAsync(messageId).Returns((Message?)null);
+
+            //Act
+            Func<Task> act = async () => await _sut.DeleteMessageAsync(messageId, accountId);
+
+            //Assert
+            await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("Message not found.");
+            await _chatRepoMock.Received(1).GetMessageByIdAsync(messageId);
+        }
+
+        [Fact]
+        public async Task DeleteMessageAsync_NotSender_ThrowsUnauthorizedAccessException()
+        {
+            //Arrange 1
+            int messageId = 1;
+            int accountId = 1; // User trying to delete
+            var message = new Message { MessageId = messageId, SenderId = 2 }; // Sender is 2
+
+            //Arrange 2
+            _chatRepoMock.GetMessageByIdAsync(messageId).Returns(message);
+
+            //Act
+            Func<Task> act = async () => await _sut.DeleteMessageAsync(messageId, accountId);
+
+            //Assert
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You can only delete your own messages.");
+            await _chatRepoMock.Received(1).GetMessageByIdAsync(messageId);
+            await _chatRepoMock.DidNotReceive().SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task DeleteMessageAsync_ValidSender_UpdatesStatusAndReturnsChatId()
+        {
+            //Arrange 1
+            int messageId = 1;
+            int accountId = 1;
+            int chatId = 10;
+            var message = new Message { MessageId = messageId, SenderId = accountId, ChatId = chatId, MessageStatus = "ok" };
+
+            //Arrange 2
+            _chatRepoMock.GetMessageByIdAsync(messageId).Returns(message);
+
+            //Act
+            var result = await _sut.DeleteMessageAsync(messageId, accountId);
+
+            //Assert
+            result.Should().Be(chatId);
+            message.MessageStatus.Should().Be("deleted_by_sender");
+            await _chatRepoMock.Received(1).GetMessageByIdAsync(messageId);
+            await _chatRepoMock.Received(1).SaveChangesAsync();
+        }
+
         // SaveMessageAsync
         [Fact]
         public async Task SaveMessageAsync_NotParticipantNoActiveReport_ThrowsUnauthorizedAccessException()
@@ -1239,6 +1300,362 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             var result = await _sut.SaveMessageAsync(senderId, dto);
             result.SenderName.Should().Be("senderUser@test.com");
+        }
+
+        // --- New Tests for Branch Coverage ---
+        [Fact]
+        public async Task GetChatHistoryAsync_ContainsDeletedMessageBySender_FiltersOutDeletedMessage()
+        {
+            var chatId = 1;
+            var accountId = 1;
+            var participant = new ChatParticipant { ClearedAt = null };
+            var messages = new List<Message>
+            {
+                new Message { MessageId = 1, SenderId = accountId, MessageStatus = "deleted_by_sender", SentAt = DateTime.UtcNow }, // Should be filtered out
+                new Message { MessageId = 2, SenderId = 2, MessageStatus = "deleted_by_sender", SentAt = DateTime.UtcNow }, // Should NOT be filtered out because sender is different
+                new Message { MessageId = 3, SenderId = accountId, MessageStatus = "ok", SentAt = DateTime.UtcNow } // Should NOT be filtered out
+            };
+
+            _chatRepoMock.IsParticipantAsync(chatId, accountId).Returns(true);
+            _chatRepoMock.GetParticipantAsync(chatId, accountId).Returns(participant);
+            _chatRepoMock.GetMessagesByChatIdAsync(chatId).Returns(messages);
+
+            var result = await _sut.GetChatHistoryAsync(chatId, accountId);
+
+            result.Should().HaveCount(2);
+            result.Should().Contain(m => m.MessageId == 2);
+            result.Should().Contain(m => m.MessageId == 3);
+        }
+
+        [Fact]
+        public async Task GetChatHistoryAsync_MessageWithNullNavigations_MapsGracefully()
+        {
+            var chatId = 1;
+            var accountId = 1;
+            var participant = new ChatParticipant { ClearedAt = null };
+            var messages = new List<Message>
+            {
+                new Message { MessageId = 1, Sender = null, Attachments = null, SentAt = DateTime.UtcNow }, // Sender is null, Attachments null
+                new Message { MessageId = 2, Sender = new Account { User = null, Manager = new Manager { DisplayName = "Mgr" } }, Attachments = new List<MessageAttachment>(), SentAt = DateTime.UtcNow }, // Sender.User is null
+                new Message { MessageId = 3, Sender = new Account { User = null, Manager = null, Email = "test@test.com" }, Attachments = null, SentAt = DateTime.UtcNow } // Fallback to Email
+            };
+
+            _chatRepoMock.IsParticipantAsync(chatId, accountId).Returns(true);
+            _chatRepoMock.GetParticipantAsync(chatId, accountId).Returns(participant);
+            _chatRepoMock.GetMessagesByChatIdAsync(chatId).Returns(messages);
+
+            var result = await _sut.GetChatHistoryAsync(chatId, accountId);
+
+            result.Should().HaveCount(3);
+            result.First(m => m.MessageId == 1).SenderName.Should().Be("Unknown");
+            result.First(m => m.MessageId == 2).SenderName.Should().Be("Mgr");
+            result.First(m => m.MessageId == 3).SenderName.Should().Be("test@test.com");
+        }
+
+        [Fact]
+        public async Task CreateSupportRequestAsync_SenderNotFound_ThrowsException()
+        {
+            var senderId = 1;
+            var dto = new SupportRequestDto { Content = "Help" };
+            _userRepoMock.GetAccountByIdAsync(senderId).Returns((Account?)null);
+
+            Func<Task> act = async () => await _sut.CreateSupportRequestAsync(senderId, dto);
+
+            await act.Should().ThrowAsync<InvalidOperationException>();
+        }
+
+        [Fact]
+        public async Task CreateSupportRequestAsync_SenderHasUser_CreatesTicketAndReturns()
+        {
+            var senderId = 1;
+            var dto = new SupportRequestDto { Content = "Help", TargetRole = "admin" };
+            var account = new Account { AccountId = senderId, User = new User { FullName = "User FullName" } };
+
+            _userRepoMock.GetAccountByIdAsync(senderId).Returns(account);
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns((List<SupportTicketDto>?)null);
+
+            var result = await _sut.CreateSupportRequestAsync(senderId, dto);
+
+            result.SenderName.Should().Be("User FullName");
+            await _redisMock.Received(1).SetCacheAsync("ActiveSupportTickets", Arg.Is<List<SupportTicketDto>>(l => l.Count == 1), Arg.Any<TimeSpan>());
+        }
+
+        [Fact]
+        public async Task CreateSupportRequestAsync_SenderHasManager_CreatesTicketAndReturns()
+        {
+            var senderId = 1;
+            var dto = new SupportRequestDto { Content = "Help", TargetRole = "admin" };
+            var account = new Account { AccountId = senderId, Manager = new Manager { DisplayName = "Mgr Name" } };
+
+            _userRepoMock.GetAccountByIdAsync(senderId).Returns(account);
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(new List<SupportTicketDto>()); // Non-null list
+
+            var result = await _sut.CreateSupportRequestAsync(senderId, dto);
+
+            result.SenderName.Should().Be("Mgr Name");
+        }
+
+        [Fact]
+        public async Task CreateSupportRequestAsync_SenderHasUsernameOnly_CreatesTicketAndReturns()
+        {
+            var senderId = 1;
+            var dto = new SupportRequestDto { Content = "Help" };
+            var account = new Account { AccountId = senderId, Username = "uname" };
+
+            _userRepoMock.GetAccountByIdAsync(senderId).Returns(account);
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(new List<SupportTicketDto>());
+
+            var result = await _sut.CreateSupportRequestAsync(senderId, dto);
+
+            result.SenderName.Should().Be("uname");
+        }
+
+        [Fact]
+        public async Task CreateSupportRequestAsync_SenderHasEmailOnly_CreatesTicketAndReturns()
+        {
+            var senderId = 1;
+            var dto = new SupportRequestDto { Content = "Help" };
+            var account = new Account { AccountId = senderId, Email = "email@test.com" };
+
+            _userRepoMock.GetAccountByIdAsync(senderId).Returns(account);
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(new List<SupportTicketDto>());
+
+            var result = await _sut.CreateSupportRequestAsync(senderId, dto);
+
+            result.SenderName.Should().Be("email@test.com");
+        }
+
+        [Fact]
+        public async Task CreateSupportRequestAsync_SenderHasNothing_CreatesTicketAndReturns()
+        {
+            var senderId = 1;
+            var dto = new SupportRequestDto { Content = "Help" };
+            var account = new Account { AccountId = senderId }; // all null
+
+            _userRepoMock.GetAccountByIdAsync(senderId).Returns(account);
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(new List<SupportTicketDto>());
+
+            var result = await _sut.CreateSupportRequestAsync(senderId, dto);
+
+            result.SenderName.Should().Be("Unknown");
+        }
+
+        [Fact]
+        public async Task GetAdminAccountAsync_AdminIsNull_ReturnsDefault()
+        {
+            _userRepoMock.GetAdminIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns((Account?)null);
+            var result = await _sut.GetAdminAccountAsync();
+            result!.FullName.Should().Be("Administrator");
+            result.AvatarUrl.Should().Be("");
+        }
+
+        [Fact]
+        public async Task GetAdminAccountAsync_AdminHasManager_ReturnsManagerName()
+        {
+            _userRepoMock.GetAdminIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { Manager = new Manager { DisplayName = "Admin Mgr" }, AvatarUrl = "url" });
+            var result = await _sut.GetAdminAccountAsync();
+            result!.FullName.Should().Be("Admin Mgr");
+            result.AvatarUrl.Should().Be("url");
+        }
+
+        [Fact]
+        public async Task GetAdminAccountAsync_AdminHasUser_ReturnsUserName()
+        {
+            _userRepoMock.GetAdminIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { User = new User { FullName = "Admin User" }, AvatarUrl = "url" });
+            var result = await _sut.GetAdminAccountAsync();
+            result!.FullName.Should().Be("Admin User");
+        }
+
+        [Fact]
+        public async Task GetSupportAccountAsync_StaffIsNull_ReturnsDefault()
+        {
+            _userRepoMock.GetStaffAccountIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns((Account?)null);
+            var result = await _sut.GetSupportAccountAsync();
+            result!.FullName.Should().Be("Support Team");
+            result.AvatarUrl.Should().Be("");
+        }
+
+        [Fact]
+        public async Task GetPendingRequestsAsync_HasTickets_FiltersByRole()
+        {
+            var accountId = 1;
+            var currentRole = "admin";
+            var tickets = new List<SupportTicketDto>
+            {
+                new SupportTicketDto { TargetRole = "admin", RequestedAt = DateTime.UtcNow },
+                new SupportTicketDto { TargetRole = "staff", RequestedAt = DateTime.UtcNow },
+                new SupportTicketDto { TargetRole = "user", SenderId = accountId, RequestedAt = DateTime.UtcNow }
+            };
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(tickets);
+            var result = await _sut.GetPendingRequestsAsync(accountId, currentRole);
+            result.Should().HaveCount(1);
+            result.First().TargetRole.Should().Be("admin");
+        }
+
+        [Fact]
+        public async Task GetPendingRequestsAsync_RoleIsStaff_FiltersByStaff()
+        {
+            var tickets = new List<SupportTicketDto> { new SupportTicketDto { TargetRole = "staff", RequestedAt = DateTime.UtcNow } };
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(tickets);
+            var result = await _sut.GetPendingRequestsAsync(1, "staff");
+            result.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetPendingRequestsAsync_RoleIsUser_FiltersBySenderId()
+        {
+            var tickets = new List<SupportTicketDto> { new SupportTicketDto { SenderId = 1, RequestedAt = DateTime.UtcNow }, new SupportTicketDto { SenderId = 2, RequestedAt = DateTime.UtcNow } };
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(tickets);
+            var result = await _sut.GetPendingRequestsAsync(1, "user");
+            result.Should().HaveCount(1);
+        }
+
+        [Fact]
+        public async Task GetPendingRequestsAsync_NullCache_ReturnsEmpty()
+        {
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns((List<SupportTicketDto>?)null);
+            var result = await _sut.GetPendingRequestsAsync(1, "admin");
+            result.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetOrCreateChatAsync_UserToUser_ContextSystem_ThrowsException()
+        {
+            var senderId = 1;
+            var dto = new CreateChatDto { TargetAccountId = 2, ContextType = "system", ContextId = null };
+            _userRepoMock.GetRoleByAccountIdAsync(senderId).Returns("user");
+            _userRepoMock.GetRoleByAccountIdAsync(dto.TargetAccountId).Returns("user");
+            
+            Func<Task> act = async () => await _sut.GetOrCreateChatAsync(senderId, dto);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+
+        [Fact]
+        public async Task GetOrCreateChatAsync_SenderIsStaff_CreatesChat()
+        {
+            var senderId = 1;
+            var dto = new CreateChatDto { TargetAccountId = 2, ContextType = "system" };
+            _userRepoMock.GetRoleByAccountIdAsync(senderId).Returns("staff");
+            _userRepoMock.GetRoleByAccountIdAsync(dto.TargetAccountId).Returns("user");
+            _chatRepoMock.CreateChatAsync(Arg.Any<Chat>()).Returns(new Chat { ChatId = 1 });
+            
+            var result = await _sut.GetOrCreateChatAsync(senderId, dto);
+            result.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task AcceptSupportRequestAsync_StaffAcceptsAdminTicket_ThrowsException()
+        {
+            var acceptorId = 1;
+            var tickets = new List<SupportTicketDto> { new SupportTicketDto { TicketId = "1", TargetRole = "admin" } };
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(tickets);
+            _userRepoMock.GetRoleByAccountIdAsync(acceptorId).Returns("staff");
+
+            Func<Task> act = async () => await _sut.AcceptSupportRequestAsync(acceptorId, "1");
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+
+        [Fact]
+        public async Task AcceptSupportRequestAsync_UserAcceptsStaffTicket_ThrowsException()
+        {
+            var acceptorId = 1;
+            var tickets = new List<SupportTicketDto> { new SupportTicketDto { TicketId = "1", TargetRole = "staff" } };
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(tickets);
+            _userRepoMock.GetRoleByAccountIdAsync(acceptorId).Returns("user");
+
+            Func<Task> act = async () => await _sut.AcceptSupportRequestAsync(acceptorId, "1");
+            await act.Should().ThrowAsync<UnauthorizedAccessException>();
+        }
+
+        [Fact]
+        public async Task AcceptSupportRequestAsync_ValidAcceptor_InitiatesChatAndReturnsChatId()
+        {
+            var acceptorId = 1;
+            var tickets = new List<SupportTicketDto> { new SupportTicketDto { TicketId = "1", TargetRole = "staff", SenderId = 2, InitialMessage = "help" } };
+            _redisMock.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets").Returns(tickets);
+            _userRepoMock.GetRoleByAccountIdAsync(acceptorId).Returns("staff");
+            
+            // Mocking GetOrCreateChatAsync internals
+            _userRepoMock.GetRoleByAccountIdAsync(2).Returns("user"); // Sender role doesn't matter for create, but acceptor is staff
+            _chatRepoMock.FindPrivateChatAsync(2, acceptorId, "system", null).Returns((ChatParticipant?)null);
+            _chatRepoMock.CreateChatAsync(Arg.Any<Chat>()).Returns(new Chat { ChatId = 99 });
+            _chatRepoMock.IsParticipantAsync(99, 2).Returns(true); // For SaveMessageAsync
+            _chatRepoMock.GetChatByIdAsync(99).Returns(new Chat());
+            _chatRepoMock.GetParticipantIdsAsync(99).Returns(new List<int> { 2, acceptorId });
+
+            var result = await _sut.AcceptSupportRequestAsync(acceptorId, "1");
+            result.Should().Be(99);
+        }
+
+        [Fact]
+        public async Task GetAdminAccountAsync_AdminHasUserButNoFullName_ReturnsManagerName()
+        {
+            _userRepoMock.GetAdminIdAsync().Returns(1);
+            // User is not null, but FullName is null. So it falls back to Manager.DisplayName
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { User = new User { FullName = null! }, Manager = new Manager { DisplayName = "Admin Mgr" }, AvatarUrl = "url" });
+            var result = await _sut.GetAdminAccountAsync();
+            result!.FullName.Should().Be("Admin Mgr");
+        }
+
+        [Fact]
+        public async Task GetSupportAccountAsync_StaffHasUserButNoFullName_ReturnsSupportTeam()
+        {
+            _userRepoMock.GetStaffAccountIdAsync().Returns(1);
+            // User is not null, but FullName is null. So it falls back to "Support Team"
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { User = new User { FullName = null! } });
+            var result = await _sut.GetSupportAccountAsync();
+            result!.FullName.Should().Be("Support Team");
+        }
+
+        [Fact]
+        public async Task GetAdminAccountAsync_AdminHasManagerButNoDisplayName_ReturnsAdministrator()
+        {
+            _userRepoMock.GetAdminIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { Manager = new Manager { DisplayName = null! } });
+            var result = await _sut.GetAdminAccountAsync();
+            result!.FullName.Should().Be("Administrator");
+        }
+
+        [Fact]
+        public async Task GetSupportAccountAsync_StaffHasNoUser_ReturnsSupportTeam()
+        {
+            _userRepoMock.GetStaffAccountIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { User = null });
+            var result = await _sut.GetSupportAccountAsync();
+            result!.FullName.Should().Be("Support Team");
+        }
+
+        [Fact]
+        public async Task GetAdminAccountAsync_AdminHasNoUserAndNoManager_ReturnsAdministrator()
+        {
+            _userRepoMock.GetAdminIdAsync().Returns(1);
+            _userRepoMock.GetAccountByIdAsync(1).Returns(new Account { User = null, Manager = null });
+            var result = await _sut.GetAdminAccountAsync();
+            result!.FullName.Should().Be("Administrator");
+        }
+
+        [Fact]
+        public async Task GetChatHistoryAsync_MessageHasNullSentAt_FilteredOutByClearedAt()
+        {
+            var chatId = 1;
+            var accountId = 1;
+            var participant = new ChatParticipant { ClearedAt = DateTime.UtcNow };
+            var messages = new List<Message>
+            {
+                new Message { MessageId = 1, SentAt = null }
+            };
+
+            _chatRepoMock.IsParticipantAsync(chatId, accountId).Returns(true);
+            _chatRepoMock.GetParticipantAsync(chatId, accountId).Returns(participant);
+            _chatRepoMock.GetMessagesByChatIdAsync(chatId).Returns(messages);
+
+            var result = await _sut.GetChatHistoryAsync(chatId, accountId);
+
+            result.Should().BeEmpty();
         }
     }
 }

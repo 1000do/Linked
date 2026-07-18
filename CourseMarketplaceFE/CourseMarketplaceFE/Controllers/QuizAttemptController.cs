@@ -19,7 +19,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/Take/{quizId:int}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> Take(int quizId)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))
@@ -62,7 +62,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/Preview/{quizId:int}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,admin,staff")]
     public async Task<IActionResult> Preview(int quizId)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))
@@ -209,7 +209,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/Review/{attemptId:int}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,admin,staff")]
     public async Task<IActionResult> Review(int attemptId)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))

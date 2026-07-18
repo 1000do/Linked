@@ -41,3 +41,5 @@ scratch/
 #Test Result
 **/TestResults
 **/TestHTMLReports
+**/rp5_extracted
+/CourseMarketplaceBE/CourseMarketplaceBE_Tests/CoverageReport/summary.html

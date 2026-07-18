@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
@@ -54,7 +54,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpGet("progress/{courseId}")]
-   [Authorize(Roles = "user,instructor")]
+   [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetProgress(int courseId)
     {
         var userId = GetUserId();
@@ -67,7 +67,7 @@ public class EnrollmentController : ControllerBase
     }
 
     [HttpPost("progress")]
-[Authorize(Roles = "user,instructor")]
+[Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> UpdateProgress([FromBody] UpdateProgressRequest request)
     {
         var userId = GetUserId();

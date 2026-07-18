@@ -1,0 +1,83 @@
+@startuml filter_reports
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Filter Reports
+actor Staff as act
+
+participant "Reports" as view
+participant "AdminModerationController" as be_ctrl
+participant ":ReportService" as sv
+participant ":ReportRepository" as repo
+participant ":AppDbContext" as ctx
+
+database Database as db
+
+act++
+act->view++:1. Select status from filter dropdown\n(e.g. "pending", "resolved", "rejected", "escalated")
+view->view++:2. Trigger onchange -> loadCourseReports() / loadReviewReports()
+view--
+
+group alt [Filter Course Reports]
+    view->be_ctrl++:3. GET /api/admin/moderation/reports/courses?status={status}
+    be_ctrl->sv++:4. GetAllCourseReportsAsync(status, page, pageSize)
+    sv->repo++:5. GetAllCourseReportsAsync(status, page, pageSize)
+    repo->ctx++:6. Query CourseReport filtered by status
+    ctx->db++:7. Execute SQL query
+    db-->>ctx:8. Return result set
+    ctx-->>repo:9. (reports, totalCount)
+    repo-->>sv:10. (reports, totalCount)
+    sv-->>be_ctrl--:11. PagedResult<CourseReportDetailResponse>
+    be_ctrl-->>view--:12. Return JSON payload
+    view-->>act:13. Re-render course report table
+else [Filter Course Review Reports]
+    view->be_ctrl++:14. GET /api/admin/moderation/reports/course-reviews?status={status}
+    be_ctrl->sv++:15. GetAllCourseReviewReportsAsync(status, page, pageSize)
+    sv->repo++:16. GetAllCourseReviewReportsAsync(status, page, pageSize)
+    repo->ctx++:17. Query CourseReviewReport filtered by status
+    ctx->db++:18. Execute SQL query
+    db-->>ctx:19. Return result set
+    ctx-->>repo:20. (reports, totalCount)
+    repo-->>sv:21. (reports, totalCount)
+    sv-->>be_ctrl--:22. PagedResult<ReviewReportDetailResponse>
+    be_ctrl-->>view--:23. Return JSON payload
+    view-->>act:24. Re-render course review report table
+else [Filter Lesson Review Reports]
+    view->be_ctrl++:25. GET /api/admin/moderation/reports/lesson-reviews?status={status}
+    be_ctrl->sv++:26. GetAllLessonReviewReportsAsync(status, page, pageSize)
+    sv->repo++:27. GetAllLessonReviewReportsAsync(status, page, pageSize)
+    repo->ctx++:28. Query LessonReviewReport filtered by status
+    ctx->db++:29. Execute SQL query
+    db-->>ctx:30. Return result set
+    ctx-->>repo:31. (reports, totalCount)
+    repo-->>sv:32. (reports, totalCount)
+    sv-->>be_ctrl--:33. PagedResult<ReviewReportDetailResponse>
+    be_ctrl-->>view--:34. Return JSON payload
+    view-->>act:35. Re-render lesson review report table
+end
+act--
+@enduml

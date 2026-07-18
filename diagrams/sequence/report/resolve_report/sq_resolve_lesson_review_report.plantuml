@@ -1,0 +1,143 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Resolve Lesson Review Report
+
+actor "Staff / Admin" as act
+participant "ReportCenterPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":IReportModerationService" as sv
+participant ":IReportRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++: Click "Moderate" on a lesson review report row
+view -->> act: Display Moderate Report popup
+
+act -> view: Enter moderation details
+act -> view: Click "Submit Decision"
+
+view -> view++: Validate form input
+view--
+
+opt Invalid form input
+    view -->> act: Display error message
+end
+
+view -> fe_ctrl++: POST /AdminModeration/ResolveLessonReviewReport?reportId={id}
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++: Validate ModelState
+    fe_ctrl--
+
+    opt Invalid ModelState
+        fe_ctrl -->> view: Return BadRequest()
+        view -->> act: Display error message
+    end
+
+    fe_ctrl -> be_ctrl++: PATCH /api/admin/moderation/reports/lesson-reviews/{reportId}
+    
+    be_ctrl -> sv++: Call ResolveLessonReviewReportAsync()
+    
+    sv -> sv++: Validate report resolution request
+    sv--
+
+    alt Report or entity not found
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return NotFound()
+        view -->> act: Display error message
+    else Unauthorized
+        sv -->> be_ctrl: Throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return Forbid()
+        view -->> act: Display error message
+    else Valid report resolution request
+        sv -> sv++: Update lesson review report fields
+        sv--
+
+    opt Report is accepted
+        sv -> sv++: Call ApplyLessonReviewPenaltyAsync()
+        sv--
+    end
+
+    sv -> repo++: UpdateLessonReviewReport(report)
+    repo -->> sv--: Return result
+
+    sv -> sv++: SaveReportChangesAsync()
+    sv -> repo++: SaveChangesAsync()
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to database
+
+    alt Database Save Failure
+        db -->> ctx: Throw DbUpdateException
+        ctx -->> repo: Throw DbUpdateException
+        repo -->> sv: Throw ReportException
+        sv -->> be_ctrl: Throw BadRequestException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return BadRequest()
+        view -->> act: Display error popup
+    else Database Save Success
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        sv--
+
+        sv -> sv++: Call SendResolutionNotificationsAsync()
+        sv--
+        
+        sv -->> be_ctrl--: Return true
+        be_ctrl -->> fe_ctrl--: Return statusCode 200
+        fe_ctrl -->> view--: Return Ok()
+        
+        view -->> act--: Display success message
+        end
+    end
+end
+@enduml

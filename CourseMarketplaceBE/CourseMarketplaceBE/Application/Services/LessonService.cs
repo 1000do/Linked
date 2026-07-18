@@ -149,10 +149,17 @@ public class LessonService : ILessonService
         {
             lesson.LessonStatus = LessonStatus.Draft.ToValue();
             course.CourseStatus = CourseStatus.Draft.ToValue();
-            _courseRepository.Update(course);
+            // Automatically tracked by EF Core, no need to call Update which could cause graph tracking issues
         }
 
-        await _lessonRepository.SaveChangesAsync();
+        try
+        {
+            await _lessonRepository.SaveChangesAsync();
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            throw new Exception($"DB Error: {ex.InnerException?.Message}");
+        }
 
         await InvalidateCourseCacheAsync(request.CourseId);
 
@@ -574,5 +581,66 @@ public class LessonService : ILessonService
         await _materialRepository.SaveChangesAsync();
 
         await InvalidateCourseCacheAsync(lesson.CourseId);
+    }
+
+    private async Task<int> SaveLessonChangesAsync()
+    {
+        try
+        {
+            return await _lessonRepository.SaveChangesAsync();
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            throw new BadRequestException("Database operation failed due to a constraint violation or data issue while saving lessons.");
+        }
+    }
+
+    private async Task<int> SaveMaterialChangesAsync()
+    {
+        try
+        {
+            return await _materialRepository.SaveChangesAsync();
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            throw new BadRequestException("Database operation failed due to a constraint violation or data issue while saving materials.");
+        }
+    }
+
+    public async Task<int> UpdateLessonStatusByCourseIdAsync(int courseId, string status)
+    {
+        var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+        if (lessons == null || !lessons.Any())
+            return 0;
+
+        foreach (var lesson in lessons)
+        {
+            lesson.LessonStatus = status;
+            _lessonRepository.Update(lesson);
+        }
+
+        return await SaveLessonChangesAsync();
+    }
+
+    public async Task<int> UpdateLearningMaterialStatusByCourseIdAsync(int courseId, string status)
+    {
+        var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
+        if (lessons == null || !lessons.Any())
+            return 0;
+
+        foreach (var lesson in lessons)
+        {
+            var materials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
+            if (materials != null)
+            {
+                foreach (var material in materials)
+                {
+                    material.LearningStatus = status;
+                    _materialRepository.Update(material);
+                }
+            }
+        }
+
+        return await SaveMaterialChangesAsync();
     }
 }

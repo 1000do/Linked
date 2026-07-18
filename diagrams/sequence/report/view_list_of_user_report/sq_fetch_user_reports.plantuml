@@ -1,0 +1,136 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+
+hide footbox
+mainframe Fetch User Reports
+
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":IReportModerationService" as sv
+participant ":CourseReportDetailResponse" as c_res
+participant ":ReviewReportDetailResponse" as r_res
+participant ":IReportRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+fe_ctrl++
+par Fetch Course Reports
+    fe_ctrl -> be_ctrl++: GET /api/admin/moderation/reports/courses
+    be_ctrl -> sv++: Call GetAllCourseReportsAsync(request)
+    sv -> repo++: Call GetAllCourseReportsAsync(status, page, pageSize)
+    repo -> ctx++: Query course reports
+    ctx -> db++: Execute query
+    
+    alt Database Query Failure
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> repo: Return empty list, totalCount = 0
+        repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+    else Database Query Success
+        db -->> ctx: Return data
+        db--
+        ctx -->> repo: Return data
+        ctx--
+        repo -->> sv: Return (reports, totalCount)
+        repo--
+        
+        sv -> c_res++: Map to PagedResult<CourseReportDetailResponse>
+        c_res -->> sv--: Return PagedResult
+        
+        sv -->> be_ctrl: Return PagedResult<CourseReportDetailResponse>
+        sv--
+        be_ctrl -->> fe_ctrl: Return statusCode 200
+        be_ctrl--
+    end
+else Fetch Course Review Reports
+    fe_ctrl -> be_ctrl++: GET /api/admin/moderation/reports/course-reviews
+    be_ctrl -> sv++: Call GetAllCourseReviewReportsAsync(request)
+    sv -> repo++: Call GetAllCourseReviewReportsAsync(status, page, pageSize)
+    repo -> ctx++: Query course review reports
+    ctx -> db++: Execute query
+    
+    alt Database Query Failure
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> repo: Return empty list, totalCount = 0
+        repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+    else Database Query Success
+        db -->> ctx: Return data
+        db--
+        ctx -->> repo: Return data
+        ctx--
+        repo -->> sv: Return (reports, totalCount)
+        repo--
+        
+        sv -> r_res++: Map to PagedResult<ReviewReportDetailResponse>
+        r_res -->> sv--: Return PagedResult
+        
+        sv -->> be_ctrl: Return PagedResult<ReviewReportDetailResponse>
+        sv--
+        be_ctrl -->> fe_ctrl: Return statusCode 200
+        be_ctrl--
+    end
+else Fetch Lesson Review Reports
+    fe_ctrl -> be_ctrl++: GET /api/admin/moderation/reports/lesson-reviews
+    be_ctrl -> sv++: Call GetAllLessonReviewReportsAsync(request)
+    sv -> repo++: Call GetAllLessonReviewReportsAsync(status, page, pageSize)
+    repo -> ctx++: Query lesson review reports
+    ctx -> db++: Execute query
+    
+    alt Database Query Failure
+        db -->> ctx: Return empty list, totalCount = 0
+        ctx -->> repo: Return empty list, totalCount = 0
+        repo -->> sv: Return empty list, totalCount = 0
+        sv -->> be_ctrl: Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+    else Database Query Success
+        db -->> ctx: Return data
+        db--
+        ctx -->> repo: Return data
+        ctx--
+        repo -->> sv: Return (reports, totalCount)
+        repo--
+        
+        sv -> r_res++: Map to PagedResult<ReviewReportDetailResponse>
+        r_res -->> sv--: Return PagedResult
+        
+        sv -->> be_ctrl: Return PagedResult<ReviewReportDetailResponse>
+        sv--
+        be_ctrl -->> fe_ctrl: Return statusCode 200
+        be_ctrl--
+    end
+end
+@enduml

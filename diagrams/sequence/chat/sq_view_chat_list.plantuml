@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -43,21 +50,18 @@ database Database as db
 
 act++
 act->view++: Access Chat page
-view->fe_ctrl++: Send GET /Chat/Index
+view->fe_ctrl++: GET /Chat/Index
 
 alt AccessToken cookie is missing
-    fe_ctrl-->>view: Return statusCode 302 (Redirect)
-    view->login_view++: Redirect to Login page
-    deactivate view
-    login_view-->>act--: Display Login page
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display Login page
 else AccessToken cookie exists
-    fe_ctrl-->>view--: Return View
-    activate view
-    
+    fe_ctrl-->>view: Return View
     view->view++: loadChats()
     view--
     
-    view->fe_ctrl++: GET /Chat/GetList
+    view->fe_ctrl: GET /Chat/GetList
     
     fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
     fe_ctrl--

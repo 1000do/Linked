@@ -1,0 +1,177 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox    
+mainframe Become an Instructor
+
+
+actor User as act
+participant "HomePage" as portal
+participant "ApplyPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as status_view
+participant "InstructorController" as fe_ctrl <<frontend controller>>
+participant ":InstructorApplyViewModel" as view_model
+participant "InstructorController" as be_ctrl <<backend controller>>
+participant ":IInstructorService" as sv
+participant ":IUserRepository" as user_repo
+participant ":IInstructorRepository" as repo
+participant ":IFileUploadService" as upload
+participant ":Instructor" as ett
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> portal++:1. Click "Become an Instructor"
+portal -> fe_ctrl++:2. GET /Instructor/Apply
+portal--
+
+fe_ctrl -> fe_ctrl++:3. Validate User's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view++:3.1. Redirect to LoginPage
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view++:3.2. Redirect to ErrorPage
+    error_view -->> act--:3.2.1. Display error message
+else Valid User's authentication and authorization
+    fe_ctrl -> be_ctrl++:3.3. GET /api/instructor/dashboard
+    be_ctrl -->> fe_ctrl--:3.3.1. Return statusCode 200
+
+    fe_ctrl -> fe_ctrl++:3.3.2. Check ApprovalStatus
+    fe_ctrl--
+
+alt ApprovalStatus == "Pending" or "Approved"
+        fe_ctrl -->> status_view++:3.3.2.1. Return statusCode 302
+        status_view -->> act--:3.3.2.1.1. Display Application Status
+else ApprovalStatus == "Rejected"
+        fe_ctrl -> be_ctrl++:3.3.2.2. GET /api/instructor/apply-info
+        be_ctrl -->> fe_ctrl--:3.3.2.2.1. Return statusCode 200
+        
+        fe_ctrl -> view_model++:3.3.2.2.2. Call InstructorApplyViewModel(IsResubmit=true)
+        view_model -->> fe_ctrl--:3.3.2.2.3. Return InstructorApplyViewModel object
+        
+        fe_ctrl -> fe_ctrl++:3.3.2.2.4. Pre-fill ViewModel (IsResubmit = true)
+        fe_ctrl--
+        
+        fe_ctrl -> fe_ctrl++:3.3.2.2.5. Load auxiliary dependencies (Profile, Countries, Categories)
+        fe_ctrl--
+
+        fe_ctrl -->> view++:3.3.2.2.6. Return statusCode 200
+        view -->> act--:3.3.2.2.7. Display instructor application form
+else ApprovalStatus == null
+        fe_ctrl -> fe_ctrl++:3.3.2.3. Load auxiliary dependencies (Profile, Countries, Categories)
+        fe_ctrl--
+
+        fe_ctrl -> view_model++:3.3.2.3.1. Call InstructorApplyViewModel()
+        view_model -->> fe_ctrl--:3.3.2.3.2. Return InstructorApplyViewModel object
+
+        fe_ctrl -->> view--:3.3.2.3.3. Return statusCode 200
+        activate view
+        view -->> act--:3.3.2.3.4. Display instructor application form
+end
+end
+
+act -> view++:4. Fill professional details, Stripe country, and upload document(s)
+act -> view:5. Click "Submit Application"
+view -> fe_ctrl++:6. POST /Instructor/Apply (FormData)
+
+fe_ctrl -> fe_ctrl++:7. Validate ModelState and file constraints
+fe_ctrl--
+
+alt Invalid Form Data
+    fe_ctrl -->> view:7.1. Return statusCode 400
+    view -->> act:7.1.1. Display validation errors inline
+else Valid Form Data
+    fe_ctrl -> be_ctrl++:7.2. POST /api/instructor/apply (FormData)
+    
+    be_ctrl -> sv++:7.2.1. SubmitApplicationAsync(userId, request)
+    
+    sv -> user_repo++:7.2.2. GetAccountByIdAsync(userId)
+    user_repo -->> sv--:7.2.3. Return Account entity
+    
+    sv -> sv++:7.2.4. Validate account verification and documents
+    sv--
+    
+alt Account Not Verified or Missing Documents
+        sv -->> be_ctrl:7.2.4.1. throw InvalidOperationException
+        be_ctrl -->> fe_ctrl:7.2.4.1.1. Return statusCode 400
+        fe_ctrl -->> view:7.2.4.1.2. Return statusCode 400
+        view -->> act:7.2.4.1.3. Display error message
+else Account Verified and Documents Valid
+        sv -> repo++:7.2.4.2. GetByIdAsync(userId)
+        repo -->> sv--:7.2.4.2.1. Return Instructor entity
+        
+        sv -> upload++:7.2.4.2.2. UploadImageAsync(file)
+        upload -->> sv--:7.2.4.2.3. Return document URL
+        
+        sv -> sv++:7.2.4.2.4. Check if application already exists
+        sv--
+        
+alt Resubmitting a Rejected Application
+            sv -> sv++:7.2.4.2.4.1. Update existing application properties (ApprovalStatus = Pending)
+            sv--
+else New Application
+            sv -> ett++:7.2.4.2.4.2. Call Instructor()
+            ett -->> sv--:7.2.4.2.4.2.1. Return Instructor object
+            sv -> repo++:7.2.4.2.4.2.2. AddAsync(instructor)
+            repo -->> sv--:7.2.4.2.4.2.3. Return result
+end
+        
+        sv -> repo++:7.2.4.2.5. SaveChangesAsync()
+        repo -> ctx++:7.2.4.2.6. Save changes to database
+        ctx -> db++:7.2.4.2.7. Execute INSERT / UPDATE
+        db -->> ctx--:7.2.4.2.8. Return numberOfRowsAffected
+        ctx -->> repo--:7.2.4.2.9. Return numberOfRowsAffected
+        repo -->> sv--:7.2.4.2.10. Return numberOfRowsAffected
+        
+        sv -> sv++:7.2.4.2.11. Check numberOfRowsAffected
+        sv--
+        
+alt Database Save Failure (numberOfRowsAffected = 0)
+            sv -->> be_ctrl:7.2.4.2.11.1. throw InvalidOperationException
+            sv--
+            be_ctrl -->> fe_ctrl:7.2.4.2.11.1.1. Return statusCode 500
+            be_ctrl--
+            fe_ctrl -->> view:7.2.4.2.11.1.2. Return statusCode 500
+            fe_ctrl--
+            view -->> act:7.2.4.2.11.1.3. Display error message
+            view--
+else Database Save Success (numberOfRowsAffected > 0)
+            sv -->> be_ctrl--:7.2.4.2.11.2. Return success message
+            be_ctrl -->> fe_ctrl--:7.2.4.2.11.2.1. Return statusCode 200
+            fe_ctrl -->> status_view++:7.2.4.2.11.2.2. Return statusCode 302
+            fe_ctrl--
+            deactivate view
+            status_view -->> act--:7.2.4.2.11.2.3. Display "Your application has been submitted successfully!"
+end
+end
+end
+
+@enduml

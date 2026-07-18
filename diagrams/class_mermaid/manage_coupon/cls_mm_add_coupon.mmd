@@ -7,12 +7,13 @@ class CouponController {
     <<backend controller>>
     - _couponService : ICouponService
     
-    + CreateCoupon(request: CreateCouponRequest) Task~IActionResult~
+    + CreateCoupon(request: CreateCouponRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class CreateCouponRequest {
+class CreateCouponRequestDTO {
+    <<dto>>
     + CouponCode : string
     + CouponType : string
     + DiscountValue : decimal
@@ -25,6 +26,7 @@ class CreateCouponRequest {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -41,12 +43,12 @@ class Coupon {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICouponService {
-    <<interface>>
-    + CreateAsync(req: CreateCouponRequest, managerId: int) Task~bool~ *
+    <<service interface>>
+    + CreateAsync(req: CreateCouponRequestDTO, managerId: int) Task~bool~ *
 }
 
 class ICouponRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByCodeAsync(code: string) Task~Coupon?~ *
     + AddAsync(coupon: Coupon) Task~void~ *
     + SaveChangesAsync() Task~int~ *
@@ -55,16 +57,18 @@ class ICouponRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class CouponService {
+    <<service>>
     - _couponRepository : ICouponRepository
     
-    + CreateAsync(req: CreateCouponRequest, managerId: int) Task~bool~
+    + CreateAsync(req: CreateCouponRequestDTO, managerId: int) Task~bool~
     - NormalizeType(type: string) string
-    - ValidateCreate(req: CreateCouponRequest) void
+    - ValidateCreate(req: CreateCouponRequestDTO) void
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class CouponRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByCodeAsync(code: string) Task~Coupon?~
@@ -75,8 +79,10 @@ class CouponRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Coupons : DbSet~Coupon~
     
+    + SaveChangesAsync() Task~int~
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
 }
@@ -93,8 +99,8 @@ CouponService ..|> ICouponService
 CouponRepository ..|> ICouponRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-CouponController ..> CreateCouponRequest
-CouponService ..> CreateCouponRequest
+CouponController ..> CreateCouponRequestDTO
+CouponService ..> CreateCouponRequestDTO
 CouponService ..> Coupon
 CouponRepository ..> Coupon
 

@@ -350,8 +350,6 @@ public class CourseCommandService : ICourseCommandService
         {
             ValidateLandingPageRequirements(course);
             await ValidateCourseDurationLimitsAsync(course, instructorId);
-            
-            await ReactivateCourseContentAsync(courseId);
 
             var adminId = await _userRepository.GetAdminIdAsync();
             if (adminId.HasValue)
@@ -467,37 +465,6 @@ public class CourseCommandService : ICourseCommandService
         }
     }
 
-    private async Task ReactivateCourseContentAsync(int courseId)
-    {
-        var materials = await _materialRepository.GetByCourseIdAsync(courseId);
-        if (materials != null)
-        {
-            foreach (var material in materials)
-            {
-                if (material.LearningStatus != LearningStatus.Removed.ToValue())
-                {
-                    if (material.LearningStatus != LearningStatus.Active.ToValue())
-                    {
-                        material.LearningStatus = LearningStatus.Active.ToValue();
-                    }
-                    _materialRepository.Update(material);
-                }
-            }
-        }
-
-        var lessons = await _lessonRepository.GetByCourseIdAsync(courseId);
-        if (lessons != null)
-        {
-            foreach (var lesson in lessons)
-            {
-                if (lesson.LessonStatus != LessonStatus.Active.ToValue())
-                {
-                    lesson.LessonStatus = LessonStatus.Active.ToValue();
-                    _lessonRepository.Update(lesson);
-                }
-            }
-        }
-    }
 
     public async Task DeleteCourseAsync(int courseId, int instructorId)
     {

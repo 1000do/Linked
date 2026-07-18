@@ -1,0 +1,120 @@
+classDiagram
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class CourseQuizControllerFE["CourseQuizController"] {
+    <<frontend controller>>
+    + Add(req: CourseQuizAddRequest) Task~IActionResult~
+}
+
+class CourseQuizAddRequest {
+    <<dto>>
+    + CourseId : int
+    + QuizId : int
+    + OrderIndex : int
+}
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class CourseQuizControllerBE["CourseQuizController"] {
+    <<backend controller>>
+    - _quizService : IQuizService
+    
+    + AddQuizToCourse(courseId: int, request: AddQuizToCourseRequest) Task~IActionResult~
+    - GetCurrentUserId() int
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class AddQuizToCourseRequest {
+    <<dto>>
+    + CourseId : int
+    + QuizId : int
+    + OrderIndex : int
+}
+
+class CourseQuizResponse {
+    <<dto>>
+    + CourseId : int
+    + QuizId : int
+    + OrderIndex : int
+    + IsHidden : bool
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class CourseQuiz {
+    + CourseId : int
+    + QuizId : int
+    + OrderIndex : int
+    + IsHidden : bool
+    + Course : Course?
+    + Quiz : Quiz?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IQuizService {
+    <<interface>>
+    + AddQuizToCourseAsync(request: AddQuizToCourseRequest, instructorId: int) Task~CourseQuizResponse~ *
+}
+
+class IQuizRepository {
+    <<interface>>
+    + AddCourseQuizAsync(courseQuiz: CourseQuiz) Task~void~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(id: int) Task~Course?~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class QuizService {
+    - _quizRepository : IQuizRepository
+    - _courseRepository : ICourseRepository
+    
+    + AddQuizToCourseAsync(request: AddQuizToCourseRequest, instructorId: int) Task~CourseQuizResponse~
+    - EnsureInstructorOwnsCourseAsync(courseId: int, instructorId: int, errorMessage: string) Task~void~
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class QuizRepository {
+    - _context : AppDbContext
+    
+    + AddCourseQuizAsync(courseQuiz: CourseQuiz) Task~void~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    + CourseQuizzes : DbSet~CourseQuiz~
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
+CourseQuizControllerBE --> IQuizService
+QuizService --> IQuizRepository
+QuizService --> ICourseRepository
+QuizRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+QuizService ..|> IQuizService
+QuizRepository ..|> IQuizRepository
+
+%% === DEPENDENCY (dashed arrows) ===
+CourseQuizControllerFE ..> CourseQuizControllerBE
+CourseQuizControllerFE ..> CourseQuizAddRequest
+CourseQuizControllerBE ..> AddQuizToCourseRequest
+QuizService ..> AddQuizToCourseRequest
+QuizService ..> CourseQuizResponse
+QuizService ..> CourseQuiz
+QuizRepository ..> CourseQuiz
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

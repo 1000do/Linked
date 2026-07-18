@@ -32,7 +32,6 @@ class NotificationViewModel {
 class BackendController["NotificationController"] {
     <<backend controller>>
     - _notiService : INotificationService
-    - _chatService : IChatService
     
     + GetMyNotifications(page: int, pageSize: int) Task~IActionResult~
     + GetUnreadSummary() Task~IActionResult~
@@ -52,15 +51,10 @@ class NotificationResponseDto {
     + CreatedAt : DateTime
 }
 
-class PagedResultNotificationResponseDto["PagedResult~NotificationResponseDto~"] {
-    <<dto>>
-    + Items : List~NotificationResponseDto~?
-    + TotalCount : int
-}
-
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification {
+    <<entity>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -77,20 +71,15 @@ class Notification {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
-}
-
-class IChatService {
-    <<interface>>
-    + GetTotalUnreadCountAsync(accountId: int) Task~int~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
     + GetUnreadCountAsync(userId: int) Task~int~ *
 }
@@ -98,6 +87,7 @@ class INotificationRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
+    <<service>>
     - _repo : INotificationRepository
     
     + GetNotificationsForUserAsync(userId: int, page: int, pageSize: int) Task~PagedResult~NotificationResponseDto~~
@@ -107,6 +97,7 @@ class NotificationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetByReceiverIdAsync(userId: int, page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
@@ -116,6 +107,7 @@ class NotificationRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Notifications : DbSet~Notification~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
@@ -125,11 +117,8 @@ class AppDbContext {
 %% ==================== RELATIONSHIPS ====================
 
 %% === AGGREGATION (hollow diamond) ===
-PagedResultNotificationResponseDto o-- NotificationResponseDto
-
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendController --> INotificationService
-BackendController --> IChatService
 NotificationService --> INotificationRepository
 NotificationRepository --> AppDbContext
 
@@ -140,8 +129,6 @@ NotificationRepository ..|> INotificationRepository
 %% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
 FrontendController ..> NotificationViewModel
-BackendController ..> PagedResultNotificationResponseDto
-NotificationService ..> PagedResultNotificationResponseDto
 NotificationService ..> NotificationResponseDto
 NotificationRepository ..> Notification
 
@@ -154,10 +141,8 @@ click FrontendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linke
 click NotificationViewModel href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/NotificationViewModel.cs" "NotificationViewModel.cs"
 click BackendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/NotificationController.cs" "NotificationController.cs"
 click NotificationResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/NotificationDto.cs" "NotificationDto.cs"
-click PagedResultNotificationResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/Common/PagedResult.cs" "PagedResult.cs"
 click Notification href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Notification.cs" "Notification.cs"
 click INotificationService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/INotificationService.cs" "INotificationService.cs"
-click IChatService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IChatService.cs" "IChatService.cs"
 click INotificationRepository href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/INotificationRepository.cs" "INotificationRepository.cs"
 click NotificationService href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/NotificationService.cs" "NotificationService.cs"
 click NotificationRepository href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/NotificationRepository.cs" "NotificationRepository.cs"

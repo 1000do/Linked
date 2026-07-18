@@ -1,0 +1,148 @@
+@startuml ApproveCourseSubmission
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Approve Course Submission
+actor Staff as act
+
+participant "AdminModerationCoursesView" as view
+participant "AdminModerationController" as be_ctrl
+participant ":CourseModerationService" as sv
+participant ":CourseRepository" as repo
+participant ":MaterialRepository" as mat_repo
+participant ":LessonRepository" as less_repo
+participant ":EnrollmentRepository" as enroll_repo
+participant ":AppDbContext" as ctx
+participant ":NotificationService" as notif_sv
+participant ":RedisService" as redis_sv
+database Database as db
+
+act++
+act -> view++:1. Click "Approve" button on a course row
+view -> view++:2. Display Swal input dialog (optional feedback message)
+view--
+
+act -> view++:3. Enter feedback and click "Approve & Publish" (or cancel)
+alt Cancelled
+    view -->> act:3.1. Close dialog without changes
+else Confirmed
+    view -> view++:3.2. Swal.showLoading()
+    view--
+    view -> be_ctrl++:3.2.1. Send POST request to /AdminModeration/ApproveCourse/{id} with feedback
+    
+    be_ctrl -> sv++:3.2.2. Call ApproveCourseAsync(id, feedback)
+    
+    sv -> repo++:3.2.3. Call GetByIdAsync(id)
+    repo -> ctx++:3.2.4. Get course by ID
+    ctx -> db++:3.2.5. Select Course
+    db -->> ctx--:3.2.6. Return Course
+    ctx -->> repo--:3.2.7. Return Course
+    repo -->> sv--:3.2.8. Return Course
+    
+alt Course not found
+        sv -->> be_ctrl:3.2.8.1. Return false
+        be_ctrl -->> view:3.2.8.1.1. Return JSON { success = false }
+        view -->> act:3.2.8.1.2. Display error notification
+else Course found
+        sv -> sv++:3.2.8.2. Update course status to "published" and set approval timestamps
+        sv--
+        
+        sv -> mat_repo++:3.2.8.2.1. Call GetByCourseIdAsync(id)
+        mat_repo -> ctx++:3.2.8.2.2. Query materials for course
+        ctx -> db++:3.2.8.2.3. Select materials
+        db -->> ctx--:3.2.8.2.4. Return materials
+        ctx -->> mat_repo--:3.2.8.2.5. Return materials
+        mat_repo -->> sv--:3.2.8.2.6. Return materials
+        
+opt Materials exist
+loop Each material
+                sv -> mat_repo:3.2.8.2.6.1. Call Update(material)
+end
+end
+        
+        sv -> less_repo++:3.2.8.2.7. Call GetByCourseIdAsync(id)
+        less_repo -> ctx++:3.2.8.2.8. Query lessons for course
+        ctx -> db++:3.2.8.2.9. Select lessons
+        db -->> ctx--:3.2.8.2.10. Return lessons
+        ctx -->> less_repo--:3.2.8.2.11. Return lessons
+        less_repo -->> sv--:3.2.8.2.12. Return lessons
+        
+opt Lessons exist
+loop Each lesson
+                sv -> less_repo:3.2.8.2.12.2. Call Update(lesson)
+end
+end
+        
+        sv -> repo:3.2.8.2.13. Call Update(course)
+        
+        sv -> repo++:3.2.8.2.14. Call SaveChangesAsync()
+        repo -> ctx++:3.2.8.2.15. Call SaveChangesAsync()
+        ctx -> db++:3.2.8.2.16. Save updates (Course, Materials, Lessons)
+        db -->> ctx--:3.2.8.2.17. Return rows affected (rowsApprove)
+        ctx -->> repo--:3.2.8.2.18. Return rows affected
+        repo -->> sv--:3.2.8.2.19. Return rows affected
+        
+alt rowsApprove <= 0
+            sv -->> be_ctrl:3.2.8.2.19.1. Throw InvalidOperationException
+            be_ctrl -->> view:3.2.8.2.19.1.1. Return JSON { success = false }
+            view -->> act:3.2.8.2.19.1.2. Display error notification
+else rowsApprove > 0
+opt course.InstructorId is present
+                sv -> notif_sv++:3.2.8.2.19.2.3. Call SendNotificationAsync(instructorId, title, content, link)
+                notif_sv--
+                
+                sv -> enroll_repo++:3.2.8.2.19.2.3.1. Call GetEnrolledUserIdsAsync(courseId)
+                enroll_repo -> ctx++:3.2.8.2.19.2.3.2. Query enrolled user IDs
+                ctx -> db++:3.2.8.2.19.2.3.3. Select enrolled student IDs
+                db -->> ctx--:3.2.8.2.19.2.3.4. Return student IDs
+                ctx -->> enroll_repo--:3.2.8.2.19.2.3.5. Return student IDs
+                enroll_repo -->> sv--:3.2.8.2.19.2.3.6. Return student IDs
+                
+opt Students enrolled
+                    sv -> notif_sv++:3.2.8.2.19.2.3.6.4. Call SendBulkNotificationsAsync(studentNotifications)
+                    notif_sv--
+end
+end
+            
+            sv -> redis_sv++:3.2.8.2.19.3. Call RemoveCacheAsync(courseDetailCacheKey)
+            redis_sv--
+            
+            sv -->> be_ctrl--:3.2.8.2.19.4. Return true
+            be_ctrl -->> view--:3.2.8.2.19.5. Return JSON { success = true }
+            
+            view -> view++:3.2.8.2.19.6. dimCourseRowInDOM(id) (make row transparent)
+            view -> view++:3.2.8.2.19.7. triggerAjaxFetch() to update table & stats in background
+            view--
+            view--
+            
+            view -->> act--:3.2.8.2.19.8. Display success notification ("Course Approved!")
+end
+end
+end
+deactivate view
+
+@enduml

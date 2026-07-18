@@ -1,0 +1,133 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Edit Profile (For Manager)
+
+
+actor Staff as act
+
+participant "EditProfilePage" as view
+participant "AdminProfileController" as fe_ctrl <<frontend controller>>
+participant "AdminProfileController" as be_ctrl <<backend controller>>
+participant ":IManagerProfileService" as sv
+participant ":IFileUploadService" as upload_sv
+participant ":ManagerProfileResponse" as res
+participant ":IManagerRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+act -> view++:1. Enter personal information (DisplayName, PhoneNumber, Bio, AvatarFile)
+act -> view:2. Click "Save Changes" button
+view -> fe_ctrl++:3. POST /AdminProfile/Edit (FormData)
+
+fe_ctrl -> fe_ctrl++:4. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> view:4.1. Return JSON (success=false)
+    view -->> act:4.1.1. Display error message
+else Unauthorized Access
+    fe_ctrl -->> view:4.2. Return JSON (success=false)
+    view -->> act:4.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++:4.3. Validate model inputs
+    fe_ctrl--
+    
+alt Invalid Form Data
+        fe_ctrl -->> view:4.3.1. Return JSON (success=false)
+        view -->> act:4.3.1.1. Display error message
+else Valid Form Data
+        fe_ctrl -> be_ctrl++:4.3.2. PUT /api/admin/profile/update (MultipartFormData)
+        
+        be_ctrl -> be_ctrl++:4.3.2.1. Validate ModelState & Login Session
+        be_ctrl--
+        
+alt Invalid ModelState or Session
+            be_ctrl -->> fe_ctrl:4.3.2.1.1. Return statusCode 400 or 401
+            fe_ctrl -->> view:4.3.2.1.1.1. Return JSON (success=false)
+            view -->> act:4.3.2.1.1.2. Display error message
+else Valid Request
+            be_ctrl -> sv++:4.3.2.1.2. UpdateProfileAsync(userId, request)
+            
+            sv -> sv++:4.3.2.1.2.1. Validate PhoneNumber & Upload Avatar
+            sv--
+            
+alt Invalid PhoneNumber or Avatar Upload Failed
+                sv -->> be_ctrl:4.3.2.1.2.1.1. Throw Exception / Return false
+                be_ctrl -->> fe_ctrl:4.3.2.1.2.1.1.1. Return Error statusCode
+                fe_ctrl -->> view:4.3.2.1.2.1.1.2. Return JSON (success=false)
+                view -->> act:4.3.2.1.2.1.1.3. Display error message
+else Valid Data and Upload Success (or No Avatar)
+opt AvatarFile != null
+                    sv -> upload_sv++:4.3.2.1.2.1.2.1. UploadImageAsync(AvatarFile)
+                    upload_sv -->> sv--:4.3.2.1.2.1.2.1.1. Return avatarUrl
+end
+                
+                sv -> repo++:4.3.2.1.2.1.3. UpdateManagerProfileAsync(userId, displayName, fullName, phoneNumber, avatarUrl, bio)
+                    
+                    repo -> ctx++:4.3.2.1.2.1.4. Save changes to database
+                    ctx -> db++:4.3.2.1.2.1.5. Execute UPDATE
+                    db -->> ctx--:4.3.2.1.2.1.6. Return numberOfRowsAffected
+                    ctx -->> repo--:4.3.2.1.2.1.7. Return numberOfRowsAffected
+                    repo -->> sv--:4.3.2.1.2.1.8. Return result
+                    
+alt Database Save Failure (result = false)
+                        sv -->> be_ctrl:4.3.2.1.2.1.8.1. Return false
+                        be_ctrl -->> fe_ctrl:4.3.2.1.2.1.8.1.1. Return statusCode 400
+                        fe_ctrl -->> view:4.3.2.1.2.1.8.1.2. Return JSON (success=false)
+                        view -->> act:4.3.2.1.2.1.8.1.3. Display error message
+else Database Save Success (result = true)
+                        sv -->> be_ctrl--:4.3.2.1.2.1.8.2. Return true
+                        be_ctrl -->> fe_ctrl--:4.3.2.1.2.1.8.2.1. Return statusCode 200 (Success)
+                        
+                        fe_ctrl -> be_ctrl++:4.3.2.1.2.1.8.2.2. GET /api/admin/profile
+                        be_ctrl -> sv++:4.3.2.1.2.1.8.2.3. GetProfileAsync(userId)
+                        sv -> repo++:4.3.2.1.2.1.8.2.4. GetManagerByIdAsync(userId)
+                        repo -> ctx++:4.3.2.1.2.1.8.2.5. Fetch Manager with Account details
+                        ctx -> db++:4.3.2.1.2.1.8.2.6. Execute Query
+                        db -->> ctx--:4.3.2.1.2.1.8.2.7. Return database record
+                        ctx -->> repo--:4.3.2.1.2.1.8.2.8. Return Manager entity
+                        repo -->> sv--:4.3.2.1.2.1.8.2.9. Return Manager entity
+                        
+                        sv -> res++:4.3.2.1.2.1.8.2.10. Call ManagerProfileResponse()
+                        res -->> sv--:4.3.2.1.2.1.8.2.11. Return ManagerProfileResponse object
+                        sv -->> be_ctrl--:4.3.2.1.2.1.8.2.12. Return ManagerProfileResponse DTO
+                        be_ctrl -->> fe_ctrl--:4.3.2.1.2.1.8.2.13. Return statusCode 200 (parsed and sync display cookies)
+                        
+                        fe_ctrl -->> view:4.3.2.1.2.1.8.2.14. Return JSON (success=true, message, avatarUrl)
+                        deactivate fe_ctrl
+                        view -->> act--:4.3.2.1.2.1.8.2.15. Display success message and update UI
+end
+end
+end
+end
+end
+
+@enduml

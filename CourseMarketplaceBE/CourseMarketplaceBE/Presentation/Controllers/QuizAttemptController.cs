@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
@@ -21,7 +21,7 @@ public class QuizAttemptController : ControllerBase
     }
 
     [HttpGet("quiz/{quizId}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,admin,staff")]
     public async Task<IActionResult> GetQuizForStudent(int quizId)
     {
         try
@@ -86,7 +86,7 @@ public class QuizAttemptController : ControllerBase
     }
 
     [HttpGet("{attemptId}/details")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,admin,staff")]
     public async Task<IActionResult> GetAttemptDetail(int attemptId)
     {
         try

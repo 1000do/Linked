@@ -131,3 +131,8 @@ public class FlagAccountFERequest
 {
     public string Reason { get; set; } = string.Empty;
 }
+
+public class UnflagAccountFERequest
+{
+    public string Reason { get; set; } = string.Empty;
+}

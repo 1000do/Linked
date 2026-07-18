@@ -10,6 +10,7 @@ class AccountController {
 }
 
 class LoginViewModel {
+    <<view model>>
     + UsernameOrEmail : string
     + Password : string
 }
@@ -20,17 +21,19 @@ class AuthController {
     <<backend controller>>
     - _authService : IAuthService
     
-    + Login(request: LoginRequest) Task~IActionResult~
+    + Login(request: LoginRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class LoginRequest {
+class LoginRequestDTO {
+    <<dto>>
     + UsernameOrEmail : string
     + Password : string
 }
 
-class LoginResponse {
+class LoginResponseDTO {
+    <<dto>>
     + AccessToken : string
     + RefreshToken : string
     + UserName : string
@@ -43,6 +46,7 @@ class LoginResponse {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + PasswordHash : string
@@ -55,6 +59,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + AccountId : int
     + Username : string
@@ -64,6 +69,7 @@ class User {
 }
 
 class Lockout {
+    <<entity>>
     + LockoutId : int
     + AccountId : int
     + LockoutType : string
@@ -76,46 +82,47 @@ class Lockout {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAuthService {
-    <<interface>>
-    + LoginAsync(request: LoginRequest) Task~LoginResponse?~ *
+    <<service interface>>
+    + LoginAsync(request: LoginRequestDTO) Task~LoginResponseDTO?~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByEmailOrUsernameAsync(usernameOrEmail: string) Task~Account?~ *
-    + UpdateLastLoginAsync(accountId: int) Task~void~ *
+    + UpdateLastLoginAsync(accountId: int) Task~int~ *
     + GetRoleByAccountIdAsync(accountId: int) Task~string~ *
-    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~void~ *
-    + SaveChangesAsync() Task~int~ *
+    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~int~ *
 }
 
 class ILockoutRepository {
-    <<interface>>
+    <<repository interface>>
     + GetActiveLockoutAsync(accountId: int, lockoutType: string) Task~Lockout?~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AuthService {
+    <<service>>
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     
-    + LoginAsync(request: LoginRequest) Task~LoginResponse?~
+    + LoginAsync(request: LoginRequestDTO) Task~LoginResponseDTO?~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAccountByEmailOrUsernameAsync(usernameOrEmail: string) Task~Account?~
-    + UpdateLastLoginAsync(accountId: int) Task~void~
+    + UpdateLastLoginAsync(accountId: int) Task~int~
     + GetRoleByAccountIdAsync(accountId: int) Task~string~
-    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~void~
-    + SaveChangesAsync() Task~int~
+    + SaveRefreshTokenAsync(accountId: int, refreshToken: string) Task~int~
 }
 
 class LockoutRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetActiveLockoutAsync(accountId: int, lockoutType: string) Task~Lockout?~
@@ -124,11 +131,13 @@ class LockoutRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Lockouts : DbSet~Lockout~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -152,10 +161,10 @@ LockoutRepository ..|> ILockoutRepository
 %% === DEPENDENCY (dashed arrows) ===
 AccountController ..> AuthController
 AccountController ..> LoginViewModel
-AuthController ..> LoginRequest
-AuthController ..> LoginResponse
-AuthService ..> LoginRequest
-AuthService ..> LoginResponse
+AuthController ..> LoginRequestDTO
+AuthController ..> LoginResponseDTO
+AuthService ..> LoginRequestDTO
+AuthService ..> LoginResponseDTO
 UserRepository ..> Account
 LockoutRepository ..> Lockout
 

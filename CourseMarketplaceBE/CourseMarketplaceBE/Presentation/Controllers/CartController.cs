@@ -3,6 +3,7 @@ using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -37,7 +38,8 @@ public class CartController : ControllerBase
     /// Thêm courseId vào giỏ của người đang login.
     /// </summary>
     [HttpPost("add/{courseId:int}")]
-    [Authorize(Roles = "user,instructor")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> AddToCart(int courseId)
     {
         var userId = GetUserId();
@@ -68,7 +70,8 @@ public class CartController : ControllerBase
     /// Xóa courseId khỏi giỏ của người đang login.
     /// </summary>
     [HttpDelete("remove/{courseId:int}")]
-    [Authorize(Roles = "user,instructor")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> RemoveFromCart(int courseId)
     {
         var userId = GetUserId();
@@ -97,7 +100,8 @@ public class CartController : ControllerBase
     /// couponCode là optional — không truyền = không áp dụng coupon.
     /// </summary>
     [HttpGet("summary")]
-    [Authorize(Roles = "user,instructor")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
     public async Task<IActionResult> GetSummary([FromQuery] string? couponCode)
     {
         var userId = GetUserId();

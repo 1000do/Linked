@@ -1,0 +1,93 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Verify Email
+actor User as act
+
+participant "VerifyOtpView" as view
+participant "LoginView" as login_view
+participant "ProfileView" as r_view
+participant "AccountController" as fe_ctrl <<frontend controller>>
+participant ":VerifyOtpRequestDTO" as be_req
+participant "AuthController" as be_ctrl <<backend controller>>
+participant ":IAuthService" as sv
+participant ":IOtpService" as otp_sv
+participant ":IUserRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Enter OTP code received in email and click "Verify"
+view->fe_ctrl++:2. POST /Account/VerifyOtp
+
+fe_ctrl->fe_ctrl++:3. Retrieve email and flow status from TempData
+fe_ctrl--
+
+fe_ctrl->be_req++:4. Call VerifyOtpRequestDTO()
+be_req-->>fe_ctrl--:5. Return VerifyOtpRequestDTO object
+
+fe_ctrl->be_ctrl++:6. POST /api/Auth/verify-email
+
+be_ctrl->be_ctrl++:7. Validate ModelState
+be_ctrl--
+
+be_ctrl->sv++:8. Call VerifyEmailAsync(email, otp)
+
+sv->otp_sv++:9. Call ConsumeOtp(email, otp, "verify")
+otp_sv-->>sv--:10. Return isValid
+
+sv->sv++:11. Check isValid and Account existence
+sv--
+
+sv->repo++:12. Call UpdateEmailVerifiedAsync(email)
+
+repo->ctx++:13. Query Accounts table for email
+ctx->db++:14. Execute query
+db-->>ctx--:15. Return result
+ctx-->>repo--:16. Return Account entity
+
+repo->ctx++:17. Set IsVerified = true and call SaveChangesAsync()
+ctx->db++:18. Execute query
+db-->>ctx--:19. Return result
+ctx-->>repo--:20. Return numberOfRowsAffected
+
+repo->repo++:21. Check numberOfRowsAffected
+repo--
+
+repo-->>sv--:22. Return success
+sv-->>be_ctrl--:23. Return success
+be_ctrl-->>fe_ctrl--:24. Return statusCode 200
+
+fe_ctrl->fe_ctrl++:25. Remove TempData verify flags\nand append IsVerified cookie
+fe_ctrl--
+
+fe_ctrl-->>view--:26. Return statusCode 302
+view-->>act--:27. Redirect to Profile page
+act->r_view++:28. Access Profile page
+r_view-->>act--:29. Display verification success message
+@enduml

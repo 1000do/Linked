@@ -52,15 +52,10 @@ class NotificationAdminResponseDto {
     + LinkAction : string?
 }
 
-class PagedResultNotificationAdminResponseDto["PagedResult~NotificationAdminResponseDto~"] {
-    <<dto>>
-    + Items : List~NotificationAdminResponseDto~?
-    + TotalCount : int
-}
-
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Notification {
+    <<entity>>
     + NotificationId : int
     + SenderId : int?
     + ReceiverId : int?
@@ -75,6 +70,7 @@ class Notification {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -97,6 +93,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -108,6 +105,7 @@ class User {
 }
 
 class Instructor {
+    <<entity>>
     + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
@@ -128,6 +126,7 @@ class Instructor {
 }
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + Role : string?
     + DisplayName : string
@@ -142,14 +141,14 @@ class Manager {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class INotificationRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~ *
     + AutoCleanupAdminNotificationsAsync() Task~int~ *
 }
@@ -157,6 +156,7 @@ class INotificationRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class NotificationService {
+    <<service>>
     - _repo : INotificationRepository
     
     + GetAllNotificationsForAdminAsync(page: int, pageSize: int) Task~PagedResult~NotificationAdminResponseDto~~
@@ -167,6 +167,7 @@ class NotificationService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class NotificationRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAllAsync(page: int, pageSize: int) Task~(List~Notification~ Items, int TotalCount)~
@@ -176,6 +177,7 @@ class NotificationRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Users : DbSet~User~
     + Managers : DbSet~Manager~
@@ -196,8 +198,6 @@ User *-- Instructor
 Account -- Notification
 
 %% === AGGREGATION (hollow diamond) ===
-PagedResultNotificationAdminResponseDto o-- NotificationAdminResponseDto
-
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendController --> INotificationService
 NotificationService --> INotificationRepository
@@ -210,8 +210,6 @@ NotificationRepository ..|> INotificationRepository
 %% === DEPENDENCY (dashed arrows) ===
 FrontendController ..> BackendController
 FrontendController ..> NotificationViewModel
-BackendController ..> PagedResultNotificationAdminResponseDto
-NotificationService ..> PagedResultNotificationAdminResponseDto
 NotificationService ..> NotificationAdminResponseDto
 NotificationService ..> Account
 NotificationRepository ..> Notification
@@ -225,7 +223,6 @@ click FrontendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linke
 click NotificationViewModel href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/NotificationViewModel.cs" "NotificationViewModel.cs"
 click BackendController href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/NotificationController.cs" "NotificationController.cs"
 click NotificationAdminResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/NotificationAdminResponseDto.cs" "NotificationAdminResponseDto.cs"
-click PagedResultNotificationAdminResponseDto href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/Common/PagedResult.cs" "PagedResult.cs"
 click Notification href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Notification.cs" "Notification.cs"
 click Account href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Account.cs" "Account.cs"
 click User href "file:///c:/Users/TRUONG%20HUNG/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/User.cs" "User.cs"

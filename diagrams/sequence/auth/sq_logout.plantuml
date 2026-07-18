@@ -33,8 +33,8 @@ participant "NavbarView" as view
 participant "HomeIndexView" as home_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
-participant ":AuthService" as sv
-participant ":UserRepository" as u_repo
+participant ":IAuthService" as sv
+participant ":IUserRepository" as u_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -56,10 +56,10 @@ opt accountId is valid
     
     u_repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes to database
-    db-->>ctx--: Return result
+    db-->>ctx--: Return numberOfRowsAffected
     ctx-->>u_repo--: Return numberOfRowsAffected
     
-    u_repo-->>sv--: Return result
+    u_repo-->>sv--: Return numberOfRowsAffected
     sv-->>be_ctrl--: Return result
 end
 

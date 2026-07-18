@@ -5,10 +5,11 @@ direction LR
 
 class AdminAccountControllerFE["AdminAccountController"] {
     <<frontend controller>>
-    + EditStaff(id: int, model: EditStaffViewModel) Task~IActionResult~
+    + EditStaff(id: int, model: UpdateStaffFERequestDTO) Task~IActionResult~
 }
 
-class EditStaffViewModel {
+class UpdateStaffFERequestDTO {
+    <<view model>>
     + DisplayName : string
     + Password : string?
     + AccountStatus : string
@@ -21,12 +22,13 @@ class AdminAccountControllerBE["AdminAccountController"] {
     <<backend controller>>
     - _adminAccountService : IAdminAccountService
     
-    + UpdateStaff(id: int, request: UpdateStaffRequest) Task~IActionResult~
+    + UpdateStaff(id: int, request: UpdateStaffRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - DTOs ====================
 
-class UpdateStaffRequest {
+class UpdateStaffRequestDTO {
+    <<dto>>
     + DisplayName : string
     + Password : string?
     + AccountStatus : string
@@ -36,6 +38,7 @@ class UpdateStaffRequest {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string
@@ -53,6 +56,7 @@ class Manager {
 }
 
 class Lockout {
+    <<entity>>
     + LockoutId : int
     + AccountId : int
     + Reason : string
@@ -63,18 +67,18 @@ class Lockout {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminAccountService {
-    <<interface>>
-    + UpdateStaffAsync(id: int, request: UpdateStaffRequest) Task~bool~ *
+    <<service interface>>
+    + UpdateStaffAsync(id: int, request: UpdateStaffRequestDTO) Task~bool~ *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + GetAccountByIdAsync(id: int) Task~Account?~ *
     + SaveChangesAsync() Task~int~ *
 }
 
 class ILockoutRepository {
-    <<interface>>
+    <<repository interface>>
     + AddAsync(lockout: Lockout) Task~void~ *
     + RemoveAccountLockoutsAsync(accountId: int) Task~void~ *
 }
@@ -82,15 +86,17 @@ class ILockoutRepository {
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AdminAccountService {
+    <<service>>
     - _userRepository : IUserRepository
     - _lockoutRepository : ILockoutRepository
     
-    + UpdateStaffAsync(id: int, request: UpdateStaffRequest) Task~bool~
+    + UpdateStaffAsync(id: int, request: UpdateStaffRequestDTO) Task~bool~
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + GetAccountByIdAsync(id: int) Task~Account?~
@@ -98,6 +104,7 @@ class UserRepository {
 }
 
 class LockoutRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + AddAsync(lockout: Lockout) Task~void~
@@ -107,12 +114,14 @@ class LockoutRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     + Managers : DbSet~Manager~
     + Lockouts : DbSet~Lockout~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -135,9 +144,9 @@ LockoutRepository ..|> ILockoutRepository
 
 %% === DEPENDENCY (dashed arrows) ===
 AdminAccountControllerFE ..> AdminAccountControllerBE
-AdminAccountControllerFE ..> EditStaffViewModel
-AdminAccountControllerBE ..> UpdateStaffRequest
-AdminAccountService ..> UpdateStaffRequest
+AdminAccountControllerFE ..> UpdateStaffFERequestDTO
+AdminAccountControllerBE ..> UpdateStaffRequestDTO
+AdminAccountService ..> UpdateStaffRequestDTO
 AdminAccountService ..> Lockout
 UserRepository ..> Account
 UserRepository ..> Manager

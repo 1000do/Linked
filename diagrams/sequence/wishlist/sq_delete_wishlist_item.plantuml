@@ -32,8 +32,8 @@ actor User as act
 participant "WishlistView" as view
 participant "WishlistController" as fe_ctrl <<frontend controller>>
 participant "WishlistController" as be_ctrl <<backend controller>>
-participant ":WishlistService" as sv
-participant ":WishlistRepository" as w_repo
+participant ":IWishlistService" as sv
+participant ":IWishlistRepository" as w_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -58,7 +58,12 @@ w_repo-->>sv--: Return result
 sv->sv++: Validate item
 sv--
 
-alt item != null
+alt Item not found
+    sv-->>be_ctrl: throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl: Return statusCode 404
+    fe_ctrl-->>view: Return statusCode 302
+    view-->>act: Reload wishlist page
+else Item found
     sv->w_repo++: Call RemoveAsync(item)
     w_repo->ctx++: Mark entity as deleted
     ctx-->>w_repo--: Return result
@@ -74,21 +79,16 @@ alt item != null
     sv->sv++: Check numberOfRowsAffected
     sv--
     
-    alt numberOfRowsAffected > 0
+    alt Database Delete Failed (numberOfRowsAffected == 0)
+        sv-->>be_ctrl: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl: Return statusCode 400
+        fe_ctrl-->>view: Return statusCode 302
+        view-->>act: Reload wishlist page
+    else Database Delete Success
         sv-->>be_ctrl--: Return success
         be_ctrl-->>fe_ctrl--: Return statusCode 200
         fe_ctrl-->>view--: Return statusCode 302
         view-->>act--: Reload wishlist page
-    else numberOfRowsAffected == 0
-        sv-->>be_ctrl--: throw InvalidOperationException
-        be_ctrl-->>fe_ctrl--: Return statusCode 400
-        fe_ctrl-->>view--: Return statusCode 302
-        view-->>act--: Reload wishlist page
     end
-else item == null
-    sv-->>be_ctrl--: throw KeyNotFoundException
-    be_ctrl-->>fe_ctrl--: Return statusCode 404
-    fe_ctrl-->>view--: Return statusCode 302
-    view-->>act--: Reload wishlist page
 end
 @enduml

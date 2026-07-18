@@ -51,6 +51,7 @@ class InstructorApprovalDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Instructor {
+    <<entity>>
     + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
@@ -68,6 +69,7 @@ class Instructor {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -75,6 +77,7 @@ class User {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -95,20 +98,21 @@ class Account {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IInstructorApprovalService {
-    <<interface>>
+    <<service interface>>
     + GetPendingListAsync(page: int, pageSize: int) Task~PagedResult~InstructorApprovalDto~~ *
 }
 
 %% ==================== BACKEND - REPOSITORY INTERFACES ====================
 
 class IInstructorRepository {
-    <<interface>>
+    <<repository interface>>
     + GetPendingInstructorsAsync(page: int, pageSize: int) Task~(IEnumerable~Instructor~, int)~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class InstructorApprovalService {
+    <<service>>
     - _repo : IInstructorRepository
     + GetPendingListAsync(page: int, pageSize: int) Task~PagedResult~InstructorApprovalDto~~
 }
@@ -116,6 +120,7 @@ class InstructorApprovalService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetPendingInstructorsAsync(page: int, pageSize: int) Task~(IEnumerable~Instructor~, int)~
 }
@@ -123,6 +128,7 @@ class InstructorRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Instructors : DbSet~Instructor~
     + Users : DbSet~User~
     + Accounts : DbSet~Account~

@@ -1,0 +1,94 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Delete Wishlist Item
+actor User as act
+
+participant "WishlistView" as view
+participant "WishlistController" as fe_ctrl <<frontend controller>>
+participant "WishlistController" as be_ctrl <<backend controller>>
+participant ":IWishlistService" as sv
+participant ":IWishlistRepository" as w_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act++
+act->view++:1. Click "Remove" button next to a course
+view->fe_ctrl++:2. POST /Wishlist/Remove
+
+fe_ctrl->be_ctrl++:3. DELETE /api/wishlist/{courseId}
+
+be_ctrl->be_ctrl++:4. Parse userId from token
+be_ctrl--
+
+be_ctrl->sv++:5. Call RemoveFromWishlistAsync(userId, courseId)
+
+sv->w_repo++:6. Call GetByUserAndCourseAsync(userId, courseId)
+w_repo->ctx++:7. Query WishlistItem
+ctx->db++:8. Execute query
+db-->>ctx--:9. Return result
+ctx-->>w_repo--:10. Return result
+w_repo-->>sv--:11. Return result
+
+sv->sv++:12. Validate item
+sv--
+
+alt Item not found
+    sv-->>be_ctrl:12.1. throw KeyNotFoundException
+    be_ctrl-->>fe_ctrl:12.1.1. Return statusCode 404
+    fe_ctrl-->>view:12.1.2. Return statusCode 302
+    view-->>act:12.1.3. Reload wishlist page
+else Item found
+    sv->w_repo++:12.2. Call RemoveAsync(item)
+    w_repo->ctx++:12.2.1. Mark entity as deleted
+    ctx-->>w_repo--:12.2.2. Return result
+    w_repo-->>sv--:12.2.3. Return result
+    
+    sv->w_repo++:12.2.4. Call SaveChangesAsync()
+    w_repo->ctx++:12.2.5. Commit tracked changes
+    ctx->db++:12.2.6. Execute query
+    db-->>ctx--:12.2.7. Return result
+    ctx-->>w_repo--:12.2.8. Return numberOfRowsAffected
+    w_repo-->>sv--:12.2.9. Return numberOfRowsAffected
+    
+    sv->sv++:12.2.10. Check numberOfRowsAffected
+    sv--
+    
+alt Database Delete Failed (numberOfRowsAffected == 0)
+        sv-->>be_ctrl:12.2.10.1. throw InvalidOperationException
+        be_ctrl-->>fe_ctrl:12.2.10.1.1. Return statusCode 400
+        fe_ctrl-->>view:12.2.10.1.2. Return statusCode 302
+        view-->>act:12.2.10.1.3. Reload wishlist page
+else Database Delete Success
+        sv-->>be_ctrl--:12.2.10.2. Return success
+        be_ctrl-->>fe_ctrl--:12.2.10.2.1. Return statusCode 200
+        fe_ctrl-->>view--:12.2.10.2.2. Return statusCode 302
+        view-->>act--:12.2.10.2.3. Reload wishlist page
+end
+end
+@enduml

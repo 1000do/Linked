@@ -3,14 +3,14 @@ direction LR
 
 %% ==================== FRONTEND ====================
 
-class AccountControllerFE["AccountController"] {
+class AccountController {
     <<frontend controller>>
-    + VerifyOtp(request: VerifyOtpRequest) Task~IActionResult~
+    + VerifyOtp(request: VerifyOtpRequestDTO) Task~IActionResult~
 }
 
 %% ==================== BACKEND - CONTROLLER ====================
 
-class AuthControllerBE["AuthController"] {
+class AuthController {
     <<backend controller>>
     - _authService : IAuthService
     
@@ -19,11 +19,13 @@ class AuthControllerBE["AuthController"] {
 
 %% ==================== BACKEND - DTOs ====================
 
-class VerifyOtpRequest {
+class VerifyOtpRequestDTO {
+    <<dto>>
     + Otp : string
 }
 
 class VerifyEmailRequest {
+    <<dto>>
     + Email : string
     + Otp : string
 }
@@ -31,6 +33,7 @@ class VerifyEmailRequest {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string
@@ -42,23 +45,24 @@ class Account {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAuthService {
-    <<interface>>
+    <<service interface>>
     + VerifyEmailAsync(email: string, otp: string) Task~bool~ *
 }
 
 class IOtpService {
-    <<interface>>
+    <<service interface>>
     + ConsumeOtp(email: string, otp: string, purpose: string) bool *
 }
 
 class IUserRepository {
-    <<interface>>
+    <<repository interface>>
     + UpdateEmailVerifiedAsync(email: string) Task~bool~ *
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class AuthService {
+    <<service>>
     - _userRepository : IUserRepository
     - _otpService : IOtpService
     
@@ -66,12 +70,14 @@ class AuthService {
 }
 
 class OtpService {
+    <<service>>
     + ConsumeOtp(email: string, otp: string, purpose: string) bool
 }
 
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class UserRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + UpdateEmailVerifiedAsync(email: string) Task~bool~
@@ -80,16 +86,18 @@ class UserRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Accounts : DbSet~Account~
     
     # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
     # OnModelCreating(modelBuilder: ModelBuilder) void
+    + SaveChangesAsync() Task~int~
 }
 
 %% ==================== RELATIONSHIPS ====================
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
-AuthControllerBE --> IAuthService
+AuthController --> IAuthService
 AuthService --> IUserRepository
 AuthService --> IOtpService
 UserRepository --> AppDbContext
@@ -100,9 +108,9 @@ OtpService ..|> IOtpService
 UserRepository ..|> IUserRepository
 
 %% === DEPENDENCY (dashed arrows) ===
-AccountControllerFE ..> VerifyOtpRequest
-AccountControllerFE ..> VerifyEmailRequest
-AuthControllerBE ..> VerifyEmailRequest
+AccountController ..> VerifyOtpRequestDTO
+AccountController ..> VerifyEmailRequest
+AuthController ..> VerifyEmailRequest
 UserRepository ..> Account
 
 %% ==================== STYLES ====================

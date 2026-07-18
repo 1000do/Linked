@@ -1270,6 +1270,9 @@
             updateCartButtons();
             document.addEventListener('cartUpdated', updateCartButtons);
             
+            if (!currentToken) {
+                localStorage.removeItem("AccountLocked");
+            }
             if (currentToken) {
                 if (localStorage.getItem("AccountLocked") === "true") {
                     localStorage.removeItem("AccountLocked");

@@ -57,6 +57,9 @@
             }
         }
     </script>
+    
+    <!-- Support Guide Modal -->
+    <partial name="_InstructorSupportModal" />
     <script>
         const LAYOUT_TOKEN = '@tokenForLayout';
         const API_BASE_URL = '@(Context.RequestServices.GetService<IConfiguration>()?["BackendApiUrl"] ?? "http://localhost:5207/api/")';
@@ -222,7 +225,7 @@
                 View as Learner
             </a>
 
-            <a href="#" class="@GetNavClass(false)">
+            <a href="javascript:void(0)" onclick="document.getElementById('support-guide-modal').classList.remove('hidden')" class="@GetNavClass(false)">
                 <span class="@GetIconClass(false)">help</span>
                 Support
             </a>
@@ -295,6 +298,9 @@
             }
         });
         
+        if (!LAYOUT_TOKEN) {
+            localStorage.removeItem("AccountLocked");
+        }
         if (LAYOUT_TOKEN) {
             if (localStorage.getItem("AccountLocked") === "true") {
                 localStorage.removeItem("AccountLocked");

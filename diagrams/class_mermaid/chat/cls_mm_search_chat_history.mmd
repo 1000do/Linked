@@ -41,6 +41,7 @@ class ChatListDto {
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Chat {
+    <<entity>>
     + ChatId : int
     + ChatType : string?
     + ContextType : string?
@@ -51,6 +52,7 @@ class Chat {
 }
 
 class ChatParticipant {
+    <<entity>>
     + ChatId : int
     + AccountId : int
     + Role : string?
@@ -61,6 +63,7 @@ class ChatParticipant {
 }
 
 class Message {
+    <<entity>>
     + MessageId : int
     + ChatId : int
     + SenderId : int
@@ -71,6 +74,7 @@ class Message {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Username : string?
     + Email : string
@@ -78,12 +82,14 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + AccountId : int?
     + FullName : string?
 }
 
 class Manager {
+    <<entity>>
     + ManagerId : int
     + AccountId : int?
     + DisplayName : string?
@@ -92,36 +98,20 @@ class Manager {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IChatService {
-    <<interface>>
+    <<service interface>>
     + SearchChatsAsync(accountId: int, query: string) Task~List~ChatListDto~~ *
 }
 
-class IRedisService {
-    <<interface>>
-    + GetUnreadCountAsync(accountId: int, chatId: int) Task~int~ *
-    + IsUserOnlineAsync(accountId: int) Task~bool~ *
-}
-
 class IChatRepository {
-    <<interface>>
+    <<repository interface>>
     + SearchParticipantsByAccountIdAsync(accountId: int, query: string) Task~List~ChatParticipant~~ *
-}
-
-class IUserRepository {
-    <<interface>>
-}
-
-class ICourseRepository {
-    <<interface>>
 }
 
 %% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
 
 class ChatService {
+    <<service>>
     - _chatRepository : IChatRepository
-    - _redisService : IRedisService
-    - _userRepository : IUserRepository
-    - _courseRepository : ICourseRepository
     - _configuration : IConfiguration
     
     + SearchChatsAsync(accountId: int, query: string) Task~List~ChatListDto~~
@@ -130,6 +120,7 @@ class ChatService {
 %% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
 
 class ChatRepository {
+    <<repository>>
     - _context : AppDbContext
     
     + SearchParticipantsByAccountIdAsync(accountId: int, query: string) Task~List~ChatParticipant~~
@@ -138,6 +129,7 @@ class ChatRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Chats : DbSet~Chat~
     + ChatParticipants : DbSet~ChatParticipant~
     + Messages : DbSet~Message~
@@ -162,9 +154,6 @@ Account o-- Manager
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 BackendChatController --> IChatService
 ChatService --> IChatRepository
-ChatService --> IRedisService
-ChatService --> IUserRepository
-ChatService --> ICourseRepository
 ChatRepository --> AppDbContext
 
 ChatParticipant --> Account

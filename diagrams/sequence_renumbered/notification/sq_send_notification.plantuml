@@ -1,0 +1,129 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Send Notifications (Staff/Admin)
+
+actor Admin as act
+participant "NotificationManagementPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_page
+participant "NotificationController" as fe_ctrl <<frontend controller>>
+participant "NotificationController" as be_ctrl <<backend controller>>
+participant ":INotificationService" as sv
+participant ":Notification" as notif_ett
+participant ":IUserRepository" as user_repo
+participant ":INotificationRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+participant "NotificationHub" as hub
+
+act++
+act->view++:1. Click "Create Notification" button
+view->view++:2. Open Compose Notification Modal
+view--
+view-->>act:3. Display Compose Notification Modal
+
+act->view:4. Enter Title, Content, TargetType, and Emails
+act->view:5. Click "Send Notification" button
+
+view->view++:6. Validate input fields and prevent self-sending
+view--
+
+alt Invalid input
+    view-->>act:6.1. Display validation warning alert
+else Valid input
+    view->fe_ctrl++:6.2. POST /Notification/SendAdvanced
+    
+    fe_ctrl -> fe_ctrl++:6.2.1. Validate actor's authentication and authorization
+    fe_ctrl--
+    
+alt Session Invalid
+        fe_ctrl -->> login_view:6.2.1.1. Redirect to LoginPage
+        activate login_view
+        login_view -->> act--:6.2.1.1.1. Display login form
+else Unauthorized Access
+        fe_ctrl -->> error_page:6.2.1.2. Redirect to ErrorPage
+        activate error_page
+        error_page -->> act--:6.2.1.2.1. Display error message
+else Valid actor's authentication and authorization
+        fe_ctrl->be_ctrl++:6.2.1.3. POST /api/Notification/send-advanced
+        
+        be_ctrl->sv++:6.2.1.3.1. Call SendAdvancedAsync(dto, senderId, senderRole)
+        
+        sv->sv++:6.2.1.3.2. Call ResolveTargetUserIdsAsync(dto, senderId, senderRole)
+        sv--
+        
+alt Invalid recipient role (staff sending to staff/admin or admin to admin)
+            sv-->>be_ctrl:6.2.1.3.2.1. throw InvalidOperationException
+            be_ctrl-->>fe_ctrl:6.2.1.3.2.1.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:6.2.1.3.2.1.2. Return JSON error response
+            view-->>act:6.2.1.3.2.1.3. Display error message
+else targetUserIds is empty
+            sv-->>be_ctrl:6.2.1.3.2.2. Return 0
+            be_ctrl-->>fe_ctrl:6.2.1.3.2.2.1. Return statusCode 400 (BadRequest)
+            fe_ctrl-->>view:6.2.1.3.2.2.2. Return JSON error response
+            view-->>act:6.2.1.3.2.2.3. Display error message
+else targetUserIds is not empty
+            sv->notif_ett++:6.2.1.3.2.3. Call Notification()
+            notif_ett-->>sv--:6.2.1.3.2.3.1. Return notifications list
+            
+            sv->repo++:6.2.1.3.2.3.2. Call AddRangeAsync(notifications)
+            repo->ctx++:6.2.1.3.2.3.3. Call AddRangeAsync(notifications)
+            ctx-->>repo--:6.2.1.3.2.3.4. Return
+            repo-->>sv--:6.2.1.3.2.3.5. Return
+            
+            sv->repo++:6.2.1.3.2.3.6. Call SaveChangesAsync()
+            repo->ctx++:6.2.1.3.2.3.7. Call SaveChangesAsync()
+            ctx->db++:6.2.1.3.2.3.8. Execute INSERT statements
+            
+alt Database Save Failure
+                db-->>ctx:6.2.1.3.2.3.8.1. Throw DbUpdateException
+                ctx-->>repo:6.2.1.3.2.3.8.1.1. Throw DbUpdateException
+                repo-->>sv:6.2.1.3.2.3.8.1.2. Throw NotificationException
+                sv-->>be_ctrl:6.2.1.3.2.3.8.1.3. throw NotificationException
+                be_ctrl-->>fe_ctrl:6.2.1.3.2.3.8.1.4. Return statusCode 500 (InternalServerError)
+                fe_ctrl-->>view:6.2.1.3.2.3.8.1.5. Return JSON error response
+                view-->>act:6.2.1.3.2.3.8.1.6. Display database error message
+else Database Save Success
+                db-->>ctx--:6.2.1.3.2.3.8.2. Return result
+                ctx-->>repo--:6.2.1.3.2.3.8.2.1. Return result
+                repo-->>sv--:6.2.1.3.2.3.8.2.2. Return result
+                
+                sv->sv++:6.2.1.3.2.3.8.2.3. Call DispatchAdvancedNotificationsAsync(targetUserIds, dto, senderId, senderRole, now)
+                sv--
+                
+                sv-->>be_ctrl--:6.2.1.3.2.3.8.2.4. Return targetUserIds.Count
+                be_ctrl-->>fe_ctrl--:6.2.1.3.2.3.8.2.5. Return statusCode 200 (Ok)
+                fe_ctrl-->>view--:6.2.1.3.2.3.8.2.6. Return JSON success response
+                view-->>act--:6.2.1.3.2.3.8.2.7. Display success alert
+end
+end
+end
+end
+
+@enduml

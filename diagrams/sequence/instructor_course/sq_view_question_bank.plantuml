@@ -1,0 +1,64 @@
+@startuml
+<style>
+    sequenceDiagram{
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Question Bank (Lessons Summary)
+
+actor Instructor as act
+participant "QuestionBankPage" as view
+participant "QuestionBankController" as fe_ctrl <<frontend controller>>
+participant "QuestionBankController" as be_ctrl <<backend controller>>
+participant ":QuestionBankService" as sv
+participant ":QuestionBankLessonSummaryResponse" as res
+participant ":ILessonRepository" as lesson_repo
+participant ":IQuestionBankRepository" as repo
+
+act ++
+act -> view++: Select a course
+view -> fe_ctrl++: GET /QuestionBank/CourseLessonsSummary?courseId={courseId}
+
+fe_ctrl -> be_ctrl++: GET /api/QuestionBank/courses/{courseId}/lessons-summary
+
+be_ctrl -> sv++: Call GetLessonsSummaryByCourseAsync(courseId, instructorId)
+
+sv -> sv++: Call EnsureInstructorOwnsCourseAsync(courseId, instructorId)
+sv--
+
+sv -> lesson_repo++: Call GetLessonsByCourseIdAsync(courseId)
+lesson_repo -->> sv--: Return List<Lesson>
+
+sv -> repo++: Call GetQuestionsByCourseAsync(courseId)
+repo -->> sv--: Return List<QuizQuestion>
+
+loop For each lesson in List<Lesson>
+    sv -> res++: Call QuestionBankLessonSummaryResponse()
+    res -->> sv--: Return QuestionBankLessonSummaryResponse object
+end
+
+sv -->> be_ctrl--: Return List<QuestionBankLessonSummaryResponse>
+be_ctrl -->> fe_ctrl--: Return statusCode 200
+fe_ctrl -->> view--: Return JSON (success=true)
+view -->> act--: Display lessons summary

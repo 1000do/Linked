@@ -32,9 +32,12 @@ actor Admin as act
 participant "AdminAccountView" as view
 participant "AdminAccountController" as fe_ctrl <<frontend controller>>
 participant "AdminAccountController" as be_ctrl <<backend controller>>
-participant ":AdminAccountService" as sv
-participant ":UserRepository" as u_repo
-participant ":LockoutRepository" as lockout_repo
+participant ":UpdateStaffFERequestDTO" as fe_req
+participant ":UpdateStaffRequestDTO" as be_req
+participant ":IAdminAccountService" as sv
+participant ":Lockout" as lockout_ett
+participant ":IUserRepository" as u_repo
+participant ":ILockoutRepository" as lockout_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -42,65 +45,60 @@ act++
 act->view++: Fill updated details and click "Save"
 view->fe_ctrl++: POST /AdminAccount/EditStaff/{id}
 
+fe_ctrl->fe_req++: Call UpdateStaffFERequestDTO()
+fe_req-->>fe_ctrl--: Return UpdateStaffFERequestDTO object
+
 fe_ctrl->fe_ctrl++: Validate required fields
 fe_ctrl--
 
-alt Validation passed
-    fe_ctrl->be_ctrl++: PUT /api/admin/accounts/staff/{id}
+fe_ctrl->be_ctrl++: PUT /api/admin/accounts/staff/{id}
+
+be_ctrl->be_req++: Call UpdateStaffRequestDTO()
+be_req-->>be_ctrl--: Return UpdateStaffRequestDTO object
+
+be_ctrl->be_ctrl++: Validate ModelState & Request
+be_ctrl--
+
+be_ctrl->sv++: Call UpdateStaffAsync(id, request)
+
+sv->u_repo++: Call GetAccountByIdAsync(id)
+u_repo->ctx++: Query Account with Manager details
+ctx->db++: Execute query
+db-->>ctx--: Return result
+ctx-->>u_repo--: Return Account entity
+u_repo-->>sv--: Return Account entity
+
+sv->sv++: Update Account and Manager properties
+sv--
+
+opt Status changed to Banned
+    sv->lockout_ett++: Call Lockout()
+    lockout_ett-->>sv--: Return Lockout entity
     
-    be_ctrl->be_ctrl++: Validate ModelState & Request
-    be_ctrl--
-    
-    alt Validation passed
-        be_ctrl->sv++: Call UpdateStaffAsync(id, request)
-        
-        sv->u_repo++: Call GetAccountByIdAsync(id)
-        u_repo->ctx++: Query Account with Manager details
-        ctx->db++: Execute query
-        db-->>ctx--: Return result
-        ctx-->>u_repo--: Return Account entity
-        u_repo-->>sv--: Return Account entity
-        
-        alt Account is valid
-            sv->sv++: Update Account and Manager properties
-            sv--
-            
-            alt Status changed to Banned
-                sv->lockout_repo++: Call AddAsync(lockout)
-                lockout_repo->ctx++: Add Lockout entity
-                ctx-->>lockout_repo--: Return tracking state
-                lockout_repo-->>sv--: Return success
-            else Status changed from Banned to Active
-                sv->lockout_repo++: Call RemoveAccountLockoutsAsync(accountId)
-                lockout_repo->ctx++: Remove active Lockouts
-                ctx-->>lockout_repo--: Return tracking state
-                lockout_repo-->>sv--: Return success
-            end
-            
-            sv->u_repo++: Call SaveChangesAsync()
-            u_repo->ctx++: Commit tracked changes
-            ctx->db++: Save changes to database
-            db-->>ctx--: Return result
-            ctx-->>u_repo--: Return numberOfRowsAffected
-            u_repo-->>sv--: Return success
-            
-            sv-->>be_ctrl: Return result
-            be_ctrl-->>fe_ctrl: Return statusCode 200
-            fe_ctrl-->>view: Return JSON with success = true
-            view-->>act: Display success toast and reload table
-        else Account not found or not staff
-            sv-->>be_ctrl--: Return result
-            be_ctrl-->>fe_ctrl: Return statusCode 404
-            fe_ctrl-->>view: Return JSON with success = false
-            view-->>act: Display error toast message
-        end
-    else Validation failed
-        be_ctrl-->>fe_ctrl--: Return statusCode 400
-        fe_ctrl-->>view: Return JSON with success = false
-        view-->>act: Display error toast message
-    end
-else Validation failed
-    fe_ctrl-->>view--: Return JSON with success = false
-    view-->>act--: Display error toast message
+    sv->lockout_repo++: Call AddAsync(lockout)
+    lockout_repo->ctx++: Add Lockout entity
+    ctx-->>lockout_repo--: Return tracking state
+    lockout_repo-->>sv--: Return success
 end
+
+opt Status changed from Banned to Active
+    sv->lockout_repo++: Call RemoveAccountLockoutsAsync(accountId)
+    lockout_repo->ctx++: Remove active Lockouts
+    ctx-->>lockout_repo--: Return tracking state
+    lockout_repo-->>sv--: Return success
+end
+
+sv->u_repo++: Call SaveChangesAsync()
+u_repo->ctx++: Commit tracked changes
+ctx->db++: Save changes to database
+db-->>ctx--: Return result
+ctx-->>u_repo--: Return numberOfRowsAffected
+u_repo-->>sv--: Return success
+
+sv-->>be_ctrl--: Return success result
+be_ctrl-->>fe_ctrl--: Return statusCode 200
+
+fe_ctrl-->>view: Return JSON with success = true
+deactivate fe_ctrl
+view-->>act--: Display success toast and reload table
 @enduml

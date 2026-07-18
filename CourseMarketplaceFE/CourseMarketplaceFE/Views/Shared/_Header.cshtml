@@ -10,7 +10,7 @@
                           || userRoleForHeader.Equals("staff", StringComparison.OrdinalIgnoreCase);
     bool isInstructor = userRoleForHeader.Equals("instructor", StringComparison.OrdinalIgnoreCase);
                           
-    bool hideHeaderElements = isStaffOrAdmin || isInstructor;
+    bool hideHeaderElements = isStaffOrAdmin;
 }
 <style>
     #header-search-results-list::-webkit-scrollbar {

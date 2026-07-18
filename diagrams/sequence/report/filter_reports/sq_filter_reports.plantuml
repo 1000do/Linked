@@ -1,0 +1,46 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Filter Reports
+
+actor "Staff / Admin" as act
+participant "ReportCenterPage" as view
+    |||
+    ref over act, view: Filter Course Reports
+    |||
+    ref over act, view: Filter Course Review Reports
+    |||
+    ref over act, view: Filter Lesson Review Reports
+
+@enduml

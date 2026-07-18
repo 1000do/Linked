@@ -33,8 +33,11 @@ participant "RegisterFormView" as view
 participant "VerifyRecommendView" as r_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
-participant ":AuthService" as sv
-participant ":UserRepository" as repo
+participant ":RegisterRequestDTO" as req
+participant ":IAuthService" as sv
+participant ":Account" as acc_ett
+participant ":User" as user_ett
+participant ":IUserRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -51,37 +54,16 @@ alt Invalid ModelState or email domain
 else Valid ModelState and email domain
     fe_ctrl->be_ctrl++: POST /api/auth/register
 
-    be_ctrl->sv++: Call RegisterAsync(request)
+    be_ctrl->req++: Call RegisterRequestDTO()
+    req-->>be_ctrl--: Return RegisterRequestDTO object
+
+    be_ctrl->sv++: Call RegisterAsync(req)
 
     sv->sv++: Validate registration request
     sv--
 
-    alt Email does not end with @gmail.com
-        sv-->>be_ctrl: Return "Email must be a @gmail.com address"
-        be_ctrl-->>fe_ctrl: Return statusCode 400
-        fe_ctrl-->>view: Return statusCode 400
-        view-->>act: Display error message
-    else Email already exists
-        sv->repo++: Call IsEmailExistsAsync(email)
-        repo->ctx++: Query Accounts table for email
-        ctx->db++: Execute query
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return boolean
-        repo-->>sv--: Return true
-
-        sv-->>be_ctrl: Return "Email already exists"
-        be_ctrl-->>fe_ctrl: Return statusCode 400
-        fe_ctrl-->>view: Return statusCode 400
-        view-->>act: Display error message
-    else Username already exists
-        sv->repo++: Call IsUsernameExistsAsync(username)
-        repo->ctx++: Query Accounts table for username
-        ctx->db++: Execute query
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return boolean
-        repo-->>sv--: Return true
-
-        sv-->>be_ctrl: Return "Username already exists"
+    alt Invalid registration request
+        sv-->>be_ctrl: Return validation error message
         be_ctrl-->>fe_ctrl: Return statusCode 400
         fe_ctrl-->>view: Return statusCode 400
         view-->>act: Display error message
@@ -89,32 +71,37 @@ else Valid ModelState and email domain
         sv->sv++: Hash password using BCrypt
         sv--
 
-        sv->sv++: Instantiate new Account & User entities\n(AccountStatus = "Active", IsVerified = false)
-        sv--
+        sv->acc_ett++: Call Account()
+        acc_ett-->>sv--: Return Account entity
+        
+        sv->user_ett++: Call User()
+        user_ett-->>sv--: Return User entity
 
-        sv->repo++: Call RegisterUserAsync(account, user)
+        sv->repo++: Call RegisterUserAsync(acc, user)
         repo->ctx++: Add Account & User to DbSets and call SaveChangesAsync()
         ctx->db++: Save changes to database
-        db-->>ctx--: Return result
+        db-->>ctx--: Return numberOfRowsAffected
         ctx-->>repo--: Return numberOfRowsAffected
 
         repo->repo++: Check numberOfRowsAffected
         repo--
 
-        alt numberOfRowsAffected > 0
-            repo-->>sv: Return true
-            sv-->>be_ctrl: Return "Success"
-            be_ctrl-->>fe_ctrl: Return statusCode 200
-            fe_ctrl-->>r_view: Redirect to VerifyRecommend page
+        alt numberOfRowsAffected = 0
+            repo-->>sv: Return false
+            sv-->>be_ctrl: Return "Error"
+            be_ctrl-->>fe_ctrl: Return statusCode 400
+            fe_ctrl-->>view: Return statusCode 400
+            view-->>act: Display error message
+            deactivate view
+        else numberOfRowsAffected > 0
+            repo-->>sv--: Return true
+            sv-->>be_ctrl--: Return "Success"
+            be_ctrl-->>fe_ctrl--: Return statusCode 200
+            
+            deactivate view
+            fe_ctrl-->>r_view--: Redirect to VerifyRecommend page
             activate r_view
-            r_view-->>act: Display VerifyRecommend page
-            deactivate r_view
-        else numberOfRowsAffected = 0
-            repo-->>sv--: Return false
-            sv-->>be_ctrl--: Return "Error"
-            be_ctrl-->>fe_ctrl--: Return statusCode 400
-            fe_ctrl-->>view--: Return statusCode 400
-            view-->>act--: Display error message
+            r_view-->>act--: Display VerifyRecommend page
         end
     end
 end

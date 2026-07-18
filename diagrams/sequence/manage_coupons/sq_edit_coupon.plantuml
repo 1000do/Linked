@@ -31,14 +31,18 @@ mainframe Edit Coupon
 actor Admin as act
 participant "CouponListView" as view
 participant "CouponController" as be_ctrl <<backend controller>>
-participant ":CouponService" as sv
-participant ":CouponRepository" as repo
+participant ":UpdateCouponRequestDTO" as be_req
+participant ":ICouponService" as sv
+participant ":ICouponRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act++
 act->view++: Click "Edit" and submit form
 view->be_ctrl++: PUT /api/coupon/{id}
+
+be_ctrl->be_req++: Call UpdateCouponRequestDTO()
+be_req-->>be_ctrl--: Return UpdateCouponRequestDTO object
 
 be_ctrl->sv++: Update(id, req, GetUserId(), isAdmin)
 
@@ -52,7 +56,15 @@ repo-->>sv--: Return Coupon entity
 sv->sv++: Validate coupon update request
 sv--
 
-alt Valid coupon update request
+alt Coupon not found
+    sv-->>be_ctrl: throw KeyNotFoundException
+    be_ctrl-->>view: Return statusCode 404
+    view-->>act: Display error message
+else Invalid EndDate or UsageLimit
+    sv-->>be_ctrl: throw ArgumentException
+    be_ctrl-->>view: Return statusCode 400
+    view-->>act: Display error message
+else Valid coupon update request
     sv->sv++: Update EndDate, UsageLimit, IsActive
     sv--
     
@@ -68,16 +80,8 @@ alt Valid coupon update request
     ctx-->>repo--: Return numberOfRowsAffected
     repo-->>sv--: Return success
     
-    sv-->>be_ctrl: Return result
-    be_ctrl-->>view: Return statusCode 200
-    view-->>act: Display success message
-else Invalid EndDate or UsageLimit
-    sv-->>be_ctrl: throw ArgumentException
-    be_ctrl-->>view: Return statusCode 400
-    view-->>act: Display error message
-else Coupon not found
-    sv-->>be_ctrl--: throw KeyNotFoundException
-    be_ctrl-->>view--: Return statusCode 404
-    view-->>act--: Display error message
+    sv-->>be_ctrl--: Return result
+    be_ctrl-->>view--: Return statusCode 200
+    view-->>act--: Display success message
 end
 @enduml

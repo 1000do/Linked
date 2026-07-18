@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>FS-102 - View List of User Reports</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<p><strong>102. View List of User Reports</strong></p>
+
+<p><strong>Function Trigger:</strong> Actor navigates to the Report Center page.</p>
+
+<p><strong>Function Description:</strong> Displays reported courses, reported course reviews, and reported lesson reviews submitted by users. All category reports are accessible via tabs and subtabs; Actor can switch between category subtabs without a page reload.</p>
+
+<p><strong>Screen Layout:</strong><br>[Placeholder for UI mockups]</p>
+
+<p><strong>Function Details</strong></p>
+
+<ul>
+    <li><strong>Preconditions</strong>
+        <ul>
+            <li>The actor must be authenticated.</li>
+            <li>The actor must have Staff or Admin role.</li>
+        </ul>
+    </li>
+    <li><strong>Process</strong>
+        <ul>
+            <li><strong>View List of User Reports Successfully:</strong>
+                <ul>
+                    <li>Actor accesses the Report Center page.</li>
+                    <li>The system validates the actor's authentication and authorization.</li>
+                    <li>The system retrieves the overall report statistics and the paginated lists of pending course reports, course review reports, and lesson review reports.</li>
+                    <li>The system displays the overall report statistics and main navigation tabs.</li>
+                    <li>The system displays the list of pending course reports by default.</li>
+                    <li>Actor views the list of user reports.</li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Empty Report List)</strong>
+        <ul>
+            <li>The system detects no reports exist for one or more report categories.</li>
+            <li>The system displays an empty state message in the affected category's report list.</li>
+            <li>Back to step 6.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Actor Switches Category Subtab)</strong>
+        <ul>
+            <li>Actor clicks a different category tab or subtab.</li>
+            <li>The system displays the report list for the selected category.</li>
+            <li>Back to step 6.</li>
+        </ul>
+    </li>
+    <li><strong>Alternative Flow (Actor Navigates to Another Page)</strong>
+        <ul>
+            <li>Actor clicks a pagination button.</li>
+            <li>The system reloads the page with the requested page of reports for the active category.</li>
+            <li>Back to step 1.</li>
+        </ul>
+    </li>
+    <li><strong>Postconditions</strong>
+        <ul>
+            <li>The system displays the paginated list of reports for the selected category.</li>
+        </ul>
+    </li>
+    <li><strong>Error Handling</strong>
+        <ul>
+            <li><strong>Session Invalid (Not Logged In):</strong> The system displays an authentication error message and redirects the user to the login page.</li>
+            <li><strong>Unauthorized Access:</strong> The system detects the actor does not have the Staff or Admin role and redirects the actor to the home page or access denied page.</li>
+            <li><strong>Database Query Failure:</strong> The system encounters an error while retrieving the reports from the database, displays an error message regarding the data retrieval failure, and returns to step 1.</li>
+        </ul>
+    </li>
+    <li><strong>Security Measures</strong>
+        <ul>
+            <li>The system enforces role-based access control, allowing only Staff or Admin to view user reports.</li>
+        </ul>
+    </li>
+</ul>
+
+</body>
+</html>

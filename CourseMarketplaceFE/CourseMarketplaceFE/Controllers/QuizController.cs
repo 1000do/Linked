@@ -233,7 +233,7 @@ namespace CourseMarketplaceFE.Controllers
 
         // ─── EDITOR (GET) ────────────────────────────────────────────────
         [HttpGet("Quiz/Editor/{id:int}")]
-        [Authorize(Roles = "instructor")]
+        [Authorize(Roles = "instructor,admin,staff")]
         public async Task<IActionResult> Editor(int id)
         {
             var viewModel = new QuizEditorViewModel { QuizId = id };

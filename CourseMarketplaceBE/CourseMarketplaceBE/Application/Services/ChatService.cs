@@ -317,7 +317,8 @@ public class ChatService : IChatService
     {
         if (clearedAt != null)
         {
-            return messages.Where(m => m.SentAt > clearedAt.Value).ToList();
+            var filterDate = clearedAt.Value;
+            return messages.Where(m => m.SentAt > filterDate).ToList();
         }
         return messages;
     }

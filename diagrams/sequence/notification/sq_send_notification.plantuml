@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -40,8 +47,6 @@ participant ":IUserRepository" as user_repo
 participant ":INotificationRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
-participant "NotificationHub" as hub
-
 act++
 act->view++: Click "Create Notification" button
 view->view++: Open Compose Notification Modal
