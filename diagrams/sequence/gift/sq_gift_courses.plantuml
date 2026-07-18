@@ -77,7 +77,7 @@ else Valid actor's authentication and authorization
         fe_ctrl -> be_ctrl++: GET /api/gift/course/{courseId}
         be_ctrl -> course_sv++: GetCourseWithDetailsAsync(courseId, userId, role)
         course_sv -> repo++: GetCourseWithDetailsAsync(courseId)
-        repo -> ctx++: Courses.Include(...).FirstOrDefaultAsync(...)
+        repo -> ctx++: Query course details from database
         ctx -> db++: Execute query
         db -->> ctx--: Return data
         ctx -->> repo--: Return Course entity or null
@@ -98,7 +98,7 @@ else Valid actor's authentication and authorization
         be_ctrl -> sv++: IsRecipientEnrolledAsync(recipientEmail, courseId)
     
         sv -> user_repo++: GetAccountByEmailAsync(recipientEmail)
-        user_repo -> ctx++: Accounts.FirstOrDefaultAsync(...)
+        user_repo -> ctx++: Query account by email from database
         ctx -> db++: Execute query
         db -->> ctx--: Return data
         ctx -->> user_repo--: Return Account entity or null
@@ -106,7 +106,7 @@ else Valid actor's authentication and authorization
     
         opt Account found
             sv -> repo++: IsEnrolledAsync(accountId, courseId)
-            repo -> ctx++: Enrollments.AnyAsync(...)
+            repo -> ctx++: Check enrollment existence in database
             ctx -> db++: Execute query
             db -->> ctx--: Return data
             ctx -->> repo--: Return boolean
@@ -123,7 +123,7 @@ else Valid actor's authentication and authorization
             fe_ctrl -> be_ctrl++: GET /api/gift/course/{courseId}
             be_ctrl -> course_sv++: GetCourseWithDetailsAsync(courseId, userId, role)
             course_sv -> repo++: GetCourseWithDetailsAsync(courseId)
-            repo -> ctx++: Courses.Include(...).FirstOrDefaultAsync(...)
+            repo -> ctx++: Query course details from database
             ctx -> db++: Execute query
             db -->> ctx--: Return data
             ctx -->> repo--: Return Course entity or null

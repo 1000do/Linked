@@ -345,7 +345,7 @@ public class AdminFinanceController : ControllerBase
         try
         {
             var list = await _financeService.GetPendingRefundRequestsAsync(page, pageSize);
-            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>>.SuccessResponse(list, "List of pending refund requests."));
+            return Ok(ApiResponse<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>>.SuccessResponse(list, "List of pending refund requests."));
         }
         catch (Exception ex)
         {

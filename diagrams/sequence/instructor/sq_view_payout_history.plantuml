@@ -91,6 +91,9 @@ else Valid actor's authentication and authorization
         
         fe_ctrl -->> view --: Return View(vm)
         
+        view -> view ++: Check vm.Items.Count
+        view --
+        
         alt vm.Items.Count == 0
             view -->> act: Display empty message "No payouts found"
         else vm.Items.Count > 0

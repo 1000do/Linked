@@ -38,6 +38,7 @@ participant ":IAdminFinanceRepository" as finance_repo
 participant ":AppDbContext" as ctx
 database Database as db
 participant ":IGiftRepository" as gift_repo
+participant ":ICourseRepository" as course_repo
 participant ":TransactionExt" as tx_ext_ett
 participant ":RefundResultResponse" as refund_res
 participant ":IPaymentGatewayService" as payment_gw
@@ -52,10 +53,12 @@ fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
-    fe_ctrl -->> login_view++: Redirect to LoginPage
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
     login_view -->> act--: Display login form
 else Unauthorized Access
-    fe_ctrl -->> error_view++: Redirect to ErrorPage
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
     error_view -->> act--: Display error message
 else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++: POST /api/admin/finance/refunds/{id}/approve
@@ -69,11 +72,21 @@ else Valid actor's authentication and authorization
     ctx -->> finance_repo--: Return Transaction entity
     finance_repo -->> finance_sv--: Return Transaction entity
 
+    finance_sv -> finance_sv++: Check transaction gift
+    finance_sv--
+
+    opt Transaction has OrderItem
+        finance_sv -> gift_repo++: GetByOrderItemIdAsync(transaction.OrderItemId.Value)
+        gift_repo -> ctx++: Query Gift by orderItemId
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Return database record
+        ctx -->> gift_repo--: Return Gift entity
+        gift_repo -->> finance_sv--: Return Gift entity
+    end
+
     finance_sv -> finance_sv++: Validate Transaction status
     finance_sv--
 
-    finance_sv -> gift_repo++: GetByOrderItemIdAsync(orderItemId)
-    gift_repo -->> finance_sv--: Return Gift entity
 
     alt Transaction Not Found
         finance_sv -->> be_ctrl: throw InvalidOperationException
@@ -86,7 +99,7 @@ else Valid actor's authentication and authorization
         fe_ctrl -->> view: Return JSON (success=false, message)
         view -->> act: Display error message
     else Gift Already Claimed
-        finance_sv -> tx_ext_ett++: Call TransactionExt(transactionId, rejectNote)
+        finance_sv -> tx_ext_ett++: Call TransactionExt(transactionId, adminNote)
         tx_ext_ett -->> finance_sv--: Return TransactionExt object
 
         finance_sv -> finance_repo++: SaveChangesAsync()
@@ -96,7 +109,7 @@ else Valid actor's authentication and authorization
         ctx -->> finance_repo--: Return numberOfRowsAffected
         finance_repo -->> finance_sv--: Return numberOfRowsAffected
 
-        finance_sv -> noti_sv++: SendNotificationAsync(studentId, "Refund REJECTED")
+        finance_sv -> noti_sv++: SendNotificationAsync(studentId, "Refund Request REJECTED")
         noti_sv -->> finance_sv--: Return result
 
         finance_sv -->> be_ctrl: throw InvalidOperationException
@@ -122,7 +135,15 @@ else Valid actor's authentication and authorization
         finance_sv -> payment_gw++: RefundAsync(paymentIntentId, amount, reason)
         payment_gw -->> finance_sv--: Return refundId
 
-        finance_sv -> finance_sv: Update Transaction status, Negate amounts & Revoke enrollment
+        finance_sv -> course_repo++: GetActiveEnrollmentAsync(studentId, courseId)
+        course_repo -> ctx++: Query Enrollment
+        ctx -> db++: Execute SELECT
+        db -->> ctx--: Return database record
+        ctx -->> course_repo--: Return Enrollment entity
+        course_repo -->> finance_sv--: Return Enrollment entity
+
+        finance_sv -> finance_sv++: Update Transaction status, Negate amounts & Revoke enrollment
+        finance_sv--
 
         finance_sv -> finance_repo++: SaveChangesAsync()
         finance_repo -> ctx++: Save changes to database

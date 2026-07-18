@@ -1,0 +1,216 @@
+classDiagram-v2
+direction LR
+
+%% ==================== FRONTEND ====================
+
+class GiftControllerFE["GiftController"] {
+    <<frontend controller>>
+    + ClaimGiftAjax(token: string) Task~IActionResult~
+}
+
+
+
+%% ==================== BACKEND - CONTROLLER ====================
+
+class GiftControllerBE["GiftController"] {
+    <<backend controller>>
+    - _giftService : IGiftService
+    
+    + ClaimGift(request: GiftClaimRequest) Task~IActionResult~
+}
+
+%% ==================== BACKEND - DTOs ====================
+
+class GiftClaimRequest {
+    + RedemptionToken : string
+}
+
+%% ==================== BACKEND - DOMAIN ENTITIES ====================
+
+class Gift {
+    + GiftId : int
+    + OrderItemId : int
+    + SenderId : int?
+    + RecipientEmail : string
+    + RecipientName : string?
+    + GiftMessage : string?
+    + CardTheme : string?
+    + RedemptionToken : string
+    + IsClaimed : bool
+    + ClaimedByUserId : int?
+    + ClaimedAt : DateTime?
+    + DeliveryStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+}
+
+class Course {
+    + CourseId : int
+    + InstructorId : int?
+    + CategoryId : int?
+    + CouponId : int?
+    + Title : string
+    + Description : string?
+    + Price : decimal
+    + CourseThumbnailUrl : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + CourseStatus : string?
+    + CourseFlagCount : int?
+    + CourseAiIntegrations : ICollection~CourseAiIntegration~
+    + CartItems : ICollection~CartItem~
+    + Category : Category?
+    + Coupon : Coupon?
+    + Enrollments : ICollection~Enrollment~
+    + Instructor : Instructor?
+    + Lessons : ICollection~Lesson~
+    + OrderItems : ICollection~OrderItem~
+    + WishlistItems : ICollection~WishlistItem~
+    + CourseExt : CourseExt?
+    + WhatYouWillLearn : string?
+    + Requirements : string?
+    + ModerationFeedback : string?
+    + LastApprovedAt : DateTime?
+    + IsRemoved : bool
+    + ThreatLevel : AiThreatLevel
+}
+
+class Enrollment {
+    + EnrollmentId : int
+    + UserId : int?
+    + CourseId : int?
+    + Title : string?
+    + Description : string?
+    + CompletedDate : DateOnly?
+    + IsCompleted : bool?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
+    + Course : Course?
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IGiftService {
+    <<interface>>
+    + ClaimGiftAsync(userId: int, token: string) Task *
+}
+
+class IGiftRepository {
+    <<interface>>
+    + GetByTokenAsync(token: string) Task~Gift?~ *
+    + Update(gift: Gift) void *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + GetByIdAsync(courseId: int) Task~Course?~ *
+}
+
+class IEnrollmentRepository {
+    <<interface>>
+    + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~ *
+    + BeginTransactionAsync() Task~IDbContextTransaction~ *
+    + AddEnrollmentAsync(enrollment: Enrollment) Task *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class ITransactionRepository {
+    <<interface>>
+    + RejectPendingRefundForGiftClaimedAsync(orderItemId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class GiftService {
+    <<service>>
+    - _giftRepo : IGiftRepository
+    - _courseRepo : ICourseRepository
+    - _enrollmentRepo : IEnrollmentRepository
+    - _transactionRepo : ITransactionRepository
+    
+    + ClaimGiftAsync(userId: int, token: string) Task
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class GiftRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetByTokenAsync(token: string) Task~Gift?~
+    + Update(gift: Gift) void
+    + SaveChangesAsync() Task~int~
+}
+
+class CourseRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetByIdAsync(courseId: int) Task~Course?~
+}
+
+class EnrollmentRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + GetEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~
+    + BeginTransactionAsync() Task~IDbContextTransaction~
+    + AddEnrollmentAsync(enrollment: Enrollment) Task
+    + SaveChangesAsync() Task~int~
+}
+
+class TransactionRepository {
+    <<repository>>
+    - _context : AppDbContext
+    
+    + RejectPendingRefundForGiftClaimedAsync(orderItemId: int) Task~bool~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + Gifts : DbSet~Gift~
+    + Courses : DbSet~Course~
+    + Enrollments : DbSet~Enrollment~
+    
+    # OnConfiguring(optionsBuilder: DbContextOptionsBuilder) void
+    # OnModelCreating(modelBuilder: ModelBuilder) void
+}
+
+%% ==================== RELATIONSHIPS ====================
+
+%% === ASSOCIATION ===
+Course -- Enrollment
+
+%% === UNIDIRECTIONAL ASSOCIATION ===
+GiftControllerBE --> IGiftService
+GiftService --> IGiftRepository
+GiftService --> ICourseRepository
+GiftService --> IEnrollmentRepository
+GiftService --> ITransactionRepository
+GiftRepository --> AppDbContext
+CourseRepository --> AppDbContext
+EnrollmentRepository --> AppDbContext
+TransactionRepository --> AppDbContext
+
+%% === INTERFACE REALIZATION ===
+GiftService ..|> IGiftService
+GiftRepository ..|> IGiftRepository
+CourseRepository ..|> ICourseRepository
+EnrollmentRepository ..|> IEnrollmentRepository
+TransactionRepository ..|> ITransactionRepository
+
+%% === DEPENDENCY ===
+GiftControllerFE ..> GiftControllerBE
+GiftControllerBE ..> GiftClaimRequest
+GiftService ..> Enrollment
+GiftRepository ..> Gift
+CourseRepository ..> Course
+EnrollmentRepository ..> Enrollment
+
+%% ==================== STYLES ====================
+
+classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

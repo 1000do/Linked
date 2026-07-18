@@ -45,7 +45,6 @@ act ++
 
 act -> view++: Select sorting option & click "Filter"
 view -> fe_tx_ctrl++: GET /Transaction/Instructor?payoutSortBy={sort}
-view--
 
 fe_tx_ctrl -> fe_tx_ctrl++: Validate actor's authentication and authorization
 fe_tx_ctrl--
@@ -93,8 +92,11 @@ else Valid actor's authentication and authorization
         
         fe_tx_ctrl -->> view --: Return View(vm)
         
+        view -> view ++: Check vm.Items.Count
+        view --
+        
         alt vm.Items.Count == 0
-            view -->> act: Display empty message "No payouts found"
+            view -->> act : Display empty message "No payouts found"
         else vm.Items.Count > 0
             view -->> act --: Display sorted list of payouts
         end

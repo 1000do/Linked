@@ -6,41 +6,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">ProcessCourseStrikeAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">ProcessCourseStrikeAsync</td>
+    <td colspan="3">ProcessCourseStrikeAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ProcessCourseStrikeAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">49</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">49</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Manage penalty strikes on a course, enforcing warnings or archiving/lockouts upon reaching 3 strikes.</td>
+    <td colspan="18">Manage penalty strikes on a course, enforcing warnings or archiving/lockouts upon reaching 3 strikes.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">7</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">5</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">7</td>
+    <td colspan="6" style="text-align: center;">7</td>
   </tr>
 </table>
 
@@ -76,41 +76,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">ProcessReviewStrikeAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">ProcessReviewStrikeAsync</td>
+    <td colspan="3">ProcessReviewStrikeAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ProcessReviewStrikeAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">46</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">46</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Manage penalty strikes on a user account for review violations, applying progressive lockouts and notifications.</td>
+    <td colspan="18">Manage penalty strikes on a user account for review violations, applying progressive lockouts and notifications.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">7</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">3</td>
     <td colspan="1" style="text-align: center;">4</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">7</td>
+    <td colspan="6" style="text-align: center;">7</td>
   </tr>
 </table>
 
@@ -144,41 +144,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">NotifyStudentsAboutInstructorSuspensionAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">NotifyStudentsAboutInstructorSuspensionAsync</td>
+    <td colspan="3">NotifyStudentsAboutInstructorSuspensionAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">NotifyStudentsAboutInstructorSuspensionAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">26</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">26</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Notify unique enrolled students when an instructor is suspended.</td>
+    <td colspan="18">Notify unique enrolled students when an instructor is suspended.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">5</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">4</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">5</td>
+    <td colspan="6" style="text-align: center;">5</td>
   </tr>
 </table>
 

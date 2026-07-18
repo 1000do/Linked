@@ -958,10 +958,10 @@ namespace CourseMarketplaceBE.Application.Services
             };
         }
 
-        public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
+        public async Task<CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>> GetPendingRefundRequestsAsync(int page = 1, int pageSize = 10)
         {
             var (items, totalCount) = await _repo.GetPendingRefundRequestsAsync(page, pageSize);
-            return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<Domain.Entities.Transaction>(items, totalCount, page, pageSize);
+            return new CourseMarketplaceBE.Application.DTOs.Common.PagedResult<CourseMarketplaceBE.Application.DTOs.TransactionListDto>(items, totalCount, page, pageSize);
         }
 
         public async Task ApproveRefundAsync(int transactionId, string adminNote)
