@@ -83,6 +83,55 @@
         <td>Resolves a report by taking moderation action (e.g., removing content) and updating status.</td>
         <td>Authenticated Staff or Admin. Target report is in a resolvable state.</td>
     </tr>
+    <tr>
+        <td class="no-col">7</td>
+        <td>Add AI Model</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to register a new AI moderation model configuration in the system by filling out the model registration form. The system validates all required fields before persisting the new model record to the database.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">8</td>
+        <td>Update AI Model</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to update an existing AI model's configuration details. The edit form allows modification of provider, version, path, and description. The system validates all required fields before persisting the changes to the database.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">9</td>
+        <td>Delete AI Model</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to soft-delete an AI model by toggling its status between active and inactive. No data is permanently removed; an active model is set to inactive and an inactive model is restored to active.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">10</td>
+        <td>View AI Model Details</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Displays the full configuration details of a selected AI model in a details dialog. The detail data is pre-loaded with the page and presented client-side without an additional server request.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">11</td>
+        <td>View AI Model List</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Displays a paginated list of all registered AI moderation models, showing each model's name, version, type, process type, status, and last modified date. Admin can navigate between pages using pagination controls.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">12</td>
+        <td>Set Confidence Threshold</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to configure the spam confidence, toxicity confidence, and similarity score thresholds used by the automated AI moderation system. The current threshold values are pre-filled from the database on page load. If no configuration exists, system defaults are applied.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">13</td>
+        <td>View Activity Log</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Displays chronological paginated logs of AI moderation events across three categories: course moderation, course review moderation, and lesson review moderation. All category logs are loaded at page load; Admin can switch between category subtabs without a page reload.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
 </table>
 
 </body>
