@@ -71,34 +71,50 @@ class TransactionExt {
     + Transaction : Transaction
 }
 
+class Gift {
+    <<entity>>
+    + GiftId : int
+    + OrderItemId : int
+    + IsClaimed : bool
+    + DeliveryStatus : string
+}
+
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~ *
 }
 
 class IAdminFinanceRepository {
-    <<interface>>
+    <<repository interface>>
     + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~ *
     + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~ *
     + SaveChangesAsync() Task~int~ *
 }
 
+class IGiftRepository {
+    <<repository interface>>
+    + GetByOrderItemIdAsync(orderItemId: int) Task~Gift?~ *
+}
+
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + SendNotificationAsync(userId: int, title: string, message: string, link: string?) Task *
 }
 
 %% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class AdminFinanceService {
+    <<service>>
     - _repo : IAdminFinanceRepository
     - _notiService : INotificationService
+    - _giftRepo : IGiftRepository
     + RequestRefundAsync(transactionId: int, studentId: int, reason: string) Task~RefundResultDto~
 }
 
 class AdminFinanceRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~
     + GetRefundEligibilityMetricsAsync(transactionId: int, studentId: int, courseId: int) Task~RefundEligibilityDto~
@@ -106,6 +122,7 @@ class AdminFinanceRepository {
 }
 
 class AppDbContext {
+    <<dbcontext>>
     + Transactions : DbSet~Transaction~
 }
 
@@ -118,6 +135,7 @@ Transaction o-- TransactionExt
 TransactionControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceService --> INotificationService
+AdminFinanceService --> IGiftRepository
 AdminFinanceRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
@@ -128,10 +146,9 @@ AdminFinanceRepository ..|> IAdminFinanceRepository
 TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerBE ..> StudentRefundRequest
 TransactionControllerBE ..> RefundResultDto
-IAdminFinanceService ..> RefundResultDto
 AdminFinanceService ..> RefundResultDto
-IAdminFinanceRepository ..> RefundEligibilityDto
-IAdminFinanceRepository ..> Transaction
+AdminFinanceService ..> Gift
+IGiftRepository ..> Gift
 AdminFinanceRepository ..> RefundEligibilityDto
 AdminFinanceRepository ..> Transaction
 

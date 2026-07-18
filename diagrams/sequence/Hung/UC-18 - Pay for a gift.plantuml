@@ -1,0 +1,182 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+hide footbox
+mainframe Pay for a gift
+
+actor User as act
+participant "GiftCheckoutPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "MyCoursesPage" as my_courses_view
+participant "GiftController" as fe_gift_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":IGiftCheckoutService" as sv
+participant ":CheckoutResponse" as res_dto
+participant ":OrderInfo" as order_ett
+participant ":OrderItem" as item_ett
+participant ":Transaction" as tx_ett
+participant ":IPaymentGatewayService" as stripe
+participant ":ICheckoutRepository" as repo
+
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+' == Access Gift Checkout ==
+act -> view++: Access Gift Checkout page
+' view -> fe_gift_ctrl++: GET /Gift/Checkout
+' fe_gift_ctrl -->> view--: Return View
+' view -> view++: Mount Stripe Elements (Empty Card Form)
+' view--
+' view -->> act: Display checkout page and card entry form
+
+' == Initiate Payment Intent ==
+act -> view: Fill in Card details (Name, Card Number, Expiry, CVC)
+act -> view: Click "Pay Securely" button
+
+view -> view++: Validate form inputs
+view--
+opt Invalid form inputs
+    view -->> act: Highlight invalid fields and display error message
+end
+
+' note right of view: Intent is created ON SUBMIT\nto prevent incomplete intents in Stripe
+view -> fe_gift_ctrl++: POST /Gift/CreateGiftPaymentIntentAjax (AJAX)
+
+fe_gift_ctrl -> fe_gift_ctrl ++: Validate actor's authentication and authorization
+fe_gift_ctrl --
+
+alt Session Invalid
+    fe_gift_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act --: Display login form
+else Unauthorized Access
+    fe_gift_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --: Display error message
+else Valid actor's authentication and authorization
+    
+    fe_gift_ctrl -> be_ctrl ++: POST /api/checkout/gift-intent
+    
+    be_ctrl -> sv++: InitiateGiftPaymentIntentAsync(userId, request)
+    
+    sv -> sv++: ValidateCourseForGiftAsync(course, recipientEmail, courseId)
+    sv--
+
+alt Gift Details Missing or Invalid
+    sv -->> be_ctrl: throw ArgumentException
+    be_ctrl -->> fe_gift_ctrl: Return statusCode 400
+    fe_gift_ctrl -->> view: Return JSON (success=false, message)
+    view -->> act: Display error message
+else Valid Gift Details
+    sv -> stripe++: CreatePaymentIntentAsync(purchasePrice, "usd", metadata)
+    stripe -->> sv--: Return ClientSecret and PaymentIntentId
+    
+    sv -> res_dto++: Call CheckoutResponse(ClientSecret, PaymentIntentId)
+    res_dto -->> sv--: Return CheckoutResponse object
+    
+        sv -->> be_ctrl--: Return CheckoutResponse object
+        be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
+        fe_gift_ctrl -->> view--: Return JSON (ClientSecret)
+    end
+end
+
+' == Process Stripe Payment ==
+view -> stripe++: stripe.confirmCardPayment(clientSecret, cardDetails)
+stripe -->> view--: Return payment result
+
+view -> view++: Validate payment result
+view--
+
+alt Payment declined
+    view -->> act: Display payment error message
+else Payment Successful
+    view -> fe_gift_ctrl++: GET /Gift/CheckoutSuccess?payment_intent_id=...
+    deactivate view
+    
+    fe_gift_ctrl -> be_ctrl++: GET /api/checkout/gift-success-intent
+    
+    be_ctrl -> sv++: ProcessPaymentIntentSuccessAsync(paymentIntentId)
+        
+
+        sv -> stripe++: GetPaymentIntentMetadataAsync(paymentIntentId)
+        stripe -->> sv--: Return metadata
+        
+        sv -> sv++: Call ProcessSuccessfulGiftPaymentCoreAsync
+        
+
+        sv -> order_ett++: Call OrderInfo(...)
+        order_ett -->> sv--: Return OrderInfo object
+        
+        sv -> repo++: AddOrderAsync(order)
+        repo -->> sv--: Return Task
+        
+        sv -> item_ett++: Call OrderItem(...)
+        item_ett -->> sv--: Return OrderItem object
+        
+        sv -> repo++: AddOrderItemAsync(orderItem)
+        repo -->> sv--: Return Task
+        
+        sv -> tx_ett++: Call Transaction(...)
+        tx_ett -->> sv--: Return Transaction object
+        
+        sv -> repo++: AddTransactionAsync(transaction)
+        repo -->> sv--: Return Task
+        
+        sv -> repo++: SaveChangesAsync()
+        repo -> ctx++: SaveChangesAsync()
+        ctx -> db++: Save changes to database
+        db -->> ctx--: Return numberOfRowsAffected
+        ctx -->> repo--: Return numberOfRowsAffected
+        repo -->> sv--: Return numberOfRowsAffected
+        
+        sv -> sv++: Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
+        sv--
+        
+        sv -> sv++: Call ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv--
+        
+
+        sv--
+        sv -->> be_ctrl--: Return result
+        
+        be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
+        
+        fe_gift_ctrl -->> my_courses_view--: Redirect to /Course/MyCourses
+        activate my_courses_view
+        my_courses_view -->> act--: Display checkout success message
+    end
+
+
+@enduml

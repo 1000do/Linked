@@ -28,7 +28,7 @@ class CartSummaryResponse {
     + AppliedCouponCode : string
 }
 
-class UserProfile {
+class UserProfileViewModel {
     <<view model>>
     + Email : string
     + FullName : string
@@ -83,19 +83,19 @@ class Transaction {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class ICheckoutService {
-    <<interface>>
+    <<service interface>>
     + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~ *
     + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task *
 }
 
 class ICheckoutRepository {
-    <<interface>>
+    <<repository interface>>
     + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~ *
     + SaveChangesAsync() Task~int~ *
 }
 
 class IPaymentGatewayService {
-    <<interface>>
+    <<service interface>>
     + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~ *
     + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~ *
 }
@@ -103,26 +103,33 @@ class IPaymentGatewayService {
 %% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class CheckoutService {
+    <<service>>
     - _repo : ICheckoutRepository
     - _paymentGateway : IPaymentGatewayService
     + InitiatePaymentIntentAsync(userId: string, couponCode: string) Task~CheckoutResponse~
     + ProcessPaymentIntentSuccessAsync(paymentIntentId: string) Task
+    - IsTransactionAlreadyProcessedAsync(sessionId: string) Task~bool~
+    - ProcessSuccessfulPaymentCoreAsync(sessionId: string, paymentIntentId: string) Task
+    - CreateEntitiesAsync() Task
     - AddEntitiesToContext(order: OrderInfo, orderItem: OrderItem, transaction: Transaction) void
     - ClearCartItemsFromContext(userId: string) void
 }
 
 class CheckoutRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetCartItemsWithCourseAndInstructorAsync(userId: string) Task~List~CartItem~~
     + SaveChangesAsync() Task~int~
 }
 
 class StripePaymentService {
+    <<service>>
     + CreatePaymentIntentAsync(...) Task~Tuple~
     + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
 }
 
 class AppDbContext {
+    <<dbcontext>>
     + Orders : DbSet~OrderInfo~
     + OrderItems : DbSet~OrderItem~
     + Transactions : DbSet~Transaction~
@@ -149,7 +156,7 @@ CartControllerFE ..> CheckoutControllerBE
 
 CartControllerFE ..> CheckoutViewModel
 CartControllerFE ..> CartSummaryResponse
-CartControllerFE ..> UserProfile
+CartControllerFE ..> UserProfileViewModel
 
 CheckoutControllerBE ..> CheckoutResponse
 CheckoutService ..> CheckoutResponse
@@ -161,4 +168,22 @@ CheckoutService ..> Transaction
 %% ==================== STYLES ====================
 
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000
+
+%% ==================== LINKS ====================
+click CartControllerFE href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Controllers/CartController.cs"
+click CheckoutViewModel href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/CheckoutViewModel.cs"
+click CartSummaryResponse href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/CartDTOs.cs"
+click UserProfileViewModel href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceFE/CourseMarketplaceFE/Models/UserProfileViewModel.cs"
+click CheckoutControllerBE href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Presentation/Controllers/CheckoutController.cs"
+click CheckoutResponse href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/DTOs/CheckoutDTOs.cs"
+click OrderInfo href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/OrderInfo.cs"
+click OrderItem href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/OrderItem.cs"
+click Transaction href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/Entities/Transaction.cs"
+click ICheckoutService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/ICheckoutService.cs"
+click ICheckoutRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Domain/IRepositories/ICheckoutRepository.cs"
+click IPaymentGatewayService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/IServices/IPaymentGatewayService.cs"
+click CheckoutService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Application/Services/CheckoutService.cs"
+click CheckoutRepository href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Repositories/CheckoutRepository.cs"
+click StripePaymentService href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Services/StripePaymentService.cs"
+click AppDbContext href "file:///c:/Users/binh4/source/repos/Linked/CourseMarketplaceBE/CourseMarketplaceBE/Infrastructure/Data/AppDbContext.cs"
 ```

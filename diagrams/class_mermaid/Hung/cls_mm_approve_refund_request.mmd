@@ -1,14 +1,11 @@
-classDiagram-v2
+classDiagram
 direction LR
-
-%% ==================== FRONTEND ====================
 
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
+    - _api : ApiClient
     + ApproveRefundDecision(transactionId: int, adminNote: string?) Task~IActionResult~
 }
-
-%% ==================== BACKEND - CONTROLLERS ====================
 
 class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
@@ -16,116 +13,202 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
     + ApproveRefund(transactionId: int, request: RefundDecisionRequest) Task~IActionResult~
 }
 
-class RefundDecisionRequest {
-    <<dto>>
-    + AdminNote : string?
-}
-
-%% ==================== BACKEND - SERVICES ====================
-
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + ApproveRefundAsync(transactionId: int, adminNote: string) Task *
+    + RefundTransactionAsync(transactionId: int, reason: string?) Task~RefundResultResponse~ *
 }
 
 class AdminFinanceService {
+    <<service>>
     - _repo : IAdminFinanceRepository
     - _paymentGateway : IPaymentGatewayService
     - _notiService : INotificationService
+    - _hubContext : IHubContext~FinanceHub~
+    - _courseRepo : ICourseRepository
+    - _giftRepo : IGiftRepository
     + ApproveRefundAsync(transactionId: int, adminNote: string) Task
-    - RefundTransactionAsync(transactionId: int, reason: string?) Task~RefundResultResponse~
+    + RefundTransactionAsync(transactionId: int, reason: string?) Task~RefundResultResponse~
+}
+
+class IAdminFinanceRepository {
+    <<repository interface>>
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~ *
+    + GetStripeTransferIdByDestinationPaymentAsync(destinationPaymentId: string) Task~string?~ *
+    + SaveChangesAsync() Task~int~ *
+}
+
+class AdminFinanceRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction?~
+    + GetStripeTransferIdByDestinationPaymentAsync(destinationPaymentId: string) Task~string?~
+    + SaveChangesAsync() Task~int~
+}
+
+class IGiftRepository {
+    <<repository interface>>
+    + GetByOrderItemIdAsync(orderItemId: int) Task~Gift?~ *
+   
+
+}
+
+class GiftRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetByOrderItemIdAsync(orderItemId: int) Task~Gift?~
+    
+}
+
+class ICourseRepository {
+    <<repository interface>>
+    + GetActiveEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~ *
+}
+
+class CourseRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetActiveEnrollmentAsync(userId: int, courseId: int) Task~Enrollment?~
 }
 
 class IPaymentGatewayService {
-    <<interface>>
+    <<service interface>>
     + ReverseTransferAsync(stripeTransferId: string) Task~string~ *
     + RefundAsync(paymentIntentId: string, amount: decimal, reason: string?) Task~string~ *
 }
 
-class StripePaymentGatewayService {
+class StripePaymentService {
+    <<service>>
     + ReverseTransferAsync(stripeTransferId: string) Task~string~
     + RefundAsync(paymentIntentId: string, amount: decimal, reason: string?) Task~string~
 }
 
 class INotificationService {
-    <<interface>>
-    + SendNotificationAsync(accountId: int, title: string, message: string, link: string) Task *
+    <<service interface>>
+    + SendNotificationAsync(receiverId: int, title: string, content: string, linkAction: string?) Task~bool~ *
 }
 
-class NotificationService {
-    + SendNotificationAsync(accountId: int, title: string, message: string, link: string) Task
-}
-
-%% ==================== BACKEND - REPOSITORIES ====================
-
-class IAdminFinanceRepository {
-    <<interface>>
-    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction~ *
-    + GetStripeTransferIdByDestinationPaymentAsync(destinationPaymentId: string) Task~string~ *
-    + SaveChangesAsync() Task~int~ *
-}
-
-class AdminFinanceRepository {
-    - _context : AppDbContext
-    + GetTransactionWithFullGraphAsync(transactionId: int) Task~Transaction~
-    + GetStripeTransferIdByDestinationPaymentAsync(destinationPaymentId: string) Task~string~
+class AppDbContext {
+    <<dbcontext>>
+    + Transactions : DbSet~Transaction~
+    + Gifts : DbSet~Gift~
+    + Enrollments : DbSet~Enrollment~
     + SaveChangesAsync() Task~int~
 }
 
-%% ==================== BACKEND - DB CONTEXT ====================
-
-class AppDbContext {
-    + Transactions : DbSet~Transaction~
+class RefundDecisionRequest {
+    <<dto>>
+    + AdminNote : string?
 }
 
-%% ==================== BACKEND - ENTITIES ====================
+class RefundResultResponse {
+    <<dto>>
+    + StripeRefundId : string
+    + StripeReversalId : string?
+    + RefundedAmount : decimal
+    + EnrollmentRevoked : bool
+    + TransactionStatus : string
+}
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
+    + OrderItemId : int?
+    + AccountFrom : int?
+    + AccountTo : int?
     + Amount : decimal
-    + Currency : string
-    + TransactionsStatus : string
-    + StripePaymentintentId : string
+    + TransferRate : decimal
+    + StripeSessionId : string?
+    + StripePaymentintentId : string?
+    + Currency : string?
+    + TransactionsStatus : string?
+    + TransactionType : string?
+    + TransactionCreatedAt : DateTime?
     + TransactionExt : TransactionExt?
+    + OrderItem : OrderItem?
+    + AccountFromNavigation : Account?
+    + AccountToNavigation : Account?
     + InstructorPayouts : ICollection~InstructorPayout~
 }
 
 class TransactionExt {
+    <<entity>>
     + TransactionId : int
     + RefundReason : string?
     + RefundAdminNote : string?
     + RefundRequestedAt : DateTime?
+    + Transaction : Transaction
 }
 
-class InstructorPayout {
-    + PayoutId : int
-    + IsPaid : bool
-    + StripeTransferId : string
-    + PayoutStatus : string
-    + PayoutAmount : decimal
+class Gift {
+    <<entity>>
+    + GiftId : int
+    + OrderItemId : int
+    + SenderId : int?
+    + RecipientEmail : string
+    + RecipientName : string?
+    + GiftMessage : string?
+    + CardTheme : string?
+    + RedemptionToken : string
+    + IsClaimed : bool
+    + ClaimedByUserId : int?
+    + ClaimedAt : DateTime?
+    + DeliveryStatus : string?
+    + CreatedAt : DateTime?
+    + UpdatedAt : DateTime?
+    + OrderItem : OrderItem
+    + Sender : Account?
+    + ClaimedByUser : User?
 }
 
-%% ==================== RELATIONSHIPS ====================
+class Enrollment {
+    <<entity>>
+    + EnrollmentId : int
+    + UserId : int?
+    + CourseId : int?
+    + Title : string?
+    + Description : string?
+    + CompletedDate : DateOnly?
+    + IsCompleted : bool?
+    + EnrollDate : DateOnly?
+    + LastAccessedAt : DateTime?
+    + EnrollmentStatus : string?
+    + Course : Course?
+    + CourseReviews : ICollection~CourseReview~
+    + LessonReviews : ICollection~LessonReview~
+    + User : User?
+    + MaterialCompletions : ICollection~MaterialCompletion~
+}
 
-%% === REALIZATION ===
-AdminFinanceService ..|> IAdminFinanceService
-StripePaymentGatewayService ..|> IPaymentGatewayService
-NotificationService ..|> INotificationService
-AdminFinanceRepository ..|> IAdminFinanceRepository
-
-%% === ASSOCIATION ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceControllerBE --> IAdminFinanceService
-AdminFinanceService --> IAdminFinanceRepository
-AdminFinanceService --> IPaymentGatewayService
-AdminFinanceService --> INotificationService
-AdminFinanceRepository --> AppDbContext
-AppDbContext --> Transaction
-Transaction --> TransactionExt : 1..1
-Transaction --> InstructorPayout : 1..N
-
-%% === DEPENDENCY ===
-AdminFinanceControllerFE ..> AdminFinanceControllerBE : API calls
 AdminFinanceControllerBE ..> RefundDecisionRequest
 
-%% ==================== STYLES ====================
+AdminFinanceService ..|> IAdminFinanceService
+AdminFinanceService --> IAdminFinanceRepository
+AdminFinanceService --> IGiftRepository
+AdminFinanceService --> ICourseRepository
+AdminFinanceService --> IPaymentGatewayService
+AdminFinanceService --> INotificationService
+
+AdminFinanceService ..> RefundResultResponse
+IAdminFinanceService ..> RefundResultResponse
+AdminFinanceService ..> TransactionExt
+
+AdminFinanceRepository ..|> IAdminFinanceRepository
+AdminFinanceRepository --> AppDbContext
+IAdminFinanceRepository ..> Transaction
+
+GiftRepository ..|> IGiftRepository
+GiftRepository --> AppDbContext
+IGiftRepository ..> Gift
+
+CourseRepository ..|> ICourseRepository
+CourseRepository --> AppDbContext
+ICourseRepository ..> Enrollment
+
+StripePaymentService ..|> IPaymentGatewayService
+
+Transaction *-- TransactionExt
+
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

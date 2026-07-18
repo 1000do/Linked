@@ -1,14 +1,12 @@
-classDiagram
+classDiagram-v2
 direction LR
 
-%% ==================== FRONTEND - CONTROLLER ====================
+%% ==================== FRONTEND ====================
 
 class TransactionControllerFE["TransactionController"] {
     <<frontend controller>>
     + Instructor(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, payoutPage: int, payoutPageSize: int, payoutKeyword: string?, payoutSortBy: string?, payoutStatus: string?, year: int?, month: int?, courseSortBy: string?) Task~IActionResult~
 }
-
-%% ==================== FRONTEND - VIEW MODELS ====================
 
 class InstructorFinancePageVM {
     <<view model>>
@@ -17,58 +15,41 @@ class InstructorFinancePageVM {
     + CourseRevenues : List~InstructorCourseRevenueResponse~
 }
 
-%% ==================== BACKEND - CONTROLLER ====================
+%% ==================== BACKEND ====================
 
 class TransactionControllerBE["TransactionController"] {
     <<backend controller>>
-    - _transactionService : ITransactionService
     - _financeService : IAdminFinanceService
     + GetInstructorCourseRevenues(year: int, month: int) Task~IActionResult~
 }
 
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueResponse~~ *
 }
 
-class IAdminFinanceRepository {
-    <<interface>>
-    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
-
 class AdminFinanceService {
+    <<service>>
     - _repo : IAdminFinanceRepository
-    - _paymentGateway : IPaymentGatewayService
-    - _instructorRepo : IInstructorRepository
-    - _notiService : INotificationService
-    - _hubContext : IHubContext~FinanceHub~
-    - _logger : ILogger~AdminFinanceService~
-    - _configRepo : ISystemConfigRepository
-    - _courseRepo : ICourseRepository
-    - _stripeConnect : IStripeConnectService
-    - _giftRepo : IGiftRepository
     + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueResponse~~
 }
 
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+class IAdminFinanceRepository {
+    <<repository interface>>
+    + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~ *
+}
 
 class AdminFinanceRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetInstructorCourseRevenuesByInstructorAsync(instructorId: int, year: int, month: int) Task~List~InstructorCourseRevenueProjection~~
 }
 
-%% ==================== BACKEND - DB CONTEXT ====================
-
 class AppDbContext {
+    <<dbcontext>>
     + Courses : DbSet~Course~
     + Transactions : DbSet~Transaction~
 }
-
-%% ==================== BACKEND - DTOs ====================
 
 class InstructorCourseRevenueResponse {
     <<dto>>
@@ -96,9 +77,10 @@ class InstructorCourseRevenueProjection {
     + LifetimeRevenue : decimal
 }
 
-%% ==================== BACKEND - DOMAIN ENTITIES ====================
+%% ==================== DOMAIN ENTITIES ====================
 
 class Course {
+    <<entity>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -117,20 +99,10 @@ class Course {
     + LastApprovedAt : DateTime?
     + IsRemoved : bool
     + ThreatLevel : AiThreatLevel
-    + CourseAiIntegrations : ICollection~CourseAiIntegration~
-    + CartItems : ICollection~CartItem~
-    + Category : Category?
-    + Coupon : Coupon?
-    + Enrollments : ICollection~Enrollment~
-    + Instructor : Instructor?
-    + Lessons : ICollection~Lesson~
-    + OrderItems : ICollection~OrderItem~
-    + WishlistItems : ICollection~WishlistItem~
-    + CourseExt : CourseExt?
-    + CourseQuizzes : ICollection~CourseQuiz~
 }
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
     + OrderItemId : int?
     + AccountFrom : int?
@@ -143,28 +115,66 @@ class Transaction {
     + TransactionsStatus : string?
     + TransactionType : string?
     + TransactionCreatedAt : DateTime?
-    + TransactionExt : TransactionExt?
-    + OrderItem : OrderItem?
-    + AccountFromNavigation : Account?
-    + AccountToNavigation : Account?
-    + InstructorPayouts : ICollection~InstructorPayout~
+}
+
+class OrderItem {
+    <<entity>>
+    + Id : int
+    + OrderId : int?
+    + CourseId : int?
+    + PurchasePrice : decimal
+    + CouponUsed : bool?
+    + OriginalPrice : decimal?
+    + CouponCode : string?
+    + CouponType : string?
+    + DiscountAmount : decimal
+}
+
+class Instructor {
+    <<entity>>
+    + InstructorId : int
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + LinkedinUrl : string?
+    + YoutubeUrl : string?
+    + FacebookUrl : string?
+    + DocumentUrl : string?
+    + ApprovalStatus : string?
+    + RejectionReason : string?
+    + StripeAccountId : string?
+    + StripeOnboardingStatus : string?
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + StripeCountry : string?
+}
+
+class User {
+    <<entity>>
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
 }
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === COMPOSITION (filled diamond) ===
+%% === COMPOSITION ===
 InstructorFinancePageVM *-- InstructorCourseRevenueResponse
 
-%% === ASSOCIATION (solid arrow) ===
+%% === ASSOCIATION ===
 TransactionControllerBE --> IAdminFinanceService
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceRepository --> AppDbContext
+Course -- Instructor
+Instructor -- User
+Transaction -- OrderItem
+OrderItem -- Course
 
-%% === REALIZATION (hollow arrow) ===
+%% === REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
 AdminFinanceRepository ..|> IAdminFinanceRepository
 
-%% === DEPENDENCY (dashed arrow) ===
+%% === DEPENDENCY ===
 TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerFE ..> InstructorFinancePageVM
 TransactionControllerBE ..> InstructorCourseRevenueResponse

@@ -91,6 +91,9 @@ else Valid actor's authentication and authorization
         
         fe_ctrl -->> view --: Return View(vm)
         
+        view -> view ++: Check vm.Transactions.Items.Count
+        view --
+        
         alt vm.Transactions.Items.Count == 0
             view -->> act: Display empty message "No purchases recorded for this period."
         else vm.Transactions.Items.Count > 0

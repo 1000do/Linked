@@ -20,28 +20,29 @@ class AdminFinanceControllerBE["AdminFinanceController"] {
 %% ==================== BACKEND - SERVICE INTERFACES ====================
 
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + SetTransferRateAsync(rate: decimal) Task *
 }
 
 class ISystemConfigRepository {
-    <<interface>>
+    <<repository interface>>
     + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~ *
 }
 
 class IInstructorRepository {
-    <<interface>>
+    <<repository interface>>
     + GetInstructorsWithStripeAsync() Task~List~Instructor~~ *
 }
 
 class INotificationService {
-    <<interface>>
+    <<service interface>>
     + SendNotificationAsync(userId: int, title: string, content: string, link: string) Task *
 }
 
 %% ==================== BACKEND - SERVICE/REPO IMPLEMENTATIONS ====================
 
 class AdminFinanceService {
+    <<service>>
     - _repo : IAdminFinanceRepository
     - _paymentGateway : IPaymentGatewayService
     - _instructorRepo : IInstructorRepository
@@ -56,16 +57,19 @@ class AdminFinanceService {
 }
 
 class SystemConfigRepository {
+    <<repository>>
     - _context : AppDbContext
     + UpsertConfigAsync(configKey: string, configValue: string, description: string?) Task~int~
 }
 
 class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetInstructorsWithStripeAsync() Task~List~Instructor~~
 }
 
 class NotificationService {
+    <<service>>
     - _context : AppDbContext
     + SendNotificationAsync(userId: int, title: string, content: string, link: string) Task
 }
@@ -73,6 +77,7 @@ class NotificationService {
 %% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + SystemConfigs : DbSet~SystemConfig~
     + Instructors : DbSet~Instructor~
 }
@@ -122,6 +127,9 @@ AdminFinanceService --> INotificationService
 SystemConfigRepository --> AppDbContext
 InstructorRepository --> AppDbContext
 NotificationService --> AppDbContext
+
+AppDbContext --> SystemConfig
+AppDbContext --> Instructor
 
 %% === REALIZATION (hollow arrow) ===
 AdminFinanceService ..|> IAdminFinanceService

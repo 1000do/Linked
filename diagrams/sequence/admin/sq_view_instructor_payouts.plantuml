@@ -34,13 +34,14 @@ participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
 participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
 participant ":AdminFinanceUnifiedVM" as vm
+participant ":PayoutDetailVM" as view_model
 participant "AdminFinanceController" as be_ctrl <<backend controller>>
 participant ":IAdminFinanceService" as sv
 participant ":PayoutDetailResponse" as res
 participant ":IAdminFinanceRepository" as repo
+participant ":PayoutDetailProjection" as proj
 participant ":AppDbContext" as ctx
 database Database as db
-participant ":PayoutDetailVM" as view_model
 
 act ++
 act -> view++: Click "Instructor Payouts" tab
@@ -50,7 +51,7 @@ fe_ctrl -> vm++: Call AdminFinanceUnifiedVM()
 vm -->> fe_ctrl--: Return AdminFinanceUnifiedVM object
 
 fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
-fe_ctrl--
+fe_ctrl --
 
 alt Session Invalid
     fe_ctrl -->> login_view: Redirect to LoginPage
@@ -70,6 +71,9 @@ else Valid actor's authentication and authorization
     repo -> ctx++: Execute query
     ctx -> db++: Execute query
 
+    db -> db++: Check query execution
+    db --
+
     alt Database Query Failure
         db -->> ctx: Throw Exception
         ctx -->> repo: Throw Exception
@@ -79,21 +83,28 @@ else Valid actor's authentication and authorization
         fe_ctrl -->> view: Return statusCode 500
         view -->> act: Display error message
     else Database Query Success
-        db -->> ctx--: Return List of PayoutDetailProjection and totalCount
-        ctx -->> repo--: Return List of PayoutDetailProjection and totalCount
-        repo -->> sv--: Return List of PayoutDetailProjection and totalCount
+        db -->> ctx--: Return entities
+        ctx -->> repo--: Return entities
+        
+        repo -> proj++: Map entities to PayoutDetailProjection
+        proj -->> repo--: Return PayoutDetailProjection
+        
+        repo -->> sv--: Return List<PayoutDetailProjection> and totalCount
 
-        sv -> res++: Call PayoutDetailResponse() (via IMapper)
-        res -->> sv--: Return List<PayoutDetailResponse>
+        sv -> res++: Map PayoutDetailProjection to PayoutDetailResponse
+        res -->> sv--: Return PayoutDetailResponse
 
-        sv -->> be_ctrl--: Return List<PayoutDetailResponse>
+        sv -->> be_ctrl--: Return PagedResult<PayoutDetailResponse>
 
         be_ctrl -->> fe_ctrl--: Return statusCode 200
 
-        fe_ctrl -> view_model++: Call PayoutDetailVM() (Deserialize JSON)
+        fe_ctrl -> view_model++: Deserialize JSON to PayoutDetailVM
         view_model -->> fe_ctrl--: Return List<PayoutDetailVM>
+        
+        fe_ctrl -> vm++: Assign Payouts to AdminFinanceUnifiedVM
+        vm -->> fe_ctrl--: Return AdminFinanceUnifiedVM
 
-        fe_ctrl -->> view--: Return statusCode 200
+        fe_ctrl -->> view--: Return View(vm)
         view -->> act--: Display instructor payouts table
     end
 end

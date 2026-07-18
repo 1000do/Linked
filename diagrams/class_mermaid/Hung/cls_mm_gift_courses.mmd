@@ -1,18 +1,17 @@
-classDiagram
+classDiagram-v2
 direction LR
 
 %% ==================== FRONTEND ====================
 
 class GiftControllerFE["GiftController"] {
     <<frontend controller>>
-    - _api : ApiClient
-    - _config : IConfiguration
     + Setup(courseId: int) Task~IActionResult~
     + Setup(model: GiftSetupViewModel) Task~IActionResult~
     + CheckRecipient(email: string, courseId: int) Task~IActionResult~
 }
 
 class GiftSetupViewModel {
+    <<view model>>
     + CourseId : int
     + RecipientEmail : string
     + RecipientName : string?
@@ -21,6 +20,7 @@ class GiftSetupViewModel {
 }
 
 class PublicCourseViewModel {
+    <<view model>>
     + CourseId : int
     + InstructorId : int?
     + Title : string
@@ -54,7 +54,7 @@ class GiftControllerBE["GiftController"] {
     <<backend controller>>
     - _giftService : IGiftService
     - _courseQueryService : ICourseQueryService
-    - GetUserId() int?
+    
     + CheckRecipientEnrollment(email: string, courseId: int) Task~IActionResult~
     + GetCourseDetails(id: int) Task~IActionResult~
 }
@@ -62,6 +62,7 @@ class GiftControllerBE["GiftController"] {
 %% ==================== BACKEND - DTOs ====================
 
 class CourseResponse {
+    <<dto>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -95,17 +96,81 @@ class CourseResponse {
     + IsRemoved : bool
     + IsInAnyCart : bool
     + FlagCount : int
-    + FieldFeedbacks : List~CourseFieldFeedbackDto~?
 }
 
 class CourseDetailResponse {
+    <<dto>>
     + Lessons : List~LessonResponse~
     + CourseQuizzes : List~CourseQuizItemResponse~
+}
+
+%% ==================== BACKEND - SERVICE INTERFACES ====================
+
+class IGiftService {
+    <<interface>>
+    + IsRecipientEnrolledAsync(email: string, courseId: int) Task~bool~ *
+}
+
+class ICourseQueryService {
+    <<interface>>
+    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~ *
+}
+
+%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
+
+class GiftService {
+    <<service>>
+    - _userRepo : IUserRepository
+    - _courseRepo : ICourseRepository
+    
+    + IsRecipientEnrolledAsync(email: string, courseId: int) Task~bool~
+}
+
+class CourseQueryService {
+    <<service>>
+    - _courseRepository : ICourseRepository
+    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~
+}
+
+%% ==================== BACKEND - REPOSITORY INTERFACES ====================
+
+class IUserRepository {
+    <<interface>>
+    + GetAccountByEmailAsync(email: string) Task~Account?~ *
+}
+
+class ICourseRepository {
+    <<interface>>
+    + IsEnrolledAsync(accountId: int, courseId: int) Task~bool~ *
+}
+
+%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
+
+class UserRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + GetAccountByEmailAsync(email: string) Task~Account?~
+}
+
+class CourseRepository {
+    <<repository>>
+    - _context : AppDbContext
+    + IsEnrolledAsync(accountId: int, courseId: int) Task~bool~
+}
+
+%% ==================== BACKEND - DbContext ====================
+
+class AppDbContext {
+    <<dbcontext>>
+    + Accounts : DbSet~Account~
+    + Enrollments : DbSet~Enrollment~
+    + Courses : DbSet~Course~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -121,21 +186,10 @@ class Account {
     + IsVerified : bool
     + AccountCreatedAt : DateTime?
     + AccountUpdatedAt : DateTime?
-    + Lockouts : ICollection~Lockout~
-    + Manager : Manager?
-    + NotificationReceivers : ICollection~Notification~
-    + NotificationSenders : ICollection~Notification~
-    + User : User?
-    + UserReportReporters : ICollection~UserReport~
-    + UserReportResolvers : ICollection~UserReport~
-    + UserReportTargets : ICollection~UserReport~
-    + TransactionFroms : ICollection~Transaction~
-    + TransactionTos : ICollection~Transaction~
-    + ChatParticipants : ICollection~ChatParticipant~
-    + Messages : ICollection~Message~
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -156,113 +210,44 @@ class Course {
     + ThreatLevel : AiThreatLevel
 }
 
-%% ==================== BACKEND - SERVICE INTERFACES ====================
-
-class IGiftService {
-    <<interface>>
-    + IsRecipientEnrolledAsync(email: string, courseId: int) Task~bool~ *
-}
-
-class ICourseQueryService {
-    <<interface>>
-    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~ *
-}
-
-class ICourseRepository {
-    <<interface>>
-    + IsEnrolledAsync(accountId: int, courseId: int) Task~bool~ *
-    + GetCourseWithDetailsAsync(courseId: int) Task~Course?~ *
-}
-
-class IUserRepository {
-    <<interface>>
-    + GetAccountByEmailAsync(email: string) Task~Account?~ *
-}
-
-%% ==================== BACKEND - SERVICE IMPLEMENTATION ====================
-
-class GiftService {
-    - _giftRepo : IGiftRepository
-    - _courseRepo : ICourseRepository
-    - _userRepo : IUserRepository
-    - _enrollmentRepo : IEnrollmentRepository
-    - _transactionRepo : ITransactionRepository
-    - _hubContext : IHubContext~FinanceHub~
-    
-    + IsRecipientEnrolledAsync(email: string, courseId: int) Task~bool~
-    - GetGiftByTokenOrThrowAsync(token: string) Task~Gift~
-    - ValidateGiftForViewing(gift: Gift) void
-    - GetSenderNameAsync(senderId: int?) Task~string~
-    - ValidateGiftForClaiming(gift: Gift) void
-    - GetCourseForGiftOrThrowAsync(courseId: int?) Task~Course~
-    - EnsureRecipientNotAlreadyEnrolledAsync(userId: int, courseId: int) Task
-    - CreateEnrollmentWithinTransactionAsync(userId: int, course: Course) Task
-    - MarkGiftAsClaimedWithinTransactionAsync(gift: Gift, userId: int) Task
-    - NotifyAdminFinanceOfRefundRejectionAsync() Task
-    - ValidateGiftCreationInputs(recipientEmail: string, token: string) void
-    - EnsureNoExistingGiftAsync(orderItemId: int) Task
-    - CreateNewGiftEntity(orderItemId: int, senderId: int, recipientEmail: string, recipientName: string?, message: string?, theme: string, token: string) Gift
-}
-
-class CourseQueryService {
-    - _courseRepository : ICourseRepository
-    - _instructorRepository : IInstructorRepository
-    - _redisService : IRedisService
-    - _cartRepository : ICartRepository
-    
-    + GetCourseWithDetailsAsync(courseId: int, userId: int?, userRole: string?) Task~CourseDetailResponse~
-}
-
-%% ==================== BACKEND - REPOSITORY IMPLEMENTATION ====================
-
-class CourseRepository {
-    - _context : AppDbContext
-    
-    + IsEnrolledAsync(accountId: int, courseId: int) Task~bool~
-    + GetCourseWithDetailsAsync(courseId: int) Task~Course?~
-}
-
-class UserRepository {
-    - _context : AppDbContext
-    
-    + GetAccountByEmailAsync(email: string) Task~Account?~
-}
-
-%% ==================== BACKEND - DbContext ====================
-
-class AppDbContext {
-    + Accounts : DbSet~Account~
-    + Enrollments : DbSet~Enrollment~
-    + Courses : DbSet~Course~
-}
-
 %% ==================== RELATIONSHIPS ====================
 
-%% === INHERITANCE ===
+%% === INHERITANCE (solid line, hollow arrow) ===
 CourseDetailResponse --|> CourseResponse
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+%% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 GiftControllerBE --> IGiftService
 GiftControllerBE --> ICourseQueryService
-GiftService --> ICourseRepository
+
 GiftService --> IUserRepository
+GiftService --> ICourseRepository
+
 CourseQueryService --> ICourseRepository
-CourseRepository --> AppDbContext
+
 UserRepository --> AppDbContext
+CourseRepository --> AppDbContext
 
 %% === INTERFACE REALIZATION ===
 GiftService ..|> IGiftService
 CourseQueryService ..|> ICourseQueryService
-CourseRepository ..|> ICourseRepository
 UserRepository ..|> IUserRepository
+CourseRepository ..|> ICourseRepository
 
-%% === DEPENDENCY ===
+%% === DEPENDENCY (dashed arrows) ===
+GiftControllerFE ..> GiftControllerBE
+
 GiftControllerFE ..> GiftSetupViewModel
 GiftControllerFE ..> PublicCourseViewModel
-GiftControllerFE ..> GiftControllerBE
-IUserRepository ..> Account
+
+GiftControllerBE ..> CourseDetailResponse
 ICourseQueryService ..> CourseDetailResponse
 CourseQueryService ..> CourseDetailResponse
+
+IGiftService ..> Account
+GiftService ..> Account
+IUserRepository ..> Account
+UserRepository ..> Account
+
 ICourseRepository ..> Course
 CourseRepository ..> Course
 

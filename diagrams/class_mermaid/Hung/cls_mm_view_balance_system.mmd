@@ -5,19 +5,26 @@ direction LR
 
 class AdminFinanceControllerFE["AdminFinanceController"] {
     <<frontend controller>>
-    + Index(year: int?, month: int?) Task~IActionResult~
+    + Index(page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, tab: string, year: int?, month: int?, payoutPage: int, withdrawPage: int) Task~IActionResult~
 }
 
 class AdminFinanceUnifiedVM {
     <<view model>>
     + Dashboard : FinanceDashboardVM
     + Withdraw : WithdrawPageVM
+    + Transactions : TransactionPagedVM
+    + Payouts : PagedResult~PayoutDetailVM~
+    + Withdrawals : PagedResult~WithdrawalHistoryVM~
+    + PendingRefunds : PagedResult~RefundRequestVM~
     + PayoutDays : string
+    + CourseRevenues : List~InstructorCourseRevenueResponse~
+    + YearlySummaries : Dictionary~int, FinancialSummaryVM~
 }
 
 class FinanceDashboardVM {
     <<view model>>
     + Summary : FinancialSummaryVM
+    + Payouts : List~PayoutDetailVM~
 }
 
 class FinancialSummaryVM {
@@ -25,14 +32,17 @@ class FinancialSummaryVM {
     + GrossRevenue : decimal
     + TotalPaidOut : decimal
     + PendingEscrow : decimal
+    + MaturedEscrow : decimal
     + PlatformNetProfit : decimal
     + CurrentTransferRate : decimal
+    + TotalTransactions : int
     + TotalRefunded : decimal
 }
 
 class WithdrawPageVM {
     <<view model>>
     + Balance : PlatformBalanceVM
+    + History : List~WithdrawalHistoryVM~
 }
 
 class PlatformBalanceVM {
@@ -41,6 +51,8 @@ class PlatformBalanceVM {
     + Incoming : decimal
     + Total : decimal
     + Currency : string
+    + PayoutScheduleInterval : string
+    + PayoutScheduleAnchor : string?
 }
 
 %% ==================== BACKEND - CONTROLLERS ====================
@@ -48,6 +60,7 @@ class PlatformBalanceVM {
 class AdminFinanceControllerBE["AdminFinanceController"] {
     <<backend controller>>
     - _financeService : IAdminFinanceService
+    - _instructorService : IInstructorService
     + GetFinancialSummary(year: int?, month: int?) Task~IActionResult~
     + GetPlatformBalance() Task~IActionResult~
 }
@@ -59,8 +72,10 @@ class FinancialSummaryResponse {
     + GrossRevenue : decimal
     + TotalPaidOut : decimal
     + PendingEscrow : decimal
+    + MaturedEscrow : decimal
     + PlatformNetProfit : decimal
     + CurrentTransferRate : decimal
+    + TotalTransactions : int
     + TotalRefunded : decimal
 }
 
@@ -70,68 +85,83 @@ class PlatformBalanceResponse {
     + Incoming : decimal
     + Total : decimal
     + Currency : string
+    + PayoutScheduleInterval : string
+    + PayoutScheduleAnchor : string?
 }
 
 %% ==================== BACKEND - SERVICES ====================
 
 class IAdminFinanceService {
-    <<interface>>
+    <<service interface>>
     + GetFinancialSummaryAsync(year: int?, month: int?) Task~FinancialSummaryResponse~ *
     + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~ *
 }
 
 class AdminFinanceService {
-    - _financeRepo : IAdminFinanceRepository
+    <<service>>
+    - _repo : IAdminFinanceRepository
+    - _configRepo : ISystemConfigRepository
     - _stripeConnect : IStripeConnectService
     + GetFinancialSummaryAsync(year: int?, month: int?) Task~FinancialSummaryResponse~
     + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
 }
 
 class IStripeConnectService {
-    <<interface>>
+    <<service interface>>
     + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~ *
 }
 
 class StripeConnectService {
+    <<service>>
     + GetPlatformBalanceAsync() Task~PlatformBalanceResponse~
 }
 
 %% ==================== BACKEND - REPOSITORIES ====================
 
 class IAdminFinanceRepository {
-    <<interface>>
-    + GetTransactionsAsync() Task~List~Transaction~~ *
-    + GetPayoutsAsync() Task~List~Payout~~ *
+    <<repository interface>>
+    + GetGrossRevenueAsync(year: int?, month: int?) Task~decimal~ *
+    + GetTotalPaidOutAsync(year: int?, month: int?) Task~decimal~ *
+    + GetPendingEscrowAsync(year: int?, month: int?) Task~decimal~ *
+    + GetMaturedEscrowAsync(year: int?, month: int?) Task~decimal~ *
+    + GetSucceededTransactionCountAsync(year: int?, month: int?) Task~int~ *
+    + GetTotalRefundedAsync(year: int?, month: int?) Task~decimal~ *
+    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~(List~PayoutDetailProjection~, int)~ *
 }
 
 class AdminFinanceRepository {
+    <<repository>>
     - _context : AppDbContext
-    + GetTransactionsAsync() Task~List~Transaction~~
-    + GetPayoutsAsync() Task~List~Payout~~
+    + GetGrossRevenueAsync(year: int?, month: int?) Task~decimal~
+    + GetTotalPaidOutAsync(year: int?, month: int?) Task~decimal~
+    + GetPendingEscrowAsync(year: int?, month: int?) Task~decimal~
+    + GetMaturedEscrowAsync(year: int?, month: int?) Task~decimal~
+    + GetSucceededTransactionCountAsync(year: int?, month: int?) Task~int~
+    + GetTotalRefundedAsync(year: int?, month: int?) Task~decimal~
+    + GetPayoutDetailsAsync(year: int?, month: int?, page: int, pageSize: int) Task~(List~PayoutDetailProjection~, int)~
 }
 
-%% ==================== BACKEND - DB CONTEXT ====================
+%% ==================== BACKEND - DB CONTEXT & ENTITIES ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Transactions : DbSet~Transaction~
-    + Payouts : DbSet~Payout~
+    + InstructorPayouts : DbSet~InstructorPayout~
 }
-
-%% ==================== BACKEND - ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
     + Amount : decimal
-    + Status : string
-    + CreatedAt : DateTime
+    + TransactionsStatus : string?
 }
 
-class Payout {
+class InstructorPayout {
+    <<entity>>
     + PayoutId : int
-    + TotalAmount : decimal
-    + InstructorReceived : decimal
-    + PlatformReceived : decimal
-    + PayoutStatus : string
+    + PayoutAmount : decimal
+    + IsPaid : bool
+    + PayoutStatus : string?
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -143,11 +173,13 @@ FinanceDashboardVM --> FinancialSummaryVM
 WithdrawPageVM --> PlatformBalanceVM
 
 AdminFinanceControllerBE --> IAdminFinanceService
+
 AdminFinanceService --> IAdminFinanceRepository
 AdminFinanceService --> IStripeConnectService
+
 AdminFinanceRepository --> AppDbContext
 AppDbContext --> Transaction
-AppDbContext --> Payout
+AppDbContext --> InstructorPayout
 
 %% === REALIZATION ===
 AdminFinanceService ..|> IAdminFinanceService
@@ -155,16 +187,17 @@ AdminFinanceRepository ..|> IAdminFinanceRepository
 StripeConnectService ..|> IStripeConnectService
 
 %% === DEPENDENCY ===
+AdminFinanceControllerFE ..> AdminFinanceControllerBE
 AdminFinanceControllerFE ..> AdminFinanceUnifiedVM
-AdminFinanceControllerFE ..> AdminFinanceControllerBE : API calls
+
 AdminFinanceControllerBE ..> FinancialSummaryResponse
 AdminFinanceControllerBE ..> PlatformBalanceResponse
+
 IAdminFinanceService ..> FinancialSummaryResponse
 IAdminFinanceService ..> PlatformBalanceResponse
-IAdminFinanceRepository ..> Transaction
-IAdminFinanceRepository ..> Payout
+
 AdminFinanceRepository ..> Transaction
-AdminFinanceRepository ..> Payout
+AdminFinanceRepository ..> InstructorPayout
 
 %% ==================== STYLES ====================
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

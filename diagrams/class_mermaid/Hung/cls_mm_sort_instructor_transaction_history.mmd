@@ -53,36 +53,60 @@ class TransactionControllerBE["TransactionController"] {
 %% ==================== BACKEND - SERVICES ====================
 
 class ITransactionService {
-    <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~ *
+    <<service interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~*
 }
 
 class TransactionService {
+    <<service>>
     - _repo : ITransactionRepository
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~TransactionListDto~~
 }
 
 %% ==================== BACKEND - REPOSITORIES ====================
 
 class ITransactionRepository {
-    <<interface>>
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~ *
+    <<repository interface>>
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~*
 }
 
 class TransactionRepository {
+    <<repository>>
     - _context : AppDbContext
-    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~PagedResult~
+    + GetInstructorTransactionsAsync(instructorId: int, page: int, pageSize: int, keyword: string?, sortBy: string?, status: string?, year: int?, month: int?) Task~ValueTuple~List~TransactionListDto~,int~~
+}
+
+class TransactionListDto {
+    <<dto>>
+    + TransactionId : int
+    + StripeSessionId : string?
+    + Date : DateTime?
+    + Amount : decimal
+    + Status : string?
+    + BuyerName : string
+    + CourseTitle : string
+    + InstructorName : string
+    + Currency : string?
+    + PayoutCurrency : string?
+    + RefundReason : string?
+    + RefundAdminNote : string?
+    + RefundRequestedAt : DateTime?
+    + IsGift : bool
+    + RecipientEmail : string?
+    + IsGiftClaimed : bool
 }
 
 %% ==================== BACKEND - DB CONTEXT ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Transactions : DbSet~Transaction~
 }
 
 %% ==================== BACKEND - ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
     + OrderItemId : int?
     + AccountFrom : int?
@@ -99,23 +123,21 @@ class Transaction {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION & COMPOSITION ===
-InstructorFinancePageVM o-- TransactionPagedVM
+TransactionControllerFE ..> InstructorFinancePageVM
+InstructorFinancePageVM *-- TransactionPagedVM
 TransactionPagedVM *-- TransactionListItemVM
 
-%% === UNIDIRECTIONAL ASSOCIATION ===
+TransactionControllerFE ..> TransactionControllerBE
 TransactionControllerBE --> ITransactionService
-TransactionService --> ITransactionRepository
-TransactionRepository --> AppDbContext
-AppDbContext --> Transaction
 
-%% === REALIZATION ===
 TransactionService ..|> ITransactionService
-TransactionRepository ..|> ITransactionRepository
+TransactionService --> ITransactionRepository
 
-%% === DEPENDENCY ===
-TransactionControllerFE ..> InstructorFinancePageVM
-TransactionControllerFE ..> TransactionControllerBE : API
+TransactionRepository ..|> ITransactionRepository
+TransactionRepository --> AppDbContext
+TransactionRepository ..> TransactionListDto
+
+AppDbContext --> Transaction
 
 %% ==================== STYLES ====================
 classDef default fill:#FFFFFF,stroke:#000000,stroke-width:1px,color:#000000

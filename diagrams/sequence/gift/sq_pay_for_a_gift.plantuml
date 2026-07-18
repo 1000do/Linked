@@ -100,12 +100,9 @@ else Valid Gift Details
     sv -> res_dto++: Call CheckoutResponse(ClientSecret, PaymentIntentId)
     res_dto -->> sv--: Return CheckoutResponse object
     
-        sv -->> be_ctrl: Return CheckoutResponse object
-        deactivate sv
-        be_ctrl -->> fe_gift_ctrl: Return statusCode 200
-        deactivate be_ctrl
-        fe_gift_ctrl -->> view: Return JSON (ClientSecret)
-        deactivate fe_gift_ctrl
+        sv -->> be_ctrl--: Return CheckoutResponse object
+        be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
+        fe_gift_ctrl -->> view--: Return JSON (ClientSecret)
     end
 end
 
@@ -113,10 +110,14 @@ end
 view -> stripe++: stripe.confirmCardPayment(clientSecret, cardDetails)
 stripe -->> view--: Return payment result
 
+view -> view++: Validate payment result
+view--
+
 alt Payment declined
     view -->> act: Display payment error message
 else Payment Successful
     view -> fe_gift_ctrl++: GET /Gift/CheckoutSuccess?payment_intent_id=...
+    deactivate view
     
     fe_gift_ctrl -> be_ctrl++: GET /api/checkout/gift-success-intent
     
@@ -129,20 +130,23 @@ else Payment Successful
         sv -> sv++: Call ProcessSuccessfulGiftPaymentCoreAsync
         
 
-        sv -> sv++: Call CreateGiftEntitiesAsync
-        
         sv -> order_ett++: Call OrderInfo(...)
         order_ett -->> sv--: Return OrderInfo object
         
-
+        sv -> repo++: AddOrderAsync(order)
+        repo -->> sv--: Return Task
+        
         sv -> item_ett++: Call OrderItem(...)
         item_ett -->> sv--: Return OrderItem object
+        
+        sv -> repo++: AddOrderItemAsync(orderItem)
+        repo -->> sv--: Return Task
         
         sv -> tx_ett++: Call Transaction(...)
         tx_ett -->> sv--: Return Transaction object
         
-        sv -> sv++: Call AddEntitiesToContext(order, orderItem, transaction)
-        sv--
+        sv -> repo++: AddTransactionAsync(transaction)
+        repo -->> sv--: Return Task
         
         sv -> repo++: SaveChangesAsync()
         repo -> ctx++: SaveChangesAsync()
@@ -150,8 +154,6 @@ else Payment Successful
         db -->> ctx--: Return numberOfRowsAffected
         ctx -->> repo--: Return numberOfRowsAffected
         repo -->> sv--: Return numberOfRowsAffected
-        
-        sv--
         
         sv -> sv++: Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
         sv--
@@ -165,9 +167,7 @@ else Payment Successful
         
         be_ctrl -->> fe_gift_ctrl--: Return statusCode 200
         
-        fe_gift_ctrl -->> view--: Return Redirect to /Course/MyCourses
-        view -->> my_courses_view: Redirect to My Courses page
-        deactivate view
+        fe_gift_ctrl -->> my_courses_view--: Redirect to /Course/MyCourses
         activate my_courses_view
         my_courses_view -->> act--: Display checkout success message
     end

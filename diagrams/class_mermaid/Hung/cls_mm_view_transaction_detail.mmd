@@ -9,6 +9,7 @@ class TransactionControllerFE["TransactionController"] {
 }
 
 class TransactionDetailVM {
+    <<viewmodel>>
     + TransactionId : int
     + StripeSessionId : string?
     + StripePaymentIntentId : string?
@@ -48,6 +49,7 @@ class TransactionControllerBE["TransactionController"] {
 %% ==================== BACKEND - DTO ====================
 
 class TransactionDetailDto {
+    <<dto>>
     + TransactionId : int
     + StripeSessionId : string?
     + StripePaymentIntentId : string?
@@ -79,6 +81,7 @@ class TransactionDetailDto {
 %% ==================== BACKEND - ENTITIES ====================
 
 class Transaction {
+    <<entity>>
     + TransactionId : int
     + OrderItemId : int?
     + AccountFrom : int?
@@ -99,6 +102,7 @@ class Transaction {
 }
 
 class TransactionExt {
+    <<entity>>
     + TransactionId : int
     + RefundReason : string?
     + RefundAdminNote : string?
@@ -107,6 +111,7 @@ class TransactionExt {
 }
 
 class OrderItem {
+    <<entity>>
     + Id : int
     + OrderId : int?
     + CourseId : int?
@@ -122,6 +127,7 @@ class OrderItem {
 }
 
 class Account {
+    <<entity>>
     + AccountId : int
     + Email : string
     + Username : string?
@@ -152,6 +158,7 @@ class Account {
 }
 
 class User {
+    <<entity>>
     + UserId : int
     + FullName : string
     + Bio : string?
@@ -166,6 +173,7 @@ class User {
 }
 
 class Course {
+    <<entity>>
     + CourseId : int
     + InstructorId : int?
     + CategoryId : int?
@@ -198,6 +206,7 @@ class Course {
 }
 
 class Instructor {
+    <<entity>>
     + InstructorId : int
     + ProfessionalTitle : string?
     + ExpertiseCategories : string?
@@ -219,6 +228,7 @@ class Instructor {
 }
 
 class Coupon {
+    <<entity>>
     + CouponId : int
     + ManagerId : int?
     + CouponCode : string
@@ -235,6 +245,7 @@ class Coupon {
 }
 
 class InstructorPayout {
+    <<entity>>
     + PayoutId : int
     + TransactionId : int?
     + InstructorId : int?
@@ -252,11 +263,12 @@ class InstructorPayout {
 %% ==================== BACKEND - SERVICE ====================
 
 class ITransactionService {
-    <<interface>>
+    <<service interface>>
     + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
 }
 
 class TransactionService {
+    <<service>>
     - _repo : ITransactionRepository
     + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
 }
@@ -264,11 +276,12 @@ class TransactionService {
 %% ==================== BACKEND - REPOSITORY ====================
 
 class ITransactionRepository {
-    <<interface>>
+    <<repository interface>>
     + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~ *
 }
 
 class TransactionRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetTransactionDetailAsync(transactionId: int) Task~TransactionDetailDto?~
 }
@@ -276,6 +289,7 @@ class TransactionRepository {
 %% ==================== BACKEND - DbContext ====================
 
 class AppDbContext {
+    <<dbcontext>>
     + Transactions : DbSet~Transaction~
 }
 

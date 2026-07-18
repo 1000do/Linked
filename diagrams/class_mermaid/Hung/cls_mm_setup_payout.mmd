@@ -43,27 +43,28 @@ class StripeAccountStatusDto {
 %% ==================== BACKEND - SERVICE & REPOSITORY INTERFACES ====================
 
 class IInstructorService {
-    <<interface>>
-    + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~
-    + VerifyStripeOnboardingAsync(instructorId: int) Task~string~
+    <<service interface>>
+    + SetupStripePayoutAsync(userId: int) Task~StripeSetupResponse~ *
+    + VerifyStripeOnboardingAsync(instructorId: int) Task~string~ *
 }
 
 class IStripeConnectService {
-    <<interface>>
-    + SetupExpressAccountAsync(userId: int, email: string, country: string, title: string, categories: string, existingStripeAccountId: string?) Task~StripeConnectSetupResponse~
-    + GetAccountStatusAsync(stripeAccountId: string) Task~StripeAccountStatusDto~
+    <<service interface>>
+    + SetupExpressAccountAsync(userId: int, email: string, country: string, title: string, categories: string, existingStripeAccountId: string?) Task~StripeConnectSetupResponse~ *
+    + GetAccountStatusAsync(stripeAccountId: string) Task~StripeAccountStatusDto~ *
 }
 
 class IInstructorRepository {
-    <<interface>>
-    + GetByIdWithNavigationAsync(userId: int) Task~Instructor~
-    + GetByIdAsync(userId: int) Task~Instructor~
-    + SaveChangesAsync() Task~int~
+    <<repository interface>>
+    + GetByIdWithNavigationAsync(userId: int) Task~Instructor~ *
+    + GetByIdAsync(userId: int) Task~Instructor~ *
+    + SaveChangesAsync() Task~int~ *
 }
 
 %% ==================== BACKEND - IMPLEMENTATIONS ====================
 
 class InstructorService {
+    <<service>>
     - _repo : IInstructorRepository
     - _stripeConnect : IStripeConnectService
     
@@ -72,6 +73,7 @@ class InstructorService {
 }
 
 class InstructorRepository {
+    <<repository>>
     - _context : AppDbContext
     + GetByIdWithNavigationAsync(userId: int) Task~Instructor~
     + GetByIdAsync(userId: int) Task~Instructor~
@@ -79,18 +81,40 @@ class InstructorRepository {
 }
 
 class AppDbContext {
+    <<dbcontext>>
     + Instructors : DbSet~Instructor~
+    + Users : DbSet~User~
+    + Accounts : DbSet~Account~
 }
 
 %% ==================== BACKEND - DOMAIN ENTITIES ====================
 
 class Instructor {
+    <<entity>>
     + InstructorId : int
     + StripeAccountId : string?
     + StripeOnboardingStatus : string?
-    + PayoutsEnabled : bool
-    + ChargesEnabled : bool
-    + ApprovalStatus : string
+    + PayoutsEnabled : bool?
+    + ChargesEnabled : bool?
+    + ApprovalStatus : string?
+    + ProfessionalTitle : string?
+    + ExpertiseCategories : string?
+    + StripeCountry : string?
+}
+
+class User {
+    <<entity>>
+    + UserId : int
+    + FullName : string
+    + Bio : string?
+    + DateOfBirth : DateOnly?
+}
+
+class Account {
+    <<entity>>
+    + AccountId : int
+    + Email : string
+    + IsVerified : bool
 }
 
 %% ==================== RELATIONSHIPS ====================
@@ -103,15 +127,21 @@ InstructorControllerBE ..> StripeSetupResponse
 InstructorService ..|> IInstructorService
 InstructorService --> IInstructorRepository
 InstructorService --> IStripeConnectService
-InstructorService ..> StripeConnectSetupResponse
-InstructorService ..> StripeAccountStatusDto
-InstructorService ..> Instructor
+InstructorService ..> StripeSetupResponse
+
+IStripeConnectService ..> StripeConnectSetupResponse
+IStripeConnectService ..> StripeAccountStatusDto
 
 InstructorRepository ..|> IInstructorRepository
 InstructorRepository --> AppDbContext
 InstructorRepository ..> Instructor
 
 AppDbContext --> Instructor
+AppDbContext --> User
+AppDbContext --> Account
+
+Instructor -- User
+User -- Account
 
 %% ==================== STYLES ====================
 
