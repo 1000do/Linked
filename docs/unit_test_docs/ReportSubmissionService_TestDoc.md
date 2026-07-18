@@ -6,41 +6,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">CreateCourseReportAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">CreateCourseReportAsync</td>
+    <td colspan="3">CreateCourseReportAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">CreateCourseReportAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">19</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">19</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Validate constraints and create a report for a course.</td>
+    <td colspan="18">Validate constraints and create a report for a course.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">13</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">9</td>
     <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">13</td>
+    <td colspan="6" style="text-align: center;">13</td>
   </tr>
 </table>
 
@@ -80,41 +80,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">CreateCourseReviewReportAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">CreateCourseReviewReportAsync</td>
+    <td colspan="3">CreateCourseReviewReportAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">CreateCourseReviewReportAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">19</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">19</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Validate constraints and create a report for a course review.</td>
+    <td colspan="18">Validate constraints and create a report for a course review.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">8</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">5</td>
     <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">8</td>
+    <td colspan="6" style="text-align: center;">8</td>
   </tr>
 </table>
 
@@ -148,41 +148,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">CreateLessonReviewReportAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">CreateLessonReviewReportAsync</td>
+    <td colspan="3">CreateLessonReviewReportAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">CreateLessonReviewReportAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">19</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">19</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Validate constraints and create a report for a lesson review.</td>
+    <td colspan="18">Validate constraints and create a report for a lesson review.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">8</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">5</td>
     <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">8</td>
+    <td colspan="6" style="text-align: center;">8</td>
   </tr>
 </table>
 
@@ -216,41 +216,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetMyCourseReportsAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetMyCourseReportsAsync</td>
+    <td colspan="3">GetMyCourseReportsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetMyCourseReportsAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">4</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Retrieve course reports submitted by a specific user.</td>
+    <td colspan="18">Retrieve course reports submitted by a specific user.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">1</td>
   </tr>
 </table>
 
@@ -272,41 +272,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetMyReviewReportsAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetMyReviewReportsAsync</td>
+    <td colspan="3">GetMyReviewReportsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetMyReviewReportsAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">7</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Retrieve and combine course and lesson review reports submitted by a user, ordered descending by creation date.</td>
+    <td colspan="18">Retrieve and combine course and lesson review reports submitted by a user, ordered descending by creation date.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">1</td>
   </tr>
 </table>
 
@@ -328,41 +328,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetReportsOnMyCourseAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetReportsOnMyCourseAsync</td>
+    <td colspan="3">GetReportsOnMyCourseAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetReportsOnMyCourseAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">7</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Allow an instructor to retrieve reports filed against their own course.</td>
+    <td colspan="18">Allow an instructor to retrieve reports filed against their own course.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 

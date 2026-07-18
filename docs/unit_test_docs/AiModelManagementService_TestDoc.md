@@ -6,41 +6,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetAllModelsAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetAllModelsAsync</td>
+    <td colspan="3">GetAllModelsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetAllModelsAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">5</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">5</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Retrieve all AI models for admin view, handling empty or null result sets by throwing KeyNotFoundException.</td>
+    <td colspan="18">Retrieve all AI models for admin view, handling empty or null result sets by throwing KeyNotFoundException.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="6" style="text-align: center;">3</td>
   </tr>
 </table>
 
@@ -66,41 +66,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetPagedModelsAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetPagedModelsAsync</td>
+    <td colspan="3">GetPagedModelsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetPagedModelsAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">8</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">8</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Retrieve paged AI models, handling pagination defaults and empty/null result sets.</td>
+    <td colspan="18">Retrieve paged AI models, handling pagination defaults and empty/null result sets.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">5</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">5</td>
+    <td colspan="6" style="text-align: center;">5</td>
   </tr>
 </table>
 
@@ -132,41 +132,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetModelByIdAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetModelByIdAsync</td>
+    <td colspan="3">GetModelByIdAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetModelByIdAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">5</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">5</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Retrieve a specific AI model by ID.</td>
+    <td colspan="18">Retrieve a specific AI model by ID.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 
@@ -191,41 +191,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">AddModelAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">AddModelAsync</td>
+    <td colspan="3">AddModelAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">AddModelAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">24</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">24</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Add a new AI model to the database.</td>
+    <td colspan="18">Add a new AI model to the database.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 
@@ -252,41 +252,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">UpdateModelAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">UpdateModelAsync</td>
+    <td colspan="3">UpdateModelAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">UpdateModelAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">17</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">17</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Update an existing AI model's properties.</td>
+    <td colspan="18">Update an existing AI model's properties.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="6" style="text-align: center;">3</td>
   </tr>
 </table>
 
@@ -315,41 +315,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">ToggleModelStatusAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">ToggleModelStatusAsync</td>
+    <td colspan="3">ToggleModelStatusAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ToggleModelStatusAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">14</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">14</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Toggle the active/inactive status of a model.</td>
+    <td colspan="18">Toggle the active/inactive status of a model.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">4</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">4</td>
+    <td colspan="6" style="text-align: center;">4</td>
   </tr>
 </table>
 
@@ -378,41 +378,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetModelIdsByType</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetModelIdsByType</td>
+    <td colspan="3">GetModelIdsByType</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetModelIdsByType</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">4</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Fetch a list of IDs for a specific AI model type.</td>
+    <td colspan="18">Fetch a list of IDs for a specific AI model type.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">1</td>
   </tr>
 </table>
 
@@ -436,41 +436,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetModelsByTypeAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetModelsByTypeAsync</td>
+    <td colspan="3">GetModelsByTypeAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetModelsByTypeAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">22</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">22</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Fetch models by type utilizing Redis caching.</td>
+    <td colspan="18">Fetch models by type utilizing Redis caching.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 

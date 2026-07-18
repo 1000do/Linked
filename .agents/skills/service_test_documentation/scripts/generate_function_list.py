@@ -90,16 +90,27 @@ for filepath in md_files:
             'pre_cond': summarized_precond
         })
 
-md_table = []
-md_table.append("| No | Requirement Name | Class Name | Function Name | Function Code | Sheet Name | Description | Pre-Condition |")
-md_table.append("|:---|:---|:---|:---|:---|:---|:---|:---|")
+html_output = []
+html_output.append("<html><head><meta charset='utf-8'><style>")
+html_output.append("body { font-family: Tahoma, sans-serif; font-size: 10pt; }")
+html_output.append("table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 10pt; }")
+html_output.append("th, td { border: 1px solid #ccc; padding: 4px; }")
+html_output.append("th { background-color: #000080; color: white; font-weight: bold; text-align: center; }")
+html_output.append("a { color: blue; text-decoration: underline; }")
+html_output.append("</style></head><body>")
+html_output.append("<table>")
+html_output.append("<tr><th>No</th><th>Requirement Name</th><th>Class Name</th><th>Function Name</th><th>Function Code(Optional)</th><th>Sheet Name</th><th>Description</th><th>Pre-Condition</th></tr>")
 
 for idx, d in enumerate(functions_data):
-    row = f"| {idx+1} | | {d['class']} | {d['func_name']} | {d['func_name']} | {d['func_name']} | {d['desc']} | {d['pre_cond']} |"
-    md_table.append(row)
+    # Just creating a dummy link for Sheet Name as seen in the picture
+    sheet_link = f"<a href='#'>{d['func_name']}</a>"
+    row = f"<tr><td style='text-align:center;'>{idx+1}</td><td></td><td>{d['class']}</td><td>{d['func_name']}</td><td>{d['func_name']}</td><td>{sheet_link}</td><td>{d['desc']}</td><td>{d['pre_cond']}</td></tr>"
+    html_output.append(row)
 
-output_file = os.path.join(doc_dir, 'FunctionList.md')
+html_output.append("</table></body></html>")
+
+output_file = os.path.join(doc_dir, 'FunctionList.html')
 with open(output_file, 'w', encoding='utf-8') as f:
-    f.write('\n'.join(md_table))
+    f.write('\n'.join(html_output))
 
 print(f"Table successfully generated with {len(functions_data)} functions and saved to {output_file}")
