@@ -215,9 +215,9 @@ public class TransactionController : Controller
     // GET /Transaction/Detail/{id}
     // UC-114: Chi tiết giao dịch
     // ═══════════════════════════════════════════════════════════════════════
-    // UC-42: View Transaction Detail — User và Instructor
+    // UC-114: View Transaction Detail — Admin
     [HttpGet]
-    [Authorize(Roles = "user,instructor")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Detail(int id)
     {
         var resp = await _api.GetAsync($"transactions/{id}");
