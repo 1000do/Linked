@@ -675,6 +675,514 @@
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-154</td>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Data Isolation:</strong> Instructors can only view statistics, revenue, and courses associated with their own account.</td>
             </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-155</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Enrollment Pre-check:</strong> The system checks recipient enrollment as the user types in the email field (debounced). The "Proceed to Payment" button is disabled until the check confirms the recipient is not enrolled.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-156</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Gift Price Restrictions:</strong> Gift purchases are always made at the course's original price. Promotional coupons and discount codes are not applicable to gift purchases.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-157</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Claim and Refund Mutual Exclusion:</strong> Once a gift is successfully claimed by the recipient, any pending refund request for that gift transaction is automatically rejected.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-158</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Cart Modification:</strong> Gifting is treated as a direct purchase and does not clear or modify the items in the user's active shopping cart.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-159</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Double Enrollment:</strong> A user cannot claim a gift course if they already possess an active enrollment in that course</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-160</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unclaimed Refund Restriction:</strong> Gifts can only be claimed if they have not been refunded. A refund reverses the redemption token validity.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-161</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>14-Day Escrow Policy:</strong> Refund requests are only permitted for successful transactions (Success status) within a 14-day escrow window from the purchase date. Once this window expires, the refund request button is disabled/hidden.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-162</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Escrow Hold:</strong> Instructor accounts are not credited with the course revenue until the 14-day refund window expires, ensuring funds are available for refund payouts.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-163</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pagination Limit:</strong> Transaction history results are paginated with a default of 10 items per page</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-164</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Enhanced Search Component:</strong> The search input field must retain the entered keyword after the page reloads so the user knows which filter is currently active</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-165</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Title Matching:</strong> The search is performed as a case-insensitive substring match on the Course Title</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-166</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Account Flag:</strong> A refund request is automatically rejected if the user account currently has 3 or more warning flags (warning count \>= 3).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-167</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Refund Frequency:</strong> A refund request is automatically rejected if the user has requested 3 or more refunds within the last 14 days.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-168</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Repeated Course Refund:</strong> A refund request is automatically rejected if the user has previously requested and received a successful refund for the exact same course.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-169</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Progress for Short Courses (\< 4h):</strong> For courses with a total duration of less than 4 hours, a refund request is automatically rejected if the student's learning progress exceeds 15%.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-170</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Progress for Long Courses (\>= 4h):</strong> For courses with a total duration of 4 hours or more, a refund request is automatically rejected if the student's completed video watch time exceeds 1 hour.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-171</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Abstract Reason Confidentiality:</strong> All auto-rejection notifications must strictly display abstract descriptions for the reject reason. It is forbidden to expose specific numeric criteria (such as exact percentage values, exact watch hours, number of flags, or refund counts) to the user. The abstract descriptions displayed are: \- Account flags limit: "your account having multiple flags" \- Refund frequency limit: "having requested too many refunds within the refund period" \- Repeated refund: "previous refund history for this course" \- Progress limit for short course: "learning progress exceeding the limit for short courses" \- Watch time limit for long course: "video watch time exceeding the limit allowed for long courses"</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-172</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Refund Eligibility Window:</strong> A refund request must be submitted within 14 days (336 hours) from the original transaction timestamp.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-173</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Negative Refund Balance:</strong> Display If the transaction status is marked as refunded, must display the Gross Amount and Total as negative values to represent the credited refund.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-174</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Strict Application Idempotency:</strong> A learner account can only have one active application record. If a previous request was rejected, any subsequent submission will overwrite the old record inline to keep the database clean and prevent duplicates.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-175</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>File Attachment Restrictions:</strong> \- The user can upload a maximum of 3 document/certificate files. \- Uploaded credential documents are strictly restricted to \`.pdf\`, \`.jpg\`, \`.jpeg\`, and \`.png\` extensions. \- The maximum file upload size is 5MB per file to protect server resources.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-176</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Email Verification Requirement:</strong> Learners must have their email verified before they are permitted to submit or access the instructor application form.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-177</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Role Activation:</strong> The user's role is upgraded to "instructor" in cookies and database sessions only after Stripe Connect onboarding is verified as "Active"</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-178</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Direct Edit Lockout:</strong> Once the bank account is successfully linked and status is "Active", the system hides the "Setup Payout" button. Instructors are locked out from editing bank details directly on the platform and must click the "Access Stripe Dashboard" button to edit directly on Stripe's secure portal.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-179</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Dynamic Balances Calculation:</strong> All balance cards must dynamically recalculate based on the selected month and year filter.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-180</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Currency Display:</strong> All balances, amounts, and chart labels default to USD (prefixed with the $ symbol).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-181</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Financial Card Definitions & Formulas:</strong> The financial metrics are defined and calculated as follows: \- Gross Revenue: Total sales revenue generated from course purchases. \- Total Refunded: Total deductions from learner refund requests (prefixed with a red minus \- symbol). \- Net Earnings: Actual revenue remaining after subtracting refunded amounts (Net Earnings \= Gross Revenue \- Total Refunded). \- Pending Transfer: Funds currently locked in the 14-day escrow protection window or in transit. \- Stripe Wallet: Funds successfully moved to the instructor's Connected Stripe Wallet (Ready for Bank Transfer). \- Withdrawn: Total funds successfully transferred to the instructor's bank account.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-182</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Negative Payout Display for Refunded Status:</strong> If a transaction status is "refunded", the system must display as a negative value prefixed with a minus \`-\` sign in red (e.g., \`- $15.29\`).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-183</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Transaction Access Control:</strong> Instructors can only view details of transactions related to courses they own. Attempts to access other instructors' transaction details will be blocked and redirected.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-184</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Expected Payout Date Calculation:</strong> The expected payout date (\`PayoutDate\` field in the database) is automatically calculated at the time of purchase as the configured payout day of the next month (e.g., the 15th of the next month) relative to the transaction date. This reflects the platform's monthly billing cycle and the 14-day escrow window.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-185</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sequential Numbering (No.):</strong> The first column in the payout history table must display sequential numbers (No., e.g., \`#1\`, \`#2\`, \`#3\`) instead of the escrow clearance date, avoiding confusion for the use</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-186</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Preservation of Filters:</strong> Selecting a sorting option and submitting the query must preserve all other active search keywords, status filters, and calendar month/year period selections.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-187</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Sort Order:</strong> If no sorting option is explicitly selected, the list defaults to "Date: Newest" order.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-188</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Period:</strong> If no month and year are specified, the system defaults to the current UTC calendar month and year.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-189</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pagination Reset:</strong> Modifying any filter criteria and applying it resets the transaction pagination back to page 1\.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-190</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Sorting:</strong> The payout list is sorted by date newest to oldest by default if no sorting option is explicitly selected.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-191</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Locked Currency and Split Rates:</strong> All split rates (Transfer Rate) and conversion rates are locked at the time of purchase to guarantee stable revenues and prevent exchange rate fluctuations</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-192</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Fee Calculation:</strong> Stripe processing fee is calculated exactly as GrossAmount \* 0.029 \+ 0.30 (capped at the gross amount to avoid negative ledger balances).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-193</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Split Summary Ledger Formulas:</strong> The Split Summary Card calculates and displays values according to the following formulas: \- Gross Amount \= Original Course Price \- Coupon Discount (if coupon is applied). \- Net Course Revenue to Split \= Gross Amount \- Stripe Processing Fee. \- Platform Net Profit \= Net Course Revenue to Split \* (100% \- Transfer Rate %). \- Instructor Net Income \= Net Course Revenue to Split \* Transfer Rate %.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-194</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Status Constraint:</strong> Only active instructors whose registration application has been reviewed and approved by the platform administrator can access the course revenue dashboard.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-195</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Period-Based Revenue Calculations:</strong> Monthly, yearly, and lifetime revenues are dynamically calculated and loaded based on the active month and year filter selected.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-196</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Month-over-Month Growth Calculation:</strong> Growth percentage is calculated using the formula: Growth % \= ((Current Month Revenue \- Previous Month Revenue) / Previous Month Revenue) \* 100\. \- If the previous month's revenue is zero and the current month's revenue is greater than zero, it is labeled and displayed as "New Sales".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-197</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Revenue Calculations:</strong> \- Gross Revenue \= Total sales revenue generated from all course purchases on the platform. \- Total Refunded \= Total deductions from refund requests. \- Net Earnings \= Gross Revenue \- Total Refunded.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-198</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Splits and Distributions Calculations:</strong> \- Paid to Instructors \= Total funds paid out/transferred to instructors' Stripe accounts or banks. \- Escrow Funds \= Funds currently locked in the 14-day escrow protection window. \- Platform Net Profit \= Net platform share cut after splits (Net Course Revenue to Split \* (100% \- Instructor Share %)).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-199</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Balances Calculations:</strong> \- Stripe Balance Available Now \= Available balance in the platform's Stripe Connect balance. \- Stripe Balance In Transit \= Pending or incoming Stripe funds. \- Total Stripe Assets \= Stripe Balance Available Now \+ Stripe Balance In Transit.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-200</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Withdrawal Representation:</strong> The withdrawal amount is displayed as a deduction (colored in red, e.g. $32.28 representing the debit from the Stripe balance).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-201</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Full Customer Refund:</strong> The customer is refunded 100% of the original purchase amount via the Stripe Refund API.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-202</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Amount Negation:</strong> The transaction Amount and the instructor's PayoutAmount are updated to negative numbers in the database to maintain double-entry accounting integrity.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-203</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Access Revocation:</strong> The student's EnrollmentStatus is changed to revoked, immediately disabling course access.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-204</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Claw Back Instructor Earnings (Transfer Reversal):</strong> The system reverses the exact payout amount originally transferred to the instructor's Connected Account: PayoutAmount \= Round((GrossAmount \- StripeFee) \* (TransferRate / 100), 2\) where: StripeFee \= Min(Round(GrossAmount \* 0.029 \+ 0.30, 2), GrossAmount)</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-205</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rejection Reason Required:</strong> Unlike approval, rejecting a refund request strictly requires a non-empty administrative explanation to provide clarity to the student.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-206</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Restored to Succeeded:</strong> The transaction state returns to succeed as if the refund request was never initiated.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-207</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Financial Changes:</strong> No funds are transferred, reversed, or refunded via Stripe Connect. The platform commissions and instructor earnings remain intact.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-208</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Uninterrupted Learning Access:</strong> The student's course enrollment status (EnrollmentStatus) remains active, ensuring they continue to have full access to learning materials.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-209</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Refund Actions Visibility:</strong> The "Approve Refund" and "Reject" buttons are conditionally rendered on the details page only if the transaction status is exactly refund\_pending.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-210</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Refund Info Retrieval:</strong> If a refund request was ever made, the student's submitted refund reason and the request date are fetched from TransactionExt and displayed. If rejected, the Admin's rejection note is also shown.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-211</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permitted Splitting Range:</strong> The split rate must be a numeric value between 30.00% and 95.00% (inclusive).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-212</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Non-Retroactivity:</strong> Changing the configuration only applies to transactions created after the change. Existing payouts and past transaction records preserve their original split rate values.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-213</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Policy Notifications:</strong> The system sends an automated real-time notification to all active instructors who have connected Stripe accounts. Re-notification is bypassed for non-Stripe linked accounts.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-214</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permitted Payout Days Range:</strong> The trigger days must be integers between 15 and 20 (inclusive), formatted as a single number or a comma-separated list of numbers (e.g., 15 or 15, 18).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-215</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Scheduler Automation:</strong> The automated bulk payout scheduler queries this setting and automatically initiates payouts to instructors' Connect accounts on the configured days of the month.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-216</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Withdrawal Limit:</strong> Platform withdrawals must be at least $0.50 (USD).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-217</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Maximum Available Balance:</strong> The maximum amount allowed to be withdrawn cannot exceed the platform's current Stripe Available balance. Cents are rounded to two decimal places.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-218</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Widget Home-only Visibility:</strong> The floating chat widget is visible and accessible only on the Home page for logged-in Users.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-219</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Support Ticket Queueing:</strong> Support requests submitted via the mini-chat widget create a pending request queue entry and prevent further messages until a staff member accepts the request.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-220</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Support Request Assignment:</strong> Pending support tickets are visible only to Staff members. When a Staff member clicks \`"Accept Request"\`, the ticket is assigned to them and removed from the public pending list. Admin members do not receive or view pending support requests from users.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-221</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Support Request Assignment:</strong> Pending support tickets are visible only to Staff members. When a Staff member clicks \`"Accept Request"\`, the ticket is assigned to them and removed from the public pending list. Admin members do not receive or view pending support requests from users.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-222</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Gmail Exclusive:</strong> Only emails ending with "@gmail.com" are permitted for registration.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-223</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Uniqueness:</strong> Email and username checks are case-insensitive and must be unique across the platform.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-224</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Security:</strong> Passwords must be hashed using BCrypt before database storage.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-225</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Account Status:</strong> Registered accounts are initialized with status "Active", AuthProvider "Local", and verification flag set to false.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-226</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>OTP Life Cycle:</strong> The OTP code must be consumed upon validation (one-time use only) and expires within 2 minutes of generation.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-227</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Session Cookie Sync:</strong> The system must update the IsVerified cookie to "true" immediately on successful verification to dynamically unlock shopping and checkout permissions without requiring a re-login.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-228</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>External Account Prevention:</strong> Users who registered using third-party auth (Google OAuth) are prohibited from changing password as they do not have a password hash stored locally.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-229</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Forced Logout:</strong> On a successful password change, the system must immediately revoke the refresh token, delete client-side cookies, and force the User to authenticate again to prevent active hijacked sessions.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-230</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Google Email Lock:</strong> Email modification is strictly locked for Google OAuth accounts to prevent authorization mismatches.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-231</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Transactional Integrity:</strong> Profile modifications spanning User and Account database tables must be executed within a single transaction. If any part of the query fails (e.g. duplicate email checks), the transaction rolls back completely.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-232</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Session Synchronization:</strong> Client-side display cookies (such as UserName and AvatarUrl) must be immediately updated on success to ensure the page headers dynamically reflect the changes.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-233</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Verification Syncing:</strong> During the profile retrieval process, the system must dynamically read the database verification flag and update the client-side IsVerified cookie to ensure consistent page behavior and menu permissions.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-234</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Uniqueness Constraint:</strong> A specific course can be added to a User's wishlist only once.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-235</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>AJAX Toggle:</strong> The add action is handled asynchronously via AJAX (ToggleAjax) so the UI changes state instantly without a page reload.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-236</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Statistics:</strong> Average rating and total students are aggregated dynamically. If statistics are missing for a course, a default rating of 4.5 is displayed.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-237</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permanent Deletion:</strong> Unlike coupons or profiles, wishlist items are physically hard-deleted from the database when removed, as they do not require transaction history preservation.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-238</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique Username Generation:</strong> For new Google sign-ups, the username is extracted from the email prefix. If the username is already taken, the system appends a numeric counter sequentially (e.g. johndoe1, johndoe2) until it is unique.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-239</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Verification:</strong> Accounts registered via Google OAuth are flagged as verified (IsVerified \= true) immediately upon creation because Google has verified the email ownership. Null Password Hash: Google OAuth accounts are initialized with no password hash (PasswordHash \= null), bypassing local password authentication.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-240</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Suspension Block:</strong> If an active lockout exists for the account, the system denies login and prints the suspension lockout end date in the error message.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-241</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Credential Flexibility:</strong> The login identifier can be either the account's username or email address (case-insensitive).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-242</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>BCrypt Verification:</strong> Local password validation must be processed using BCrypt.Verify.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-243</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role-Based Redirection:</strong> Authenticated Admin and Staff actors are redirected to the admin dashboard, while Users and Instructors are redirected to the homepage.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-244</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Validity Criteria:</strong> To be applied, a coupon must be active, within its validity dates (StartDate \<= Now \<= EndDate), have remaining uses (UsedCount \< UsageLimit), and the cart subtotal must meet the MinOrderValue.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-245</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Discount Logic:</strong> Percentage/Fixed discount calculation and Session Cookie Storage: Applied coupons are written to local cookies to maintain the discount status across browsing activities until checkout.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-246</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cookie Invalidation:</strong> The coupon code must be completely deleted from local session cookies. Price Reversion: Removing a coupon must immediately restore the cart's discount value to zero.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-247</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Verified Email Requirement:</strong> Only accounts that have completed email verification are permitted to use the forget password reset feature.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-248</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Token Invalidation/Cookie Clearance:</strong> Upon logout, the backend must immediately nullify/revoke the stored RefreshToken and clear all client-side cookies.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-249</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Required Credentials:</strong> Email, Password, and Display Name are mandatory fields that cannot be empty.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-250</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Verification:</strong> Since the account is directly created by the Admin, the new Staff account is initialized as verified (IsVerified \= true) and active (AccountStatus \= "Active") by default.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-251</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role Scope Restriction:</strong> This update endpoint is restricted solely to accounts carrying the "staff" role.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-252</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Ban/Lockout Logic:</strong> Banning adds a 100-year lockout record; Unbanning deletes all active lockout entries to restore login access.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-253</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Super Admin Protection:</strong> The Super Admin account ("admin" role) is protected and cannot be banned or locked out.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-254</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role-Specific Data Aggregation:</strong> System displays data based on specific roles (Students, Instructors, Managers/Staff) and detects lockouts if the account has been banned.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-255</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Search Criteria:</strong> Search keywords are matched (case-insensitive substring) against the account's Email, Phone Number, Manager Display Name, or User Full Name.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-256</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Search Criteria:</strong> Search keywords are matched (case-insensitive substring) against the account's Email, Phone Number, Manager Display Name, or User Full Name.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-257</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Pagination:</strong> The page size defaults to 10 accounts per page if not specified otherwise.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-258</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role Filters:</strong> Supported role filters include: "user", "instructor", "staff", "registered\_staff", or "all" roles.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-259</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Flag Thresholds and Status Progression:</strong> 1st/2nd flag (warning); 3rd flag (banned) triggers a 30-day lockout.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-260</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Non-Blocking Notifications:</strong> A notification dispatch error must not block or roll back the flagging transaction.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-261</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique:</strong> Code, Coupon Types, Discount Value Limits, Validity Dates, and Usage Limit constraints for new coupons.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-262</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sorting/Search:</strong> Default sorting by ID, client-side in-memory sorting, and case-insensitive CouponCode matching.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-263</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Locked Fields:</strong> Code, Type, Value, and MinOrderValue are read-only. End Date and Usage Limit have specific update constraints.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-264</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Soft-Delete Only:</strong> Hard deletion is forbidden. Expiration Enforcement: End Date updated to the previous day to ensure the coupon becomes unusable.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-265</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Filter Parameters:</strong> Filtering by IsActive state, CouponType, or both combined in a single database query.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-266</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lockout Status Monitoring:</strong> The profile displays any active suspension records (start and end times) for the manager account, keeping administrative users informed of active lockout configurations.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-267</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role-based Labeling:</strong> The interface shows "Super Admin" if the manager's role is "ADMIN", and "Staff Support" otherwise.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-268</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique Quiz Title:</strong> The quiz title must be unique per instructor. The system checks this upon quiz creation and updates.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-269</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Total Questions:</strong> The total questions limit for a quiz must be greater than 0.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-270</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Distribution Integrity:</strong> The sum of question counts distributed across lessons must exactly equal the quiz's configured TotalQuestions.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-271</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Question Bank Sufficiency:</strong> For each lesson distribution, the number of requested questions must not exceed the actual number of questions available in the Question Bank for that specific lesson.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-272</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Attempt Lockdown:</strong> An instructor cannot update the settings of a quiz, delete a quiz, or remove a quiz from a course if there is currently an active (unsubmitted) attempt by any student.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-273</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Enrolled Course Protection:</strong> A quiz cannot be deleted if it is assigned to any course that has enrolled students.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-274</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pending Course Lockdown:</strong> Quizzes cannot be added to, removed from, or toggled hidden in a course while the course status is "Pending".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-275</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto Draft Fallback:</strong> Adding or removing a quiz from a "Published" course will automatically revert the course status back to "Draft".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-276</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Quiz Generation Logic:</strong> When a student starts a quiz, the system randomly draws questions from the Question Bank based on the quiz's QuizLessonDistribution. If the distribution falls short, it supplements remaining questions randomly from the entire course's question pool.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-277</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Score Calculation:</strong> The attempt score is calculated as (Correct Answers / Total Questions) * 100, rounded to the nearest integer.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-278</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Passing Condition:</strong> A student attempt is marked as "Passed" if the calculated score is greater than or equal to the quiz's PassingScore configuration.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-279</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Options:</strong> A question must have at least 2 options.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-280</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Correct Options:</strong> A question must have at least 1 correct option.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-281</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Course Ownership:</strong> An instructor can only add, edit, delete, or view questions for courses they own.</td>
+            </tr>
         </tbody>
     </table>
 </div>
