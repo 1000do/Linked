@@ -588,30 +588,13 @@ public class QuizService : IQuizService
         CreatedAt = quiz.CreatedAt,
         UpdatedAt = quiz.UpdatedAt,
         Questions = new List<QuizQuestionResponse>(),
-        Distributions = quiz.QuizLessonDistributions.Select(d => new QuizLessonDistributionResponse
+        Distributions = quiz.QuizLessonDistributions?.Select(d => new QuizLessonDistributionResponse
         {
             LessonId = d.LessonId,
             QuestionCount = d.QuestionCount
         }).ToList() ?? new List<QuizLessonDistributionResponse>()
     };
 
-    private static QuizQuestionResponse MapToQuestionResponse(QuizQuestion q) => new()
-    {
-        QuestionId = q.QuestionId,
-        QuestionText = q.QuestionText,
-        QuestionType = q.QuestionType,
-        CourseId = q.CourseId,
-        LessonId = q.LessonId,
-        Options = q.QuizOptions
-            .OrderBy(o => o.OrderIndex)
-            .Select(o => new QuizOptionResponse
-            {
-                OptionId = o.OptionId,
-                OptionText = o.OptionText,
-                IsCorrect = o.IsCorrect,
-                OrderIndex = o.OrderIndex
-            }).ToList()
-    };
 
     private static CourseQuizResponse MapToCourseQuizResponse(CourseQuiz cq, Quiz quiz) => new()
     {
