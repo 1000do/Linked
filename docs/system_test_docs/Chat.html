@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Chat</li>
+    <li><b>Test requirement:</b> Tests for real-time messaging, viewing chat list, chat history, searching, and deleting chats.</li>
+    <li><b>Number of TCs:</b> 28</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Chat List</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>View Chat List Successfully & Default View</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the Chat page.</td>
+        <td>System displays the chat sidebar containing the list of active conversations, partner names, avatars, last message snippet, timestamp, online statuses, and unread count badges.</td>
+        <td>User is successfully authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>View New Message Notification via Unread Preview Bubble</td>
+        <td>1. Login as a User or Instructor.<br>2. Stay on the Chat or Home page.<br>3. Receive a new chat message from another user.</td>
+        <td>System displays the 'unread-preview-bubble' containing a preview of the message. Clicking it opens the chat room and hides the bubble.</td>
+        <td>User is authenticated and receives a new message.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Failed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Chat page as a guest.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as an unapproved Instructor or manipulate access.<br>2. Access the Chat page.</td>
+        <td>System redirects to the error page or displays an access denied message.</td>
+        <td>User lacks permission to access the chat list.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Chats</td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Delete Chats Successfully</td>
+        <td>1. Login as a User or Instructor.<br>2. Access an active conversation.<br>3. Click the delete icon in the active conversation header.<br>4. Click 'OK' on the confirmation dialog.</td>
+        <td>System displays a success message, clears the message viewport (shows empty state), and updates the active chat list in the sidebar. History remains intact for the partner participant.</td>
+        <td>User is authenticated and has an active conversation open.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Cancel Chat Deletion</td>
+        <td>1. Login as a User or Instructor.<br>2. Access an active conversation.<br>3. Click the delete icon.<br>4. Click 'Cancel' on the confirmation dialog.</td>
+        <td>System closes the confirmation dialog and the chat history remains visible.</td>
+        <td>User is authenticated and has an active conversation open.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Participant Not Found / Invalid Chat</td>
+        <td>1. Login as a User or Instructor.<br>2. Attempt to clear history for a chat the user is not part of.</td>
+        <td>System displays an error message regarding chat access permission.</td>
+        <td>User is not a participant of the target chat.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Session Invalid</td>
+        <td>1. Access a conversation.<br>2. Simulate session expiration.<br>3. Click the delete icon and confirm.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with insufficient privileges.<br>2. Attempt to trigger the clear history endpoint.</td>
+        <td>System redirects to the error page.</td>
+        <td>User lacks permission to delete chats.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Database Save Failed</td>
+        <td>1. Simulate a database error.<br>2. Click the delete icon and confirm.</td>
+        <td>System displays a database error message.</td>
+        <td>Valid delete chat request.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Failed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Send Messages</td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Send Text Message Successfully</td>
+        <td>1. Login as a User or Instructor.<br>2. Access an active conversation.<br>3. Type a message in the input area.<br>4. Click the send button or press Enter.</td>
+        <td>Message is displayed in the viewport with a sent indicator, input is cleared, and message is broadcasted in real-time to participants.</td>
+        <td>User is authenticated and has an active conversation open.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Attach and Send Files Successfully</td>
+        <td>1. Login as a User or Instructor.<br>2. Access a conversation.<br>3. Click 'attach_file' and select a valid file (<= 10MB).<br>4. Click the send button.</td>
+        <td>File is uploaded, displayed in the message list viewport alongside the message, and broadcasted in real-time.</td>
+        <td>User is authenticated and file size is valid.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>File Size Limit Exceeded (> 10MB)</td>
+        <td>1. Login as a User or Instructor.<br>2. Access a conversation.<br>3. Click 'attach_file' and select a file larger than 10MB.</td>
+        <td>System displays a file size validation error message and prevents upload.</td>
+        <td>User is authenticated and file exceeds size limit.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Remove Selected Attachment Before Sending</td>
+        <td>1. Login as a User or Instructor.<br>2. Access a conversation.<br>3. Attach a file.<br>4. Click the 'close' icon on the attachment preview.</td>
+        <td>System removes the file from the preview list.</td>
+        <td>User is authenticated and has an attachment preview.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Empty Message Submission</td>
+        <td>1. Login as a User or Instructor.<br>2. Access a conversation.<br>3. Leave text empty and select no attachments.<br>4. Click the send button.</td>
+        <td>System cancels the submission and does not send anything.</td>
+        <td>User is authenticated and message payload is empty.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Unauthorized Participant</td>
+        <td>1. Login as a User or Instructor.<br>2. Attempt to send a message to a chat room the user is not part of.</td>
+        <td>System displays a permission error message (received via SignalR) and rejects the message.</td>
+        <td>User is not a participant of the target chat room.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Failed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Session Invalid (File Upload)</td>
+        <td>1. Simulate session expiry.<br>2. Click 'attach_file' in an active conversation.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Database Save Failed (Send Message)</td>
+        <td>1. Simulate a database error.<br>2. Type a message and click send.</td>
+        <td>System displays a database error message.</td>
+        <td>Valid send message request.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Chat History</td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>View Chat History Successfully</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the Chat page.<br>3. Click on a conversation card with history in the sidebar.</td>
+        <td>System displays the chat room panel, updates header (partner name, avatar, online status), renders messages, scrolls to bottom, marks unread messages as read in DB, and broadcasts a read notification.</td>
+        <td>User is authenticated and has permission to access the selected chat.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Render Empty Chat Room</td>
+        <td>1. Login as a User or Instructor.<br>2. Click on a newly created conversation card with no history in the sidebar.</td>
+        <td>System displays a start-chatting message in the viewport.</td>
+        <td>User is authenticated and chat room has no messages.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Unauthorized Access (Not Participant)</td>
+        <td>1. Login as a User or Instructor.<br>2. Attempt to view history of a chat room the user is not part of.</td>
+        <td>System displays an unauthorized error message and halts execution.</td>
+        <td>User is not a participant of the target chat room.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Session Invalid</td>
+        <td>1. Access chat history endpoint as a guest.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Database Save Failed (Marking Read)</td>
+        <td>1. Simulate a database error.<br>2. Click on a conversation card with unread messages.</td>
+        <td>System displays a database error message.</td>
+        <td>Valid chat history request.</td>
+        <td>Failed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Search Chat History</td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>Search Chats Successfully</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the Chat page.<br>3. Type a matching query in the 'Search users...' input box and wait for debounce.</td>
+        <td>System displays only the matching conversations in the sidebar list.</td>
+        <td>User is authenticated and there are matching chat rooms.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>Clear Search Query</td>
+        <td>1. Login as a User or Instructor.<br>2. Perform a search.<br>3. Clear the search query text box.</td>
+        <td>System restores and displays the full list of active conversations from the local cache.</td>
+        <td>User has performed a search.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-026</td>
+        <td>No Matching Results Found</td>
+        <td>1. Login as a User or Instructor.<br>2. Type a query that matches no conversations.</td>
+        <td>System displays a message in the sidebar indicating 'No conversations found.'</td>
+        <td>Query does not match any participants in user's chats.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-027</td>
+        <td>Session Invalid</td>
+        <td>1. Simulate session expiry.<br>2. Type in the search box.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-028</td>
+        <td>Unauthorized Access</td>
+        <td>1. Simulate privilege loss.<br>2. Type in the search box.</td>
+        <td>System redirects to the error page.</td>
+        <td>User lacks permission to access chat search.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-16</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>
