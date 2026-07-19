@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Cart</li>
+    <li><b>Test requirement:</b> Tests for user cart features including adding to cart, viewing cart items, and deleting cart items.</li>
+    <li><b>Number of TCs:</b> 21</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Add to cart</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Add Course to Cart Successfully</td>
+        <td>1. Login as User or Instructor.<br>2. Access a course detail page.<br>3. Click the 'Add to Cart' button.</td>
+        <td>System adds course to cart, displays a success toast notification on the current page, and updates the cart item count badge in the header without redirecting.</td>
+        <td>User is authenticated, email is verified, course is not owned by user, user is not enrolled, and course is not already in cart.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Email Not Verified</td>
+        <td>1. Login as a User with an unverified email.<br>2. Access a course detail page.<br>3. Click the 'Add to Cart' button.</td>
+        <td>System displays an error message 'Please verify your email address.'</td>
+        <td>User is authenticated but email is unverified.</td>
+        <td>Failed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as Staff or Admin.<br>2. Attempt to add a course to the cart.</td>
+        <td>System returns an unauthorized error or redirects to the error page.</td>
+        <td>Actor is authenticated but does not have User or Instructor role.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Add Own Course to Cart</td>
+        <td>1. Login as an Instructor.<br>2. Access the course detail page of a course owned by the instructor.<br>3. Click the 'Add to Cart' button.</td>
+        <td>System displays an error message 'You cannot add your own course to the cart.'</td>
+        <td>User is an instructor and owns the course.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Add Already Enrolled Course to Cart</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the course detail page of an already purchased or enrolled course.</td>
+        <td>The 'Add to cart' button is replaced by a checkmark icon to prevent double purchases. If bypassed, system displays 'You have already purchased this course.'</td>
+        <td>User is already enrolled in the course.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Add Course Already in Cart</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the course detail page of a course already present in the active cart.<br>3. Click the 'Add to Cart' button.</td>
+        <td>System displays an error message 'Course is already in the cart.'</td>
+        <td>Course is already added to the user's cart.</td>
+        <td>Failed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access a course detail page as a guest.<br>2. Click the 'Add to Cart' button.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Add Unpublished Course</td>
+        <td>1. Login as a User or Instructor.<br>2. Attempt to add a draft or unpublished course to the cart.</td>
+        <td>System displays an error message 'Course does not exist or is not published.'</td>
+        <td>The target course is not in the 'Published' state.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Database Save Failed (Add to Cart)</td>
+        <td>1. Simulate a database error.<br>2. Login as a User or Instructor.<br>3. Access a course detail page and click 'Add to Cart'.</td>
+        <td>System returns a 500 Internal Server Error and displays a system error message to the user.</td>
+        <td>Valid add to cart request.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Cart items</td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>View Cart Successfully & Default View</td>
+        <td>1. Login as a User or Instructor.<br>2. Click the 'Cart' icon on the navigation header.</td>
+        <td>System displays a detailed list of courses currently in the cart, calculates and displays the Subtotal, Discount Amount (if any), final Payable Total, and available checkout coupons.</td>
+        <td>User is authenticated and has at least one course in the cart.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Active Coupon Applied</td>
+        <td>1. Login as a User or Instructor.<br>2. System detects a valid coupon code previously applied in the session.<br>3. Click the 'Cart' icon on the navigation header.</td>
+        <td>System recalculates the discount based on the active coupon and updates the final Payable Total in the pricing summary.</td>
+        <td>User has a valid coupon code stored in session cookies.</td>
+        <td>Failed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Empty Cart</td>
+        <td>1. Login as a User or Instructor.<br>2. Ensure the shopping cart is empty.<br>3. Click the 'Cart' icon on the navigation header.</td>
+        <td>System displays an empty notice 'Your cart is empty' with the description 'Explore interesting courses and add them to your cart!' and an 'Explore Courses' button.</td>
+        <td>User has no courses in the cart.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Invalid or Expired Coupon in Cart</td>
+        <td>1. Login as a User or Instructor.<br>2. System detects an applied coupon that is now expired, invalid, or limit reached.<br>3. Click the 'Cart' icon on the navigation header.</td>
+        <td>System automatically removes the invalid coupon from the user's session, recalculates the pricing summary, updates the cart display, and displays a specific error message regarding the invalid coupon.</td>
+        <td>User has an invalid or expired coupon code in session cookies.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Failed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Cart page as a guest.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as Staff or Admin.<br>2. Attempt to access the Cart page.</td>
+        <td>System returns an unauthorized error or redirects to the error page.</td>
+        <td>Actor is authenticated but does not have User or Instructor role.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete cart items</td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Remove Course from Cart Successfully & Recalculate Prices</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the Cart page.<br>3. Click the delete icon button next to a target course item.<br>4. Confirm the removal action.</td>
+        <td>System permanently removes the course from the cart in the database, displays a success notification, recalculates the cart summary prices (including applied coupons), and re-renders the Cart page.</td>
+        <td>User has at least one course in the cart.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Cancel Removal</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the Cart page.<br>3. Click the delete icon button next to a course.<br>4. Cancel the confirmation prompt.</td>
+        <td>System dismisses the prompt and does not remove the course from the cart.</td>
+        <td>User has at least one course in the cart.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Course Not Found</td>
+        <td>1. Login as a User or Instructor.<br>2. Access the Cart page.<br>3. Attempt to remove a course that was already deleted or doesn't exist in the cart.</td>
+        <td>System detects the course is not present in the cart and displays an error message 'Course not found in the cart.'</td>
+        <td>The target course is not in the user's cart.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Cart page.<br>2. Simulate session expiration.<br>3. Click the delete icon button next to a course item.</td>
+        <td>System redirects the user to the login page before the deletion can occur.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as Staff or Admin.<br>2. Attempt to trigger the delete cart item endpoint.</td>
+        <td>System returns an unauthorized error or redirects to the error page.</td>
+        <td>Actor is authenticated but does not have User or Instructor role.</td>
+        <td>Passed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Database Save Failed (Delete from Cart)</td>
+        <td>1. Simulate a database error.<br>2. Login as a User or Instructor.<br>3. Access the Cart page.<br>4. Click the delete icon button and confirm.</td>
+        <td>System returns a 500 Internal Server Error and displays a system database error message.</td>
+        <td>Valid delete from cart request.</td>
+        <td>Failed</td>
+        <td>2026-07-01</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-08</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>
