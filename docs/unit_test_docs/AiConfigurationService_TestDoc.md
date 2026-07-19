@@ -6,41 +6,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">GetConfigurationsAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">GetConfigurationsAsync</td>
+    <td colspan="3">GetConfigurationsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetConfigurationsAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">27</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">27</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Retrieve AI configurations from system configs and handle missing, partial, or malformed JSON values, falling back to default threshold constants.</td>
+    <td colspan="18">Retrieve AI configurations from system configs and handle missing, partial, or malformed JSON values, falling back to default threshold constants.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">7</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">5</td>
     <td colspan="1" style="text-align: center;">2</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">7</td>
+    <td colspan="6" style="text-align: center;">7</td>
   </tr>
 </table>
 
@@ -73,41 +73,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">UpdateThresholdsAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">UpdateThresholdsAsync</td>
+    <td colspan="3">UpdateThresholdsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">UpdateThresholdsAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">16</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">16</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Update AI moderation threshold configurations in the database.</td>
+    <td colspan="18">Update AI moderation threshold configurations in the database.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 
@@ -134,41 +134,41 @@
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
     <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="2">UpdateIntegrationAsync</td>
-    <td colspan="2"><strong>Function Name</strong></td>
-    <td colspan="2">UpdateIntegrationAsync</td>
+    <td colspan="3">UpdateIntegrationAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">UpdateIntegrationAsync</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="2">AnHK</td>
-    <td colspan="2"><strong>Executed By</strong></td>
-    <td colspan="2">AnHK</td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="2">9</td>
-    <td colspan="2"><strong>Lack of test cases</strong></td>
-    <td colspan="2">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+    <td colspan="3">9</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="6">Update AI integration configuration paths in the database.</td>
+    <td colspan="18">Update AI integration configuration paths in the database.</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="1" style="text-align: center;">Failed</th>
-    <th colspan="1" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
     <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="1" style="text-align: center;">Total Test Cases</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
     <td colspan="2" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 

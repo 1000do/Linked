@@ -659,6 +659,514 @@
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-154</td>
                 <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Data Isolation:</strong> Giảng viên chỉ có thể xem số liệu thống kê, doanh thu và các khóa học liên quan đến tài khoản của chính họ.</td>
             </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-155</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Enrollment Pre-check:</strong> Hệ thống kiểm tra trạng thái đăng ký của người nhận ngay khi người dùng gõ vào trường email (debounced). Nút "Proceed to Payment" bị vô hiệu hóa cho đến khi xác nhận được người nhận chưa đăng ký khóa học này.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-156</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Gift Price Restrictions:</strong> Giao dịch mua quà tặng luôn được thực hiện ở mức giá gốc của khóa học. Phiếu giảm giá và mã khuyến mãi không được áp dụng cho việc mua quà tặng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-157</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Claim and Refund Mutual Exclusion:</strong> Khi quà tặng đã được người nhận nhận thành công, mọi yêu cầu hoàn tiền đang chờ xử lý cho giao dịch quà tặng đó sẽ tự động bị từ chối.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-158</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Cart Modification:</strong> Tặng quà được coi là mua hàng trực tiếp và không xóa hoặc sửa đổi các mục trong giỏ hàng đang hoạt động của người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-159</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Double Enrollment:</strong> Người dùng không thể nhận khóa học quà tặng nếu họ đã có đăng ký học đang hoạt động trong khóa học đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-160</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unclaimed Refund Restriction:</strong> Quà tặng chỉ có thể được nhận nếu chúng chưa bị hoàn tiền. Việc hoàn tiền sẽ đảo ngược hiệu lực của mã nhận quà.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-161</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>14-Day Escrow Policy:</strong> Yêu cầu hoàn tiền chỉ được phép đối với các giao dịch thành công (trạng thái Success) trong khoảng thời gian ký quỹ 14 ngày kể từ ngày mua. Sau khi hết thời gian này, nút yêu cầu hoàn tiền sẽ bị vô hiệu hóa/ẩn.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-162</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Escrow Hold:</strong> Tài khoản của giảng viên sẽ không được cộng doanh thu khóa học cho đến khi hết thời hạn hoàn tiền 14 ngày, nhằm đảm bảo luôn có đủ tiền để chi trả hoàn tiền.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-163</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pagination Limit:</strong> Kết quả lịch sử giao dịch được phân trang với mặc định là 10 mục mỗi trang.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-164</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Enhanced Search Component:</strong> Trường đầu vào tìm kiếm phải giữ lại từ khóa đã nhập sau khi tải lại trang để người dùng biết bộ lọc nào hiện đang hoạt động.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-165</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Title Matching:</strong> Tìm kiếm được thực hiện dưới dạng khớp chuỗi con không phân biệt chữ hoa chữ thường trên Tiêu đề khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-166</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Account Flag:</strong> Yêu cầu hoàn tiền sẽ tự động bị từ chối nếu tài khoản người dùng hiện có từ 3 cờ cảnh báo trở lên (số lượng cảnh báo \>= 3).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-167</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Refund Frequency:</strong> Yêu cầu hoàn tiền sẽ tự động bị từ chối nếu người dùng đã yêu cầu hoàn tiền 3 lần trở lên trong vòng 14 ngày qua.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-168</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Repeated Course Refund:</strong> Yêu cầu hoàn tiền sẽ tự động bị từ chối nếu người dùng trước đó đã yêu cầu và nhận được hoàn tiền thành công cho chính khóa học đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-169</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Progress for Short Courses (\< 4h):</strong> Đối với các khóa học có tổng thời lượng dưới 4 giờ, yêu cầu hoàn tiền sẽ tự động bị từ chối nếu tiến độ học tập của học viên vượt quá 15%.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-170</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Rejection \- Progress for Long Courses (\>= 4h):</strong> Đối với các khóa học có tổng thời lượng từ 4 giờ trở lên, yêu cầu hoàn tiền sẽ tự động bị từ chối nếu thời gian xem video hoàn thành của học viên vượt quá 1 giờ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-171</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Abstract Reason Confidentiality:</strong> Tất cả các thông báo tự động từ chối phải nghiêm ngặt hiển thị các mô tả trừu tượng cho lý do từ chối. Việc hiển thị các tiêu chí số cụ thể (chẳng hạn như giá trị phần trăm chính xác, số giờ xem chính xác, số lượng cờ hoặc số lần hoàn tiền) cho người dùng là bị cấm. Các mô tả trừu tượng được hiển thị là: \- Giới hạn cờ tài khoản: "tài khoản của bạn có quá nhiều cờ cảnh báo" \- Giới hạn tần suất hoàn tiền: "đã yêu cầu quá nhiều lần hoàn tiền trong kỳ hoàn tiền" \- Hoàn tiền lặp lại: "đã có lịch sử hoàn tiền trước đó cho khóa học này" \- Giới hạn tiến độ cho khóa học ngắn: "tiến độ học tập vượt quá giới hạn đối với khóa học ngắn" \- Giới hạn thời gian xem cho khóa học dài: "thời gian xem video vượt quá giới hạn cho phép đối với khóa học dài"</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-172</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Refund Eligibility Window:</strong> Yêu cầu hoàn tiền phải được nộp trong vòng 14 ngày (336 giờ) kể từ thời điểm giao dịch ban đầu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-173</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Negative Refund Balance:</strong> Nếu trạng thái giao dịch được đánh dấu là hoàn tiền (refunded), hệ thống phải hiển thị Tổng giá (Gross Amount) và Tổng cộng (Total) dưới dạng số âm để đại diện cho khoản hoàn tiền được ghi có.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-174</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Strict Application Idempotency:</strong> Một tài khoản học viên chỉ có thể có một bản ghi đơn đăng ký (application) đang hoạt động. Nếu yêu cầu trước đó bị từ chối, bất kỳ lần gửi tiếp theo nào cũng sẽ ghi đè nội tuyến lên bản ghi cũ để giữ cho cơ sở dữ liệu sạch và ngăn ngừa trùng lặp.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-175</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>File Attachment Restrictions:</strong> \- Người dùng có thể tải lên tối đa 3 tệp tài liệu/chứng chỉ. \- Các tài liệu chứng chỉ tải lên bị hạn chế nghiêm ngặt ở các định dạng \`.pdf\`, \`.jpg\`, \`.jpeg\`, và \`.png\`. \- Kích thước tải lên tệp tối đa là 5MB cho mỗi tệp để bảo vệ tài nguyên máy chủ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-176</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Email Verification Requirement:</strong> Học viên phải được xác minh email trước khi được phép nộp hoặc truy cập vào biểu mẫu đăng ký giảng viên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-177</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Role Activation:</strong> Vai trò của người dùng chỉ được nâng cấp thành "giảng viên" trong cookie và phiên cơ sở dữ liệu sau khi quá trình tích hợp Stripe Connect được xác minh là "Active" (Hoạt động).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-178</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Direct Edit Lockout:</strong> Khi tài khoản ngân hàng được liên kết thành công và trạng thái là "Active", hệ thống sẽ ẩn nút "Setup Payout" (Thiết lập thanh toán). Giảng viên bị khóa chức năng chỉnh sửa chi tiết ngân hàng trực tiếp trên nền tảng và phải nhấp vào nút "Truy cập Bảng điều khiển Stripe" để chỉnh sửa trực tiếp trên cổng bảo mật của Stripe.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-179</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Dynamic Balances Calculation:</strong> Tất cả các thẻ số dư phải tự động tính toán lại dựa trên bộ lọc tháng và năm được chọn.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-180</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Currency Display:</strong> Tất cả số dư, số tiền và nhãn biểu đồ mặc định hiển thị bằng USD (có tiền tố ký hiệu $).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-181</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Financial Card Definitions & Formulas:</strong> Các số liệu tài chính được xác định và tính toán như sau: \- Gross Revenue (Tổng doanh thu): Tổng doanh thu bán hàng tạo ra từ việc mua khóa học. \- Total Refunded (Tổng hoàn tiền): Tổng các khoản khấu trừ từ yêu cầu hoàn tiền của học viên (có tiền tố dấu trừ \- màu đỏ). \- Net Earnings (Thu nhập ròng): Doanh thu thực tế còn lại sau khi trừ đi số tiền đã hoàn (Thu nhập ròng \= Tổng doanh thu \- Tổng hoàn tiền). \- Pending Transfer (Chờ chuyển khoản): Số tiền hiện đang bị khóa trong cửa sổ bảo vệ ký quỹ 14 ngày hoặc đang được chuyển. \- Stripe Wallet (Ví Stripe): Số tiền đã chuyển thành công vào Ví Stripe Liên kết của giảng viên (Sẵn sàng chuyển khoản ngân hàng). \- Withdrawn (Đã rút): Tổng số tiền đã chuyển thành công vào tài khoản ngân hàng của giảng viên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-182</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Negative Payout Display for Refunded Status:</strong> Nếu trạng thái giao dịch là "hoàn tiền", hệ thống phải hiển thị dưới dạng giá trị âm với tiền tố là dấu trừ \`-\` màu đỏ (ví dụ: \`- $15.29\`).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-183</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Transaction Access Control:</strong> Giảng viên chỉ có thể xem chi tiết của các giao dịch liên quan đến khóa học mà họ sở hữu. Các nỗ lực truy cập vào chi tiết giao dịch của giảng viên khác sẽ bị chặn và chuyển hướng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-184</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Expected Payout Date Calculation:</strong> Ngày thanh toán dự kiến (\`PayoutDate\` trong cơ sở dữ liệu) được tự động tính tại thời điểm mua theo ngày thanh toán cấu hình của tháng tiếp theo (ví dụ: ngày 15 của tháng tiếp theo) so với ngày giao dịch. Điều này phản ánh chu kỳ thanh toán hàng tháng của nền tảng và cửa sổ bảo vệ 14 ngày.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-185</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sequential Numbering (No.):</strong> Cột đầu tiên trong bảng lịch sử thanh toán phải hiển thị các số tuần tự (Số thứ tự, ví dụ: \`#1\`, \`#2\`, \`#3\`) thay vì ngày giải phóng ký quỹ, để tránh gây nhầm lẫn cho người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-186</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Preservation of Filters:</strong> Việc chọn một tùy chọn sắp xếp và gửi truy vấn phải giữ nguyên tất cả các từ khóa tìm kiếm, bộ lọc trạng thái và lựa chọn chu kỳ tháng/năm đang hoạt động khác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-187</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Sort Order:</strong> Nếu không có tùy chọn sắp xếp nào được chọn rõ ràng, danh sách sẽ mặc định theo thứ tự "Ngày: Mới nhất" (Date: Newest).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-188</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Period:</strong> Nếu không có tháng và năm nào được chỉ định, hệ thống mặc định chọn tháng và năm lịch UTC hiện tại.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-189</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pagination Reset:</strong> Việc sửa đổi bất kỳ tiêu chí lọc nào và áp dụng nó sẽ đặt lại phân trang giao dịch trở về trang 1.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-190</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Sorting:</strong> Danh sách thanh toán được sắp xếp từ mới nhất đến cũ nhất theo mặc định nếu không có tùy chọn sắp xếp nào được chọn rõ ràng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-191</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Locked Currency and Split Rates:</strong> Tất cả các tỷ lệ chia (Tỷ lệ chuyển giao) và tỷ giá chuyển đổi đều bị khóa tại thời điểm mua hàng để đảm bảo doanh thu ổn định và ngăn ngừa biến động tỷ giá.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-192</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Fee Calculation:</strong> Phí xử lý Stripe được tính chính xác là Tổng Số tiền \* 0.029 \+ 0.30 (được giới hạn ở tổng số tiền để tránh số dư sổ cái âm).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-193</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Split Summary Ledger Formulas:</strong> Thẻ Tóm tắt Phân chia tính toán và hiển thị các giá trị theo các công thức sau: \- Tổng số tiền \= Giá gốc của khóa học \- Giảm giá từ phiếu giảm giá (nếu có). \- Doanh thu khóa học ròng để chia \= Tổng số tiền \- Phí xử lý Stripe. \- Lợi nhuận ròng của nền tảng \= Doanh thu khóa học ròng để chia \* (100% \- Tỷ lệ chuyển giao %). \- Thu nhập ròng của giảng viên \= Doanh thu khóa học ròng để chia \* Tỷ lệ chuyển giao %.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-194</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Status Constraint:</strong> Chỉ các giảng viên đang hoạt động, có đơn đăng ký đã được quản trị viên nền tảng xem xét và phê duyệt mới có thể truy cập vào bảng điều khiển doanh thu khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-195</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Period-Based Revenue Calculations:</strong> Doanh thu hàng tháng, hàng năm và toàn thời gian được tính toán và tải động dựa trên bộ lọc tháng và năm đang hoạt động được chọn.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-196</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Month-over-Month Growth Calculation:</strong> Tỷ lệ phần trăm tăng trưởng được tính theo công thức: % Tăng trưởng \= ((Doanh thu tháng hiện tại \- Doanh thu tháng trước) / Doanh thu tháng trước) \* 100. \- Nếu doanh thu tháng trước bằng 0 và doanh thu tháng hiện tại lớn hơn 0, nó được dán nhãn và hiển thị là "Doanh số mới".</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-197</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Course Revenue Calculations:</strong> \- Tổng doanh thu (Gross Revenue) \= Tổng doanh thu bán hàng tạo ra từ tất cả các lượt mua khóa học trên nền tảng. \- Tổng hoàn tiền (Total Refunded) \= Tổng số tiền khấu trừ từ các yêu cầu hoàn tiền. \- Thu nhập ròng (Net Earnings) \= Tổng doanh thu \- Tổng hoàn tiền.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-198</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Splits and Distributions Calculations:</strong> \- Đã thanh toán cho Giảng viên \= Tổng số tiền đã thanh toán/chuyển vào tài khoản Stripe hoặc ngân hàng của giảng viên. \- Quỹ ký quỹ \= Số tiền hiện đang bị khóa trong cửa sổ bảo vệ 14 ngày. \- Lợi nhuận ròng của Nền tảng \= Phần chia sẻ ròng của nền tảng sau khi phân chia (Doanh thu khóa học ròng để chia \* (100% \- % Chia sẻ của Giảng viên)).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-199</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Stripe Balances Calculations:</strong> \- Số dư Stripe có sẵn hiện tại \= Số dư khả dụng trong số dư Stripe Connect của nền tảng. \- Số dư Stripe đang chuyển \= Tiền Stripe đang chờ xử lý hoặc sắp đến. \- Tổng tài sản Stripe \= Số dư Stripe có sẵn hiện tại \+ Số dư Stripe đang chuyển.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-200</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Withdrawal Representation:</strong> Số tiền rút được hiển thị như một khoản khấu trừ (màu đỏ, ví dụ: $32.28 đại diện cho khoản ghi nợ từ số dư Stripe).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-201</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Full Customer Refund:</strong> Khách hàng được hoàn lại 100% số tiền mua gốc thông qua Stripe Refund API.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-202</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Amount Negation:</strong> Số tiền giao dịch (Amount) và số tiền thanh toán cho giảng viên (PayoutAmount) được cập nhật thành số âm trong cơ sở dữ liệu để duy trì tính toàn vẹn của kế toán kép.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-203</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Access Revocation:</strong> Trạng thái đăng ký học của học viên (EnrollmentStatus) được đổi thành bị thu hồi (revoked), ngay lập tức vô hiệu hóa quyền truy cập khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-204</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Claw Back Instructor Earnings (Transfer Reversal):</strong> Hệ thống đảo ngược số tiền thanh toán chính xác đã chuyển ban đầu vào Tài khoản Liên kết của giảng viên: PayoutAmount \= Làm tròn((Tổng số tiền \- Phí Stripe) \* (Tỷ lệ chuyển khoản / 100), 2\) trong đó: Phí Stripe \= Min(Làm tròn(Tổng số tiền \* 0.029 \+ 0.30, 2), Tổng số tiền)</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-205</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Rejection Reason Required:</strong> Không giống như phê duyệt, việc từ chối một yêu cầu hoàn tiền nghiêm ngặt đòi hỏi phải có lời giải thích từ phía quản trị viên (không được để trống) để làm rõ cho học viên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-206</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Status Restored to Succeeded:</strong> Trạng thái giao dịch quay trở lại thành công (succeeded) giống như chưa từng có yêu cầu hoàn tiền nào được bắt đầu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-207</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>No Financial Changes:</strong> Không có khoản tiền nào được chuyển, đảo ngược hoặc hoàn lại qua Stripe Connect. Các khoản hoa hồng của nền tảng và thu nhập của giảng viên vẫn được giữ nguyên.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-208</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Uninterrupted Learning Access:</strong> Trạng thái đăng ký khóa học của học viên (EnrollmentStatus) vẫn ở trạng thái hoạt động (active), đảm bảo họ tiếp tục có quyền truy cập đầy đủ vào tài liệu học tập.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-209</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Refund Actions Visibility:</strong> Các nút "Phê duyệt Hoàn tiền" (Approve Refund) và "Từ chối" (Reject) chỉ được hiển thị có điều kiện trên trang chi tiết nếu trạng thái giao dịch chính xác là refund\_pending (chờ hoàn tiền).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-210</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Refund Info Retrieval:</strong> Nếu có bất kỳ yêu cầu hoàn tiền nào từng được thực hiện, lý do hoàn tiền do học viên nộp và ngày yêu cầu sẽ được lấy từ TransactionExt và hiển thị. Nếu bị từ chối, ghi chú từ chối của Quản trị viên cũng được hiển thị.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-211</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permitted Splitting Range:</strong> Tỷ lệ phân chia phải là một giá trị số trong khoảng từ 30.00% đến 95.00% (bao gồm cả hai mốc này).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-212</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Non-Retroactivity:</strong> Việc thay đổi cấu hình chỉ áp dụng cho các giao dịch được tạo sau khi thay đổi. Các khoản thanh toán hiện tại và hồ sơ giao dịch quá khứ giữ nguyên các giá trị tỷ lệ phân chia gốc của chúng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-213</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Policy Notifications:</strong> Hệ thống gửi thông báo tự động theo thời gian thực tới tất cả giảng viên đang hoạt động, những người đã kết nối tài khoản Stripe. Bỏ qua thông báo đối với các tài khoản chưa liên kết Stripe.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-214</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permitted Payout Days Range:</strong> Ngày kích hoạt thanh toán phải là số nguyên từ 15 đến 20 (bao gồm cả hai mốc này), được định dạng dưới dạng một số duy nhất hoặc một danh sách các số phân tách bằng dấu phẩy (ví dụ: 15 hoặc 15, 18).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-215</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Scheduler Automation:</strong> Bộ lên lịch thanh toán hàng loạt tự động sẽ truy vấn cài đặt này và tự động bắt đầu các khoản thanh toán tới tài khoản Connect của giảng viên vào những ngày cấu hình trong tháng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-216</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Withdrawal Limit:</strong> Các khoản rút tiền của nền tảng phải có giá trị ít nhất là $0.50 (USD).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-217</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Maximum Available Balance:</strong> Số tiền tối đa được phép rút không được vượt quá số dư Stripe Khả dụng hiện tại của nền tảng. Phần xu được làm tròn đến hai chữ số thập phân.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-218</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Widget Home-only Visibility:</strong> Tiện ích trò chuyện (chat widget) nổi chỉ hiển thị và có thể truy cập được trên trang Chủ (Home page) đối với Người dùng đã đăng nhập.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-219</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Support Ticket Queueing:</strong> Các yêu cầu hỗ trợ được gửi qua tiện ích trò chuyện thu nhỏ (mini-chat widget) sẽ tạo ra một mục nhập hàng đợi yêu cầu đang chờ xử lý và ngăn cản các tin nhắn tiếp theo cho đến khi một nhân viên (staff) chấp nhận yêu cầu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-220</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Support Request Assignment:</strong> Các phiếu hỗ trợ đang chờ xử lý (pending support tickets) chỉ hiển thị với các thành viên Nhân viên (Staff). Khi một Nhân viên nhấp vào \`"Chấp nhận Yêu cầu" (Accept Request)\`, phiếu đó sẽ được gán cho họ và xóa khỏi danh sách chờ công khai. Thành viên Quản trị (Admin) không nhận được hay xem các yêu cầu hỗ trợ đang chờ từ người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-221</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Support Request Assignment:</strong> Các phiếu hỗ trợ đang chờ xử lý chỉ hiển thị với các thành viên Nhân viên. Khi một Nhân viên nhấp vào \`"Accept Request"\`, phiếu đó sẽ được gán cho họ và xóa khỏi danh sách chờ công khai. Thành viên Quản trị không nhận được hay xem các yêu cầu hỗ trợ đang chờ từ người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-222</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Gmail Exclusive:</strong> Chỉ các email kết thúc bằng "@gmail.com" mới được phép đăng ký.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-223</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Uniqueness:</strong> Kiểm tra email và tên người dùng không phân biệt chữ hoa chữ thường và phải là duy nhất trên toàn bộ nền tảng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-224</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Security:</strong> Mật khẩu phải được băm (hashing) bằng BCrypt trước khi lưu trữ vào cơ sở dữ liệu.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-225</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Account Status:</strong> Các tài khoản mới đăng ký được khởi tạo với trạng thái "Active" (Hoạt động), AuthProvider là "Local", và cờ xác minh (verification flag) được đặt là false.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-226</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>OTP Life Cycle:</strong> Mã OTP phải được tiêu thụ ngay khi xác nhận (chỉ sử dụng một lần) và hết hạn trong vòng 2 phút kể từ khi tạo.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-227</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Session Cookie Sync:</strong> Hệ thống phải cập nhật cookie IsVerified thành "true" ngay lập tức khi xác minh thành công để mở khóa động quyền hạn mua sắm và thanh toán mà không yêu cầu đăng nhập lại.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-228</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>External Account Prevention:</strong> Người dùng đã đăng ký bằng xác thực của bên thứ ba (Google OAuth) bị cấm thay đổi mật khẩu vì họ không có chuỗi băm mật khẩu được lưu trữ cục bộ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-229</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Forced Logout:</strong> Khi thay đổi mật khẩu thành công, hệ thống phải ngay lập tức thu hồi mã thông báo làm mới (refresh token), xóa cookie ở phía máy khách, và buộc Người dùng phải xác thực lại để ngăn chặn các phiên bị chiếm quyền điều khiển đang hoạt động.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-230</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Google Email Lock:</strong> Việc sửa đổi email bị khóa nghiêm ngặt đối với các tài khoản Google OAuth để ngăn chặn sự không khớp về ủy quyền.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-231</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Transactional Integrity:</strong> Các sửa đổi hồ sơ trải dài qua các bảng cơ sở dữ liệu User (Người dùng) và Account (Tài khoản) phải được thực thi trong một giao dịch (transaction) duy nhất. Nếu bất kỳ phần nào của truy vấn thất bại (ví dụ: kiểm tra email trùng lặp), giao dịch sẽ cuộn lại (roll back) hoàn toàn.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-232</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Session Synchronization:</strong> Các cookie hiển thị ở phía máy khách (như UserName và AvatarUrl) phải được cập nhật ngay lập tức khi thành công để đảm bảo tiêu đề trang phản ánh động các thay đổi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-233</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Verification Syncing:</strong> Trong quá trình truy xuất hồ sơ, hệ thống phải đọc động cờ xác minh trong cơ sở dữ liệu và cập nhật cookie IsVerified ở phía máy khách để đảm bảo hành vi trang và quyền menu nhất quán.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-234</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Uniqueness Constraint:</strong> Một khóa học cụ thể chỉ có thể được thêm vào danh sách yêu thích (wishlist) của Người dùng một lần duy nhất.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-235</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>AJAX Toggle:</strong> Hành động thêm được xử lý bất đồng bộ qua AJAX (ToggleAjax) nên giao diện người dùng (UI) thay đổi trạng thái ngay lập tức mà không cần tải lại trang.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-236</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Statistics:</strong> Xếp hạng trung bình và tổng số học viên được tổng hợp động. Nếu số liệu thống kê bị thiếu cho một khóa học, xếp hạng mặc định là 4.5 sẽ được hiển thị.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-237</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Permanent Deletion:</strong> Khác với phiếu giảm giá hoặc hồ sơ, các mục trong danh sách yêu thích sẽ bị xóa cứng (hard-deleted) hoàn toàn khỏi cơ sở dữ liệu khi bị gỡ bỏ, vì chúng không yêu cầu bảo lưu lịch sử giao dịch.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-238</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique Username Generation:</strong> Đối với các lượt đăng ký mới qua Google, tên người dùng được trích xuất từ tiền tố của email. Nếu tên người dùng đã tồn tại, hệ thống sẽ thêm một bộ đếm số liên tiếp (ví dụ: johndoe1, johndoe2) cho đến khi nó là duy nhất.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-239</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Verification:</strong> Các tài khoản được đăng ký qua Google OAuth sẽ được gắn cờ đã xác minh (IsVerified \= true) ngay lập tức khi tạo vì Google đã xác minh quyền sở hữu email. Băm mật khẩu rỗng: Các tài khoản Google OAuth được khởi tạo không có chuỗi băm mật khẩu (PasswordHash \= null), bỏ qua xác thực mật khẩu cục bộ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-240</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Suspension Block:</strong> Nếu tài khoản đang có lệnh cấm/khóa hoạt động, hệ thống sẽ từ chối đăng nhập và in ngày kết thúc khóa đình chỉ trong thông báo lỗi.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-241</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Credential Flexibility:</strong> Thông tin định danh đăng nhập có thể là tên người dùng hoặc địa chỉ email của tài khoản (không phân biệt chữ hoa chữ thường).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-242</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>BCrypt Verification:</strong> Việc xác thực mật khẩu cục bộ phải được xử lý bằng BCrypt.Verify.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-243</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role-Based Redirection:</strong> Những người dùng có vai trò Quản trị (Admin) và Nhân viên (Staff) sau khi xác thực sẽ được chuyển hướng đến bảng quản trị, trong khi Người dùng (Users) và Giảng viên (Instructors) sẽ được chuyển hướng đến trang chủ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-244</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Validity Criteria:</strong> Để được áp dụng, một phiếu giảm giá phải đang hoạt động, nằm trong khoảng ngày có hiệu lực (Ngày Bắt đầu \<= Hiện tại \<= Ngày Kết thúc), còn số lượt sử dụng (Đã sử dụng \< Giới hạn sử dụng), và tổng phụ của giỏ hàng phải đáp ứng Giá trị Đơn hàng Tối thiểu (MinOrderValue).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-245</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Discount Logic:</strong> Tính toán chiết khấu Phần trăm/Cố định và Lưu trữ Phiên bằng Cookie: Các phiếu giảm giá đã được áp dụng sẽ được ghi vào cookie cục bộ để duy trì trạng thái giảm giá trong suốt các hoạt động duyệt web cho đến khi thanh toán.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-246</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Cookie Invalidation:</strong> Mã giảm giá phải được xóa hoàn toàn khỏi cookie phiên cục bộ. Đảo ngược giá: Việc xóa phiếu giảm giá phải ngay lập tức khôi phục giá trị chiết khấu của giỏ hàng về 0.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-247</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Verified Email Requirement:</strong> Chỉ những tài khoản đã hoàn tất xác minh email mới được phép sử dụng tính năng đặt lại mật khẩu quên (forget password reset).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-248</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Token Invalidation/Cookie Clearance:</strong> Khi đăng xuất, phần phụ trợ (backend) phải ngay lập tức làm rỗng/thu hồi RefreshToken đã lưu và xóa sạch tất cả cookie phía máy khách.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-249</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Required Credentials:</strong> Email, Mật khẩu, và Tên Hiển thị (Display Name) là các trường bắt buộc không được để trống.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-250</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto-Verification:</strong> Do tài khoản được tạo trực tiếp bởi Quản trị viên (Admin), tài khoản Nhân viên (Staff) mới sẽ được khởi tạo với trạng thái đã xác minh (IsVerified \= true) và đang hoạt động (AccountStatus \= "Active") theo mặc định.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-251</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role Scope Restriction:</strong> Điểm cuối (endpoint) cập nhật này bị giới hạn riêng cho các tài khoản mang vai trò "nhân viên" (staff).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-252</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Ban/Lockout Logic:</strong> Lệnh cấm (Banning) sẽ thêm một bản ghi khóa 100 năm; Hủy cấm (Unbanning) sẽ xóa tất cả các bản mục khóa đang hoạt động để khôi phục quyền truy cập đăng nhập.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-253</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Super Admin Protection:</strong> Tài khoản Siêu Quản trị (Super Admin) (vai trò "admin") được bảo vệ và không thể bị cấm hoặc khóa.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-254</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role-Specific Data Aggregation:</strong> Hệ thống hiển thị dữ liệu dựa trên các vai trò cụ thể (Học viên, Giảng viên, Quản lý/Nhân viên) và phát hiện các trường hợp bị khóa nếu tài khoản đã bị cấm.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-255</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Search Criteria:</strong> Các từ khóa tìm kiếm được khớp (chuỗi con không phân biệt chữ hoa chữ thường) với Email, Số điện thoại, Tên hiển thị của Quản lý hoặc Họ tên của Người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-256</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Search Criteria:</strong> Các từ khóa tìm kiếm được khớp (chuỗi con không phân biệt chữ hoa chữ thường) với Email, Số điện thoại, Tên hiển thị của Quản lý hoặc Họ tên của Người dùng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-257</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Default Pagination:</strong> Kích thước trang mặc định là 10 tài khoản mỗi trang nếu không có chỉ định nào khác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-258</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role Filters:</strong> Các bộ lọc vai trò được hỗ trợ bao gồm: "user" (người dùng), "instructor" (giảng viên), "staff" (nhân viên), "registered\_staff" (nhân viên đăng ký), hoặc "all" (tất cả).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-259</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Flag Thresholds and Status Progression:</strong> Cờ thứ nhất/thứ hai (cảnh cáo); cờ thứ 3 (cấm) sẽ kích hoạt khóa tài khoản 30 ngày.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-260</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Non-Blocking Notifications:</strong> Lỗi khi gửi thông báo không được phép chặn hoặc đảo ngược (roll back) quá trình giao dịch gắn cờ.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-261</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique:</strong> Mã, Loại Phiếu giảm giá, Giới hạn Giá trị Chiết khấu, Ngày Hiệu lực và Ràng buộc Giới hạn Sử dụng cho các phiếu giảm giá mới.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-262</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Sorting/Search:</strong> Sắp xếp mặc định theo ID, sắp xếp trong bộ nhớ (in-memory) ở phía máy khách, và khớp CouponCode không phân biệt chữ hoa chữ thường.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-263</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Locked Fields:</strong> Mã, Loại, Giá trị và Giá trị đơn hàng tối thiểu (MinOrderValue) là các trường chỉ đọc (read-only). Ngày kết thúc (End Date) và Giới hạn sử dụng (Usage Limit) có những ràng buộc cập nhật cụ thể.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-264</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Soft-Delete Only:</strong> Cấm xóa cứng (Hard deletion). Thực thi hết hạn (Expiration Enforcement): Ngày kết thúc được cập nhật thành ngày hôm trước để đảm bảo phiếu giảm giá không thể sử dụng được nữa.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-265</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Filter Parameters:</strong> Lọc theo trạng thái IsActive, Loại Phiếu giảm giá (CouponType), hoặc kết hợp cả hai trong một truy vấn cơ sở dữ liệu duy nhất.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-266</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Lockout Status Monitoring:</strong> Hồ sơ (profile) hiển thị bất kỳ bản ghi đình chỉ nào đang hoạt động (thời gian bắt đầu và kết thúc) đối với tài khoản quản lý, giúp người dùng quản trị nhận thức được các cấu hình khóa hiện hành.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-267</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Role-based Labeling:</strong> Giao diện hiển thị "Super Admin" (Siêu Quản trị) nếu vai trò của người quản lý là "ADMIN", và "Staff Support" (Hỗ trợ Nhân viên) trong các trường hợp khác.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-268</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Unique Quiz Title:</strong> Tiêu đề bài trắc nghiệm (quiz) phải là duy nhất đối với mỗi giảng viên. Hệ thống kiểm tra điều này khi tạo và cập nhật quiz.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-269</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Total Questions:</strong> Giới hạn tổng số câu hỏi cho một bài trắc nghiệm phải lớn hơn 0.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-270</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Distribution Integrity:</strong> Tổng số câu hỏi được phân bổ qua các bài học phải bằng chính xác tổng số câu hỏi (TotalQuestions) được cấu hình cho bài trắc nghiệm đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-271</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Question Bank Sufficiency:</strong> Đối với mỗi phân bổ bài học, số lượng câu hỏi yêu cầu không được vượt quá số lượng câu hỏi thực tế có sẵn trong Ngân hàng câu hỏi cho bài học cụ thể đó.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-272</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Attempt Lockdown:</strong> Giảng viên không thể cập nhật cài đặt, xóa, hoặc gỡ bỏ bài trắc nghiệm khỏi khóa học nếu hiện tại đang có học viên làm bài (chưa nộp).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-273</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Enrolled Course Protection:</strong> Không thể xóa một bài trắc nghiệm nếu nó đã được gán cho bất kỳ khóa học nào đang có học viên đăng ký.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-274</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Pending Course Lockdown:</strong> Không thể thêm, gỡ bỏ, hoặc thay đổi trạng thái ẩn của bài trắc nghiệm trong một khóa học khi khóa học đó đang ở trạng thái "Pending" (Chờ phê duyệt).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-275</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Auto Draft Fallback:</strong> Việc thêm hoặc gỡ bỏ một bài trắc nghiệm khỏi một khóa học đã xuất bản ("Published") sẽ tự động chuyển trạng thái của khóa học đó về "Draft" (Bản nháp).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-276</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Quiz Generation Logic:</strong> Khi học viên bắt đầu bài trắc nghiệm, hệ thống sẽ rút ngẫu nhiên các câu hỏi từ Ngân hàng câu hỏi dựa trên phân bổ bài học (QuizLessonDistribution). Nếu phân bổ không đủ số lượng, hệ thống sẽ lấy ngẫu nhiên các câu hỏi còn thiếu từ kho câu hỏi của toàn bộ khóa học.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-277</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Score Calculation:</strong> Điểm của bài làm được tính bằng (Số câu đúng / Tổng số câu hỏi) * 100, làm tròn đến số nguyên gần nhất.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-278</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Passing Condition:</strong> Bài làm của học viên được đánh dấu là "Đạt" (Passed) nếu điểm số tính được lớn hơn hoặc bằng mức điểm đạt (PassingScore) được cấu hình của bài trắc nghiệm.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-279</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Options:</strong> Một câu hỏi phải có ít nhất 2 lựa chọn (options).</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-280</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Minimum Correct Options:</strong> Một câu hỏi phải có ít nhất 1 lựa chọn đúng.</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;">BR-281</td>
+                <td style="border: 1px solid black; padding: 5px; vertical-align: top;"><strong>Instructor Course Ownership:</strong> Giảng viên chỉ có thể thêm, sửa, xóa hoặc xem câu hỏi thuộc về khóa học mà họ sở hữu.</td>
+            </tr>
         </tbody>
     </table>
 </div>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Notification</li>
+    <li><b>Test requirement:</b> Tests for Staff and Admin functionalities to view, filter, sort, search, and send system notifications.</li>
+    <li><b>Number of TCs:</b> 27</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Notification List</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>View Notification List Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Access the System Notifications page.</td>
+        <td>System displays the comprehensive notifications log table, role tabs, search bar, and filter controls.</td>
+        <td>Actor is successfully authenticated as Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Session Invalid</td>
+        <td>1. Access the System Notifications page as a guest.</td>
+        <td>System displays an authentication error message and redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as User or Instructor.<br>2. Attempt to access the System Notifications page.</td>
+        <td>System redirects the user to the access denied error page.</td>
+        <td>Actor is not a Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Notification Detail</td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>View Notification Detail Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Click on a notification row in the System Notifications table.</td>
+        <td>System displays the notification detail modal, showing the recipient name and email, message title, full message details, creation timestamp, and read status. Clicking the Close button closes the modal.</td>
+        <td>Actor has access and the notification exists.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Auto-mark Notification as Read</td>
+        <td>1. Login as Staff.<br>2. Click on an unread notification row that is addressed to the active Staff member.</td>
+        <td>System displays the detail modal, updates the notification's status to read in the database, updates the detail status badge, and refreshes the background table view dynamically.</td>
+        <td>Target notification is unread and addressed to the viewing Staff member.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Database Save Failure (Auto-mark)</td>
+        <td>1. Simulate a database error.<br>2. Click on an unread notification row addressed to the active Staff member.</td>
+        <td>System displays a database error message.</td>
+        <td>Target notification is unread and addressed to the viewing Staff member.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Session Invalid (Auto-mark)</td>
+        <td>1. Simulate session expiry.<br>2. Click on an unread notification row addressed to the active Staff member.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Search Notifications</td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Search Notifications Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Type a search query (e.g. recipient name, email, title keyword) in the search input box.</td>
+        <td>System filters the notifications list in real time and displays matching notifications in the table, preserving any active role tab filters or sorting orders.</td>
+        <td>Actor is successfully authenticated and on the System Notifications page.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Clear Search Query</td>
+        <td>1. Delete all text from the search input box.</td>
+        <td>System filters the notifications list using only the remaining active role tab filters and sorting orders, then displays the updated list in the table.</td>
+        <td>A search query was previously entered.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>No Matching Notifications Found</td>
+        <td>1. Enter a search query that does not match any notifications in the list.</td>
+        <td>System displays a message indicating 'No notifications found matching your filters'.</td>
+        <td>Actor is on the System Notifications page.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Sort Notifications</td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Sort Notifications Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Select a sorting option (e.g. 'Title (A - Z)') from the sort dropdown list.</td>
+        <td>System sorts the notification list in real time and displays the sorted list in the table.</td>
+        <td>Actor is successfully authenticated and on the System Notifications page.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Clear Sorting</td>
+        <td>1. Click the Reset button.</td>
+        <td>System resets the sort selector to its default ('Newest First') and displays the updated sorted list in the table.</td>
+        <td>A non-default sorting option is active.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Filter Notifications</td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Filter by Role Tab</td>
+        <td>1. Login as Staff or Admin.<br>2. Click a recipient role tab button (e.g. 'Students').</td>
+        <td>System filters the notifications list in real time to show only notifications addressed to the selected role.</td>
+        <td>Actor is successfully authenticated and on the System Notifications page.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Filter by Status</td>
+        <td>1. Login as Staff or Admin.<br>2. Select a status filter option (e.g. 'Unread') from the status dropdown.</td>
+        <td>System filters the notifications list in real time to show only notifications matching the selected status.</td>
+        <td>Actor is successfully authenticated and on the System Notifications page.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Filter by Role and Status</td>
+        <td>1. Login as Staff or Admin.<br>2. Click a role tab (e.g. 'Instructors') and select a status (e.g. 'Read').</td>
+        <td>System applies both filters in real time and displays only the notifications that match both criteria.</td>
+        <td>Actor is successfully authenticated and on the System Notifications page.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Clear Filters</td>
+        <td>1. Click the Reset button.</td>
+        <td>System resets the active role tab to 'All Notifications' and the status dropdown to 'All Statuses', displaying the unfiltered list.</td>
+        <td>At least one filter is active.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Send Notifications</td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Send Notification to Specific User Successfully</td>
+        <td>1. Click the 'Create Notification' button.<br>2. Select 'Specific User (Email)' from the Recipient Group dropdown.<br>3. Enter valid recipient email in the tag box.<br>4. Enter valid title and content.<br>5. Click 'Send Notification' button.</td>
+        <td>System saves the notification, broadcasts it via SignalR, displays a success popup message, closes the modal, and refreshes the sent notifications table list.</td>
+        <td>Actor is successfully authenticated as Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Autocomplete Email Suggestions</td>
+        <td>1. Type characters in the Recipient Email input box.</td>
+        <td>System displays a dropdown list of matching registered emails that are not already selected.</td>
+        <td>Actor is on the Compose New Notification modal.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Add Multiple Emails</td>
+        <td>1. Type an email address and press Enter.<br>2. Type another email address and press Enter.</td>
+        <td>System adds each email as a tag pill in the tag box.</td>
+        <td>Actor is on the Compose New Notification modal.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Remove Email Pill</td>
+        <td>1. Click the close (X) icon on one of the email tag pills.</td>
+        <td>System removes the tag pill from the recipient list.</td>
+        <td>An email tag pill is present in the tag box.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Broadcast to All Users</td>
+        <td>1. Select 'Broadcast (All Users)' from the Recipient Group dropdown.<br>2. Enter title and content.<br>3. Click 'Send Notification'.</td>
+        <td>System hides the Recipient Email box, saves the notification for all users, broadcasts via SignalR, displays a success popup, and refreshes the list.</td>
+        <td>Actor is on the Compose New Notification modal.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Missing Recipient Email</td>
+        <td>1. Select 'Specific User' but leave the email tag box empty.<br>2. Enter valid title and content.<br>3. Click 'Send Notification'.</td>
+        <td>System displays a warning notification indicating 'Please select at least one recipient email'.</td>
+        <td>Actor is on the Compose New Notification modal.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Self-Notification Blocked</td>
+        <td>1. Attempt to add the actor's own email address as a recipient.</td>
+        <td>System displays a warning notification: 'You cannot send a notification to yourself'.</td>
+        <td>Actor is on the Compose New Notification modal.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>Invalid Recipient Role (Backend validation)</td>
+        <td>1. Simulate sending a notification to another Staff or Admin using 'Specific User' or 'Role' group.</td>
+        <td>System displays an error message indicating invalid operation.</td>
+        <td>Actor is successfully authenticated as Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>TargetUserIds is Empty (Backend validation)</td>
+        <td>1. Simulate sending a notification where the target list resolves to 0 valid users.</td>
+        <td>System displays an error message regarding empty recipients.</td>
+        <td>Actor is successfully authenticated as Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-026</td>
+        <td>Database Save Failure (Send Notification)</td>
+        <td>1. Simulate a database error.<br>2. Submit a valid 'Send Notification' form.</td>
+        <td>System displays a database error message.</td>
+        <td>Actor is on the Compose New Notification modal with valid inputs.</td>
+        <td>Failed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-027</td>
+        <td>Session Invalid (Send Notification)</td>
+        <td>1. Simulate session expiry.<br>2. Submit a valid 'Send Notification' form.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-02</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-09</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>

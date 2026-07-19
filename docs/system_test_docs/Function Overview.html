@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, Arial, sans-serif;
+        font-size: 10pt;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px dotted black;
+        padding: 5px;
+        text-align: left;
+    }
+    th {
+        background-color: #1a237e; /* Dark blue background */
+        color: white;
+        font-weight: bold;
+        text-align: center;
+    }
+    td.no-col {
+        text-align: right;
+    }
+    a {
+        color: blue;
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<table>
+    <tr>
+        <th>No</th>
+        <th>Function Name</th>
+        <th>Sheet Name</th>
+        <th>Description</th>
+        <th>Pre-Condition</th>
+    </tr>
+    <tr>
+        <td class="no-col">1</td>
+        <td>Report A Course</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Allows a user to report a course for violations (e.g., misleading content, copyright violation, spam, adult content). The system allows adding multiple reasons, validates the input, and submits the report to the server for moderation.</td>
+        <td>Authenticated enrolled user (not owner/manager). Course is in a reportable state.</td>
+    </tr>
+    <tr>
+        <td class="no-col">2</td>
+        <td>Report A Review</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Allows a user to report a course or lesson review for violations such as spam, offensive content, or fake reviews. The system prompts the user to select a reason and optionally provide a description before submitting the report for moderation.</td>
+        <td>Authenticated user.</td>
+    </tr>
+    <tr>
+        <td class="no-col">3</td>
+        <td>View List of User Reports</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Displays reported courses, reported course reviews, and reported lesson reviews submitted by users. All category reports are accessible via tabs and subtabs; Actor can switch between category subtabs without a page reload.</td>
+        <td>Authenticated Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">4</td>
+        <td>View Report Detail</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Displays details and evidence of a reported violation.</td>
+        <td>Authenticated Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">5</td>
+        <td>Filter Reports</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Filters reports by type (Course, Review, Lesson) or status.</td>
+        <td>Authenticated Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">6</td>
+        <td>Resolve Report</td>
+        <td><a href="#">Manage User Report</a></td>
+        <td>Resolves a report by taking moderation action (e.g., removing content) and updating status.</td>
+        <td>Authenticated Staff or Admin. Target report is in a resolvable state.</td>
+    </tr>
+    <tr>
+        <td class="no-col">7</td>
+        <td>Add AI Model</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to register a new AI moderation model configuration in the system by filling out the model registration form. The system validates all required fields before persisting the new model record to the database.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">8</td>
+        <td>Update AI Model</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to update an existing AI model's configuration details. The edit form allows modification of provider, version, path, and description. The system validates all required fields before persisting the changes to the database.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">9</td>
+        <td>Delete AI Model</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to soft-delete an AI model by toggling its status between active and inactive. No data is permanently removed; an active model is set to inactive and an inactive model is restored to active.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">10</td>
+        <td>View AI Model Details</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Displays the full configuration details of a selected AI model in a details dialog. The detail data is pre-loaded with the page and presented client-side without an additional server request.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">11</td>
+        <td>View AI Model List</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Displays a paginated list of all registered AI moderation models, showing each model's name, version, type, process type, status, and last modified date. Admin can navigate between pages using pagination controls.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">12</td>
+        <td>Set Confidence Threshold</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Allows an Admin to configure the spam confidence, toxicity confidence, and similarity score thresholds used by the automated AI moderation system. The current threshold values are pre-filled from the database on page load. If no configuration exists, system defaults are applied.</td>
+        <td>Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">13</td>
+        <td>View Activity Log</td>
+        <td><a href="#">Manage AI Service</a></td>
+        <td>Displays chronological paginated logs of AI moderation events across three categories: course moderation, course review moderation, and lesson review moderation. All category logs are loaded at page load; Admin can switch between category subtabs without a page reload.</td>
+        <td>Admin must be successfully authenticated.</td>
+    <tr>
+        <td class="no-col">14</td>
+        <td>Add to cart</td>
+        <td><a href="#">Manage Cart</a></td>
+        <td>This use case allows an authenticated user to add one or more courses to their shopping cart to purchase them together in a single transaction.</td>
+        <td>User or Instructor must be successfully authenticated and have a verified email status.</td>
+    </tr>
+    <tr>
+        <td class="no-col">15</td>
+        <td>View Cart items</td>
+        <td><a href="#">Manage Cart</a></td>
+        <td>Displays the list of courses added to the active user's shopping cart, calculates the pricing summary (subtotal, coupon discounts, final payable amount), and lists available checkout coupon options.</td>
+        <td>User must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">16</td>
+        <td>Delete cart items</td>
+        <td><a href="#">Manage Cart</a></td>
+        <td>Allows authenticated Users or Instructors to remove a course from their shopping cart.</td>
+        <td>User or Instructor must be successfully authenticated and has at least one course item in their shopping cart.</td>
+    <tr>
+        <td class="no-col">17</td>
+        <td>View Chat List</td>
+        <td><a href="#">Chat</a></td>
+        <td>Allows authenticated Users or Instructors to view their list of active conversations, including partner avatar, partner name, last message snippet, timestamp, online status, and unread message count badge.</td>
+        <td>Actor must be successfully authenticated and approved.</td>
+    </tr>
+    <tr>
+        <td class="no-col">18</td>
+        <td>Delete Chats</td>
+        <td><a href="#">Chat</a></td>
+        <td>Allows the User or Instructor to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</td>
+        <td>Actor must be successfully authenticated and have an active conversation open.</td>
+    </tr>
+    <tr>
+        <td class="no-col">19</td>
+        <td>Send Messages</td>
+        <td><a href="#">Chat</a></td>
+        <td>Allows the User or Instructor to send text messages and optionally attach files within an active conversation room. The message is transmitted in real time to other participants.</td>
+        <td>Actor must be successfully authenticated and have an active conversation open.</td>
+    </tr>
+    <tr>
+        <td class="no-col">20</td>
+        <td>View Chat History</td>
+        <td><a href="#">Chat</a></td>
+        <td>Allows the User or Instructor to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</td>
+        <td>Actor must be successfully authenticated and have access to the selected chat.</td>
+    </tr>
+    <tr>
+        <td class="no-col">21</td>
+        <td>Search Chat History</td>
+        <td><a href="#">Chat</a></td>
+        <td>Allows the Actor to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</td>
+        <td>Actor must be successfully authenticated and is on the Chat messages page.</td>
+    <tr>
+        <td class="no-col">22</td>
+        <td>View Chat List</td>
+        <td><a href="#">Manage Chat</a></td>
+        <td>Allows the Actor to view their list of active support or moderation conversations, view pending support request tickets, search for specific conversations, filter by unread status, and sort the conversation list.</td>
+        <td>Actor must be successfully authenticated as Staff or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">23</td>
+        <td>View Chat History</td>
+        <td><a href="#">Manage Chat</a></td>
+        <td>Allows authenticated Actor users to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</td>
+        <td>Actor must be successfully authenticated as Staff or Admin and have access to the selected chat room.</td>
+    </tr>
+    <tr>
+        <td class="no-col">24</td>
+        <td>Send Messages</td>
+        <td><a href="#">Manage Chat</a></td>
+        <td>Allows authenticated Actor users to send text messages and optionally attach files (images or documents) within an active support/moderation conversation room. The message is transmitted in real time to the recipient.</td>
+        <td>Actor must be successfully authenticated as Staff or Admin and have an active conversation open.</td>
+    </tr>
+    <tr>
+        <td class="no-col">25</td>
+        <td>Delete Chats</td>
+        <td><a href="#">Manage Chat</a></td>
+        <td>Allows authenticated Staff or Admin users to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</td>
+        <td>Actor must be successfully authenticated as Staff or Admin and have an active conversation open.</td>
+    </tr>
+    <tr>
+        <td class="no-col">26</td>
+        <td>Search Chat History</td>
+        <td><a href="#">Manage Chat</a></td>
+        <td>Allows authenticated Staff or Admin users to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</td>
+        <td>Actor must be successfully authenticated as Staff or Admin and is on the Chat page under the Admin Panel dashboard.</td>
+    <tr>
+        <td class="no-col">27</td>
+        <td>View Instructor Applications</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff and Admin users to view the list of pending instructor registration requests with applicant details, search, filter, and sort options.</td>
+        <td>User must be successfully authenticated as a Staff member or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">28</td>
+        <td>Approve Instructor Applications</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff or Admin users to approve an instructor's pending registration application, which promotes their role to Instructor in the database and updates their status.</td>
+        <td>User must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
+    </tr>
+    <tr>
+        <td class="no-col">29</td>
+        <td>Reject Instructor Application</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff or Admin users to reject an instructor's pending registration application. A detailed rejection reason is required, which is recorded in the database.</td>
+        <td>Users must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
+    </tr>
+    <tr>
+        <td class="no-col">30</td>
+        <td>View Instructor Applications Detail</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff or Admin users to inspect the detailed credentials of an instructor applicant, including their external LinkedIn, YouTube, and Facebook profiles, and submitted resume or portfolio documents.</td>
+        <td>User must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
+    </tr>
+    <tr>
+        <td class="no-col">31</td>
+        <td>Search Instructor Applications</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff or Admin users to search the pending instructor applications list by name, email, professional title, or expertise specialization in real-time.</td>
+        <td>User must be successfully authenticated as a Staff member or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">32</td>
+        <td>Filter Instructor Applications</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff or Admin users to filter the pending instructor applications list by applicant expertise or specialization.</td>
+        <td>User must be successfully authenticated as a Staff member or Admin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">33</td>
+        <td>Sort Instructor Applications</td>
+        <td><a href="#">Manage Instructor Application</a></td>
+        <td>Allows authenticated Staff or Admin users to sort the pending instructor applications list by application date (newest/oldest) or alphabetical order of the applicant's name.</td>
+        <td>User must be successfully authenticated as a Staff member or Admin.</td>
+    <tr>
+        <td class="no-col">34</td>
+        <td>View Notification list</td>
+        <td><a href="#">Notification</a></td>
+        <td>Allows users and instructors to view their list of notifications, search, sort, filter, view details, mark notifications as read, mark all notifications as read, or delete notifications.</td>
+        <td>Actor must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">35</td>
+        <td>View Notification Detail</td>
+        <td><a href="#">Notification</a></td>
+        <td>Allows users and instructors to view the detailed content of a notification in a modal dialog. If the notification is unread, the system automatically marks it as read.</td>
+        <td>User or Instructor must be successfully authenticated and the notifications page must be successfully loaded.</td>
+    </tr>
+    <tr>
+        <td class="no-col">36</td>
+        <td>Mark As Read</td>
+        <td><a href="#">Notification</a></td>
+        <td>Allows users and instructors to mark their received notifications as read. The system updates the notification status in the database, notifies active client sessions in real-time, and updates the unread count in the UI.</td>
+        <td>User or Instructor must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">37</td>
+        <td>Delete Notifications</td>
+        <td><a href="#">Notification</a></td>
+        <td>Allows users and instructors to permanently delete a notification. The system displays a confirmation dialog before sending the request to the database.</td>
+        <td>User or Instructor must be successfully authenticated and the notification must exist.</td>
+    <tr>
+        <td class="no-col">38</td>
+        <td>Send Notifications</td>
+        <td><a href="#">Manage Notification</a></td>
+        <td>Allows authenticated Staff or Admin users to compose and send notifications either to a specific registered user (using email tags) or broadcasted to all users.</td>
+        <td>Staff or Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">39</td>
+        <td>View Notification List</td>
+        <td><a href="#">Manage Notification</a></td>
+        <td>Allows authenticated Staff or Admin to view the list of all system-sent notifications, with search, role tab filtering, status filtering, sorting, page navigation, and detail view modal options.</td>
+        <td>Staff or Admin must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">40</td>
+        <td>View Notification Detail</td>
+        <td><a href="#">Manage Notification</a></td>
+        <td>Allows authenticated Staff or Admin to view the detailed recipient, title, content, creation timestamp, and read status of a notification. If a Staff member views an unread notification addressed to themselves, the system automatically marks it as read.</td>
+        <td>Staff or Admin must be successfully authenticated and the target notification must exist.</td>
+    </tr>
+    <tr>
+        <td class="no-col">41</td>
+        <td>Search Notifications</td>
+        <td><a href="#">Manage Notification</a></td>
+        <td>Allows authenticated Staff or Admin to search the system notifications log by recipient name, email address, message title, or content.</td>
+        <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">42</td>
+        <td>Sort Notifications</td>
+        <td><a href="#">Manage Notification</a></td>
+        <td>Allows authenticated Staff or Admin to sort the system notifications log by timestamp, title, or recipient name.</td>
+        <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">43</td>
+        <td>Filter Notifications</td>
+        <td><a href="#">Manage Notification</a></td>
+        <td>Allows authenticated Staff or Admin users to filter the system notifications log by recipient role and/or read status.</td>
+        <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
+    </tr>
+</table>
+
+</body>
+</html>
