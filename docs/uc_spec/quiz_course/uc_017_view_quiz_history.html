@@ -1,0 +1,104 @@
+﻿<div class="uc-container" style="font-family: 'Times New Roman', serif; font-size: 12pt; background-color: transparent; color: black;">
+    <style>
+        .uc-container, .uc-container table, .uc-container tr, .uc-container td, .uc-container p, .uc-container ol, .uc-container ul, .uc-container li, .uc-container span, .uc-container strong, .uc-container b {
+            font-family: 'Times New Roman', serif !important;
+            font-size: 12pt !important;
+            color: black !important;
+        }
+    </style>
+    <table style="border-collapse: collapse; width: 100%; border: 1px solid black;">
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">UC ID and Name</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">UC-17-View Quiz History</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Created By:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">Truong Phuoc Tai</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top; width: 20%;">Date Created:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">11/07/2026</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Primary Actor:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">User</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Secondary Actors:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Trigger:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Actor accesses the quiz history page.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Description:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Allows a User to view a paginated list of their past attempts for a specific quiz.</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Preconditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>PRE-1.</b> None.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Post-conditions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;"><b>POST-1.</b> The paginated list of quiz attempts is displayed to the actor.</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Normal Flow:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A. View Quiz History Successfully</strong></p>
+                <ol style="margin: 0; padding-left: 20px;">
+                    <li>Actor accesses the quiz history page.</li>
+                    <li>The system retrieves the paginated list of quiz attempts for the actor and quiz.</li>
+                    <li>The system maps the attempts to the summary response format.</li>
+                    <li>The system displays the quiz history list to the actor.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Alternative Flows:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>A.1 Navigate Pagination</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>Actor clicks a page link or page navigation control.</li>
+                    <li>The system updates the current page index.</li>
+                    <li>Back to step 2.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Exceptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0 0 5px 0;"><strong>EX-1 Session Invalid (Not Logged In)</strong></p>
+                <ol style="margin: 0 0 10px 0; padding-left: 20px;">
+                    <li>The system displays an authentication error message.</li>
+                    <li>The system redirects the user to the login page.</li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Priority:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Frequency of Use:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">Medium</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Business Rules:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                N/A
+            </td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Other Information:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">N/A</td>
+        </tr>
+        <tr>
+            <td style="border: 1px solid black; padding: 5px; text-align: right; vertical-align: top;">Assumptions:</td>
+            <td style="border: 1px solid black; padding: 5px; text-align: left; vertical-align: top;" colspan="3">
+                <p style="margin: 0;">User has stable internet connection.</p>
+            </td>
+        </tr>
+    </table>
+</div>

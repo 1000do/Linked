@@ -295,5 +295,305 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             result.Should().BeEquivalentTo(expectedResponse);
         }
+        // ═══════════════════════════════════════════════════════════════════════════
+        // ProcessPaymentSuccessAsync
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_ExistingTransactionNotSucceeded_ProcessesNormally()
+        {
+            string sessionId = "sess_1";
+            var transactions = new List<Transaction> 
+            { 
+                new Transaction { TransactionsStatus = "pending", InstructorPayouts = new List<InstructorPayout>() } 
+            };
+            var metadata = new Dictionary<string, string> { { "userId", "1" }, { "courseIds", "2" }, { "recipientEmail", "rec@test.com" } };
+            var course = new Course { Title = "Test Course", Price = 100m, CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), InstructorId = 3 };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(transactions);
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _courseRepoMock.GetCourseWithInstructorAsync(2).Returns(course);
+            _adminFinanceServiceMock.GetPayoutDaysConfigAsync().Returns("15,30"); // Prevent error if it proceeds
+            
+            // Just simulate failure in AddOrder so we can catch it and verify we reached inside.
+            // Or better, simulate CourseNotPublished so we hit the rollback early.
+            course.CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue();
+            Func<Task> act = async () => await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await act.Should().ThrowAsync<InvalidOperationException>();
+        }
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_AlreadyProcessed_ReturnsEarly()
+        {
+            string sessionId = "sess_1";
+            var transactions = new List<Transaction> 
+            { 
+                new Transaction { TransactionsStatus = "succeeded", InstructorPayouts = new List<InstructorPayout> { new InstructorPayout() } } 
+            };
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(transactions);
+
+            await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await _repoMock.Received(1).GetTransactionsBySessionIdAsync(sessionId);
+            await _paymentGatewayMock.DidNotReceive().GetSessionMetadataAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_NoMetadata_ThrowsInvalidOperationException()
+        {
+            string sessionId = "sess_1";
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns((Dictionary<string, string>?)null);
+
+            Func<Task> act = async () => await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Valid metadata or UserId was not found in the Stripe Session.");
+        }
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_NoCourseIds_ThrowsInvalidOperationException()
+        {
+            string sessionId = "sess_1";
+            var metadata = new Dictionary<string, string> { { "userId", "1" } };
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
+
+            Func<Task> act = async () => await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Valid Course ID list was not found in the Stripe session/intent.");
+        }
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_ValidRequest_ProcessesSuccessfully()
+        {
+            string sessionId = "sess_1";
+            int userId = 1;
+            int courseId = 2;
+            var metadata = new Dictionary<string, string> 
+            { 
+                { "userId", userId.ToString() }, 
+                { "courseIds", courseId.ToString() },
+                { "recipientEmail", "rec@test.com" }
+            };
+            
+            var course = new Course { Title = "Test Course", Price = 100m, CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), InstructorId = 3 };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            var recipientAccount = new Account { AccountId = 10, Email = "rec@test.com" };
+            
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
+            _paymentGatewayMock.GetPaymentReferenceAsync(sessionId).Returns("pi_1");
+            _adminFinanceServiceMock.GetCurrentTransferRateAsync().Returns(80m);
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _courseRepoMock.GetCourseWithInstructorAsync(courseId).Returns(course);
+            _adminFinanceServiceMock.GetPayoutDaysConfigAsync().Returns("15,30");
+            _userRepoMock.GetAccountByEmailAsync("rec@test.com").Returns(recipientAccount);
+
+            await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await _repoMock.Received(1).AddOrderAsync(Arg.Is<OrderInfo>(o => o.UserId == userId && o.OrderStatus == "paid"));
+            await _repoMock.Received(1).AddOrderItemAsync(Arg.Is<OrderItem>(oi => oi.CourseId == courseId && oi.PurchasePrice == 100m));
+            await _repoMock.Received(1).AddTransactionAsync(Arg.Is<Transaction>(t => t.Amount == 100m && t.StripePaymentintentId == "pi_1"));
+            await _giftRepoMock.Received(1).AddAsync(Arg.Is<Gift>(g => g.RecipientEmail == "rec@test.com" && g.DeliveryStatus == "sent"));
+            await _emailServiceMock.Received(1).SendEmailAsync("rec@test.com", Arg.Any<string>(), Arg.Any<string>());
+            await _repoMock.Received(1).AddInstructorPayoutAsync(Arg.Any<InstructorPayout>());
+            await dbTransactionMock.Received(1).CommitAsync();
+            await _hubContextMock.Clients.Group("AdminFinance").Received(1).SendCoreAsync("UpdatePayoutStatus", Arg.Any<object[]>());
+        }
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_CourseNotPublished_RollsBackTransaction()
+        {
+            string sessionId = "sess_1";
+            var metadata = new Dictionary<string, string> { { "userId", "1" }, { "courseIds", "2" } };
+            var course = new Course { Title = "Test Course", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Draft.ToValue() };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
+            _paymentGatewayMock.GetPaymentReferenceAsync(sessionId).Returns("pi_1");
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _courseRepoMock.GetCourseWithInstructorAsync(2).Returns(course);
+
+            Func<Task> act = async () => await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"The course \"{course.Title}\" is not published and cannot be purchased.");
+            await dbTransactionMock.Received(1).RollbackAsync();
+        }
+
+        [Fact]
+        public async Task ProcessPaymentSuccessAsync_DbException_RollsBackTransaction()
+        {
+            string sessionId = "sess_1";
+            var metadata = new Dictionary<string, string> { { "userId", "1" }, { "courseIds", "2" } };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
+            _paymentGatewayMock.GetPaymentReferenceAsync(sessionId).Returns("pi_1");
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _repoMock.When(x => x.AddOrderAsync(Arg.Any<OrderInfo>())).Throw(new Exception("DB Error"));
+
+            Func<Task> act = async () => await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await act.Should().ThrowAsync<Exception>().WithMessage("DB Error");
+            await dbTransactionMock.Received(1).RollbackAsync();
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // ProcessPaymentIntentSuccessAsync
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        [Fact]
+        public async Task ProcessPaymentIntentSuccessAsync_AlreadyProcessed_ReturnsEarly()
+        {
+            string intentId = "pi_1";
+            var transactions = new List<Transaction> 
+            { 
+                new Transaction { TransactionsStatus = "succeeded", InstructorPayouts = new List<InstructorPayout> { new InstructorPayout() } } 
+            };
+            _repoMock.GetTransactionsBySessionIdAsync(intentId).Returns(transactions);
+
+            await _sut.ProcessPaymentIntentSuccessAsync(intentId);
+
+            await _repoMock.Received(1).GetTransactionsBySessionIdAsync(intentId);
+            await _paymentGatewayMock.DidNotReceive().GetPaymentIntentMetadataAsync(Arg.Any<string>());
+        }
+
+        [Fact]
+        public async Task ProcessPaymentIntentSuccessAsync_NoMetadata_ThrowsInvalidOperationException()
+        {
+            string intentId = "pi_1";
+            _repoMock.GetTransactionsBySessionIdAsync(intentId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetPaymentIntentMetadataAsync(intentId).Returns((Dictionary<string, string>?)null);
+
+            Func<Task> act = async () => await _sut.ProcessPaymentIntentSuccessAsync(intentId);
+
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Valid metadata or UserId was not found in the Stripe PaymentIntent.");
+        }
+
+        [Fact]
+        public async Task ProcessPaymentIntentSuccessAsync_ValidRequest_ProcessesSuccessfully()
+        {
+            string intentId = "pi_1";
+            int userId = 1;
+            int courseId = 2;
+            var metadata = new Dictionary<string, string> 
+            { 
+                { "userId", userId.ToString() }, 
+                { "courseIds", courseId.ToString() },
+                { "recipientEmail", "rec@test.com" }
+            };
+            
+            var course = new Course { Title = "Test Course", Price = 100m, CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), InstructorId = 3 };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            
+            _repoMock.GetTransactionsBySessionIdAsync(intentId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetPaymentIntentMetadataAsync(intentId).Returns(metadata);
+            _adminFinanceServiceMock.GetCurrentTransferRateAsync().Returns(80m);
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _courseRepoMock.GetCourseWithInstructorAsync(courseId).Returns(course);
+            _adminFinanceServiceMock.GetPayoutDaysConfigAsync().Returns(""); // Empty config test
+
+            await _sut.ProcessPaymentIntentSuccessAsync(intentId);
+
+            await _repoMock.Received(1).AddOrderAsync(Arg.Is<OrderInfo>(o => o.UserId == userId && o.OrderStatus == "paid"));
+            await dbTransactionMock.Received(1).CommitAsync();
+        }
+
+        [Fact]
+        public async Task ProcessPaymentIntentSuccessAsync_CourseNull_ReturnsWithoutAddingOrder()
+        {
+            string intentId = "pi_1";
+            var metadata = new Dictionary<string, string> { { "userId", "1" }, { "courseIds", "2" } };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            
+            _repoMock.GetTransactionsBySessionIdAsync(intentId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetPaymentIntentMetadataAsync(intentId).Returns(metadata);
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _courseRepoMock.GetCourseWithInstructorAsync(2).Returns((Course?)null);
+
+            await _sut.ProcessPaymentIntentSuccessAsync(intentId);
+
+            await _repoMock.DidNotReceive().AddOrderItemAsync(Arg.Any<OrderItem>());
+            await dbTransactionMock.Received(1).CommitAsync();
+        }
+
+        [Fact]
+        public async Task ProcessGiftFulfillmentAsync_EmailAndNotiExceptions_CatchesAndContinues()
+        {
+            // Testing exception handling inside ProcessGiftFulfillmentAsync
+            string sessionId = "sess_1";
+            var metadata = new Dictionary<string, string> { { "userId", "1" }, { "courseIds", "2" }, { "recipientEmail", "rec@test.com" } };
+            var course = new Course { Title = "Test", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), InstructorId = 3 };
+            var dbTransactionMock = Substitute.For<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction>();
+            var account = new Account { AccountId = 5, User = new User { FullName = "Sender" } };
+            var recipientAccount = new Account { AccountId = 6 };
+            
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(new List<Transaction>());
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns(metadata);
+            _repoMock.BeginTransactionAsync().Returns(dbTransactionMock);
+            _courseRepoMock.GetCourseWithInstructorAsync(2).Returns(course);
+            _userRepoMock.GetAccountByIdAsync(1).Returns(account);
+            _userRepoMock.GetAccountByEmailAsync("rec@test.com").Returns(recipientAccount);
+            
+            _emailServiceMock.When(x => x.SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())).Throw(new Exception("Email Error"));
+            _notificationServiceMock.When(x => x.SendNotificationAsync(6, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())).Throw(new Exception("Noti Error"));
+
+            await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            await dbTransactionMock.Received(1).CommitAsync();
+            _loggerMock.ReceivedCalls().Should().HaveCount(2); // LogError should be called twice
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════════
+        // GetCurrencyFromCountry
+        // ═══════════════════════════════════════════════════════════════════════════
+
+        [Theory]
+        [InlineData("GB", "GBP")]
+        [InlineData("CA", "CAD")]
+        [InlineData("CH", "CHF")]
+        [InlineData("AT", "EUR")]
+        [InlineData("FR", "EUR")]
+        [InlineData("DE", "EUR")]
+        [InlineData("IT", "EUR")]
+        [InlineData("ES", "EUR")]
+        [InlineData("BG", "BGN")]
+        [InlineData("HR", "EUR")]
+        [InlineData("CZ", "CZK")]
+        [InlineData("DK", "DKK")]
+        [InlineData("HU", "HUF")]
+        [InlineData("IS", "ISK")]
+        [InlineData("NO", "NOK")]
+        [InlineData("PL", "PLN")]
+        [InlineData("RO", "RON")]
+        [InlineData("SE", "SEK")]
+        [InlineData("AU", "AUD")]
+        [InlineData("VN", "VND")]
+        [InlineData("US", "USD")]
+        [InlineData("JP", "USD")]
+        [InlineData("", "USD")]
+        [InlineData(null, "USD")]
+        public async Task GetCurrencyFromCountry_ValidCountry_MapsCorrectly(string? countryCode, string expectedCurrency)
+        {
+            // Testing this indirectly via InitiateGiftCheckoutAsync 
+            var request = new GiftCheckoutRequest { CourseId = 1, RecipientEmail = "rec@test.com", SuccessUrl = "success", CancelUrl = "cancel" };
+            var course = new Course { Title = "Test", CourseStatus = CourseMarketplaceBE.Domain.Constants.CourseStatus.Published.ToValue(), InstructorId = 2, Price = 100m };
+            _courseRepoMock.GetCourseWithInstructorAsync(request.CourseId).Returns(course);
+            _userRepoMock.GetInstructorStripeAccountIdAsync(2).Returns("acct_123");
+            _userRepoMock.GetInstructorStripeCountryAsync(2).Returns(countryCode);
+            
+            var paymentResult = new PaymentSessionResult { SessionUrl = "url", SessionId = "sess" };
+            _paymentGatewayMock.CreateCheckoutSessionAsync(Arg.Any<List<PaymentLineItem>>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), expectedCurrency, Arg.Any<string>(), Arg.Any<decimal?>(), Arg.Any<Dictionary<string, string>>())
+                .Returns(paymentResult);
+
+            await _sut.InitiateGiftCheckoutAsync(1, request);
+
+            await _paymentGatewayMock.Received(1).CreateCheckoutSessionAsync(Arg.Any<List<PaymentLineItem>>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), expectedCurrency, Arg.Any<string>(), Arg.Any<decimal?>(), Arg.Any<Dictionary<string, string>>());
+        }
     }
 }

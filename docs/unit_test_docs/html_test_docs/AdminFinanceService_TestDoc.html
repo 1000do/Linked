@@ -1,0 +1,5242 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body { font-family: Tahoma, sans-serif; font-size: 8pt; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 8pt; }
+    th, td { border: 1px solid #ccc; padding: 4px; }
+    .header-dark { background-color: #000080; color: white; font-weight: bold; }
+    .col-category { background-color: #000080; color: white; font-weight: bold; border-top: none; border-bottom: none; border-left: 1px solid black; border-right: 1px solid black; }
+    .empty-th { background-color: #000080; border-top: 1px solid black; border-bottom: 1px solid black; border-left: none; border-right: none; }
+    .empty-category { background-color: #000080; border-top: none; border-bottom: none; border-left: 1px solid black; border-right: 1px solid black; }
+    .subcat-detail { border-top: 1px solid black; border-bottom: 1px solid black; border-left: none; border-right: none; }
+    .subcat-left { border-left: 1px solid black; font-weight: bold; }
+    .detail-right { border-right: 1px solid black; }
+    .o-mark { font-size: 11pt; font-weight: bold; text-align: center; border: 1px solid black; }
+    .utc-header { background-color: #000080; color: white; font-weight: bold; text-align: center; writing-mode: vertical-rl; border: 1px solid black; }
+    .vertical-text { text-align: center; writing-mode: vertical-rl; border: 1px solid black; }
+    .normal-cell { border: 1px solid black; }
+    .summary-table th, .summary-table td { border: 1px solid black; }
+</style>
+</head>
+<body>
+<h3>Function: GetInstructorCourseRevenuesByInstructorAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetInstructorCourseRevenuesByInstructorAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetInstructorCourseRevenuesByInstructorAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">15</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetInstructorCourseRevenuesByInstructorAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidInstructor</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsMappedResponses</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: SetTransferRateAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SetTransferRateAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SetTransferRateAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">32</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SetTransferRateAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">5</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">5</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RateLessThan30</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RateGreaterThan95</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRateWithInstructors</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRateNoInstructors</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NotificationThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">UpsertsConfigAndSendsNotifications</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">UpsertsConfigAndSkipsNotifications</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SwallowsExceptionAndCompletes</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsInvalidOperationException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsInvalidOperationException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetFinancialSummaryAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetFinancialSummaryAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetFinancialSummaryAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">38</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetFinancialSummaryAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidDate</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsCorrectCalculationsAndSums</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetInstructorPayoutsAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetInstructorPayoutsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetInstructorPayoutsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">43</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetInstructorPayoutsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NormalPayouts</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RefundedPayout</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CalculatesPlatformReceivedCorrectly</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CalculatesNegativePlatformReceived</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: MarkPayoutAsPaidAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">MarkPayoutAsPaidAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">MarkPayoutAsPaidAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">22</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for MarkPayoutAsPaidAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">PayoutNotFound</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AlreadyPaid</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidPendingPayout</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SignalRThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">UpdatesStatusAndBroadcastsSignalR</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SwallowsExceptionAndCompletes</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsInvalidOperationException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsInvalidOperationException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetCurrentTransferRateAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetCurrentTransferRateAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetCurrentTransferRateAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetCurrentTransferRateAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">3</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ConfigExists</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ConfigEmptyOrInvalid</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ConfigNotFound</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsConfiguredRate</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsDefaultRate</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CreatesDefault</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetPayoutDaysConfigAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetPayoutDaysConfigAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetPayoutDaysConfigAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetPayoutDaysConfigAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">3</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NullConfig</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">HasConfig</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ConfigNotFound</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsDefault15</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsConfigValue</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CreatesDefault</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: SetPayoutDaysConfigAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SetPayoutDaysConfigAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SetPayoutDaysConfigAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">12</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SetPayoutDaysConfigAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">3</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">EmptyInput</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">InvalidFormat</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidInput</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">UpsertsConfig</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsInvalidOperationException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsInvalidOperationException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: PerformStripeTransferAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">PerformStripeTransferAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">PerformStripeTransferAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">50</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for PerformStripeTransferAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">7</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">5</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">7</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">PayoutNotFound</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AlreadyPaid</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoStripeAccount</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StripeError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SignalRError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StripeErrorAndSignalRError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">TransfersAndUpdates</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CatchesException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SetsFailedAndThrows</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CatchesSignalRAndThrowsStripeError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text">DFID003</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID004</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID005</td>
+  </tr>
+</table>
+<h3>Function: BulkPayAllViaStripeAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">BulkPayAllViaStripeAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">BulkPayAllViaStripeAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">29</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for BulkPayAllViaStripeAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidData</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">FiltersAndProcessesCorrectly</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetPlatformBalanceAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetPlatformBalanceAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetPlatformBalanceAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">12</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetPlatformBalanceAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidState</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsCorrectMappedData</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: CreateWithdrawalAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">CreateWithdrawalAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">CreateWithdrawalAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">44</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for CreateWithdrawalAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">5</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">7</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AmountLessThanMin</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AmountGreaterThanAvailable</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRequest</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StripeError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SignalRError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CreatesWithdrawal</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CatchesException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID003</td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetWithdrawalHistoryAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetWithdrawalHistoryAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetWithdrawalHistoryAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">42</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetWithdrawalHistoryAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">3</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoChanges</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">HasPending</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StripeError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsData</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SyncsStatusAndSaves</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CatchesException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: RefundTransactionAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">RefundTransactionAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">RefundTransactionAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">130</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for RefundTransactionAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">14</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">6</td>
+    <td colspan="1" style="text-align: center;">8</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">14</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+    <th class="utc-header">UTCID09</th>
+    <th class="utc-header">UTCID10</th>
+    <th class="utc-header">UTCID11</th>
+    <th class="utc-header">UTCID12</th>
+    <th class="utc-header">UTCID13</th>
+    <th class="utc-header">UTCID14</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">TransactionNotFound</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AlreadyRefunded</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NotSucceeded</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoPaymentIntent</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">HasTransfer</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReversalFails</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithExistingExt</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoInstructorPayout</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">InstructorPayoutPaid</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithGiftAndRecipientEnrollment</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithBuyerEnrollment</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SignalRFails</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StripeTransferIdNull</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RefundStripeError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReversesTransferAndRefunds</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ProcessesRefund</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoTransfer</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithNoTransferId_SkipsReversal</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RevokesBoth</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RevokesEnrollment</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ContinuesWithoutThrowing</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text">DFID003</td>
+    <td class="vertical-text">DFID004</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID005</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID006</td>
+    <td class="vertical-text">DFID007</td>
+    <td class="vertical-text">DFID008</td>
+  </tr>
+</table>
+<h3>Function: SyncAllPayoutsWithStripeAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SyncAllPayoutsWithStripeAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SyncAllPayoutsWithStripeAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">46</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SyncAllPayoutsWithStripeAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">9</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">9</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">9</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+    <th class="utc-header">UTCID09</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoInstructors</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">HasInstructors</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GetPayoutsThrows</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ExistingPayout</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StatusInTransit</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StatusFailed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">StatusUnknown</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GetPayoutsByStripePayoutIdThrows</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SignalRError</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsEarly</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">SyncsSuccessfully</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">LogsAndContinues</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Refunded_DoesNotUpdate</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">MarksInTransit</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">MarksFailed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">DoesNotUpdate</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Caught</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CaughtAndIgnored</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: RequestRefundAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">RequestRefundAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">RequestRefundAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">99</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for RequestRefundAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">15</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">7</td>
+    <td colspan="1" style="text-align: center;">8</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">16</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+    <th class="utc-header">UTCID09</th>
+    <th class="utc-header">UTCID10</th>
+    <th class="utc-header">UTCID11</th>
+    <th class="utc-header">UTCID12</th>
+    <th class="utc-header">UTCID13</th>
+    <th class="utc-header">UTCID14</th>
+    <th class="utc-header">UTCID15</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NotSucceeded</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRequest</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRequest</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">TransactionNotFound</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WrongStudent</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">PendingRefund</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AlreadyRefunded</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Exceeds14Days</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GiftClaimed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoCourseId</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AutoReject</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AutoReject</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AutoReject</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AutoReject</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRequest</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">AutoRejected</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">PendingApproval</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">TooManyRefunds</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">PastRefunded</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ShortCourseExceedsProgress</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">LongCourseExceedsWatchTime</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithExistingExt</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text">DFID003</td>
+    <td class="vertical-text">DFID004</td>
+    <td class="vertical-text">DFID005</td>
+    <td class="vertical-text">DFID006</td>
+    <td class="vertical-text">DFID007</td>
+    <td class="vertical-text">DFID008</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetPendingRefundRequestsAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetPendingRefundRequestsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetPendingRefundRequestsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetPendingRefundRequestsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidState</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsData</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ApproveRefundAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ApproveRefundAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ApproveRefundAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">66</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ApproveRefundAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">9</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">6</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">10</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+    <th class="utc-header">UTCID09</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NotPending</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">TransactionNotFound</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GiftClaimed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GiftClaimed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GiftClaimed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">GiftClaimed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ApprovesAndRefunds</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithExistingExt</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithExistingExtAndFailingNoti</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoExt_CreatesExtAndRejects</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoExistingExt_CreatesNewExt</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithSignalRError_Catches</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">RejectsAndThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text">DFID003</td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: RejectRefundAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">RejectRefundAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">RejectRefundAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">33</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for RejectRefundAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">TransactionNotFound</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NotPending</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Rejects</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">WithExistingExtAndFailingNoti</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ThrowsException</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text">DFID001</td>
+    <td class="vertical-text">DFID002</td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetInstructorCourseRevenuesAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetInstructorCourseRevenuesAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetInstructorCourseRevenuesAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">15</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetInstructorCourseRevenuesAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ValidRequest</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsData</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetStripeCountriesAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetStripeCountriesAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetStripeCountriesAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">HungPH</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">HungPH</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">6</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetStripeCountriesAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">NoConfig</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">HasConfig</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsEmptyList</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">ReturnsList</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">19/07/2026</td>
+    <td class="vertical-text">19/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+</body></html>
