@@ -58,7 +58,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetInstructorCourseRevenuesByInstructorAsync_ShouldReturnMappedResponses()
+        public async Task GetInstructorCourseRevenuesByInstructorAsync_ValidInstructor_ReturnsMappedResponses()
         {
             // Arrange
             int instructorId = 5;
@@ -681,7 +681,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task BulkPayAllViaStripeAsync_FiltersAndProcessesCorrectly()
+        public async Task BulkPayAllViaStripeAsync_ValidData_FiltersAndProcessesCorrectly()
         {
             //Arrange 1
             var now = DateTime.UtcNow;
@@ -737,7 +737,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         #region Phase 3 Tests
 
         [Fact]
-        public async Task GetPlatformBalanceAsync_ReturnsCorrectMappedData()
+        public async Task GetPlatformBalanceAsync_ValidState_ReturnsCorrectMappedData()
         {
             //Arrange 1
             var stripeBalance = new StripePlatformBalanceDto 
@@ -1117,7 +1117,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetPendingRefundRequestsAsync_ReturnsData()
+        public async Task GetPendingRefundRequestsAsync_ValidState_ReturnsData()
         {
             //Arrange 1
             var list = new List<TransactionListDto> { new TransactionListDto { TransactionId = 1 } };
@@ -1199,7 +1199,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetInstructorCourseRevenuesAsync_ReturnsData()
+        public async Task GetInstructorCourseRevenuesAsync_ValidRequest_ReturnsData()
         {
             //Arrange 1
             var list = new List<InstructorCourseRevenueProjection>
@@ -1457,7 +1457,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         // --- RefundTransactionAsync (Missing Branches) ---
         [Fact]
-        public async Task RefundTransactionAsync_WithExistingExt()
+        public async Task RefundTransactionAsync_WithExistingExt_ProcessesRefund()
         {
             var payout = new InstructorPayout { PayoutId = 1, IsPaid = false };
             var txn = new Transaction { TransactionId = 1, TransactionsStatus = "succeeded", StripePaymentintentId = "pi_1", Amount = 100m, InstructorPayouts = new List<InstructorPayout> { payout }, TransactionExt = new TransactionExt() };
@@ -1521,7 +1521,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task SyncAllPayoutsWithStripeAsync_StatusInTransit()
+        public async Task SyncAllPayoutsWithStripeAsync_StatusInTransit_MarksInTransit()
         {
             var instructors = new List<Instructor> { new Instructor { InstructorId = 1, StripeAccountId = "acct_1" } };
             var stripePayouts = new List<StripePayoutDto> { new StripePayoutDto { Id = "po_1", Status = "in_transit" } };
@@ -1536,7 +1536,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task SyncAllPayoutsWithStripeAsync_StatusFailed()
+        public async Task SyncAllPayoutsWithStripeAsync_StatusFailed_MarksFailed()
         {
             var instructors = new List<Instructor> { new Instructor { InstructorId = 1, StripeAccountId = "acct_1" } };
             var stripePayouts = new List<StripePayoutDto> { new StripePayoutDto { Id = "po_1", Status = "failed" } };

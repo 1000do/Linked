@@ -578,7 +578,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [InlineData("JP", "USD")]
         [InlineData("", "USD")]
         [InlineData(null, "USD")]
-        public async Task GetCurrencyFromCountry_MapsCorrectly(string? countryCode, string expectedCurrency)
+        public async Task GetCurrencyFromCountry_ValidCountry_MapsCorrectly(string? countryCode, string expectedCurrency)
         {
             // Testing this indirectly via InitiateGiftCheckoutAsync 
             var request = new GiftCheckoutRequest { CourseId = 1, RecipientEmail = "rec@test.com", SuccessUrl = "success", CancelUrl = "cancel" };

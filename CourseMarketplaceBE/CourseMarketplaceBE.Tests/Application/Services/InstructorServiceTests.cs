@@ -572,7 +572,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         // GetAllApplicationsAsync
         // ═══════════════════════════════════════════════════════════════════════
         [Fact]
-        public async Task GetAllApplicationsAsync_ReturnsApplications()
+        public async Task GetAllApplicationsAsync_ValidRequest_ReturnsApplications()
         {
             //Arrange 1
             var list = new List<InstructorDashboardDto> { new InstructorDashboardDto() };
@@ -664,7 +664,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         // GetRejectedApplicationInfoAsync
         // ═══════════════════════════════════════════════════════════════════════
         [Fact]
-        public async Task GetRejectedApplicationInfoAsync_ReturnsResult()
+        public async Task GetRejectedApplicationInfoAsync_ValidRequest_ReturnsResult()
         {
             //Arrange 1
             int userId = 1;
@@ -891,7 +891,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         // GetPayoutsAsync
         // ═══════════════════════════════════════════════════════════════════════
         [Fact]
-        public async Task GetPayoutsAsync_ReturnsPagedResult()
+        public async Task GetPayoutsAsync_ValidRequest_ReturnsPagedResult()
         {
             //Arrange 1
             int userId = 1;
