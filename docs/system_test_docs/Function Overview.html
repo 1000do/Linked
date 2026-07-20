@@ -336,6 +336,258 @@
         <td>Allows authenticated Staff or Admin users to filter the system notifications log by recipient role and/or read status.</td>
         <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
     </tr>
+    <tr>
+        <td class="no-col">44</td>
+        <td>Gift Courses</td>
+        <td><a href="#">Manage Gift</a></td>
+        <td>Allows the user to configure gift details—including the recipient's name, email, card theme, and a personal message with a live preview—before proceeding to the checkout page.</td>
+        <td>The user must be authenticated. The target course must be retrievable from the system.</td>
+    </tr>
+    <tr>
+        <td class="no-col">45</td>
+        <td>Pay for a gift</td>
+        <td><a href="#">Manage Gift</a></td>
+        <td>Allows the giver to enter and validate the recipient's personal identity details (full name and email address), ensuring accurate delivery coordinates for the automated redeem voucher.</td>
+        <td>The user must be authenticated. The gift details must have been successfully configured and passed to the checkout page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">46</td>
+        <td>Receive a gifts</td>
+        <td><a href="#">Manage Gift</a></td>
+        <td>Allows the recipient to view the gift card and redeem the gifted course. If the user is not logged in, the system prompts them to log in or register. Once authenticated, the user clicks the claim button to enroll in the course and mark the gift as claimed, which also automatically cancels any pending refund requests for that gift.</td>
+        <td>The redemption token must be valid and exist in the system. The gift must not be already claimed or refunded.</td>
+    </tr>
+    <tr>
+        <td class="no-col">47</td>
+        <td>Become an Instructor</td>
+        <td><a href="#">Become an Instructor</a></td>
+        <td>Allows a registered Learner to submit an application (biography, skills, CV/ID documents) to join the platform's instructor team. Once submitted, the application awaits administrative review.</td>
+        <td>Users must be successfully authenticated (logged in). Users must not already possess an approved or active Instructor account profile.</td>
+    </tr>
+    <tr>
+        <td class="no-col">48</td>
+        <td>Setup payout</td>
+        <td><a href="#">Become an Instructor</a></td>
+        <td>Allows approved instructors to link their financial profiles with Stripe Connect or enter manual banking credentials to receive earned course purchase commissions.</td>
+        <td>User must be successfully authenticated (logged in). The user's account must be approved as an Instructor by the system.</td>
+    </tr>
+    <tr>
+        <td class="no-col">49</td>
+        <td>View Transaction List</td>
+        <td><a href="#">Manage Transaction</a></td>
+        <td>Allows an authenticated student to view a paginated list of their purchase transactions, search by course title, filter by payment status, sort by date/price, navigate details, request a refund for eligible purchases within 14 days, and submit a billing support ticket.</td>
+        <td>User must be successfully authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">50</td>
+        <td>Search Transaction History</td>
+        <td><a href="#">Manage Transaction</a></td>
+        <td>Allows the user to search their purchase/transaction history by course title. The search is submitted to the server via a GET request which reloads the page with the filtered list.</td>
+        <td>The User must be successfully authenticated. The User must have accessed their purchase history page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">51</td>
+        <td>Request Refund</td>
+        <td><a href="#">Manage Transaction</a></td>
+        <td>Allows an authenticated student to request a refund for a course purchased within a 14-day window. The system automatically checks strict eligibility metrics (learning progress, past course refunds, recent refund frequency, and account flags). If any auto-rejection rule is violated, the request is immediately declined with an abstract reason; otherwise, it is submitted to the Admin for manual review.</td>
+        <td>The user must be successfully authenticated. The target transaction status must be successful, and not already refunded or pending refund. The transaction must have occurred within the last 14 days. The transaction must belong to the logged-in user.</td>
+    </tr>
+    <tr>
+        <td class="no-col">52</td>
+        <td>View Transaction Detail</td>
+        <td><a href="#">Manage Transaction</a></td>
+        <td>Provides a detailed invoice receipt of a specific course purchase transaction, displaying detailed financial breakdowns, purchaser information, and payment gateway metadata.</td>
+        <td>Users must be successfully authenticated (logged in). Users must have placed at least one transaction. The specified transaction must exist and be associated with the Customer's account.</td>
+    </tr>
+    <tr>
+        <td class="no-col">53</td>
+        <td>View balance</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows instructors to track their financial metrics and cash flows filtered by month/year, including gross sales revenue, refunded amount, actual net earnings, pending escrow holdings, Stripe wallet balances, and successful withdrawals.</td>
+        <td>The instructor must be logged in. The user's account must be active as an approved Instructor with a linked Stripe Connect account.</td>
+    </tr>
+    <tr>
+        <td class="no-col">54</td>
+        <td>View Instructor's Transaction History</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Displays a detailed list of course purchases made by learners for courses owned by the active instructor. Provides search, filtering, sorting, and direct links to view the financial breakdown of each transaction.</td>
+        <td>The instructor must be logged in. The user's account must be active as an approved Instructor with a linked Stripe Connect account.</td>
+    </tr>
+    <tr>
+        <td class="no-col">55</td>
+        <td>View payout history</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows instructors to track their historical and pending payout transfers, including sequential numbering, course sale references, net payout amounts, and real-time Stripe settlement statuses.</td>
+        <td>The instructor must be logged in. The instructor must have a valid session cookie.</td>
+    </tr>
+    <tr>
+        <td class="no-col">56</td>
+        <td>Sort Instructor's Transaction History</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows an approved instructor to sort their learner purchases transaction history by date or amount to easily audit and analyze their course sales revenues.</td>
+        <td>Instructors must be successfully authenticated. Instructor's account status must be approved (ApprovalStatus = "Approved").</td>
+    </tr>
+    <tr>
+        <td class="no-col">57</td>
+        <td>Filter Instructor's Transaction History</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows an instructor to search and filter their transaction history list ("Learner Purchases" tab) by name/purchaser, status, month, and year.</td>
+        <td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">58</td>
+        <td>Filter payout History</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows an instructor to search and filter their payout history list ("Payout History" tab) by course title, Stripe ID, status, month, and year.</td>
+        <td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">59</td>
+        <td>Sort payout History</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows an instructor to sort their payout history list ("Payout History" tab) based on date or payout amount.</td>
+        <td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">60</td>
+        <td>View Instructor's Transaction History Detail</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows instructors to view the comprehensive financial ledger breakdown, coupon usage, Stripe gateway references, purchaser info, and refund dispute details for a specific transaction.</td>
+        <td>The instructor must be logged in. The transaction record must belong to a course owned by the logged-in instructor. There is at least one transaction in the record.</td>
+    </tr>
+    <tr>
+        <td class="no-col">61</td>
+        <td>View Instructor's Course Revenue</td>
+        <td><a href="#">Manage Instructor Finance</a></td>
+        <td>Allows instructors to view the sales breakdown and revenue statistics for each of their courses, including monthly revenue, yearly revenue, lifetime revenue, sales quantity, and growth trends.</td>
+        <td>The instructor must be logged in. The user's account must be active as an approved Instructor with linked Stripe settings.</td>
+    </tr>
+    <tr>
+        <td class="no-col">62</td>
+        <td>View Profile (For Manager)</td>
+        <td><a href="#">Manage Profile for manager</a></td>
+        <td>Allows managers (Super Admin or Staff Support) to view their profile details, including system account information, and update their account password through a secure modal.</td>
+        <td>The manager must be logged in.</td>
+    </tr>
+    <tr>
+        <td class="no-col">63</td>
+        <td>Edit Profile (For Manager)</td>
+        <td><a href="#">Manage Profile for manager</a></td>
+        <td>Allows managers (Super Admin or Staff Support) to edit their profile information, upload a profile picture, and save the updated details to the system.</td>
+        <td>The manager must be logged in.</td>
+    </tr>
+    <tr>
+        <td class="no-col">64</td>
+        <td>View Balance (For System)</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to track platform-wide financial summary statistics, splits, payouts, Stripe gateway balances, and view current configuration settings.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+    </tr>
+    <tr>
+        <td class="no-col">65</td>
+        <td>View Instructor Payouts</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+    </tr>
+    <tr>
+        <td class="no-col">66</td>
+        <td>View Funds Withdrawal History</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+    </tr>
+    <tr>
+        <td class="no-col">67</td>
+        <td>View List of Refund Requests</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to view the list of pending refund requests submitted by learners within the 14-day window. Shows purchase and request details, and provides actionable links and decision triggers.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+    </tr>
+    <tr>
+        <td class="no-col">68</td>
+        <td>Approve Refund Request</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to approve a learner's pending refund request. The system automatically performs a Stripe refund, reverses the instructor's payout (if already transferred), updates the database ledger status, and revokes the student's course access.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one refund request record.</td>
+    </tr>
+    <tr>
+        <td class="no-col">69</td>
+        <td>Reject Refund Request</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to reject a student's pending refund request. The system reverts the transaction status to succeeded, records the administrative rejection note, retains the student's course access, and notifies the student.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one refund request record.</td>
+    </tr>
+    <tr>
+        <td class="no-col">70</td>
+        <td>View transaction detail (For System)</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to view the detailed information of a specific transaction, including the buyer profile, course information, financial split figures, and any associated refund logs.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one transaction record.</td>
+    </tr>
+    <tr>
+        <td class="no-col">71</td>
+        <td>View transaction list (For System)</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to track all course purchase transactions across the entire platform. Provides search, filtering by status, sorting, and direct links to view the details of each transaction.</td>
+        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+    </tr>
+    <tr>
+        <td class="no-col">72</td>
+        <td>Search transactions (For System)</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows authenticated Admin users to search the system-wide transaction history by course title, student (buyer) name, or instructor name.</td>
+        <td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
+    </tr>
+    <tr>
+        <td class="no-col">73</td>
+        <td>Filter transactions(For System)</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows authenticated Admin users to filter the system-wide transaction history by transaction status.</td>
+        <td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
+    </tr>
+    <tr>
+        <td class="no-col">74</td>
+        <td>Sort transactions(For System)</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows authenticated Admin users to sort the system-wide transaction history by date or amount.</td>
+        <td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
+    </tr>
+    <tr>
+        <td class="no-col">75</td>
+        <td>Set Transfer Rate</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to update the percentage of course purchase revenue allocated to instructors. The new rate is stored in system configurations, applied to all future transactions, and broadcasted to onboarded instructors.</td>
+        <td>The administrator must be successfully logged into the system. The system configuration repository is accessible.</td>
+    </tr>
+    <tr>
+        <td class="no-col">76</td>
+        <td>Set Payout Schedule of Instructor</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to configure the days of the month when automatic bulk payouts are triggered for instructors. The new payout days are saved in the system configurations.</td>
+        <td>The administrator must be successfully logged into the system. The system configuration repository is accessible.</td>
+    </tr>
+    <tr>
+        <td class="no-col">77</td>
+        <td>Withdraw Funds</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows administrators to manually transfer accumulated platform net profit from the Stripe available balance directly into the platform's corporate bank account.</td>
+        <td>The administrator must be successfully logged into the system. The platform's Stripe Connect available balance must be at least $0.50. Account successfully linked to Stripe's bank account.</td>
+    </tr>
+    <tr>
+        <td class="no-col">78</td>
+        <td>Filter financial dashboard by period</td>
+        <td><a href="#">Manage System Finance</a></td>
+        <td>Allows authenticated Admin users to filter the financial dashboard data (including revenue overview cards, Stripe balance metrics, monthly performance chart, and transaction list) by selecting a specific month and year.</td>
+        <td>The administrator must be successfully logged into the system.</td>
+    </tr>
+    <tr>
+        <td class="no-col">79</td>
+        <td>Checkout</td>
+        <td><a href="#">Checkout</a></td>
+        <td>This use case facilitates the secure payment process for one or more courses using the Stripe payment gateway, resulting in course enrollment upon successful transaction.</td>
+        <td>User must be authenticated. Cart must contain at least one course (or a single course selected for Direct Buy).</td>
+    </tr>
 </table>
 
 </body>
