@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Wishlist</li>
+    <li><b>Test requirement:</b> Tests for user wishlist features including adding, viewing, and removing wishlist items</li>
+    <li><b>Number of TCs:</b> 10</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Add wishlist items</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Add Wishlist Item Successfully</td>
+        <td>1. Login as User.<br>2. Access the Course Details page for a course not in the wishlist.<br>3. Click the 'Add to Wishlist' button (Heart Icon).</td>
+        <td>The system displays a success message, updates the wishlist heart icon to an active state, and saves the item without a page reload.</td>
+        <td>User must be logged in. The target course must exist and not already be in the wishlist.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Course Already in Wishlist</td>
+        <td>1. Login as User.<br>2. Open two separate tabs for the same Course Details page (course not in wishlist).<br>3. In the first tab, click 'Add to Wishlist' button.<br>4. In the second tab, click the 'Add to Wishlist' button.</td>
+        <td>The system detects the course is already in the wishlist and displays an error message: "Course is already in your wishlist."</td>
+        <td>User must be logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Details page as an unauthenticated User.<br>2. Click the 'Add to Wishlist' button (Heart Icon).</td>
+        <td>The system detects that the User is not authenticated and redirects the User to the Login page.</td>
+        <td>User is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as User.<br>3. Access the Course Details page for a course not in the wishlist.<br>4. Click the 'Add to Wishlist' button (Heart Icon).</td>
+        <td>The system displays an error message regarding the save failure.</td>
+        <td>User must be logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Wishlist</td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>View Wishlist Successfully</td>
+        <td>1. Login as User.<br>2. Access the Wishlist page.</td>
+        <td>The system successfully renders the Wishlist page, displaying the list of saved courses with their title, thumbnail, price, instructor name, average rating, enrollment count, and enrollment status check.</td>
+        <td>User must be logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Wishlist page as an unauthenticated User.</td>
+        <td>The system detects that the User is not authenticated and redirects the User to the Login page.</td>
+        <td>User is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Wishlist Items</td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Delete Wishlist Item Successfully</td>
+        <td>1. Login as User.<br>2. Access the Wishlist page containing at least one saved course.<br>3. Click the 'Remove' button next to a specific course.</td>
+        <td>The system successfully deletes the wishlist item record from the database, and refreshes the Wishlist page.</td>
+        <td>User must be logged in. The target course must exist in the wishlist.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Course Not Found in Wishlist</td>
+        <td>1. Login as User.<br>2. Access the Wishlist page in two separate tabs.<br>3. In the first tab, click 'Remove' to delete a course.<br>4. In the second tab, click 'Remove' for the exact same course.</td>
+        <td>The system detects the course does not exist in the wishlist, displays a "Course not found in your wishlist" error message, and reloads the page.</td>
+        <td>User must be logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Wishlist page as an authenticated User.<br>2. Simulate session expiration.<br>3. Click the 'Remove' button next to a course.</td>
+        <td>The system detects that the User is not authenticated and redirects the User to the Login page.</td>
+        <td>User is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Database Save Failure</td>
+        <td>1. Login as User.<br>2. Access the Wishlist page containing at least one saved course.<br>3. Simulate a database error.<br>4. Click the 'Remove' button next to a course.</td>
+        <td>The system displays an error message regarding the save failure and reloads the page.</td>
+        <td>User must be logged in.</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-14</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-15</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+</table>
+</body>
+</html>

@@ -587,6 +587,24 @@
         <td><a href="#">Checkout</a></td>
         <td>This use case facilitates the secure payment process for one or more courses using the Stripe payment gateway, resulting in course enrollment upon successful transaction.</td>
         <td>User must be authenticated. Cart must contain at least one course (or a single course selected for Direct Buy).</td>
+        <td>Add wishlist items</td>
+        <td><a href="#">Manage Wishlist</a></td>
+        <td>Allows an authenticated User to add a course to their personal wishlist. The system checks if the course is already in the wishlist, creates a wishlist record, saves it to the database, and updates the heart icon state dynamically via AJAX.</td>
+        <td>User must be logged in. The target course must exist and not already be in the User's wishlist.</td>
+    </tr>
+    <tr>
+        <td class="no-col">45</td>
+        <td>View Wishlist</td>
+        <td><a href="#">Manage Wishlist</a></td>
+        <td>Allows an authenticated User to view all courses they have saved in their personal wishlist. For each course, the system retrieves title, thumbnail, price, instructor name, average rating, enrollment count, and check if the User is currently enrolled in it.</td>
+        <td>User must be logged in.</td>
+    </tr>
+    <tr>
+        <td class="no-col">46</td>
+        <td>Delete Wishlist Items</td>
+        <td><a href="#">Manage Wishlist</a></td>
+        <td>Allows an authenticated User to delete a course from their personal wishlist. The system checks if the course is in their wishlist, deletes the record, and reloads the wishlist page.</td>
+        <td>User must be logged in. The target course must exist in the User's wishlist.</td>
     </tr>
 </table>
 
