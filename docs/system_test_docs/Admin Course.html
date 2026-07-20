@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Admin Course Management</li>
+    <li><b>Test requirement:</b> Tests for admin course moderation features including viewing list, searching, sorting, filtering, approving, rejecting, and flagging courses.</li>
+    <li><b>Number of TCs:</b> 43</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Course Moderation List</td>
+    </tr>
+    <tr>
+        <td>TC-001</td>
+        <td>View Course Moderation List Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.</td>
+        <td>The system retrieves categories, filters pending/under-review courses, calculates urgency levels, retrieves moderation stats, and displays the course moderation page containing stats cards, filters, and the course moderation table.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-002</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-003</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-004</td>
+        <td>API Call Failed</td>
+        <td>1. Simulate API failure.<br>2. Login with Staff or Admin role.<br>3. Access the Course Moderation Page.</td>
+        <td>The system displays an error message regarding API call failure and renders the Course Moderation page with an empty list and stats reset to zero.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-005</td>
+        <td>Clear Filters</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Select a filter or sorting option.<br>4. Click the 'refresh' icon button.</td>
+        <td>The system resets the filters and sorting options to their default values, retrieves the courses list using the default parameters, and updates the moderation table and statistics cards.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-006</td>
+        <td>Preview Course Details</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the 'visibility' icon button on a course row.</td>
+        <td>The system opens the course details page for the selected course in a new browser tab.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-007</td>
+        <td>Navigate Pagination</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page with multiple pages of courses.<br>3. Click a page number or the chevron icon buttons.</td>
+        <td>The system retrieves the courses list for the selected page and updates the course moderation table and statistics cards.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Search Courses</td>
+    </tr>
+    <tr>
+        <td>TC-008</td>
+        <td>Search Courses Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Enter search keywords in the search input box.</td>
+        <td>The system retrieves and displays the courses list matching the search keywords (title or instructor name) and any other active filters, updating the table and stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-009</td>
+        <td>Clear Search Keyword</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Enter search keywords.<br>4. Clear the search keywords in the input box.</td>
+        <td>The system retrieves and displays the default courses list (applying any other active filters) and updates the stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-010</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).<br>2. Enter search keywords.</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-011</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.<br>3. Enter search keywords.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-012</td>
+        <td>API Call Failed</td>
+        <td>1. Simulate API failure.<br>2. Login with Staff or Admin role.<br>3. Access the Course Moderation Page.<br>4. Enter search keywords.</td>
+        <td>The system displays an error message regarding search failure and renders the Course Moderation page with an empty list.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Sort Courses</td>
+    </tr>
+    <tr>
+        <td>TC-013</td>
+        <td>Sort Courses Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Select a sorting option from the sortBy dropdown.</td>
+        <td>The system retrieves and displays the courses list sorted according to the selected option, updating the table and stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-014</td>
+        <td>Switch Sorting Option</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Select a sorting option.<br>4. Select a different sorting option from the sortBy dropdown.</td>
+        <td>The system retrieves and displays the courses list sorted by the newly selected option.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-015</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).<br>2. Select a sorting option.</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-016</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.<br>3. Select a sorting option.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-017</td>
+        <td>API Call Failed</td>
+        <td>1. Simulate API failure.<br>2. Login with Staff or Admin role.<br>3. Access the Course Moderation Page.<br>4. Select a sorting option.</td>
+        <td>The system displays an error message regarding sorting failure and renders the Course Moderation page with an empty list.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Filter Courses</td>
+    </tr>
+    <tr>
+        <td>TC-018</td>
+        <td>Filter Courses Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Select a category from the category dropdown, or a status from the status dropdown.</td>
+        <td>The system retrieves and displays the filtered course list matching the selected criteria, updating the table and stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-019</td>
+        <td>Change Filter Selection</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Select a filter criteria.<br>4. Select a different category or status from the dropdowns.</td>
+        <td>The system retrieves and displays the updated filtered course list matching the new criteria.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-020</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).<br>2. Select a filter criteria.</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-021</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.<br>3. Select a filter criteria.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-022</td>
+        <td>API Call Failed</td>
+        <td>1. Simulate API failure.<br>2. Login with Staff or Admin role.<br>3. Access the Course Moderation Page.<br>4. Select a filter criteria.</td>
+        <td>The system displays an error message regarding filtering failure and renders the Course Moderation page with an empty list.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Approve Course Submission</td>
+    </tr>
+    <tr>
+        <td>TC-023</td>
+        <td>Approve Course Submission Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Locate a pending course and click the Approve button.<br>4. Enter optional feedback in the dialog.<br>5. Click the Approve & Publish button.</td>
+        <td>The system updates the course status to published, sets its lessons/materials to active, sends an approval notification to the instructor, sends update notifications to enrolled students, clears moderation feedback, and updates the stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or rejected, archived, permanently locked).</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-024</td>
+        <td>Cancel Approval</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Approve button on a pending course.<br>4. Click the Cancel button on the confirmation dialog.</td>
+        <td>The system closes the confirmation dialog without saving any changes.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-025</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).<br>2. Click the Approve button.</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-026</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.<br>3. Click the Approve button.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-027</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate database failure.<br>2. Login with Staff or Admin role.<br>3. Click the Approve button on a pending course.<br>4. Click the Approve & Publish button.</td>
+        <td>The system displays a system error message and halts the approval submission.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Reject Course Submission</td>
+    </tr>
+    <tr>
+        <td>TC-028</td>
+        <td>Reject Course Submission Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Locate a pending course and click the Reject button.<br>4. Click the Add Rejection Item button.<br>5. Select a violating element and enter a reason.<br>6. Click the Submit Rejection button.</td>
+        <td>The system updates the tagged lessons/materials to rejected, sets the course status to rejected with combined feedback, sends a rejection notification to the instructor, and updates the stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or approved/published).</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-029</td>
+        <td>Cancel Rejection</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Reject button on a course.<br>4. Click the Cancel button on the reject modal.</td>
+        <td>The system closes the reject modal without saving any changes.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-030</td>
+        <td>Remove Rejection Item Row</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Reject button on a course.<br>4. Click the Add Rejection Item button.<br>5. Click the delete icon button next to the rejection item row.</td>
+        <td>The system removes the rejection item row from the modal.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-031</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).<br>2. Click the Reject button.</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-032</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.<br>3. Click the Reject button.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-033</td>
+        <td>Course Metadata Fetch Failed</td>
+        <td>1. Simulate API failure for fetching course details.<br>2. Login with Staff or Admin role.<br>3. Access the Course Moderation Page.<br>4. Click the Reject button.</td>
+        <td>The system displays an error message indicating failure to load course details, and the reject modal shows a connection failure message.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-034</td>
+        <td>Form Incomplete Validation</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Reject button.<br>4. Click Add Rejection Item.<br>5. Leave the element dropdown unselected or the reason text field empty.<br>6. Click the Submit Rejection button.</td>
+        <td>The system displays a warning message indicating information is missing and halts submission.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-035</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate database failure.<br>2. Login with Staff or Admin role.<br>3. Click the Reject button, fill in valid rejection items.<br>4. Click the Submit Rejection button.</td>
+        <td>The system displays a system error message and halts submission.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Flag Course for Content Violation</td>
+    </tr>
+    <tr>
+        <td>TC-036</td>
+        <td>Flag Course for Content Violation Successfully</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Locate a course with less than 3 flags and click the Flag button.<br>4. Enter a violation description in the dialog.<br>5. Click the Confirm Flag button.</td>
+        <td>The system increments the flag count by 1, updates ModerationFeedback, sends a policy warning notification to the instructor, and updates the stats cards.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course flag count must be less than 3.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-037</td>
+        <td>Cancel Flagging</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Flag button on a course.<br>4. Click the Cancel button on the dialog.</td>
+        <td>The system closes the dialog without saving any changes.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-038</td>
+        <td>Flag Count Reaches Three (Strike 3)</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Flag button on a course that already has 2 flags.<br>4. Enter a violation description and click the Confirm Flag button.</td>
+        <td>The system increments the flag count to 3, sets the course status to archived (permanently locked), sends a permanent discontinuation notification to the instructor, and updates stats.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course flag count must be 2.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-039</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the Course Moderation Page as an unauthenticated user (simulate session expiration).<br>2. Click the Flag button.</td>
+        <td>The system displays an authentication error message and redirects the actor to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-040</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login with User or Instructor role.<br>2. Access the Course Moderation Page.<br>3. Click the Flag button.</td>
+        <td>The system displays an access denied page or error message.</td>
+        <td>Actor does not have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-041</td>
+        <td>Empty Input Validation</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Click the Flag button.<br>4. Leave the violation description empty.<br>5. Click the Confirm Flag button.</td>
+        <td>The system displays an error message indicating a violation reason is required and halts submission.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-042</td>
+        <td>Flag Lockout</td>
+        <td>1. Login with Staff or Admin role.<br>2. Access the Course Moderation Page.<br>3. Simulate clicking the Flag button via API for a course with a flag count of 3 or more.</td>
+        <td>The system displays an error message indicating the course is already permanently locked and halts the flow.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course flag count must be 3 or more.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>TC-043</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate database failure.<br>2. Login with Staff or Admin role.<br>3. Click the Flag button, fill in a valid violation description.<br>4. Click the Confirm Flag button.</td>
+        <td>The system displays a system error message and halts submission.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>

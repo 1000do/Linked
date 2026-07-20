@@ -337,25 +337,333 @@
         <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
     </tr>
     <tr>
+        <td class="no-col">14</td>
+        <td>View Course List</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows Guests and Users to browse, search, filter, and sort the public list of courses on the marketplace. Authenticated Users can toggle course wishlist status, add courses to their shopping cart, or view their enrollment status directly from the course cards.</td>
+        <td>None.</td>
+    </tr>
+    <tr>
+        <td class="no-col">15</td>
+        <td>Filter Courses</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows Guests and Users to filter the list of courses by category, rating stars, and price (Free vs. Paid). The filters can be applied singly or in combination.</td>
+        <td>None.</td>
+    </tr>
+    <tr>
+        <td class="no-col">16</td>
+        <td>Sort Courses</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows Guests and Users to order the displayed courses by Newest, Highest Rated, Price: Low to High, or Price: High to Low.</td>
+        <td>None.</td>
+    </tr>
+    <tr>
+        <td class="no-col">17</td>
+        <td>View Course Details</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows Guests and Users to view the detailed information of a course, including its description, curriculum, instructor profile, and student reviews. The system determines the visibility of course content and available actions (e.g., "Add to cart", "Enroll Now", "Go to learning") based on the actor's authentication and enrollment status.</td>
+        <td>None.</td>
+    </tr>
+    <tr>
+        <td class="no-col">18</td>
+        <td>View Review List</td>
+        <td><a href="#">User Course</a></td>
+        <td>Displays the list of public course reviews, star ratings, and statistics, allowing sorting/filtering by star rating and pagination.</td>
+        <td>Course details must be accessible.</td>
+    </tr>
+    <tr>
+        <td class="no-col">19</td>
+        <td>Search Courses</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows Guests and Users to search for courses by entering keywords that match titles, descriptions, and skills. The search is executed in real-time with a brief debounce delay, presenting matching results in the course catalog.</td>
+        <td>None.</td>
+    </tr>
+    <tr>
+        <td class="no-col">20</td>
+        <td>View Instructor Profile</td>
+        <td><a href="#">User Course</a></td>
+        <td>Displays the public profile page of an instructor along with their list of created courses.</td>
+        <td>The instructor's application must be approved.</td>
+    </tr>
+    <tr>
+        <td class="no-col">21</td>
+        <td>Add Personal Reviews</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows learners to submit reviews and star ratings for courses (or lessons) they are enrolled in, enforcing learning progress checks.</td>
+        <td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
+    </tr>
+    <tr>
+        <td class="no-col">22</td>
+        <td>Delete Personal Reviews</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows users to delete the course reviews they have previously submitted.</td>
+        <td>Actor must be authenticated. Actor must be the author of the review.</td>
+    </tr>
+    <tr>
+        <td class="no-col">23</td>
+        <td>Go To Learning</td>
+        <td><a href="#">User Course</a></td>
+        <td>Opens the course player to watch video lectures, read text content, and view course slides.</td>
+        <td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
+    </tr>
+    <tr>
+        <td class="no-col">24</td>
+        <td>View Learning Progress</td>
+        <td><a href="#">User Course</a></td>
+        <td>Allows Users and Instructors to track learning progress for enrolled or owned courses. Actors can view progress percentages on their enrolled courses dashboard, continue learning in the course player, view videos, read text documents, download learning materials, and automatically update their progress checks. When all materials are completed, the course is marked as completed.</td>
+        <td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
+    </tr>
+    <tr>
+        <td class="no-col">25</td>
+        <td>View purchased course list</td>
+        <td><a href="#">User Course</a></td>
+        <td>Displays all courses successfully purchased or enrolled in by the user.</td>
+        <td>Actor must be authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">26</td>
+        <td>Enroll courses</td>
+        <td><a href="#">User Course</a></td>
+        <td>Grants immediate course access (for free courses) or updates status after payment confirmation (for paid courses).</td>
+        <td>Actor must be authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">27</td>
+        <td>Create Courses</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Drafts basic details for a new course, including title, pricing, description, and curriculum outline.</td>
+        <td>Instructor must be authenticated and approved.</td>
+    </tr>
+    <tr>
+        <td class="no-col">28</td>
+        <td>Edit Course</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows instructors to modify details of their courses with integrated automatic debounced saving and content security hashing.</td>
+        <td>User must be successfully authenticated as an approved Instructor. The course must exist and belong to the active Instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">29</td>
+        <td>Add Lesson</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an instructor to add a new lesson to an existing course.</td>
+        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">30</td>
+        <td>Remove Lesson</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an instructor to remove an existing lesson from a course.</td>
+        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">31</td>
+        <td>Add Learning Materials</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an instructor to add new learning materials to an empty lesson.</td>
+        <td>User must be successfully authenticated as an approved instructor. The lesson must exist and belong to a course owned by the active instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">32</td>
+        <td>Edit Learning Material Details</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an instructor to edit the title and description of an existing learning material.</td>
+        <td>User must be successfully authenticated as an approved instructor. The material must exist and belong to a lesson in a course owned by the active instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">33</td>
+        <td>Remove Learning Materials</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an instructor to remove an existing learning material from a lesson.</td>
+        <td>User must be successfully authenticated as an approved instructor. The material must exist and belong to a course owned by the active instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">34</td>
+        <td>Remove Course</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an instructor to remove an existing course.</td>
+        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+    </tr>
+    <tr>
+        <td class="no-col">35</td>
+        <td>View Instructor's Course List</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Allows an approved instructor to view their course portfolio and manage courses.</td>
+        <td>The actor must be authenticated and have an approved instructor profile.</td>
+    </tr>
+    <tr>
+        <td class="no-col">36</td>
+        <td>Hide courses</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Temporarily hides a course from public display on the marketplace.</td>
+        <td>Instructor must be authenticated, be the owner of the course, and course status must be Published.</td>
+    </tr>
+    <tr>
+        <td class="no-col">37</td>
+        <td>View list of removed learning materials</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Displays a list of deleted learning materials (instructor's trash bin).</td>
+        <td>Instructor must be authenticated and approved.</td>
+    </tr>
+    <tr>
+        <td class="no-col">38</td>
+        <td>Restore learning materials</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Restores deleted learning materials back to active lessons.</td>
+        <td>Instructor must be authenticated and approved. The material must be currently in the trash bin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">39</td>
+        <td>Permanently delete learning materials</td>
+        <td><a href="Instructor Course.html">Instructor Course</a></td>
+        <td>Permanently deletes files from the storage server.</td>
+        <td>Instructor must be authenticated and approved. The material must be currently in the trash bin.</td>
+    </tr>
+    <tr>
+        <td class="no-col">40</td>
+        <td>Start Quiz Attempt</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows a user to start an attempt on a quiz assigned to a course lesson.</td>
+        <td>User must be enrolled in the course and the quiz must be available.</td>
+    </tr>
+    <tr>
+        <td class="no-col">41</td>
+        <td>Submit Quiz Attempt</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows a user to submit their answers for an active quiz attempt for grading.</td>
+        <td>User must have an active, unsubmitted quiz attempt.</td>
+    </tr>
+    <tr>
+        <td class="no-col">42</td>
+        <td>View Attempt Detail</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Displays detailed results of a completed quiz attempt, including answers and scores.</td>
+        <td>The quiz attempt must exist and be owned by the user.</td>
+    </tr>
+    <tr>
+        <td class="no-col">43</td>
+        <td>View Quiz History</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Displays a paginated list of all past quiz attempts for a user on a specific quiz.</td>
+        <td>User must be authenticated.</td>
+    </tr>
+    <tr>
         <td class="no-col">44</td>
-        <td>Add wishlist items</td>
-        <td><a href="#">Manage Wishlist</a></td>
-        <td>Allows an authenticated User to add a course to their personal wishlist. The system checks if the course is already in the wishlist, creates a wishlist record, saves it to the database, and updates the heart icon state dynamically via AJAX.</td>
-        <td>User must be logged in. The target course must exist and not already be in the User's wishlist.</td>
+        <td>Assign Quiz To Course</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to assign an existing quiz to a lesson within their course.</td>
+        <td>Instructor must be the owner of the course.</td>
     </tr>
     <tr>
         <td class="no-col">45</td>
-        <td>View Wishlist</td>
-        <td><a href="#">Manage Wishlist</a></td>
-        <td>Allows an authenticated User to view all courses they have saved in their personal wishlist. For each course, the system retrieves title, thumbnail, price, instructor name, average rating, enrollment count, and check if the User is currently enrolled in it.</td>
-        <td>User must be logged in.</td>
+        <td>View Question Bank</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Displays a summary of lessons and question counts for a specific course.</td>
+        <td>Instructor must be the owner of the course.</td>
     </tr>
     <tr>
         <td class="no-col">46</td>
-        <td>Delete Wishlist Items</td>
-        <td><a href="#">Manage Wishlist</a></td>
-        <td>Allows an authenticated User to delete a course from their personal wishlist. The system checks if the course is in their wishlist, deletes the record, and reloads the wishlist page.</td>
-        <td>User must be logged in. The target course must exist in the User's wishlist.</td>
+        <td>View Course Questions</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Displays the list of questions associated with a specific lesson in a course.</td>
+        <td>Instructor must be the owner of the course.</td>
+    </tr>
+    <tr>
+        <td class="no-col">47</td>
+        <td>Create Question</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to create a new quiz question and its options.</td>
+        <td>Instructor must be the owner of the course.</td>
+    </tr>
+    <tr>
+        <td class="no-col">48</td>
+        <td>Edit Question</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to edit an existing quiz question and its options.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+    </tr>
+    <tr>
+        <td class="no-col">49</td>
+        <td>Delete Question</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to permanently delete a quiz question from the question bank.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+    </tr>
+    <tr>
+        <td class="no-col">50</td>
+        <td>View Quiz List</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Displays a list of all quizzes created by the instructor.</td>
+        <td>Instructor must be authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">51</td>
+        <td>Create Quiz</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to create a new quiz with specific configurations and distributions.</td>
+        <td>Instructor must be authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">52</td>
+        <td>Delete Quiz</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to soft-delete a quiz they own.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+    </tr>
+    <tr>
+        <td class="no-col">53</td>
+        <td>Edit Quiz Settings</td>
+        <td><a href="Quiz Course.html">Quiz Course</a></td>
+        <td>Allows an Instructor to update configurations and distributions for an existing quiz.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+    </tr>
+    <tr>
+        <td class="no-col">54</td>
+        <td>View Course Moderation List</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Displays all courses submitted by instructors that are pending review.</td>
+        <td>Actor must be authenticated and have staff or admin role.</td>
+    </tr>
+    <tr>
+        <td class="no-col">55</td>
+        <td>Search Courses</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Searches course list by title or instructor name for moderation purposes.</td>
+        <td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">56</td>
+        <td>Sort Courses</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Sorts courses in the moderation list by submission date or threat level.</td>
+        <td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">57</td>
+        <td>Filter Courses</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Filters courses by categories or moderation status (Pending, Approved, Rejected).</td>
+        <td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
+    </tr>
+    <tr>
+        <td class="no-col">58</td>
+        <td>Approve Course Submission</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Approves a submitted course, marking it as published and visible on the marketplace.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or rejected, archived, permanently locked if re-approving).</td>
+    </tr>
+    <tr>
+        <td class="no-col">59</td>
+        <td>Reject Course Submission</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Rejects a submitted course with reasons and feedback for the instructor.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or approved/published if rejecting an active course).</td>
+    </tr>
+    <tr>
+        <td class="no-col">60</td>
+        <td>Flag Course for Content Violation</td>
+        <td><a href="Admin Course.html">Admin Course</a></td>
+        <td>Flags a course for content or policy violations, hiding it from public display.</td>
+        <td>Actor must be authenticated and have staff or admin role. The course status must be pending, approved/published, rejected, or archived. The course's current flag count must be less than 3.</td>
     </tr>
 </table>
 
