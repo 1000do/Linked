@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -33,7 +40,7 @@ participant "InstructorController" as fe_ctrl <<frontend controller>>
 participant "InstructorController" as be_ctrl <<backend controller>>
 participant ":InstructorService" as sv
 participant ":InstructorPublicProfileDto" as res
-participant ":IUserRepository" as repo
+participant ":IInstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -50,30 +57,35 @@ db -->> ctx--:8. Return query results
 ctx -->> repo--:9. Return instructor entity
 repo -->> sv--:10. Return instructor entity
 
-alt Instructor Not Found or Not Approved
+alt Instructor == null OR ApprovalStatus != Approved
     sv -->> be_ctrl:10.1. Return null
     be_ctrl -->> fe_ctrl:10.1.1. Return statusCode 404
-    fe_ctrl -->> view:10.1.2. Redirect to HomePage
-    activate view
-    view -->> act:10.1.3. Display HomePage
-else Instructor Found
+    fe_ctrl -->> view:10.1.2. Redirect to HomePage / Show NotFound
+    view -->> act:10.1.3. Display NotFound message
+else Instructor Found and Approved
     sv -> repo++:10.2. Call GetStatsAsync(id)
-    repo -->> sv--:10.2.1. Return instructor stats
+    repo -> ctx++:10.2.1. Execute query
+    ctx -> db++:10.2.2. Fetch stats
+    db -->> ctx--:10.2.3. Return query results
+    ctx -->> repo--:10.2.4. Return stats
+    repo -->> sv--:10.2.5. Return instructor stats
     
-    sv -> repo++:10.2.2. Call CountActiveCoursesAsync(id)
-    repo -->> sv--:10.2.3. Return active courses count
+    sv -> repo++:10.2.6. Call CountActiveCoursesAsync(id)
+    repo -> ctx++:10.2.7. Execute query
+    ctx -> db++:10.2.8. Count active courses
+    db -->> ctx--:10.2.9. Return query results
+    ctx -->> repo--:10.2.10. Return count
+    repo -->> sv--:10.2.11. Return active courses count
     
-    sv -> sv++:10.2.4. Extract published courses
+    sv -> sv++:10.2.12. Select published courses
     sv--
     
-    sv -> repo++:10.2.5. Call CountInstructorReviewsAsync(id)
-    repo -->> sv--:10.2.6. Return total reviews
+
+    sv -> res++:10.2.13. Call InstructorPublicProfileDto()
+    res -->> sv--:10.2.14. Return InstructorPublicProfileDto object
     
-    sv -> res++:10.2.7. Call InstructorPublicProfileDto()
-    res -->> sv--:10.2.8. Return InstructorPublicProfileDto object
-    
-    sv -->> be_ctrl--:10.2.9. Return InstructorPublicProfileDto object
-    be_ctrl -->> fe_ctrl--:10.2.10. Return statusCode 200
-    fe_ctrl -->> view--:10.2.11. Return View(InstructorPublicProfileViewModel)
-    view -->> act--:10.2.12. Display instructor profile
+    sv -->> be_ctrl--:10.2.15. Return InstructorPublicProfileDto object
+    be_ctrl -->> fe_ctrl--:10.2.16. Return statusCode 200
+    fe_ctrl -->> view--:10.2.17. Return View(InstructorPublicProfileViewModel)
+    view -->> act--:10.2.18. Display instructor profile
 end

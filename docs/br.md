@@ -269,5 +269,19 @@
 | BR-265  | **Filter Parameters:** Filtering by IsActive state, CouponType, or both combined in a single database query. |
 | BR-266 | Lockout Status Monitoring: The profile displays any active suspension records (start and end times) for the manager account, keeping administrative users informed of active lockout configurations. |
 | BR-267 | Role-based Labeling: The interface shows "Super Admin" if the manager's role is "ADMIN", and "Staff Support" otherwise. |
+| BR-268 | **Unique Quiz Title:** The quiz title must be unique per instructor. The system checks this upon quiz creation and updates. |
+| BR-269 | **Minimum Total Questions:** The total questions limit for a quiz must be greater than 0. |
+| BR-270 | **Distribution Integrity:** The sum of question counts distributed across lessons must exactly equal the quiz's configured TotalQuestions. |
+| BR-271 | **Question Bank Sufficiency:** For each lesson distribution, the number of requested questions must not exceed the actual number of questions available in the Question Bank for that specific lesson. |
+| BR-272 | **Attempt Lockdown:** An instructor cannot update the settings of a quiz, delete a quiz, or remove a quiz from a course if there is currently an active (unsubmitted) attempt by any student. |
+| BR-273 | **Enrolled Course Protection:** A quiz cannot be deleted if it is assigned to any course that has enrolled students. |
+| BR-274 | **Pending Course Lockdown:** Quizzes cannot be added to, removed from, or toggled hidden in a course while the course status is "Pending". |
+| BR-275 | **Auto Draft Fallback:** Adding or removing a quiz from a "Published" course will automatically revert the course status back to "Draft". |
+| BR-276 | **Quiz Generation Logic:** When a student starts a quiz, the system randomly draws questions from the Question Bank based on the quiz's QuizLessonDistribution. If the distribution falls short, it supplements remaining questions randomly from the entire course's question pool. |
+| BR-277 | **Score Calculation:** The attempt score is calculated as (Correct Answers / Total Questions) * 100, rounded to the nearest integer. |
+| BR-278 | **Passing Condition:** A student attempt is marked as "Passed" if the calculated score is greater than or equal to the quiz's PassingScore configuration. |
+| BR-279 | **Minimum Options:** A question must have at least 2 options. |
+| BR-280 | **Minimum Correct Options:** A question must have at least 1 correct option. |
+| BR-281 | **Instructor Course Ownership:** An instructor can only add, edit, delete, or view questions for courses they own. |
 
 ## 

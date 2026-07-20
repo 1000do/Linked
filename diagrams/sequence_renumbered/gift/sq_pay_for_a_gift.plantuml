@@ -100,12 +100,9 @@ else Valid Gift Details
     sv -> res_dto++:10.3.2.2.2. Call CheckoutResponse(ClientSecret, PaymentIntentId)
     res_dto -->> sv--:10.3.2.2.3. Return CheckoutResponse object
     
-        sv -->> be_ctrl:10.3.2.2.4. Return CheckoutResponse object
-        deactivate sv
-        be_ctrl -->> fe_gift_ctrl:10.3.2.2.5. Return statusCode 200
-        deactivate be_ctrl
-        fe_gift_ctrl -->> view:10.3.2.2.6. Return JSON (ClientSecret)
-        deactivate fe_gift_ctrl
+        sv -->> be_ctrl--:10.3.2.2.4. Return CheckoutResponse object
+        be_ctrl -->> fe_gift_ctrl--:10.3.2.2.5. Return statusCode 200
+        fe_gift_ctrl -->> view--:10.3.2.2.6. Return JSON (ClientSecret)
 end
 end
 
@@ -113,63 +110,66 @@ end
 view -> stripe++:11. stripe.confirmCardPayment(clientSecret, cardDetails)
 stripe -->> view--:12. Return payment result
 
+view -> view++:13. Validate payment result
+view--
+
 alt Payment declined
-    view -->> act:12.1. Display payment error message
+    view -->> act:13.1. Display payment error message
 else Payment Successful
-    view -> fe_gift_ctrl++:12.2. GET /Gift/CheckoutSuccess?payment_intent_id=...
+    view -> fe_gift_ctrl++:13.2. GET /Gift/CheckoutSuccess?payment_intent_id=...
+    deactivate view
     
-    fe_gift_ctrl -> be_ctrl++:12.2.1. GET /api/checkout/gift-success-intent
+    fe_gift_ctrl -> be_ctrl++:13.2.1. GET /api/checkout/gift-success-intent
     
-    be_ctrl -> sv++:12.2.2. ProcessPaymentIntentSuccessAsync(paymentIntentId)
+    be_ctrl -> sv++:13.2.2. ProcessPaymentIntentSuccessAsync(paymentIntentId)
         
 
-        sv -> stripe++:12.2.3. GetPaymentIntentMetadataAsync(paymentIntentId)
-        stripe -->> sv--:12.2.4. Return metadata
+        sv -> stripe++:13.2.3. GetPaymentIntentMetadataAsync(paymentIntentId)
+        stripe -->> sv--:13.2.4. Return metadata
         
-        sv -> sv++:12.2.5. Call ProcessSuccessfulGiftPaymentCoreAsync
-        
-
-        sv -> sv++:12.2.6. Call CreateGiftEntitiesAsync
-        
-        sv -> order_ett++:12.2.7. Call OrderInfo(...)
-        order_ett -->> sv--:12.2.8. Return OrderInfo object
+        sv -> sv++:13.2.5. Call ProcessSuccessfulGiftPaymentCoreAsync
         
 
-        sv -> item_ett++:12.2.9. Call OrderItem(...)
-        item_ett -->> sv--:12.2.10. Return OrderItem object
+        sv -> order_ett++:13.2.6. Call OrderInfo(...)
+        order_ett -->> sv--:13.2.7. Return OrderInfo object
         
-        sv -> tx_ett++:12.2.11. Call Transaction(...)
-        tx_ett -->> sv--:12.2.12. Return Transaction object
+        sv -> repo++:13.2.8. AddOrderAsync(order)
+        repo -->> sv--:13.2.9. Return Task
         
-        sv -> sv++:12.2.13. Call AddEntitiesToContext(order, orderItem, transaction)
+        sv -> item_ett++:13.2.10. Call OrderItem(...)
+        item_ett -->> sv--:13.2.11. Return OrderItem object
+        
+        sv -> repo++:13.2.12. AddOrderItemAsync(orderItem)
+        repo -->> sv--:13.2.13. Return Task
+        
+        sv -> tx_ett++:13.2.14. Call Transaction(...)
+        tx_ett -->> sv--:13.2.15. Return Transaction object
+        
+        sv -> repo++:13.2.16. AddTransactionAsync(transaction)
+        repo -->> sv--:13.2.17. Return Task
+        
+        sv -> repo++:13.2.18. SaveChangesAsync()
+        repo -> ctx++:13.2.19. SaveChangesAsync()
+        ctx -> db++:13.2.20. Save changes to database
+        db -->> ctx--:13.2.21. Return numberOfRowsAffected
+        ctx -->> repo--:13.2.22. Return numberOfRowsAffected
+        repo -->> sv--:13.2.23. Return numberOfRowsAffected
+        
+        sv -> sv++:13.2.24. Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
         sv--
         
-        sv -> repo++:12.2.14. SaveChangesAsync()
-        repo -> ctx++:12.2.15. SaveChangesAsync()
-        ctx -> db++:12.2.16. Save changes to database
-        db -->> ctx--:12.2.17. Return numberOfRowsAffected
-        ctx -->> repo--:12.2.18. Return numberOfRowsAffected
-        repo -->> sv--:12.2.19. Return numberOfRowsAffected
-        
-        sv--
-        
-        sv -> sv++:12.2.20. Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
-        sv--
-        
-        sv -> sv++:12.2.21. Call ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv -> sv++:13.2.25. Call ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
         sv--
         
 
         sv--
-        sv -->> be_ctrl--:12.2.22. Return result
+        sv -->> be_ctrl--:13.2.26. Return result
         
-        be_ctrl -->> fe_gift_ctrl--:12.2.23. Return statusCode 200
+        be_ctrl -->> fe_gift_ctrl--:13.2.27. Return statusCode 200
         
-        fe_gift_ctrl -->> view--:12.2.24. Return Redirect to /Course/MyCourses
-        view -->> my_courses_view:12.2.25. Redirect to My Courses page
-        deactivate view
+        fe_gift_ctrl -->> my_courses_view--:13.2.28. Redirect to /Course/MyCourses
         activate my_courses_view
-        my_courses_view -->> act--:12.2.26. Display checkout success message
+        my_courses_view -->> act--:13.2.29. Display checkout success message
 end
 
 

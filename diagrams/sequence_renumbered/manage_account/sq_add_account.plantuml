@@ -97,6 +97,7 @@ alt Database save failed
             be_ctrl-->>fe_ctrl:5.2.10.2.9.1.4. Return statusCode 400
             fe_ctrl-->>view:5.2.10.2.9.1.5. Return JSON with success = false
             view-->>act:5.2.10.2.9.1.6. Display error toast message
+            deactivate view
 else Save successful
             db-->>ctx--:5.2.10.2.9.2. Return numberOfRowsAffected
             ctx-->>u_repo--:5.2.10.2.9.2.1. Return numberOfRowsAffected

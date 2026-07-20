@@ -1,6 +1,13 @@
 @startuml 
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -10,7 +17,7 @@
             RoundCorner 0
         }
         database{
-            BackgroundColor white   
+            BackgroundColor white
         }
         groupHeader{
             BackgroundColor white
@@ -43,7 +50,8 @@ view ++
 act -> view:1. Access the profile page
 view -> fe_ctrl++:2. GET /AdminProfile/Index
 
-fe_ctrl -> fe_ctrl:3. Validate active login session
+fe_ctrl -> fe_ctrl++:3. Validate active login session
+deactivate fe_ctrl
 alt Session Expired / Unauthorized Access
     fe_ctrl -->> login_view:3.1. Redirect to /Account/Login
     activate login_view
@@ -52,7 +60,8 @@ alt Session Expired / Unauthorized Access
 else Valid Session
     fe_ctrl -> be_ctrl++:3.2. GET /api/admin/profile
     
-    be_ctrl -> be_ctrl:3.2.1. Validate ClaimTypes.NameIdentifier
+    be_ctrl -> be_ctrl++:3.2.1. Validate ClaimTypes.NameIdentifier
+    deactivate be_ctrl
     
 alt Session Invalid
         be_ctrl -->> fe_ctrl:3.2.1.1. Return statusCode 401
@@ -68,30 +77,29 @@ else Valid Claim
         ctx -> db++:3.2.1.2.3. Execute SELECT
         db -->> ctx--:3.2.1.2.4. Data
         
+        ctx -> ctx++:3.2.1.2.5. Check returned Data
+        deactivate ctx
+        
 alt Manager Profile Not Found
-            ctx -->> manager_repo:3.2.1.2.4.1. null
-            manager_repo -->> profile_sv:3.2.1.2.4.1.1. null
-            profile_sv -->> be_ctrl:3.2.1.2.4.1.2. null
-            be_ctrl -->> fe_ctrl:3.2.1.2.4.1.3. Return statusCode 404
-            fe_ctrl -->> login_view:3.2.1.2.4.1.4. Redirect to /Account/Login\nwith error message
+            ctx -->> manager_repo:3.2.1.2.5.1. null
+            manager_repo -->> profile_sv:3.2.1.2.5.1.1. null
+            profile_sv -->> be_ctrl:3.2.1.2.5.1.2. null
+            be_ctrl -->> fe_ctrl:3.2.1.2.5.1.3. Return statusCode 404
+            fe_ctrl -->> login_view:3.2.1.2.5.1.4. Redirect to /Account/Login\nwith error message
             activate login_view
-            login_view -->> act:3.2.1.2.4.1.5. Display error message regarding profile retrieval failure
+            login_view -->> act:3.2.1.2.5.1.5. Display error message regarding profile retrieval failure
             deactivate login_view
 else Manager Profile Found
-            ctx -->> manager_repo--:3.2.1.2.4.2. Manager Entity
-            manager_repo -->> profile_sv--:3.2.1.2.4.2.1. Manager Entity
+            ctx -->> manager_repo--:3.2.1.2.5.2. Manager Entity
+            manager_repo -->> profile_sv--:3.2.1.2.5.2.1. Manager Entity
             
-            profile_sv -> profile_sv:3.2.1.2.4.2.2. Retrieve account's active lockout history\n(From ManagerNavigation.Lockouts)
+            profile_sv -->> be_ctrl--:3.2.1.2.5.2.2. Return ManagerProfileResponse
             
-            profile_sv -> profile_sv:3.2.1.2.4.2.3. Map to ManagerProfileResponse
-            profile_sv -->> be_ctrl--:3.2.1.2.4.2.4. Return ManagerProfileResponse
+            be_ctrl -->> fe_ctrl--:3.2.1.2.5.2.3. Return statusCode 200 (ManagerProfileResponse)
             
-            be_ctrl -->> fe_ctrl--:3.2.1.2.4.2.5. Return statusCode 200 (ManagerProfileResponse)
+            fe_ctrl -->> view--:3.2.1.2.5.2.4. Return View(AdminProfileViewModel)
             
-            fe_ctrl -> fe_ctrl:3.2.1.2.4.2.6. Deserialize to AdminProfileViewModel
-            fe_ctrl -->> view--:3.2.1.2.4.2.7. Return View(AdminProfileViewModel)
-            
-            view -->> act--:3.2.1.2.4.2.8. Display manager profile details,\naccount information, and lockout status
+            view -->> act--:3.2.1.2.5.2.5. Display manager profile details,\naccount information, and lockout status
 end
 end
 end

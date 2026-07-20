@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Gift</li>
+    <li><b>Test requirement:</b> Tests for purchasing and receiving gifted courses.</li>
+    <li><b>Number of TCs:</b> 19</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Gift Courses</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Configure Gift Details Successfully</td>
+        <td>1. Login as an authenticated User.<br>2. Access the Course Details page.<br>3. Click the 'Gift this course' button.<br>4. Fill in the Recipient's Email (valid and not enrolled), Recipient's Name, Card Theme, and Gift Message.<br>5. Click the 'Proceed to Payment' button.</td>
+        <td>The system validates inputs, checks the recipient's enrollment status, and redirects the user to the Gift Checkout page.</td>
+        <td>User must be authenticated. Target course exists. Recipient must not be enrolled.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Invalid form inputs</td>
+        <td>1. Login as an authenticated User.<br>2. Access the Course Details page.<br>3. Click the 'Gift this course' button.<br>4. Submit the form with invalid or missing required fields (e.g., missing recipient email).</td>
+        <td>The system highlights the invalid fields and displays inline validation error messages.</td>
+        <td>User must be authenticated. Target course exists.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Recipient already enrolled</td>
+        <td>1. Login as an authenticated User.<br>2. Access the Course Details page.<br>3. Click the 'Gift this course' button.<br>4. Fill in the Recipient's Email belonging to an already enrolled user.<br>5. Click the 'Proceed to Payment' button.</td>
+        <td>The system displays an error message on the email field indicating the recipient already owns the course and disables the checkout button.</td>
+        <td>User must be authenticated. Target course exists. Recipient is already enrolled in the course.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Session Invalid</td>
+        <td>1. Access the Course Details page as an unauthenticated User.<br>2. Click the 'Gift this course' button.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated. Target course exists.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Course Not Found</td>
+        <td>1. Login as an authenticated User.<br>2. Simulate accessing the gift setup page with an invalid course ID parameter.</td>
+        <td>The system fails to retrieve course information, displays an error message, and redirects the user to the home page.</td>
+        <td>User must be authenticated. Target course does not exist.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Pay for a gift</td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Pay for a Gift Successfully - Unregistered recipient</td>
+        <td>1. Login as User A.<br>2. Configure a gift for an unregistered email address and proceed to checkout.<br>3. Enter valid payment card details and click 'Pay Securely'.<br>4. Check User A's screen.<br>5. Check the unregistered recipient's external email inbox.<br>6. Login as the Instructor of the course and check notifications.</td>
+        <td>User A sees a checkout success message and is redirected to the course list. The recipient receives an email with the redemption link. The Instructor receives a sales notification.</td>
+        <td>User A is authenticated. Gift details configured. Recipient email is not registered in the system.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Pay for a Gift Successfully - Registered recipient</td>
+        <td>1. Login as User A.<br>2. Configure a gift for a registered User B (not enrolled in the course) and proceed to checkout.<br>3. Enter valid payment card details and click 'Pay Securely'.<br>4. Check User A's screen.<br>5. Check User B's external email inbox and login as User B to check in-app notifications.<br>6. Login as the Instructor of the course and check notifications.</td>
+        <td>User A sees a checkout success message. User B receives both an email with the redemption link and an in-app notification. The Instructor receives a sales notification.</td>
+        <td>User A is authenticated. Gift details configured. Recipient email is registered but not enrolled.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Missing cardholder name</td>
+        <td>1. Login as an authenticated User.<br>2. Access the Gift Checkout page with valid gift parameters.<br>3. Leave the Cardholder Name empty and fill in other card details.<br>4. Click 'Pay Securely'.</td>
+        <td>The system highlights the Cardholder Name field and displays a validation error message.</td>
+        <td>User is authenticated. Gift details configured.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Payment declined</td>
+        <td>1. Login as an authenticated User.<br>2. Access the Gift Checkout page with valid gift parameters.<br>3. Input a test card known to be declined by Stripe.<br>4. Click 'Pay Securely'.</td>
+        <td>The Stripe Payment Gateway declines the payment and the system displays a payment error message.</td>
+        <td>User is authenticated. Gift details configured.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Session Invalid</td>
+        <td>1. Simulate session expiry or access the Gift Checkout page as an unauthenticated user with valid parameters.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Gift Details Missing</td>
+        <td>1. Login as an authenticated User.<br>2. Access the Gift Checkout page without passing the required gift parameters (e.g., missing recipient email in the backend).</td>
+        <td>The system detects missing parameters, displays an error message, and redirects the user to the home page.</td>
+        <td>User is authenticated. Missing gift parameters.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Payment Intent Creation Failed</td>
+        <td>1. Simulate a Stripe API outage in the backend.<br>2. Login as an authenticated User.<br>3. Proceed to the Gift Checkout page with valid parameters.<br>4. Attempt to initialize the payment card form.</td>
+        <td>The system fails to create the payment intent, displays an error message, and redirects the user back to the gift setup page.</td>
+        <td>User is authenticated. Gift details configured. Stripe API unavailable.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Email Delivery Failed</td>
+        <td>1. Simulate an SMTP delivery failure in the backend.<br>2. Login as User A.<br>3. Configure a gift and process a successful payment.</td>
+        <td>User A sees a checkout success message. The system logs the email delivery failure but does not crash the payment flow.</td>
+        <td>User A is authenticated. Email service unavailable.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Receive a gift</td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Receive a Gift Successfully</td>
+        <td>1. Login as a registered User (the recipient).<br>2. Click the valid redemption link from the email or in-app notification.<br>3. Review the gift card preview on the page.<br>4. Click the 'Claim Your Gift' button.</td>
+        <td>The system creates an active enrollment, marks the gift as claimed, rejects pending refunds, displays a success message, and redirects the user to the course study page.</td>
+        <td>Token is valid. User is authenticated. User is not already enrolled. Gift is not claimed/refunded.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>User is not logged in</td>
+        <td>1. Click the valid redemption link from the email as an unauthenticated user.<br>2. Observe the gift card preview.<br>3. Click the 'Login' or 'Register' button and complete authentication.</td>
+        <td>The system hides the claim button initially. After authentication, the system redirects the user back to the Gift Claim page with the claim button visible.</td>
+        <td>Token is valid. User is unauthenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Recipient already enrolled</td>
+        <td>1. Login as a registered User who is already enrolled in the gifted course.<br>2. Click the valid redemption link from the email or in-app notification.<br>3. Attempt to click 'Claim Your Gift'.</td>
+        <td>The system displays an error message indicating the user already owns the course and disables the claim button.</td>
+        <td>Token is valid. User is authenticated and already enrolled in the course.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Invalid or Expired Token</td>
+        <td>1. Login as a registered User.<br>2. Modify the redemption link with an invalid token and access the URL.</td>
+        <td>The system displays a token invalid error message and redirects the user to the Claim Error page.</td>
+        <td>User is authenticated. Token does not exist.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Refunded Gift</td>
+        <td>1. Login as a registered User.<br>2. Click a valid redemption link for a gift transaction that has been successfully refunded to the buyer.</td>
+        <td>The system displays an error message indicating the gift is refunded and redirects the user to the Claim Error page.</td>
+        <td>Token is valid. User is authenticated. Gift transaction is refunded.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Gift Already Claimed</td>
+        <td>1. Login as a registered User.<br>2. Click a valid redemption link for a gift that has already been claimed by another account.</td>
+        <td>The system displays a message indicating the gift is already claimed and disables the claiming options.</td>
+        <td>Token is valid. User is authenticated. Gift is marked as claimed.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>

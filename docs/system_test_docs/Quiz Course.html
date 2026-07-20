@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Quiz Course</li>
+    <li><b>Test requirement:</b> Tests for quiz course features including starting/submitting quiz attempts, viewing attempt details and history, managing question banks, and managing quizzes</li>
+    <li><b>Number of TCs:</b> 70</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Start Quiz Attempt</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Start Quiz Attempt Successfully</td>
+        <td>1. Login as an enrolled User.<br>2. Access the course learning page and navigate to a quiz.<br>3. Click the 'Start Quiz' button.</td>
+        <td>The system creates a new quiz attempt and displays the quiz questions interface.</td>
+        <td>User must be enrolled in the course and the quiz must be available.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the course learning page and navigate to a quiz as an unauthenticated User.<br>2. Click the 'Start Quiz' button.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Quiz Not Found</td>
+        <td>1. Login as an enrolled User.<br>2. Access the course learning page.<br>3. Attempt to start a quiz that has been deleted or does not exist (using direct API or modified ID).</td>
+        <td>The system displays a quiz not found error message.</td>
+        <td>The requested quiz does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Unauthorized Access or Quiz Unavailable</td>
+        <td>1. Login as a User not enrolled in the course.<br>2. Attempt to start the quiz.</td>
+        <td>The system displays an error message regarding unauthorized access.</td>
+        <td>User is not enrolled or the quiz is unavailable.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an enrolled User.<br>3. Click the 'Start Quiz' button.</td>
+        <td>The system displays a server error message.</td>
+        <td>User must be enrolled in the course and the quiz must be available.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Submit Quiz Attempt</td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Submit Quiz Attempt Successfully</td>
+        <td>1. Login as an enrolled User.<br>2. Navigate to an active quiz attempt.<br>3. Answer the questions.<br>4. Click the 'Submit' button.</td>
+        <td>The system calculates the score, updates the attempt record, and displays the quiz result summary.</td>
+        <td>User must have an active, unsubmitted quiz attempt.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Cancel Submission</td>
+        <td>1. Login as an enrolled User.<br>2. Navigate to an active quiz attempt.<br>3. Click the 'Submit' button.<br>4. Click the cancel button on the submission confirmation modal.</td>
+        <td>The system closes the modal without submitting the quiz.</td>
+        <td>User must have an active, unsubmitted quiz attempt.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Click the 'Submit' button on an active quiz attempt.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Attempt Not Found</td>
+        <td>1. Login as an enrolled User.<br>2. Attempt to submit a quiz attempt that does not exist (using direct API).</td>
+        <td>The system displays an attempt not found error message.</td>
+        <td>The requested attempt does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a User.<br>2. Attempt to submit a quiz attempt owned by another User (using direct API).</td>
+        <td>The system displays an unauthorized access error message.</td>
+        <td>User is not the owner of the attempt.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Already Submitted</td>
+        <td>1. Login as an enrolled User.<br>2. Attempt to submit a quiz attempt that has already been submitted.</td>
+        <td>The system displays an error message stating the quiz was already submitted.</td>
+        <td>The attempt has already been submitted.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an enrolled User.<br>3. Click the 'Submit' button on an active attempt.</td>
+        <td>The system displays a server error message.</td>
+        <td>User must have an active, unsubmitted quiz attempt.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Attempt Detail</td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>View Attempt Detail Successfully</td>
+        <td>1. Login as a User.<br>2. Access the quiz history page.<br>3. Click on a specific completed quiz attempt.</td>
+        <td>The system retrieves and displays the detailed attempt results, including submitted answers and scores.</td>
+        <td>The quiz attempt must exist and be owned by the user.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access a specific quiz attempt detail page as an unauthenticated User.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Attempt Not Found</td>
+        <td>1. Login as a User.<br>2. Attempt to view details for an attempt that does not exist.</td>
+        <td>The system displays an attempt not found error message.</td>
+        <td>The requested attempt does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a User.<br>2. Attempt to view details for a quiz attempt owned by another User.</td>
+        <td>The system displays an unauthorized access error message.</td>
+        <td>User is not the owner of the attempt.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Quiz History</td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>View Quiz History Successfully</td>
+        <td>1. Login as a User.<br>2. Access the quiz history page for a specific quiz.</td>
+        <td>The system displays the paginated list of past quiz attempts for the user.</td>
+        <td>User must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Navigate Pagination</td>
+        <td>1. Login as a User.<br>2. Access the quiz history page.<br>3. Click a page link or page navigation control.</td>
+        <td>The system updates the list to show the requested page of quiz attempts.</td>
+        <td>The user must have enough attempts to trigger pagination.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the quiz history page as an unauthenticated User.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Assign Quiz To Course</td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Assign Quiz to Course Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to the course editor page.<br>3. Select a quiz to add to the course.</td>
+        <td>The system assigns the quiz to the course, saves it to the database, and displays a success message.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the course editor page as an unauthenticated user.<br>2. Attempt to assign a quiz.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Course Not Found Or Unauthorized Access</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to assign a quiz to a course owned by another Instructor.</td>
+        <td>The system displays an unauthorized error message.</td>
+        <td>Instructor is not the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Select a quiz to add in the course editor page.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Question Bank</td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>View Question Bank Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Access the question bank page.<br>3. Select a specific course.</td>
+        <td>The system displays the summary of lessons and their associated question counts for the course.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the question bank page as an unauthenticated user.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-026</td>
+        <td>Course Not Found Or Unauthorized</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to view the question bank for a course owned by another Instructor.</td>
+        <td>The system displays an unauthorized error message.</td>
+        <td>Instructor is not the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Course Questions</td>
+    </tr>
+
+    <tr>
+        <td>TC-027</td>
+        <td>View Questions Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Access the question bank page.<br>3. Select a specific lesson.</td>
+        <td>The system displays the list of questions associated with the selected lesson.</td>
+        <td>Instructor must be the owner of the course containing the lesson.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-028</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the question bank and select a lesson as an unauthenticated user.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-029</td>
+        <td>Lesson Not Found</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to view questions for a lesson that does not exist.</td>
+        <td>The system displays a lesson not found error message.</td>
+        <td>The requested lesson does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-030</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to view questions for a lesson in a course owned by another Instructor.</td>
+        <td>The system displays an unauthorized error message.</td>
+        <td>Instructor is not the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Create Question</td>
+    </tr>
+
+    <tr>
+        <td>TC-031</td>
+        <td>Create Question Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to the question bank and click add question.<br>3. Fill out valid question details and options.<br>4. Click submit.</td>
+        <td>The system creates the new question, saves it to the database, and displays a success message.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-032</td>
+        <td>Invalid Form Submission</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to add question.<br>3. Submit the form with missing required fields (e.g., empty title).</td>
+        <td>The system displays frontend validation error messages.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-033</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Submit the add question form.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-034</td>
+        <td>Invalid Options</td>
+        <td>1. Login as an Instructor.<br>2. Submit the form with invalid options (e.g., no correct answer selected).</td>
+        <td>The system displays a validation error message.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-035</td>
+        <td>Course Not Found Or Unauthorized</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to create a question for a course owned by another Instructor.</td>
+        <td>The system displays an unauthorized error message.</td>
+        <td>Instructor is not the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-036</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Submit the add question form with valid data.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Edit Question</td>
+    </tr>
+
+    <tr>
+        <td>TC-037</td>
+        <td>Edit Question Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to the question bank and click edit for a specific question.<br>3. Modify question details or options.<br>4. Click save.</td>
+        <td>The system updates the question, saves it to the database, and displays a success message.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-038</td>
+        <td>Invalid Form Submission</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to edit a question.<br>3. Submit the form with missing required fields.</td>
+        <td>The system displays frontend validation error messages.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-039</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Submit the edit question form.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-040</td>
+        <td>Invalid Options</td>
+        <td>1. Login as an Instructor.<br>2. Submit the edit form with invalid options (e.g., removing all correct answers).</td>
+        <td>The system displays a validation error message.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-041</td>
+        <td>Question Not Found</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to edit a question that does not exist.</td>
+        <td>The system displays a not found error message.</td>
+        <td>The requested question does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-042</td>
+        <td>Course Not Found Or Unauthorized</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to edit a question for a course owned by another Instructor.</td>
+        <td>The system displays an unauthorized error message.</td>
+        <td>Instructor is not the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-043</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Submit the edit question form with valid data.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Question</td>
+    </tr>
+
+    <tr>
+        <td>TC-044</td>
+        <td>Delete Question Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to the question bank and click delete for a specific question.<br>3. Confirm the deletion.</td>
+        <td>The system removes the question from the database and displays a success message.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-045</td>
+        <td>Cancel Deletion</td>
+        <td>1. Login as an Instructor.<br>2. Click delete for a question.<br>3. Click the cancel button on the deletion confirmation modal.</td>
+        <td>The system closes the modal without deleting the question.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-046</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Confirm the deletion of a question.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-047</td>
+        <td>Question Not Found</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to delete a question that does not exist.</td>
+        <td>The system displays a not found error message.</td>
+        <td>The requested question does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-048</td>
+        <td>Course Not Found Or Unauthorized</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to delete a question from a course owned by another Instructor.</td>
+        <td>The system displays an unauthorized error message.</td>
+        <td>Instructor is not the owner of the course.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-049</td>
+        <td>Database Delete Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Confirm the deletion of a question.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be the owner of the course containing the question.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Quiz List</td>
+    </tr>
+
+    <tr>
+        <td>TC-050</td>
+        <td>View Quiz List Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Access the quiz list page.</td>
+        <td>The system retrieves and displays the list of all quizzes created by the instructor.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-051</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Access the quiz list page as an unauthenticated user.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Create Quiz</td>
+    </tr>
+
+    <tr>
+        <td>TC-052</td>
+        <td>Create Quiz Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to create a new quiz.<br>3. Fill out valid quiz details and question distributions.<br>4. Click Create.</td>
+        <td>The system saves the new quiz and its distribution settings to the database and displays a success message.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-053</td>
+        <td>Invalid Form Submission</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to create a new quiz.<br>3. Submit the form with missing required fields.</td>
+        <td>The system displays frontend validation error messages.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-054</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Submit the create quiz form.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-055</td>
+        <td>Validation Failed</td>
+        <td>1. Login as an Instructor.<br>2. Submit the create quiz form with an existing title.</td>
+        <td>The system displays a validation error message regarding duplicate title.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-056</td>
+        <td>Distributions Invalid</td>
+        <td>1. Login as an Instructor.<br>2. Submit the create quiz form with invalid question distributions (e.g., sum does not match total questions).</td>
+        <td>The system displays an invalid distribution error message.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-057</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Submit the create quiz form with valid data.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Quiz</td>
+    </tr>
+
+    <tr>
+        <td>TC-058</td>
+        <td>Delete Quiz Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Access the quiz list page.<br>3. Click the delete button for a specific quiz.<br>4. Confirm the deletion.</td>
+        <td>The system marks the quiz as removed in the database and displays a success message.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-059</td>
+        <td>Cancel Deletion</td>
+        <td>1. Login as an Instructor.<br>2. Click the delete button for a quiz.<br>3. Click the cancel button on the deletion confirmation modal.</td>
+        <td>The system closes the modal without deleting the quiz.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-060</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Confirm the deletion of a quiz.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-061</td>
+        <td>Validation Failed</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to delete a quiz that is assigned to an enrolled course.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Instructor must be the owner of the quiz, but the quiz cannot be deleted due to active enrollments.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-062</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Confirm the deletion of a quiz.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Edit Quiz Settings</td>
+    </tr>
+
+    <tr>
+        <td>TC-063</td>
+        <td>Edit Quiz Settings Successfully</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to edit a specific quiz.<br>3. Modify quiz settings or question distributions.<br>4. Click Save.</td>
+        <td>The system updates the quiz properties and distributions, saves to the database, and displays a success message.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-064</td>
+        <td>Invalid Form Submission</td>
+        <td>1. Login as an Instructor.<br>2. Navigate to edit a quiz.<br>3. Submit the form with missing required fields.</td>
+        <td>The system displays frontend validation error messages.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-065</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate session expiration.<br>2. Submit the edit quiz settings form.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-066</td>
+        <td>Validation Failed</td>
+        <td>1. Login as an Instructor.<br>2. Submit the edit quiz form with a duplicate title.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-067</td>
+        <td>Distributions Invalid</td>
+        <td>1. Login as an Instructor.<br>2. Submit the edit form with invalid question distributions.</td>
+        <td>The system displays an invalid distribution error message.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-068</td>
+        <td>Quiz Not Found</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to edit a quiz that does not exist.</td>
+        <td>The system displays a quiz not found error message.</td>
+        <td>The requested quiz does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-069</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as an Instructor.<br>2. Attempt to edit a quiz owned by another Instructor.</td>
+        <td>The system displays an unauthorized access error message.</td>
+        <td>Instructor is not the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-070</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Login as an Instructor.<br>3. Submit the edit form with valid data.</td>
+        <td>The system displays a server error message.</td>
+        <td>Instructor must be the owner of the quiz.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>TaiTP</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>TaiTP</td>
+        <td></td>
+    </tr>
+
+</table>
+</body>
+</html>

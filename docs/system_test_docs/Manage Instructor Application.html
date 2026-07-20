@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Instructor Application</li>
+    <li><b>Test requirement:</b> Tests for Staff and Admin viewing, searching, filtering, sorting, approving, and rejecting instructor applications.</li>
+    <li><b>Number of TCs:</b> 33</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Instructor Applications</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>View Instructor Applications Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Access the instructor registration requests page.</td>
+        <td>System displays the list of pending instructor applications including applicant details, specialization, and documents.</td>
+        <td>Actor is successfully authenticated as Staff or Admin.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>No Pending Applications Found</td>
+        <td>1. Login as Staff or Admin.<br>2. Access the registration requests page when there are no pending applications.</td>
+        <td>System displays an empty state message indicating no registration requests were found.</td>
+        <td>No pending applications exist in the database.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Session Invalid</td>
+        <td>1. Access the instructor registration requests page as a guest.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a User.<br>2. Access the instructor registration requests page.</td>
+        <td>System redirects the user to the access denied error page.</td>
+        <td>Actor lacks Staff or Admin privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Approve Instructor Applications</td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Approve Instructor Application Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Locate a pending application and click 'Approve'.<br>3. Click 'Approve' on the confirmation dialog.</td>
+        <td>System updates status to 'Approved', updates user role to 'Instructor', displays a success message, removes the row, and sends an approval notification.</td>
+        <td>Actor has access and a pending application exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Cancel Approval</td>
+        <td>1. Login as Staff or Admin.<br>2. Click 'Approve' on an application.<br>3. Click 'Cancel' on the confirmation dialog.</td>
+        <td>System closes the dialog and no changes are made to the application.</td>
+        <td>Actor has access and a pending application exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Application Not Found</td>
+        <td>1. Login as Staff or Admin.<br>2. Attempt to approve an application that was already processed.</td>
+        <td>System displays an error message indicating the application could not be found.</td>
+        <td>The target pending application does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Session Invalid</td>
+        <td>1. Simulate session expiry.<br>2. Click 'Approve' and confirm.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a User.<br>2. Attempt to trigger the approval process endpoint.</td>
+        <td>System redirects the user to the access denied error page.</td>
+        <td>Actor lacks Staff or Admin privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Processing Error on Server</td>
+        <td>1. Simulate a database error.<br>2. Confirm the approval.</td>
+        <td>System displays an error message regarding server processing failure.</td>
+        <td>Valid approval request.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Reject Instructor Application</td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Reject Instructor Application Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Click 'Reject' next to a pending application.<br>3. Enter a rejection reason and click 'Reject'.</td>
+        <td>System updates status to 'Rejected', displays a success message, removes the row, and sends a rejection notification with the reason to the user.</td>
+        <td>Actor has access and a pending application exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Submit Empty Rejection Reason</td>
+        <td>1. Login as Staff or Admin.<br>2. Click 'Reject' next to an application.<br>3. Leave the reason text field blank and confirm.</td>
+        <td>System displays a validation error message requiring a reason for rejection.</td>
+        <td>Actor leaves the required reason field empty.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Cancel Rejection</td>
+        <td>1. Login as Staff or Admin.<br>2. Click 'Reject' next to an application.<br>3. Click 'Cancel' on the dialog.</td>
+        <td>System closes the dialog and no changes are made to the application.</td>
+        <td>Actor has access and a pending application exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Application Not Found</td>
+        <td>1. Login as Staff or Admin.<br>2. Attempt to reject an application that was already processed.</td>
+        <td>System displays an error message indicating the application could not be found.</td>
+        <td>The target pending application does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Session Invalid</td>
+        <td>1. Simulate session expiry.<br>2. Submit the rejection.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a User.<br>2. Attempt to trigger the rejection process endpoint.</td>
+        <td>System redirects the user to the access denied error page.</td>
+        <td>Actor lacks Staff or Admin privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Processing Error on Server</td>
+        <td>1. Simulate a database error.<br>2. Confirm the rejection with a valid reason.</td>
+        <td>System displays an error message regarding server processing failure.</td>
+        <td>Valid rejection request.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Instructor Applications Detail</td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>View Application Details Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Click the 'View Info' link for a pending application.</td>
+        <td>System displays the applicant's profile details (avatar, name, email, expertise, social links, documents) and the Approve/Reject buttons.</td>
+        <td>Actor has access and the application exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Cancel Viewing Details</td>
+        <td>1. Login as Staff or Admin.<br>2. View application details.<br>3. Click 'Cancel' or the 'Back to List' link.</td>
+        <td>System navigates back to the pending applications list page.</td>
+        <td>Actor is on the detail page.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Application Not Found</td>
+        <td>1. Login as Staff or Admin.<br>2. Attempt to view details for an application ID that is invalid or already processed.</td>
+        <td>System displays an 'Application not found' error and redirects to the list.</td>
+        <td>The target application ID is invalid or missing.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Session Invalid</td>
+        <td>1. Access the application details endpoint as a guest.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a User.<br>2. Access the application details endpoint.</td>
+        <td>System redirects the user to the access denied error page.</td>
+        <td>Actor lacks Staff or Admin privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Search Instructor Applications</td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Search Instructor Applications Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Enter a matching query (e.g. name, email) in the search input field.</td>
+        <td>System filters and displays matching applications in the table.</td>
+        <td>Actor has access and the applications list is loaded.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>Clear Search Query</td>
+        <td>1. Login as Staff or Admin.<br>2. Clear the text from the search input field.</td>
+        <td>System resets the filters and displays all pending applications.</td>
+        <td>Actor has previously entered a search query.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>No Matching Applications Found</td>
+        <td>1. Login as Staff or Admin.<br>2. Enter a query that does not match any application.</td>
+        <td>System displays an empty state message indicating no matching requests were found.</td>
+        <td>Search query matches no existing applications.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-026</td>
+        <td>Session Invalid (Search)</td>
+        <td>1. Attempt to access the page or search without a valid session.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-027</td>
+        <td>Unauthorized Access (Search)</td>
+        <td>1. Login as a User and attempt to access the page to search.</td>
+        <td>System redirects to the access denied error page.</td>
+        <td>Actor lacks Staff or Admin privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Filter Instructor Applications</td>
+    </tr>
+
+    <tr>
+        <td>TC-028</td>
+        <td>Filter Instructor Applications Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Select a specialization option from the filter dropdown.</td>
+        <td>System updates the table rows to display only applications with the selected specialization.</td>
+        <td>Actor has access and the applications list is loaded.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-029</td>
+        <td>Select 'All Specializations'</td>
+        <td>1. Login as Staff or Admin.<br>2. Select 'All Specializations' from the dropdown.</td>
+        <td>System resets the expertise filter and displays all applications.</td>
+        <td>Actor has previously selected a filter.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-030</td>
+        <td>Filter with No Matches</td>
+        <td>1. Login as Staff or Admin.<br>2. Combine an expertise filter with a search query that has no match.</td>
+        <td>System displays an empty state message indicating no matching requests were found.</td>
+        <td>Combined filters yield zero results.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-031</td>
+        <td>Session Invalid (Filter)</td>
+        <td>1. Attempt to access the page or filter without a valid session.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Sort Instructor Applications</td>
+    </tr>
+
+    <tr>
+        <td>TC-032</td>
+        <td>Sort Instructor Applications Successfully</td>
+        <td>1. Login as Staff or Admin.<br>2. Select a sorting criteria option from the sort dropdown.</td>
+        <td>System sorts and updates the table rows according to the selected criteria.</td>
+        <td>Actor has access and the applications list is loaded.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-033</td>
+        <td>Sort with No Matches</td>
+        <td>1. Login as Staff or Admin.<br>2. Combine sorting with a search query that yields no match.</td>
+        <td>System displays an empty state message indicating no matching requests were found.</td>
+        <td>Combined filters yield zero results.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>

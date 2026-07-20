@@ -39,6 +39,29 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task ProcessPaymentSuccessAsync_TransactionExistsButPending_ContinuesProcessingAndThrowsSinceNoMetadata()
+        {
+            //Arrange 1
+            string sessionId = "sess_1";
+            var transactions = new List<Transaction> 
+            { 
+                new Transaction { TransactionsStatus = "pending", InstructorPayouts = new List<InstructorPayout>() } 
+            };
+
+            //Arrange 2
+            _repoMock.GetTransactionsBySessionIdAsync(sessionId).Returns(transactions);
+            _paymentGatewayMock.GetSessionMetadataAsync(sessionId).Returns((Dictionary<string, string>?)null);
+
+            //Act
+            Func<Task> act = async () => await _sut.ProcessPaymentSuccessAsync(sessionId);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Valid metadata or UserId was not found in the Stripe Session.");
+            await _repoMock.Received(1).GetTransactionsBySessionIdAsync(sessionId);
+            await _paymentGatewayMock.Received(1).GetSessionMetadataAsync(sessionId);
+        }
+
+        [Fact]
         public async Task ProcessPaymentSuccessAsync_NoMetadataOrUserId_ThrowsInvalidOperationException()
         {
             //Arrange 1

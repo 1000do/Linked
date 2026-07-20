@@ -108,9 +108,7 @@ end
         sv-->>be_ctrl--:5.2.9.10. Return success result
         be_ctrl-->>fe_ctrl--:5.2.9.11. Return statusCode 200
         
-        deactivate view
-        fe_ctrl-->>view--:5.2.9.12. Return JSON with success = true
-        activate view
+        fe_ctrl-->>view:5.2.9.12. Return JSON with success = true
         view-->>act--:5.2.9.13. Render updated account status & flag count
 end
 end

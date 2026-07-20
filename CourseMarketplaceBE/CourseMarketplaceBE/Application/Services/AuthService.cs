@@ -20,9 +20,10 @@ public class AuthService : IAuthService
     private readonly IOtpService _otpService;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _config;
+    private readonly IGoogleTokenValidator _googleTokenValidator;
 
     public AuthService(IUserRepository userRepo, ILockoutRepository lockoutRepo, JwtSettings jwtSettings, IOtpService otpService,
-    IEmailService emailService, IConfiguration config)
+    IEmailService emailService, IConfiguration config, IGoogleTokenValidator googleTokenValidator)
     {
         _userRepo = userRepo;
         _lockoutRepo = lockoutRepo;
@@ -30,6 +31,7 @@ public class AuthService : IAuthService
         _otpService = otpService;
         _emailService = emailService;
         _config = config;
+        _googleTokenValidator = googleTokenValidator;
     }
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest r)
@@ -89,11 +91,7 @@ public class AuthService : IAuthService
 
     public async Task<LoginResponse?> GoogleLoginAsync(string idToken)
     {
-        var settings = new GoogleJsonWebSignature.ValidationSettings
-        {
-            IssuedAtClockTolerance = TimeSpan.FromMinutes(5)
-        };
-        var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+        var payload = await ValidateGoogleTokenAsync(idToken);
         var email = payload.Email.ToLower();
         var account = await _userRepo.GetAccountByEmailAsync(email);
 
@@ -180,6 +178,11 @@ public class AuthService : IAuthService
     }
 
     // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
+
+    private async Task<GoogleJsonWebSignature.Payload> ValidateGoogleTokenAsync(string idToken)
+    {
+        return await _googleTokenValidator.ValidateAsync(idToken);
+    }
 
     private async Task EnsureAccountNotLockedOutAsync(int accountId)
     {

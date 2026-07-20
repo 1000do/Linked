@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Coupons</li>
+    <li><b>Test requirement:</b> Tests for managing coupons (viewing, adding, editing, deleting, searching, sorting, filtering) and user flows (applying and cancelling coupons).</li>
+    <li><b>Number of TCs:</b> 17</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Coupons List</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>View Coupons List Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.</td>
+        <td>The system retrieves and displays the list of coupons sorted by CouponId descending.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Session Invalid</td>
+        <td>1. Access the Coupon List page without logging in.</td>
+        <td>The system displays an authentication error message and redirects to the login page.</td>
+        <td>Admin is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Add Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Add Coupon Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List view.<br>3. Click the Add Coupon button.<br>4. Enter the coupon details: Code, Type, Value, Min Order Value, Start Date, End Date, and Limit.<br>5. Click the Save button.</td>
+        <td>The system normalizes and validates inputs, checks for code uniqueness, saves the coupon to the database, displays a success message, and renders the updated list.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Validation Failure</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List view.<br>3. Click the Add Coupon button.<br>4. Enter invalid coupon parameters (e.g., Value < 0, Start Date > End Date).<br>5. Click the Save button.</td>
+        <td>The system displays a validation error message explaining the failure.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Coupon Code Already Exists</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List view.<br>3. Click the Add Coupon button.<br>4. Enter a coupon code that already exists in the database.<br>5. Click the Save button.</td>
+        <td>The system displays an error message: 'Coupon code already exists'.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Edit Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Edit Coupon Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Click the Edit button on a specific coupon.<br>4. Modify the allowed fields (End Date, Usage Limit, Active Status).<br>5. Click the Save button.</td>
+        <td>The system validates the modified fields, updates the properties, saves to the database, displays a success message, and renders the updated list.</td>
+        <td>Admin must be logged in with Admin role privileges. Target coupon exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Coupon Not Found</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Click the Edit button on a coupon that has been removed or modified URL.</td>
+        <td>The system displays a 'Coupon not found' error message.</td>
+        <td>Admin must be logged in. Target coupon does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Invalid Input Data</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Click the Edit button on a specific coupon.<br>4. Modify parameters with invalid data (e.g., End Date before Start Date).<br>5. Click the Save button.</td>
+        <td>The system displays a validation error message explaining the failure.</td>
+        <td>Admin must be logged in with Admin role privileges. Target coupon exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Delete Coupon Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Click the Delete button on a specific coupon.</td>
+        <td>The system updates the coupon status to inactive, shifts the End Date to the past, saves changes, displays a success message, and renders the updated list.</td>
+        <td>Admin must be logged in with Admin role privileges. Target coupon exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Coupon Not Found</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Click the Delete button on a non-existent coupon.</td>
+        <td>The system displays a 'Coupon not found' error message.</td>
+        <td>Admin must be logged in. Target coupon does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Search Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Search Coupons Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Enter a search keyword in the search input field.</td>
+        <td>The system captures the keyword, queries the database by Coupon Code, and renders the filtered Coupon List table.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Sort Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Sort Coupons Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Click on a table header column (e.g., Date Create).</td>
+        <td>The system toggles the sorting direction, sorts the cached list in memory, and rerenders the sorted Coupon List table.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Filter Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Filter Coupons Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Coupon List page.<br>3. Select the active status filter or coupon type filter.</td>
+        <td>The system queries the database for matching criteria and renders the filtered Coupon List table.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Apply Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Apply Coupon Successfully</td>
+        <td>1. Login to the system.<br>2. Navigate to the Cart page with items added.<br>3. Enter a valid coupon code.<br>4. Click the Apply button.</td>
+        <td>The system validates the coupon, calculates the discount, deducts it from the subtotal, saves the code to session cookies, and displays the updated cart with a success message.</td>
+        <td>User must be logged in and have items in the cart.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Invalid or Ineligible Coupon</td>
+        <td>1. Login to the system.<br>2. Navigate to the Cart page with items added.<br>3. Enter an invalid, expired, or ineligible coupon code.<br>4. Click the Apply button.</td>
+        <td>The system records a validation error message, resets discount to zero, and displays the cart view with a warning message.</td>
+        <td>User must be logged in and have items in the cart.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Cancel Coupons</td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Cancel Coupon Successfully</td>
+        <td>1. Login to the system.<br>2. Navigate to the Cart page with an applied coupon.<br>3. Click the Cancel/Remove Coupon button.</td>
+        <td>The system deletes the coupon code from session cookies, recalculates totals using original prices, and displays the updated cart.</td>
+        <td>User must be logged in and a coupon must be currently applied.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Session Invalid</td>
+        <td>1. On the Cart page with an applied coupon, simulate session expiration.<br>2. Click the Cancel/Remove Coupon button.</td>
+        <td>The system detects the unauthenticated user and redirects to the Login page.</td>
+        <td>A coupon must be currently applied, but user session is expired.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+</table>
+
+</body>
+</html>

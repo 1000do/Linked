@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Notification</li>
+    <li><b>Test requirement:</b> Tests for User and Instructor functionalities to view, filter, sort, view details, mark as read, and delete notifications.</li>
+    <li><b>Number of TCs:</b> 25</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Notification list</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>View Notification List Successfully</td>
+        <td>1. Login as User or Instructor.<br>2. Access the notifications page.</td>
+        <td>System displays the notification list including title, content, unread indicator, and action links, along with pagination controls.</td>
+        <td>Actor is successfully authenticated and has notifications.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Filter Notifications by Read State</td>
+        <td>1. Login as User or Instructor.<br>2. Select 'Unread' from the status dropdown.</td>
+        <td>System filters the displayed list to show only unread notifications.</td>
+        <td>Actor has access and the notifications list is loaded.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Search Notifications</td>
+        <td>1. Login as User or Instructor.<br>2. Enter a keyword in the search input box.</td>
+        <td>System filters the displayed list to show only notifications containing the keyword in the title or content.</td>
+        <td>Actor has access and the notifications list is loaded.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Sort Notifications</td>
+        <td>1. Login as User or Instructor.<br>2. Select a sorting option (e.g. Oldest First) from the sort dropdown.</td>
+        <td>System sorts and updates the displayed notification list based on the selected order.</td>
+        <td>Actor has access and the notifications list is loaded.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>No Notifications Found</td>
+        <td>1. Login as User or Instructor (with no notifications in the database).<br>2. Access the notifications page.</td>
+        <td>System displays an empty list message indicating no notifications were found.</td>
+        <td>Actor is authenticated but has no notifications.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Session Invalid</td>
+        <td>1. Access the notifications page as a guest.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Unauthorized Access</td>
+        <td>1. Login as a Staff member.<br>2. Attempt to access the User/Instructor notifications endpoint.</td>
+        <td>System redirects the user to the error page indicating unauthorized access.</td>
+        <td>Actor does not have User or Instructor privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Notification Detail</td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>View Notification Detail Successfully (Already Read)</td>
+        <td>1. Login as User or Instructor.<br>2. Click on a read notification row in the list.</td>
+        <td>System displays the detailed content of the notification in a modal dialog without marking it as read again.</td>
+        <td>Target notification is already in 'read' state.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Auto-mark Notification as Read</td>
+        <td>1. Login as User or Instructor.<br>2. Click on an unread notification row in the list.</td>
+        <td>System displays the detailed content in a modal, updates the status to read in the database, and updates the list UI to display it as read.</td>
+        <td>Target notification is unread.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Redirect to Action Link</td>
+        <td>1. Login as User or Instructor.<br>2. Open a notification with an action link.<br>3. Click the 'View Details' button inside the modal.</td>
+        <td>System redirects the actor to the corresponding action URL.</td>
+        <td>Notification details modal is open and has an action link.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Close Details Modal</td>
+        <td>1. Login as User or Instructor.<br>2. Open a notification modal.<br>3. Click the close icon or backdrop area.</td>
+        <td>System closes the details modal and returns to the notification list.</td>
+        <td>Notification details modal is open.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Session Invalid (Detail)</td>
+        <td>1. Simulate session expiry.<br>2. Click on an unread notification row.</td>
+        <td>System redirects the user to the login page instead of marking it as read.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Notification Not Found or Access Denied</td>
+        <td>1. Login as User or Instructor.<br>2. Try to view/auto-mark an unread notification that belongs to someone else (simulated API call).</td>
+        <td>System returns a Not Found/Forbidden error and displays an error message on the UI.</td>
+        <td>Target notification belongs to a different user.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Database Save Failure (Auto-mark)</td>
+        <td>1. Simulate a database error.<br>2. Click on an unread notification row.</td>
+        <td>System displays an error message regarding database save failure.</td>
+        <td>Target notification is unread.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Mark As Read</td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Mark Notification As Read Successfully</td>
+        <td>1. Login as User or Instructor.<br>2. Click the 'Mark as read' check circle icon next to an unread notification.</td>
+        <td>System updates status to read in DB, broadcasts SignalR event, updates UI to show read, and decreases unread count.</td>
+        <td>Target notification is unread.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Mark All Notifications As Read</td>
+        <td>1. Login as User or Instructor with unread notifications.<br>2. Click the 'Mark All as Read' button.</td>
+        <td>System updates all unread notifications to read in DB, broadcasts SignalR event, updates UI, resets unread count, and displays success message.</td>
+        <td>Actor has unread notifications.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Mark All Notifications As Read (No unread)</td>
+        <td>1. Login as User or Instructor with 0 unread notifications.<br>2. Click the 'Mark All as Read' button.</td>
+        <td>System displays a message indicating all notifications are already read.</td>
+        <td>Actor has no unread notifications.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Notification Not Found or Access Denied</td>
+        <td>1. Login as User or Instructor.<br>2. Trigger mark as read for a notification belonging to another user.</td>
+        <td>System displays a notification not found or access denied error message.</td>
+        <td>Target notification belongs to a different user.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-019</td>
+        <td>Session Invalid (Mark as Read)</td>
+        <td>1. Simulate session expiry.<br>2. Click 'Mark as read'.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-020</td>
+        <td>Database Save Failure</td>
+        <td>1. Simulate a database error.<br>2. Click 'Mark as read'.</td>
+        <td>System displays a database error message.</td>
+        <td>Target notification is unread.</td>
+        <td>Failed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Notifications</td>
+    </tr>
+
+    <tr>
+        <td>TC-021</td>
+        <td>Delete Notification Successfully</td>
+        <td>1. Login as User or Instructor.<br>2. Click the delete icon next to a notification.<br>3. Click 'Delete' to confirm.</td>
+        <td>System soft-deletes the notification from the DB, broadcasts SignalR event, displays a deletion success notification, and removes it from the UI.</td>
+        <td>Actor has access and the notification exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-022</td>
+        <td>Cancel Deletion</td>
+        <td>1. Login as User or Instructor.<br>2. Click the delete icon next to a notification.<br>3. Click 'Cancel' on the confirmation dialog.</td>
+        <td>System closes the confirmation dialog without making any changes.</td>
+        <td>Actor has access and the notification exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-023</td>
+        <td>Notification Not Found or Access Denied (Delete)</td>
+        <td>1. Login as User or Instructor.<br>2. Confirm deletion for a notification that does not belong to the user.</td>
+        <td>System displays an error message regarding missing notification or permission.</td>
+        <td>Target notification belongs to a different user.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-024</td>
+        <td>Session Invalid (Delete)</td>
+        <td>1. Simulate session expiry.<br>2. Confirm deletion.</td>
+        <td>System redirects the user to the login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-025</td>
+        <td>Database Save Failure (Delete)</td>
+        <td>1. Simulate a database error.<br>2. Confirm deletion.</td>
+        <td>System displays a database error message.</td>
+        <td>Target notification belongs to the user.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>Truong Hung</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>Truong Hung</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>

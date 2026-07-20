@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -34,8 +41,8 @@ participant "ErrorPage" as error_view
 participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "CoursePublicController" as be_ctrl <<backend controller>>
 participant ":CourseQueryService" as sv
-participant ":IRedisCacheService" as redis
 participant ":CourseDetailResponse" as res
+participant ":IRedisService" as redis
 participant ":ICourseRepository" as repo
 participant ":IInstructorRepository" as inst_repo
 participant ":ICartRepository" as cart_repo
@@ -76,22 +83,24 @@ alt cachedResponse == null
 alt Course Not Found
             sv -->> be_ctrl:3.3.3.1.5.1. throw KeyNotFoundException
             be_ctrl -->> fe_ctrl:3.3.3.1.5.1.1. Return statusCode 404
-            fe_ctrl -->> view:3.3.3.1.5.1.2. Return View("NotFound")
+            fe_ctrl -->> view:3.3.3.1.5.1.2. Return NotFound()
             view -->> act:3.3.3.1.5.1.3. Display course not found message
 else Course Found
-            sv -> repo++:3.3.3.1.5.2. Call GetCourseStatsAsync(id)
-            repo -->> sv--:3.3.3.1.5.2.1. Return stats
-            
+
 opt InstructorId HasValue
-                sv -> inst_repo++:3.3.3.1.5.2.1.1. Call GetStatsAsync(InstructorId)
-                inst_repo -->> sv--:3.3.3.1.5.2.1.1.1. Return instructor stats
+                sv -> inst_repo++:3.3.3.1.5.2.1. Call GetStatsAsync(InstructorId)
+                inst_repo -> ctx++:3.3.3.1.5.2.1.1. Execute query
+                ctx -> db++:3.3.3.1.5.2.1.2. Fetch instructor stats
+                db -->> ctx--:3.3.3.1.5.2.1.3. Return query results
+                ctx -->> inst_repo--:3.3.3.1.5.2.1.4. Return instructor stats
+                inst_repo -->> sv--:3.3.3.1.5.2.1.5. Return instructor stats
 end
             
-            sv -> res++:3.3.3.1.5.2.2. Call CourseDetailResponse()
-            res -->> sv--:3.3.3.1.5.2.3. Return CourseDetailResponse object
+            sv -> res++:3.3.3.1.5.3. Call CourseDetailResponse()
+            res -->> sv--:3.3.3.1.5.4. Return CourseDetailResponse object
             
-            sv -> redis++:3.3.3.1.5.2.4. Call SetCacheAsync(cacheKey, response)
-            redis -->> sv--:3.3.3.1.5.2.5. Return result
+            sv -> redis++:3.3.3.1.5.5. Call SetCacheAsync(cacheKey, response)
+            redis -->> sv--:3.3.3.1.5.6. Return result
 end
 else cachedResponse != null
         sv -> sv++:3.3.3.2. Use cachedResponse
@@ -99,29 +108,37 @@ else cachedResponse != null
 end
     
     sv -> cart_repo++:3.3.4. Call IsCourseInAnyCartAsync(id)
-    cart_repo -->> sv--:3.3.5. Return IsInAnyCart flag
+    cart_repo -> ctx++:3.3.5. Execute query
+    ctx -> db++:3.3.6. Check cart status
+    db -->> ctx--:3.3.7. Return query results
+    ctx -->> cart_repo--:3.3.8. Return IsInAnyCart flag
+    cart_repo -->> sv--:3.3.9. Return IsInAnyCart flag
     
 opt userId HasValue
-        sv -> repo++:3.3.5.2. Call IsEnrolledAsync(userId, courseId)
-        repo -->> sv--:3.3.5.2.1. Return IsEnrolled flag
+        sv -> repo++:3.3.9.2. Call IsEnrolledAsync(userId, courseId)
+        repo -> ctx++:3.3.9.2.1. Execute query
+        ctx -> db++:3.3.9.2.2. Check enrollment
+        db -->> ctx--:3.3.9.2.3. Return query results
+        ctx -->> repo--:3.3.9.2.4. Return IsEnrolled flag
+        repo -->> sv--:3.3.9.2.5. Return IsEnrolled flag
 end
     
 alt Course Status != Published
 alt Unauthorized Access (Not Owner and Not Admin/Staff)
-            sv -->> be_ctrl:3.3.5.1. throw UnauthorizedAccessException
-            be_ctrl -->> fe_ctrl:3.3.5.1.1. Return statusCode 403
-            fe_ctrl -->> view:3.3.5.1.2. Return View("AccessDenied")
-            view -->> act:3.3.5.1.3. Display access denied message
+            sv -->> be_ctrl:3.3.9.1. throw UnauthorizedAccessException
+            be_ctrl -->> fe_ctrl:3.3.9.1.1. Return statusCode 403
+            fe_ctrl -->> view:3.3.9.1.2. Return Forbid()
+            view -->> act:3.3.9.1.3. Display access denied message
 else Valid actor's authentication and authorization
-            sv -->> be_ctrl:3.3.5.2. Return CourseDetailResponse object
-            be_ctrl -->> fe_ctrl:3.3.5.2.1. Return statusCode 200
-            fe_ctrl -->> view:3.3.5.2.2. Return View(CourseDetailViewModel)
-            view -->> act:3.3.5.2.3. Display course learning page
+            sv -->> be_ctrl:3.3.9.2. Return CourseDetailResponse object
+            be_ctrl -->> fe_ctrl:3.3.9.2.1. Return statusCode 200
+            fe_ctrl -->> view:3.3.9.2.2. Return View(CourseDetailViewModel)
+            view -->> act:3.3.9.2.3. Display course learning page
 end
 else Course Status == Published
-        sv -->> be_ctrl--:3.3.5. Return CourseDetailResponse object
-        be_ctrl -->> fe_ctrl--:3.3.5.1. Return statusCode 200
-        fe_ctrl -->> view--:3.3.5.2. Return View(CourseDetailViewModel)
-        view -->> act--:3.3.5.3. Display course learning page
+        sv -->> be_ctrl--:3.3.9. Return CourseDetailResponse object
+        be_ctrl -->> fe_ctrl--:3.3.9.1. Return statusCode 200
+        fe_ctrl -->> view--:3.3.9.2. Return View(CourseDetailViewModel)
+        view -->> act--:3.3.9.3. Display course learning page
 end
 end

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Profile (for manager)</li>
+    <li><b>Test requirement:</b> Tests for viewing and editing the manager's profile, including system account information and profile picture updates.</li>
+    <li><b>Number of TCs:</b> 8</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Profile (For Manager)</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>View Manager Profile Successfully</td>
+        <td>1. Login as a Manager (Admin/Staff).<br>2. Access the profile page.</td>
+        <td>The system validates the session, retrieves data from the database, and displays the profile details and system information (picture, name, email, biography, phone number, creation date, and lockout history).</td>
+        <td>Manager is successfully authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Session Expired / Unauthorized Access</td>
+        <td>1. Attempt to access the Manager profile page URL without logging in or with an expired session.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Manager Profile Not Found</td>
+        <td>1. Login as a Manager.<br>2. Force a profile retrieval failure (e.g., delete DB record while logged in).<br>3. Access the profile page.</td>
+        <td>The system fails to retrieve the profile, displays an error message regarding profile retrieval failure, and redirects the manager to the login page.</td>
+        <td>Manager is authenticated but profile data is missing/corrupted in the database.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Edit Profile (For Manager)</td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Edit Manager Profile Successfully</td>
+        <td>1. Login as a Manager and access the profile page.<br>2. Click the "Edit Profile" link.<br>3. Update profile details (picture, display name, full name, phone number, biography).<br>4. Click "Save Profile".<br>5. Click the confirmation button on the prompt.</td>
+        <td>The system validates inputs, uploads the new picture, updates details in the database, updates display cookies, and shows a success confirmation message.</td>
+        <td>Manager is successfully authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Cancel editing</td>
+        <td>1. Click the "Edit Profile" link.<br>2. Click the "Cancel" or "Back to Profile" link.</td>
+        <td>The system aborts the edit process and redirects the manager back to the view profile page without saving changes.</td>
+        <td>Manager is successfully authenticated and is on the edit profile page.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Session Invalid (Not Logged In)</td>
+        <td>1. Simulate submitting a profile update request via API as an unauthenticated user.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Manager Profile Not Found</td>
+        <td>1. Login as a Manager and access the edit profile page.<br>2. Force a profile retrieval failure (e.g., delete DB record while logged in).<br>3. Click "Save Profile".</td>
+        <td>The system fails to retrieve/update the profile, displays a retrieval failure error, and redirects to the login page.</td>
+        <td>Manager is authenticated but profile data is missing in the database.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>File Upload Service offline</td>
+        <td>1. Login as a Manager and access the edit profile page.<br>2. Select a new profile picture to upload.<br>3. Simulate a file upload service downtime or network block.<br>4. Click "Save Profile" and confirm.</td>
+        <td>The system fails to upload the profile picture, displays an error message regarding file upload failure, and aborts the save operation.</td>
+        <td>Manager is authenticated. File upload service is unreachable.</td>
+        <td>Passed</td>
+        <td>2026-07-19</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-07-26</td>
+        <td>HungPH</td>
+        <td>Passed</td>
+        <td>2026-08-02</td>
+        <td>HungPH</td>
+        <td></td>
+    </tr>
+
+</table>
+
+</body>
+</html>
