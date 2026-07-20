@@ -336,6 +336,188 @@
         <td>Allows authenticated Staff or Admin users to filter the system notifications log by recipient role and/or read status.</td>
         <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
     </tr>
+    <tr>
+        <td class="no-col">44</td>
+        <td>Register</td>
+        <td><a href="Authentication.html">Authentication</a></td>
+        <td>Allows a Guest to create a new user account on the platform by providing an email, username, full name, password, and password confirmation. Upon successful creation, the account is set to active but unverified, and the Guest is prompted to verify their email.</td>
+        <td>Guest must not be currently logged into the system.</td>
+    </tr>
+    <tr>
+        <td class="no-col">45</td>
+        <td>Login</td>
+        <td><a href="Authentication.html">Authentication</a></td>
+        <td>Allows any registered actor to authenticate using local credentials. The system verifies credentials, checks suspension, sets cookies, and redirects.</td>
+        <td>Actor is on the Login page and not currently authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">46</td>
+        <td>Login with Google</td>
+        <td><a href="Authentication.html">Authentication</a></td>
+        <td>Allows a User or Instructor to log in using Google credentials. Registers a new account if first time. Suspended accounts are blocked.</td>
+        <td>Actor is on the Login page and not currently authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">47</td>
+        <td>Forget Password</td>
+        <td><a href="Authentication.html">Authentication</a></td>
+        <td>Allows an unauthenticated actor to perform a secure password reset via email OTP verification.</td>
+        <td>Actor must not be currently authenticated in the system.</td>
+    </tr>
+    <tr>
+        <td class="no-col">48</td>
+        <td>Logout</td>
+        <td><a href="Authentication.html">Authentication</a></td>
+        <td>Allows an authenticated actor to safely terminate their session, revoking tokens and deleting cookies.</td>
+        <td>Actor must be currently logged in and authenticated.</td>
+    </tr>
+    <tr>
+        <td class="no-col">49</td>
+        <td>Add Account</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to register a new Staff account within the account management panel by specifying details.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">50</td>
+        <td>Update Account</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to update profile details, change status, and reset the password of an existing Staff account. The system validates entries and manages lockout records if the account status is updated to or from banned.</td>
+        <td>Admin must be logged in with Admin role privileges. The target account must exist and belong to a Staff member.</td>
+    </tr>
+    <tr>
+        <td class="no-col">51</td>
+        <td>Delete Account</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to deactivate (ban) or reactivate a registered account. Banning an account places a severe 100-year lockout suspension on it. Reactivating the account deletes all active lockout entries, immediately restoring access.</td>
+        <td>Admin must be logged in with Admin role privileges. The target account must exist in the system.</td>
+    </tr>
+    <tr>
+        <td class="no-col">52</td>
+        <td>View Account Detail</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to view detailed profile information of any account in the system. The details retrieved dynamically vary depending on the account's role (User, Instructor, Staff, or Admin).</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">53</td>
+        <td>View Account List</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to view a paginated list of all registered accounts. The Admin can search for accounts, filter them by role, and navigate through the pages.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">54</td>
+        <td>Filter Accounts</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to filter the displayed account list by selecting specific role criteria, such as User (student), Instructor, Staff, or Registered Staff.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">55</td>
+        <td>Search Accounts</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to search for accounts by specifying a keyword that matches the account's Email, Phone Number, Display Name, or Full Name.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">56</td>
+        <td>Flag Accounts for Violation</td>
+        <td><a href="Manage Account.html">Manage Account</a></td>
+        <td>Allows an Admin to flag a user account for a policy violation. The flag count increments, and the account status transitions through warning levels. On the 3rd flag, the account is automatically banned for 30 days.</td>
+        <td>Admin must be logged in with Admin role privileges. The target account must exist and not be currently banned or already at the max flag limit.</td>
+    </tr>
+    <tr>
+        <td class="no-col">57</td>
+        <td>View Coupons List</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to browse a list of all coupons in the system.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">58</td>
+        <td>Add Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to create a new coupon in the coupon warehouse by specifying details like code, type, value, and validity.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">59</td>
+        <td>Edit Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to update properties of an existing coupon (End Date, Usage Limit, or Active Status).</td>
+        <td>Admin must be logged in with Admin role privileges. Target coupon must exist.</td>
+    </tr>
+    <tr>
+        <td class="no-col">60</td>
+        <td>Delete Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to soft-delete (disable) a coupon by marking it inactive and shifting its end date.</td>
+        <td>Admin must be logged in with Admin role privileges. Target coupon must exist.</td>
+    </tr>
+    <tr>
+        <td class="no-col">61</td>
+        <td>Search Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to filter the coupon list by searching for a specific keyword matching the Coupon Code.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">62</td>
+        <td>Sort Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to sort the displayed coupon list ascending or descending based on selected columns.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">63</td>
+        <td>Filter Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an Admin to filter the displayed coupon list by selecting active status or coupon type.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+    </tr>
+    <tr>
+        <td class="no-col">64</td>
+        <td>Apply Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an authenticated User to apply a coupon code to their shopping cart and updates cart totals.</td>
+        <td>User must be logged in. Cart must have items.</td>
+    </tr>
+    <tr>
+        <td class="no-col">65</td>
+        <td>Cancel Coupons</td>
+        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
+        <td>Allows an authenticated User to remove an applied coupon from their shopping cart and restores original prices.</td>
+        <td>User must be logged in. A coupon must be currently applied.</td>
+    </tr>
+    <tr>
+        <td class="no-col">66</td>
+        <td>Verify Email</td>
+        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
+        <td>Allows a User to verify their email address by submitting the One-Time Password (OTP) sent to their registered email.</td>
+        <td>An OTP has been generated and sent to the User's email. The User's email is stored in TempData.</td>
+    </tr>
+    <tr>
+        <td class="no-col">67</td>
+        <td>Change Password</td>
+        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
+        <td>Allows an authenticated User to update their password. The system verifies the current password, hashes the new one, and forces logout.</td>
+        <td>User must be logged in with a valid session (AccessToken).</td>
+    </tr>
+    <tr>
+        <td class="no-col">68</td>
+        <td>Update Personal Info</td>
+        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
+        <td>Allows an authenticated User to update their personal details. Handles image upload and updates cookies.</td>
+        <td>User must be logged in with a valid session.</td>
+    </tr>
+    <tr>
+        <td class="no-col">69</td>
+        <td>View Profile</td>
+        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
+        <td>Allows an authenticated User to view their personal profile information such as full name, username, email, phone number, bio, and verification status.</td>
+        <td>User must be logged in with a valid session.</td>
+    </tr>
 </table>
 
 </body>
