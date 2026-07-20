@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,7 +36,7 @@ mainframe Remove Learning Materials
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
 participant ":IMaterialRepository" as repo
@@ -38,12 +45,12 @@ database Database as db
 
 act ++
 act -> view++:1. Click Delete Material
-view -> fe_ctrl++:2. DELETE /Lesson/RemoveMaterial/{materialId}
+view -> fe_ctrl++:2. DELETE /InstructorCourse/RemoveMaterial/{materialId}
 fe_ctrl -> be_ctrl++:3. DELETE /api/lessons/materials/{materialId}
 
 be_ctrl -> sv++:4. Call RemoveMaterialAsync(materialId, instructorId)
 
-sv -> repo++:5. Call GetMaterialByIdAsync(materialId)
+sv -> repo++:5. Call GetByIdAsync(materialId)
 repo -> ctx++:6. Execute query
 ctx -> db++:7. Fetch material
 db -->> ctx--:8. Return query results
@@ -56,38 +63,53 @@ alt Material Not Found
     fe_ctrl -->> view:10.1.2. Return JSON (success=false)
     view -->> act:10.1.3. Display material not found message
 else Material Found
-    sv -> sv++:10.2. Call ValidateInstructorAndCourseStateAsync()
+    sv -> sv++:10.2. Validate Instructor and Course State
     sv--
     
-    sv -> sv++:10.2.1. Call MoveMaterialToTrashAsync(material)
+alt Validation Failed
+        sv -->> be_ctrl:10.2.1. throw BadRequestException
+        be_ctrl -->> fe_ctrl:10.2.1.1. Return statusCode 400
+        fe_ctrl -->> view:10.2.1.2. Return JSON (success=false)
+        view -->> act:10.2.1.3. Display error message
+else Valid to Delete
+
+    sv -> sv++:10.2.2. Move material to trash
     sv--
     
-    sv -> repo++:10.2.2. Call Update(material)
-    repo -->> sv--:10.2.3. Return tracking state
+    sv -> repo++:10.2.2.1. Call Update(material)
+    repo -> ctx++:10.2.2.2. Update entity state
+    ctx -->> repo--:10.2.2.3. Return
+    repo -->> sv--:10.2.2.4. Return
     
-    sv -> repo++:10.2.4. Call SaveChangesAsync()
-    repo -> ctx++:10.2.5. Save changes to database
-    ctx -> db++:10.2.6. Update Material (Soft Delete)
+opt Course is Published
+        sv -> sv++:10.2.2.4.1. Set course.CourseStatus = "draft"
+        sv--
+end
+    
+    sv -> repo++:10.2.2.5. Call SaveChangesAsync()
+    repo -> ctx++:10.2.2.6. Save changes to database
+    ctx -> db++:10.2.2.7. Update Material (Soft Delete)
     
 alt Database Save Failure
-        db -->> ctx:10.2.6.1. throw DbUpdateException
-        ctx -->> repo:10.2.6.1.1. throw DbUpdateException
-        repo -->> sv:10.2.6.1.2. throw DbUpdateException
-        sv -->> be_ctrl:10.2.6.1.3. throw DbUpdateException
-        be_ctrl -->> fe_ctrl:10.2.6.1.4. Return statusCode 500
-        fe_ctrl -->> view:10.2.6.1.5. Return JSON (success=false)
-        view -->> act:10.2.6.1.6. Display server error message
+        db -->> ctx:10.2.2.7.1. throw DbUpdateException
+        ctx -->> repo:10.2.2.7.1.1. throw DbUpdateException
+        repo -->> sv:10.2.2.7.1.2. throw DbUpdateException
+        sv -->> be_ctrl:10.2.2.7.1.3. throw DbUpdateException
+        be_ctrl -->> fe_ctrl:10.2.2.7.1.4. Return statusCode 500
+        fe_ctrl -->> view:10.2.2.7.1.5. Return JSON (success=false)
+        view -->> act:10.2.2.7.1.6. Display server error message
 else Database Save Success
-        db -->> ctx--:10.2.6.2. Return returnCode
-        ctx -->> repo--:10.2.6.2.1. Return numberOfRowsAffected
-        repo -->> sv--:10.2.6.2.2. Return numberOfRowsAffected
+        db -->> ctx--:10.2.2.7.2. Return returnCode
+        ctx -->> repo--:10.2.2.7.2.1. Return numberOfRowsAffected
+        repo -->> sv--:10.2.2.7.2.2. Return numberOfRowsAffected
         
-        sv -> sv++:10.2.6.2.3. Call InvalidateCourseCacheAsync(courseId)
+        sv -> sv++:10.2.2.7.2.3. Call Cache Invalidation Logic
         sv--
         
-        sv -->> be_ctrl--:10.2.6.2.4. Return success
-        be_ctrl -->> fe_ctrl--:10.2.6.2.5. Return statusCode 200
-        fe_ctrl -->> view--:10.2.6.2.6. Return JSON (success=true)
-        view -->> act--:10.2.6.2.7. Display material removed successfully
+        sv -->> be_ctrl--:10.2.2.7.2.4. Return success
+        be_ctrl -->> fe_ctrl--:10.2.2.7.2.5. Return statusCode 200
+        fe_ctrl -->> view--:10.2.2.7.2.6. Return JSON (success=true)
+        view -->> act--:10.2.2.7.2.7. Display material removed successfully
+end
 end
 end

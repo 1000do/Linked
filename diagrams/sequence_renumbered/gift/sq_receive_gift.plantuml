@@ -162,10 +162,7 @@ else Recipient not enrolled
                         db -->> enroll_repo--:3.3.7.3.4.2.4.2.28. Return result
                         enroll_repo -->> sv--:3.3.7.3.4.2.4.2.29. Return result
                         
-opt rejected == true
-                            sv -> sv++:3.3.7.3.4.2.4.2.29.2. NotifyAdminFinanceOfRefundRejectionAsync()
-                            sv--
-end
+
                         
                         sv -->> be_ctrl--:3.3.7.3.4.2.4.2.30. Return result
                         be_ctrl -->> fe_ctrl--:3.3.7.3.4.2.4.2.31. Return statusCode 200

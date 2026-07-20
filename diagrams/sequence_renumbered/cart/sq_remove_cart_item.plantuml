@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -85,9 +92,9 @@ else item != null
                 ctx->db++:2.2.1.3.7.2.2. Save changes to database
                 
 alt Database Save Failure
-                    db-->>ctx--:2.2.1.3.7.2.2.1. Throw DbUpdateException
-                    ctx-->>repo--:2.2.1.3.7.2.2.1.1. Throw DbUpdateException
-                    repo-->>sv--:2.2.1.3.7.2.2.1.2. Throw DbUpdateException
+                    db-->>ctx:2.2.1.3.7.2.2.1. Throw DbUpdateException
+                    ctx-->>repo:2.2.1.3.7.2.2.1.1. Throw DbUpdateException
+                    repo-->>sv:2.2.1.3.7.2.2.1.2. Throw DbUpdateException
                     sv-->>be_ctrl:2.2.1.3.7.2.2.1.3. Throw DbUpdateException
                     be_ctrl-->>fe_ctrl:2.2.1.3.7.2.2.1.4. Return statusCode 500 (InternalServerError)
                     fe_ctrl-->>view:2.2.1.3.7.2.2.1.5. Return statusCode 302 (Redirect)

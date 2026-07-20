@@ -52,7 +52,7 @@ act++
 act->view++:1. Click "View Detail" on an account
 view->fe_ctrl++:2. GET /AdminAccount/Detail/{id}
 
-== 1. Get Account Details ==
+
 fe_ctrl->be_ctrl++:3. GET /api/admin/accounts/{id}
 
 be_ctrl->sv++:4. Call GetAccountDetailAsync(id)
@@ -131,7 +131,7 @@ detail_dto-->>sv--:18. Return AdminAccountDetailDto object
 sv-->>be_ctrl--:19. Return AdminAccountDetailDto object
 be_ctrl-->>fe_ctrl--:20. Return statusCode 200
 
-== 2. Get Account Transactions ==
+
 fe_ctrl->be_ctrl++:21. GET /api/admin/accounts/{id}/transactions
 
 be_ctrl->sv++:22. Call GetAccountTransactionsAsync(id)
@@ -155,7 +155,7 @@ summary_dto-->>sv--:36. Return AccountTransactionSummaryDto object
 sv-->>be_ctrl--:37. Return AccountTransactionSummaryDto object
 be_ctrl-->>fe_ctrl--:38. Return statusCode 200
 
-== 3. Render View ==
+
 alt Any request failed
     fe_ctrl-->>view:38.1. Return statusCode 302
     view-->>act:38.1.1. Display Index page with error message
@@ -170,9 +170,9 @@ else Both requests are successful
     vm_page-->>fe_ctrl--:38.2.5. Return AdminAccountDetailPageViewModel object
 
     fe_ctrl-->>view:38.2.6. Return statusCode 200
+    deactivate fe_ctrl
     view-->>act:38.2.7. Display Account Detail page
+    deactivate view
 end
-deactivate fe_ctrl
-deactivate view
 deactivate act
 @enduml

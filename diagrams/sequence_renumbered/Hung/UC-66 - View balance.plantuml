@@ -1,0 +1,157 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+
+hide footbox
+mainframe View Balance
+
+actor Instructor as act
+participant "EarningsInstructorPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ApplicationStatusPage" as app_view
+participant "TransactionController" as fe_ctrl <<frontend controller>>
+participant "TransactionController" as be_tx_ctrl <<backend controller>>
+participant "InstructorController" as be_inst_ctrl <<backend controller>>
+participant ":ITransactionService" as tx_sv
+participant ":ITransactionRepository" as tx_repo
+participant ":TransactionListDto" as tx_dto
+participant ":IInstructorService" as inst_sv
+participant ":IInstructorRepository" as inst_repo
+participant ":InstructorPayoutDto" as po_dto
+participant ":IAdminFinanceService" as fin_sv
+participant ":IAdminFinanceRepository" as fin_repo
+participant ":InstructorCourseRevenueProjection" as cr_proj
+participant ":InstructorCourseRevenueResponse" as cr_res
+participant ":InstructorFinancePageVM" as vm
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view ++:1. View Earnings Dashboard (Balance metrics)
+view -> fe_ctrl ++:2. GET /Transaction/Instructor
+
+fe_ctrl -> fe_ctrl ++:3. Validate actor's authentication and authorization
+fe_ctrl --
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act --:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    
+    fe_ctrl -> fe_ctrl ++:3.3. Check Cookies["InstructorApprovalStatus"]
+    fe_ctrl --
+    
+alt Status != "Approved"
+        fe_ctrl -->> app_view:3.3.1. Redirect to ApplicationStatusPage
+        activate app_view
+        app_view -->> act --:3.3.1.1. Display application status
+else Status == "Approved"
+        
+        fe_ctrl -> fe_ctrl ++:3.3.2. Fetch balance data concurrently
+        fe_ctrl --
+        
+par Fetch Transactions
+            fe_ctrl -> be_tx_ctrl ++:3.3.2.1. GET /api/transactions/instructor
+            be_tx_ctrl -> tx_sv ++:3.3.2.1.1. Call GetInstructorTransactionsAsync(...)
+            tx_sv -> tx_repo ++:3.3.2.1.2. Call GetInstructorTransactionsAsync(...)
+            tx_repo -> ctx ++:3.3.2.1.3. Query transactions
+            ctx -> db ++:3.3.2.1.4. Execute query
+            db -->> ctx --:3.3.2.1.5. Return database records
+            ctx -->> tx_repo --:3.3.2.1.6. Return data
+            
+            tx_repo -> tx_dto ++:3.3.2.1.7. Call TransactionListDto()
+            tx_dto -->> tx_repo --:3.3.2.1.8. Return TransactionListDto object
+            
+            tx_repo -->> tx_sv --:3.3.2.1.9. Return list
+            tx_sv -->> be_tx_ctrl --:3.3.2.1.10. Return PagedResult<TransactionListDto>
+            be_tx_ctrl -->> fe_ctrl --:3.3.2.1.11. Return statusCode 200
+            
+else Fetch Payouts
+            fe_ctrl -> be_inst_ctrl ++:3.3.2.2. GET /api/instructor/payouts
+            be_inst_ctrl -> inst_sv ++:3.3.2.2.1. Call GetPayoutsAsync(...)
+            inst_sv -> inst_repo ++:3.3.2.2.2. Call GetPayoutsAsync(...)
+            inst_repo -> ctx ++:3.3.2.2.3. Query payouts
+            ctx -> db ++:3.3.2.2.4. Execute query
+            db -->> ctx --:3.3.2.2.5. Return database records
+            ctx -->> inst_repo --:3.3.2.2.6. Return data
+            
+            inst_repo -> po_dto ++:3.3.2.2.7. Call InstructorPayoutDto()
+            po_dto -->> inst_repo --:3.3.2.2.8. Return InstructorPayoutDto object
+            
+            inst_repo -->> inst_sv --:3.3.2.2.9. Return list
+            inst_sv -->> be_inst_ctrl --:3.3.2.2.10. Return PagedResult<InstructorPayoutDto>
+            be_inst_ctrl -->> fe_ctrl --:3.3.2.2.11. Return statusCode 200
+            
+else Fetch Course Revenues
+            fe_ctrl -> be_tx_ctrl ++:3.3.2.3. GET /api/transactions/instructor/course-revenues
+            be_tx_ctrl -> fin_sv ++:3.3.2.3.1. Call GetInstructorCourseRevenuesByInstructorAsync()
+            fin_sv -> fin_repo ++:3.3.2.3.2. Call GetInstructorCourseRevenuesByInstructorAsync()
+            fin_repo -> ctx ++:3.3.2.3.3. Query course revenues
+            ctx -> db ++:3.3.2.3.4. Execute query
+            db -->> ctx --:3.3.2.3.5. Return database records
+            ctx -->> fin_repo --:3.3.2.3.6. Return data
+            
+            fin_repo -> cr_proj ++:3.3.2.3.7. Call InstructorCourseRevenueProjection()
+            cr_proj -->> fin_repo --:3.3.2.3.8. Return projection list
+            fin_repo -->> fin_sv --:3.3.2.3.9. Return projection list
+            
+            fin_sv -> cr_res ++:3.3.2.3.10. Call InstructorCourseRevenueResponse()
+            cr_res -->> fin_sv --:3.3.2.3.11. Return response list
+            
+            fin_sv -->> be_tx_ctrl --:3.3.2.3.12. Return list
+            be_tx_ctrl -->> fe_ctrl --:3.3.2.3.13. Return statusCode 200
+            
+else Fetch Payout Days
+            fe_ctrl -> be_inst_ctrl ++:3.3.2.4. GET /api/instructor/payout-days
+            be_inst_ctrl -> fin_sv ++:3.3.2.4.1. Call GetPayoutDaysConfigAsync()
+            fin_sv -->> be_inst_ctrl --:3.3.2.4.2. Return days config
+            be_inst_ctrl -->> fe_ctrl --:3.3.2.4.3. Return statusCode 200
+end
+        
+        fe_ctrl -> fe_ctrl ++:3.3.3. Compute Financial Metrics (Gross, Refunded, Net Earnings, Pending, Withdrawn)
+        fe_ctrl --
+        
+        fe_ctrl -> vm ++:3.3.4. Call InstructorFinancePageVM()
+        vm -->> fe_ctrl --:3.3.5. Return InstructorFinancePageVM object
+        
+        fe_ctrl -->> view --:3.3.6. Return View(vm)
+        view -->> act --:3.3.7. Display Balance Summary Cards
+end
+end
+@enduml

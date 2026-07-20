@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -32,7 +39,7 @@ participant "CourseListPage" as view
 participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "CoursePublicController" as be_ctrl <<backend controller>>
 participant ":CourseQueryService" as sv
-participant ":PagedResult<CourseResponse>" as res
+participant ":CourseResponse" as res
 participant ":ICourseRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -51,22 +58,18 @@ ctx -->> repo--:9. Return entities and totalCount
 repo -->> sv--:10. Return (courses, totalCount)
 
 alt courses is empty
-    sv -> res++:10.1. Call PagedResult(emptyList, 0)
-    res -->> sv--:10.1.1. Return PagedResult object
-    sv -->> be_ctrl:10.1.2. Return PagedResult object
-    be_ctrl -->> fe_ctrl:10.1.3. Return statusCode 200
-    fe_ctrl -->> view:10.1.4. Return View(PagedResult)
-    view -->> act:10.1.5. Display empty course list message
+    sv -->> be_ctrl:10.1. Return empty list
+    be_ctrl -->> fe_ctrl:10.1.1. Return statusCode 200
+    fe_ctrl -->> view:10.1.2. Return View(emptyList)
+    view -->> act:10.1.3. Display empty course list message
 else courses found
     sv -> sv++:10.2. Fetch course stats, enrollment and wishlist status
     sv--
-    sv -> sv++:10.2.1. Map courses to CourseResponse DTOs
-    sv--
-    sv -> res++:10.2.2. Call PagedResult(courseResponses, totalCount)
-    res -->> sv--:10.2.3. Return PagedResult object
+    sv -> res++:10.2.1. Call CourseResponse() (via IMapper)
+    res -->> sv--:10.2.2. Return List<CourseResponse>
     
-    sv -->> be_ctrl--:10.2.4. Return PagedResult object
-    be_ctrl -->> fe_ctrl--:10.2.5. Return statusCode 200
-    fe_ctrl -->> view--:10.2.6. Return View(PagedResult)
-    view -->> act--:10.2.7. Display course list
+    sv -->> be_ctrl--:10.2.3. Return List<CourseResponse>
+    be_ctrl -->> fe_ctrl--:10.2.4. Return statusCode 200
+    fe_ctrl -->> view--:10.2.5. Return View(List<CourseResponse>)
+    view -->> act--:10.2.6. Display course list
 end
