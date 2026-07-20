@@ -1,7 +1,8 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"/>
 <style>
     body {
         font-family: Tahoma, Arial, sans-serif;
@@ -17,7 +18,7 @@
         text-align: left;
     }
     th {
-        background-color: #1a237e; /* Dark blue background */
+        background-color: #1a237e;
         color: white;
         font-weight: bold;
         text-align: center;
@@ -32,1082 +33,1107 @@
 </style>
 </head>
 <body>
-
 <table>
-    <tr>
-        <th>No</th>
-        <th>Function Name</th>
-        <th>Sheet Name</th>
-        <th>Description</th>
-        <th>Pre-Condition</th>
-    </tr>
-    <tr>
-        <td class="no-col">1</td>
-        <td>Report A Course</td>
-        <td><a href="#">Manage User Report</a></td>
-        <td>Allows a user to report a course for violations (e.g., misleading content, copyright violation, spam, adult content). The system allows adding multiple reasons, validates the input, and submits the report to the server for moderation.</td>
-        <td>Authenticated enrolled user (not owner/manager). Course is in a reportable state.</td>
-    </tr>
-    <tr>
-        <td class="no-col">2</td>
-        <td>Report A Review</td>
-        <td><a href="#">Manage User Report</a></td>
-        <td>Allows a user to report a course or lesson review for violations such as spam, offensive content, or fake reviews. The system prompts the user to select a reason and optionally provide a description before submitting the report for moderation.</td>
-        <td>Authenticated user.</td>
-    </tr>
-    <tr>
-        <td class="no-col">3</td>
-        <td>View List of User Reports</td>
-        <td><a href="#">Manage User Report</a></td>
-        <td>Displays reported courses, reported course reviews, and reported lesson reviews submitted by users. All category reports are accessible via tabs and subtabs; Actor can switch between category subtabs without a page reload.</td>
-        <td>Authenticated Staff or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">4</td>
-        <td>View Report Detail</td>
-        <td><a href="#">Manage User Report</a></td>
-        <td>Displays details and evidence of a reported violation.</td>
-        <td>Authenticated Staff or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">5</td>
-        <td>Filter Reports</td>
-        <td><a href="#">Manage User Report</a></td>
-        <td>Filters reports by type (Course, Review, Lesson) or status.</td>
-        <td>Authenticated Staff or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">6</td>
-        <td>Resolve Report</td>
-        <td><a href="#">Manage User Report</a></td>
-        <td>Resolves a report by taking moderation action (e.g., removing content) and updating status.</td>
-        <td>Authenticated Staff or Admin. Target report is in a resolvable state.</td>
-    </tr>
-    <tr>
-        <td class="no-col">7</td>
-        <td>Add AI Model</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Allows an Admin to register a new AI moderation model configuration in the system by filling out the model registration form. The system validates all required fields before persisting the new model record to the database.</td>
-        <td>Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">8</td>
-        <td>Update AI Model</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Allows an Admin to update an existing AI model's configuration details. The edit form allows modification of provider, version, path, and description. The system validates all required fields before persisting the changes to the database.</td>
-        <td>Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">9</td>
-        <td>Delete AI Model</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Allows an Admin to soft-delete an AI model by toggling its status between active and inactive. No data is permanently removed; an active model is set to inactive and an inactive model is restored to active.</td>
-        <td>Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">10</td>
-        <td>View AI Model Details</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Displays the full configuration details of a selected AI model in a details dialog. The detail data is pre-loaded with the page and presented client-side without an additional server request.</td>
-        <td>Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">11</td>
-        <td>View AI Model List</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Displays a paginated list of all registered AI moderation models, showing each model's name, version, type, process type, status, and last modified date. Admin can navigate between pages using pagination controls.</td>
-        <td>Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">12</td>
-        <td>Set Confidence Threshold</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Allows an Admin to configure the spam confidence, toxicity confidence, and similarity score thresholds used by the automated AI moderation system. The current threshold values are pre-filled from the database on page load. If no configuration exists, system defaults are applied.</td>
-        <td>Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">13</td>
-        <td>View Activity Log</td>
-        <td><a href="#">Manage AI Service</a></td>
-        <td>Displays chronological paginated logs of AI moderation events across three categories: course moderation, course review moderation, and lesson review moderation. All category logs are loaded at page load; Admin can switch between category subtabs without a page reload.</td>
-        <td>Admin must be successfully authenticated.</td>
-    <tr>
-        <td class="no-col">14</td>
-        <td>Add to cart</td>
-        <td><a href="#">Manage Cart</a></td>
-        <td>This use case allows an authenticated user to add one or more courses to their shopping cart to purchase them together in a single transaction.</td>
-        <td>User or Instructor must be successfully authenticated and have a verified email status.</td>
-    </tr>
-    <tr>
-        <td class="no-col">15</td>
-        <td>View Cart items</td>
-        <td><a href="#">Manage Cart</a></td>
-        <td>Displays the list of courses added to the active user's shopping cart, calculates the pricing summary (subtotal, coupon discounts, final payable amount), and lists available checkout coupon options.</td>
-        <td>User must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">16</td>
-        <td>Delete cart items</td>
-        <td><a href="#">Manage Cart</a></td>
-        <td>Allows authenticated Users or Instructors to remove a course from their shopping cart.</td>
-        <td>User or Instructor must be successfully authenticated and has at least one course item in their shopping cart.</td>
-    <tr>
-        <td class="no-col">17</td>
-        <td>View Chat List</td>
-        <td><a href="#">Chat</a></td>
-        <td>Allows authenticated Users or Instructors to view their list of active conversations, including partner avatar, partner name, last message snippet, timestamp, online status, and unread message count badge.</td>
-        <td>Actor must be successfully authenticated and approved.</td>
-    </tr>
-    <tr>
-        <td class="no-col">18</td>
-        <td>Delete Chats</td>
-        <td><a href="#">Chat</a></td>
-        <td>Allows the User or Instructor to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</td>
-        <td>Actor must be successfully authenticated and have an active conversation open.</td>
-    </tr>
-    <tr>
-        <td class="no-col">19</td>
-        <td>Send Messages</td>
-        <td><a href="#">Chat</a></td>
-        <td>Allows the User or Instructor to send text messages and optionally attach files within an active conversation room. The message is transmitted in real time to other participants.</td>
-        <td>Actor must be successfully authenticated and have an active conversation open.</td>
-    </tr>
-    <tr>
-        <td class="no-col">20</td>
-        <td>View Chat History</td>
-        <td><a href="#">Chat</a></td>
-        <td>Allows the User or Instructor to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</td>
-        <td>Actor must be successfully authenticated and have access to the selected chat.</td>
-    </tr>
-    <tr>
-        <td class="no-col">21</td>
-        <td>Search Chat History</td>
-        <td><a href="#">Chat</a></td>
-        <td>Allows the Actor to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</td>
-        <td>Actor must be successfully authenticated and is on the Chat messages page.</td>
-    <tr>
-        <td class="no-col">22</td>
-        <td>View Chat List</td>
-        <td><a href="#">Manage Chat</a></td>
-        <td>Allows the Actor to view their list of active support or moderation conversations, view pending support request tickets, search for specific conversations, filter by unread status, and sort the conversation list.</td>
-        <td>Actor must be successfully authenticated as Staff or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">23</td>
-        <td>View Chat History</td>
-        <td><a href="#">Manage Chat</a></td>
-        <td>Allows authenticated Actor users to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</td>
-        <td>Actor must be successfully authenticated as Staff or Admin and have access to the selected chat room.</td>
-    </tr>
-    <tr>
-        <td class="no-col">24</td>
-        <td>Send Messages</td>
-        <td><a href="#">Manage Chat</a></td>
-        <td>Allows authenticated Actor users to send text messages and optionally attach files (images or documents) within an active support/moderation conversation room. The message is transmitted in real time to the recipient.</td>
-        <td>Actor must be successfully authenticated as Staff or Admin and have an active conversation open.</td>
-    </tr>
-    <tr>
-        <td class="no-col">25</td>
-        <td>Delete Chats</td>
-        <td><a href="#">Manage Chat</a></td>
-        <td>Allows authenticated Staff or Admin users to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</td>
-        <td>Actor must be successfully authenticated as Staff or Admin and have an active conversation open.</td>
-    </tr>
-    <tr>
-        <td class="no-col">26</td>
-        <td>Search Chat History</td>
-        <td><a href="#">Manage Chat</a></td>
-        <td>Allows authenticated Staff or Admin users to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</td>
-        <td>Actor must be successfully authenticated as Staff or Admin and is on the Chat page under the Admin Panel dashboard.</td>
-    <tr>
-        <td class="no-col">27</td>
-        <td>View Instructor Applications</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff and Admin users to view the list of pending instructor registration requests with applicant details, search, filter, and sort options.</td>
-        <td>User must be successfully authenticated as a Staff member or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">28</td>
-        <td>Approve Instructor Applications</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff or Admin users to approve an instructor's pending registration application, which promotes their role to Instructor in the database and updates their status.</td>
-        <td>User must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
-    </tr>
-    <tr>
-        <td class="no-col">29</td>
-        <td>Reject Instructor Application</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff or Admin users to reject an instructor's pending registration application. A detailed rejection reason is required, which is recorded in the database.</td>
-        <td>Users must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
-    </tr>
-    <tr>
-        <td class="no-col">30</td>
-        <td>View Instructor Applications Detail</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff or Admin users to inspect the detailed credentials of an instructor applicant, including their external LinkedIn, YouTube, and Facebook profiles, and submitted resume or portfolio documents.</td>
-        <td>User must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
-    </tr>
-    <tr>
-        <td class="no-col">31</td>
-        <td>Search Instructor Applications</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff or Admin users to search the pending instructor applications list by name, email, professional title, or expertise specialization in real-time.</td>
-        <td>User must be successfully authenticated as a Staff member or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">32</td>
-        <td>Filter Instructor Applications</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff or Admin users to filter the pending instructor applications list by applicant expertise or specialization.</td>
-        <td>User must be successfully authenticated as a Staff member or Admin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">33</td>
-        <td>Sort Instructor Applications</td>
-        <td><a href="#">Manage Instructor Application</a></td>
-        <td>Allows authenticated Staff or Admin users to sort the pending instructor applications list by application date (newest/oldest) or alphabetical order of the applicant's name.</td>
-        <td>User must be successfully authenticated as a Staff member or Admin.</td>
-    <tr>
-        <td class="no-col">34</td>
-        <td>View Notification list</td>
-        <td><a href="#">Notification</a></td>
-        <td>Allows users and instructors to view their list of notifications, search, sort, filter, view details, mark notifications as read, mark all notifications as read, or delete notifications.</td>
-        <td>Actor must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">35</td>
-        <td>View Notification Detail</td>
-        <td><a href="#">Notification</a></td>
-        <td>Allows users and instructors to view the detailed content of a notification in a modal dialog. If the notification is unread, the system automatically marks it as read.</td>
-        <td>User or Instructor must be successfully authenticated and the notifications page must be successfully loaded.</td>
-    </tr>
-    <tr>
-        <td class="no-col">36</td>
-        <td>Mark As Read</td>
-        <td><a href="#">Notification</a></td>
-        <td>Allows users and instructors to mark their received notifications as read. The system updates the notification status in the database, notifies active client sessions in real-time, and updates the unread count in the UI.</td>
-        <td>User or Instructor must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">37</td>
-        <td>Delete Notifications</td>
-        <td><a href="#">Notification</a></td>
-        <td>Allows users and instructors to permanently delete a notification. The system displays a confirmation dialog before sending the request to the database.</td>
-        <td>User or Instructor must be successfully authenticated and the notification must exist.</td>
-    <tr>
-        <td class="no-col">38</td>
-        <td>Send Notifications</td>
-        <td><a href="#">Manage Notification</a></td>
-        <td>Allows authenticated Staff or Admin users to compose and send notifications either to a specific registered user (using email tags) or broadcasted to all users.</td>
-        <td>Staff or Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">39</td>
-        <td>View Notification List</td>
-        <td><a href="#">Manage Notification</a></td>
-        <td>Allows authenticated Staff or Admin to view the list of all system-sent notifications, with search, role tab filtering, status filtering, sorting, page navigation, and detail view modal options.</td>
-        <td>Staff or Admin must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">40</td>
-        <td>View Notification Detail</td>
-        <td><a href="#">Manage Notification</a></td>
-        <td>Allows authenticated Staff or Admin to view the detailed recipient, title, content, creation timestamp, and read status of a notification. If a Staff member views an unread notification addressed to themselves, the system automatically marks it as read.</td>
-        <td>Staff or Admin must be successfully authenticated and the target notification must exist.</td>
-    </tr>
-    <tr>
-        <td class="no-col">41</td>
-        <td>Search Notifications</td>
-        <td><a href="#">Manage Notification</a></td>
-        <td>Allows authenticated Staff or Admin to search the system notifications log by recipient name, email address, message title, or content.</td>
-        <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">42</td>
-        <td>Sort Notifications</td>
-        <td><a href="#">Manage Notification</a></td>
-        <td>Allows authenticated Staff or Admin to sort the system notifications log by timestamp, title, or recipient name.</td>
-        <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">43</td>
-        <td>Filter Notifications</td>
-        <td><a href="#">Manage Notification</a></td>
-        <td>Allows authenticated Staff or Admin users to filter the system notifications log by recipient role and/or read status.</td>
-        <td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">14</td>
-        <td>View Course List</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows Guests and Users to browse, search, filter, and sort the public list of courses on the marketplace. Authenticated Users can toggle course wishlist status, add courses to their shopping cart, or view their enrollment status directly from the course cards.</td>
-        <td>None.</td>
-    </tr>
-    <tr>
-        <td class="no-col">15</td>
-        <td>Filter Courses</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows Guests and Users to filter the list of courses by category, rating stars, and price (Free vs. Paid). The filters can be applied singly or in combination.</td>
-        <td>None.</td>
-    </tr>
-    <tr>
-        <td class="no-col">16</td>
-        <td>Sort Courses</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows Guests and Users to order the displayed courses by Newest, Highest Rated, Price: Low to High, or Price: High to Low.</td>
-        <td>None.</td>
-    </tr>
-    <tr>
-        <td class="no-col">17</td>
-        <td>View Course Details</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows Guests and Users to view the detailed information of a course, including its description, curriculum, instructor profile, and student reviews. The system determines the visibility of course content and available actions (e.g., "Add to cart", "Enroll Now", "Go to learning") based on the actor's authentication and enrollment status.</td>
-        <td>None.</td>
-    </tr>
-    <tr>
-        <td class="no-col">18</td>
-        <td>View Review List</td>
-        <td><a href="#">User Course</a></td>
-        <td>Displays the list of public course reviews, star ratings, and statistics, allowing sorting/filtering by star rating and pagination.</td>
-        <td>Course details must be accessible.</td>
-    </tr>
-    <tr>
-        <td class="no-col">19</td>
-        <td>Search Courses</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows Guests and Users to search for courses by entering keywords that match titles, descriptions, and skills. The search is executed in real-time with a brief debounce delay, presenting matching results in the course catalog.</td>
-        <td>None.</td>
-    </tr>
-    <tr>
-        <td class="no-col">20</td>
-        <td>View Instructor Profile</td>
-        <td><a href="#">User Course</a></td>
-        <td>Displays the public profile page of an instructor along with their list of created courses.</td>
-        <td>The instructor's application must be approved.</td>
-    </tr>
-    <tr>
-        <td class="no-col">21</td>
-        <td>Add Personal Reviews</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows learners to submit reviews and star ratings for courses (or lessons) they are enrolled in, enforcing learning progress checks.</td>
-        <td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">22</td>
-        <td>Delete Personal Reviews</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows users to delete the course reviews they have previously submitted.</td>
-        <td>Actor must be authenticated. Actor must be the author of the review.</td>
-    </tr>
-    <tr>
-        <td class="no-col">23</td>
-        <td>Go To Learning</td>
-        <td><a href="#">User Course</a></td>
-        <td>Opens the course player to watch video lectures, read text content, and view course slides.</td>
-        <td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">24</td>
-        <td>View Learning Progress</td>
-        <td><a href="#">User Course</a></td>
-        <td>Allows Users and Instructors to track learning progress for enrolled or owned courses. Actors can view progress percentages on their enrolled courses dashboard, continue learning in the course player, view videos, read text documents, download learning materials, and automatically update their progress checks. When all materials are completed, the course is marked as completed.</td>
-        <td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">25</td>
-        <td>View purchased course list</td>
-        <td><a href="#">User Course</a></td>
-        <td>Displays all courses successfully purchased or enrolled in by the user.</td>
-        <td>Actor must be authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">26</td>
-        <td>Enroll courses</td>
-        <td><a href="#">User Course</a></td>
-        <td>Grants immediate course access (for free courses) or updates status after payment confirmation (for paid courses).</td>
-        <td>Actor must be authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">27</td>
-        <td>Create Courses</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Drafts basic details for a new course, including title, pricing, description, and curriculum outline.</td>
-        <td>Instructor must be authenticated and approved.</td>
-    </tr>
-    <tr>
-        <td class="no-col">28</td>
-        <td>Edit Course</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows instructors to modify details of their courses with integrated automatic debounced saving and content security hashing.</td>
-        <td>User must be successfully authenticated as an approved Instructor. The course must exist and belong to the active Instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">29</td>
-        <td>Add Lesson</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an instructor to add a new lesson to an existing course.</td>
-        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">30</td>
-        <td>Remove Lesson</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an instructor to remove an existing lesson from a course.</td>
-        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">31</td>
-        <td>Add Learning Materials</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an instructor to add new learning materials to an empty lesson.</td>
-        <td>User must be successfully authenticated as an approved instructor. The lesson must exist and belong to a course owned by the active instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">32</td>
-        <td>Edit Learning Material Details</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an instructor to edit the title and description of an existing learning material.</td>
-        <td>User must be successfully authenticated as an approved instructor. The material must exist and belong to a lesson in a course owned by the active instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">33</td>
-        <td>Remove Learning Materials</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an instructor to remove an existing learning material from a lesson.</td>
-        <td>User must be successfully authenticated as an approved instructor. The material must exist and belong to a course owned by the active instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">34</td>
-        <td>Remove Course</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an instructor to remove an existing course.</td>
-        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
-    </tr>
-    <tr>
-        <td class="no-col">35</td>
-        <td>View Instructor's Course List</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Allows an approved instructor to view their course portfolio and manage courses.</td>
-        <td>The actor must be authenticated and have an approved instructor profile.</td>
-    </tr>
-    <tr>
-        <td class="no-col">36</td>
-        <td>Hide courses</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Temporarily hides a course from public display on the marketplace.</td>
-        <td>Instructor must be authenticated, be the owner of the course, and course status must be Published.</td>
-    </tr>
-    <tr>
-        <td class="no-col">37</td>
-        <td>View list of removed learning materials</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Displays a list of deleted learning materials (instructor's trash bin).</td>
-        <td>Instructor must be authenticated and approved.</td>
-    </tr>
-    <tr>
-        <td class="no-col">38</td>
-        <td>Restore learning materials</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Restores deleted learning materials back to active lessons.</td>
-        <td>Instructor must be authenticated and approved. The material must be currently in the trash bin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">39</td>
-        <td>Permanently delete learning materials</td>
-        <td><a href="Instructor Course.html">Instructor Course</a></td>
-        <td>Permanently deletes files from the storage server.</td>
-        <td>Instructor must be authenticated and approved. The material must be currently in the trash bin.</td>
-    </tr>
-    <tr>
-        <td class="no-col">40</td>
-        <td>Start Quiz Attempt</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows a user to start an attempt on a quiz assigned to a course lesson.</td>
-        <td>User must be enrolled in the course and the quiz must be available.</td>
-    </tr>
-    <tr>
-        <td class="no-col">41</td>
-        <td>Submit Quiz Attempt</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows a user to submit their answers for an active quiz attempt for grading.</td>
-        <td>User must have an active, unsubmitted quiz attempt.</td>
-    </tr>
-    <tr>
-        <td class="no-col">42</td>
-        <td>View Attempt Detail</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Displays detailed results of a completed quiz attempt, including answers and scores.</td>
-        <td>The quiz attempt must exist and be owned by the user.</td>
-    </tr>
-    <tr>
-        <td class="no-col">43</td>
-        <td>View Quiz History</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Displays a paginated list of all past quiz attempts for a user on a specific quiz.</td>
-        <td>User must be authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">44</td>
-        <td>Register</td>
-        <td><a href="Authentication.html">Authentication</a></td>
-        <td>Allows a Guest to create a new user account on the platform by providing an email, username, full name, password, and password confirmation. Upon successful creation, the account is set to active but unverified, and the Guest is prompted to verify their email.</td>
-        <td>Guest must not be currently logged into the system.</td>
-    </tr>
-    <tr>
-        <td class="no-col">45</td>
-        <td>Login</td>
-        <td><a href="Authentication.html">Authentication</a></td>
-        <td>Allows any registered actor to authenticate using local credentials. The system verifies credentials, checks suspension, sets cookies, and redirects.</td>
-        <td>Actor is on the Login page and not currently authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">46</td>
-        <td>Login with Google</td>
-        <td><a href="Authentication.html">Authentication</a></td>
-        <td>Allows a User or Instructor to log in using Google credentials. Registers a new account if first time. Suspended accounts are blocked.</td>
-        <td>Actor is on the Login page and not currently authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">47</td>
-        <td>Forget Password</td>
-        <td><a href="Authentication.html">Authentication</a></td>
-        <td>Allows an unauthenticated actor to perform a secure password reset via email OTP verification.</td>
-        <td>Actor must not be currently authenticated in the system.</td>
-    </tr>
-    <tr>
-        <td class="no-col">48</td>
-        <td>Logout</td>
-        <td><a href="Authentication.html">Authentication</a></td>
-        <td>Allows an authenticated actor to safely terminate their session, revoking tokens and deleting cookies.</td>
-        <td>Actor must be currently logged in and authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">49</td>
-        <td>Add Account</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to register a new Staff account within the account management panel by specifying details.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">50</td>
-        <td>Update Account</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to update profile details, change status, and reset the password of an existing Staff account. The system validates entries and manages lockout records if the account status is updated to or from banned.</td>
-        <td>Admin must be logged in with Admin role privileges. The target account must exist and belong to a Staff member.</td>
-    </tr>
-    <tr>
-        <td class="no-col">51</td>
-        <td>Delete Account</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to deactivate (ban) or reactivate a registered account. Banning an account places a severe 100-year lockout suspension on it. Reactivating the account deletes all active lockout entries, immediately restoring access.</td>
-        <td>Admin must be logged in with Admin role privileges. The target account must exist in the system.</td>
-    </tr>
-    <tr>
-        <td class="no-col">52</td>
-        <td>View Account Detail</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to view detailed profile information of any account in the system. The details retrieved dynamically vary depending on the account's role (User, Instructor, Staff, or Admin).</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">53</td>
-        <td>View Account List</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to view a paginated list of all registered accounts. The Admin can search for accounts, filter them by role, and navigate through the pages.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">54</td>
-        <td>Filter Accounts</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to filter the displayed account list by selecting specific role criteria, such as User (student), Instructor, Staff, or Registered Staff.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">55</td>
-        <td>Search Accounts</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to search for accounts by specifying a keyword that matches the account's Email, Phone Number, Display Name, or Full Name.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">56</td>
-        <td>Flag Accounts for Violation</td>
-        <td><a href="Manage Account.html">Manage Account</a></td>
-        <td>Allows an Admin to flag a user account for a policy violation. The flag count increments, and the account status transitions through warning levels. On the 3rd flag, the account is automatically banned for 30 days.</td>
-        <td>Admin must be logged in with Admin role privileges. The target account must exist and not be currently banned or already at the max flag limit.</td>
-    </tr>
-    <tr>
-        <td class="no-col">57</td>
-        <td>View Coupons List</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to browse a list of all coupons in the system.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">58</td>
-        <td>Add Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to create a new coupon in the coupon warehouse by specifying details like code, type, value, and validity.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">59</td>
-        <td>Edit Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to update properties of an existing coupon (End Date, Usage Limit, or Active Status).</td>
-        <td>Admin must be logged in with Admin role privileges. Target coupon must exist.</td>
-    </tr>
-    <tr>
-        <td class="no-col">60</td>
-        <td>Delete Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to soft-delete (disable) a coupon by marking it inactive and shifting its end date.</td>
-        <td>Admin must be logged in with Admin role privileges. Target coupon must exist.</td>
-    </tr>
-    <tr>
-        <td class="no-col">61</td>
-        <td>Search Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to filter the coupon list by searching for a specific keyword matching the Coupon Code.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">62</td>
-        <td>Sort Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to sort the displayed coupon list ascending or descending based on selected columns.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">63</td>
-        <td>Filter Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an Admin to filter the displayed coupon list by selecting active status or coupon type.</td>
-        <td>Admin must be logged in with Admin role privileges.</td>
-    </tr>
-    <tr>
-        <td class="no-col">64</td>
-        <td>Apply Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an authenticated User to apply a coupon code to their shopping cart and updates cart totals.</td>
-        <td>User must be logged in. Cart must have items.</td>
-    </tr>
-    <tr>
-        <td class="no-col">65</td>
-        <td>Cancel Coupons</td>
-        <td><a href="Manage Coupons.html">Manage Coupons</a></td>
-        <td>Allows an authenticated User to remove an applied coupon from their shopping cart and restores original prices.</td>
-        <td>User must be logged in. A coupon must be currently applied.</td>
-    </tr>
-    <tr>
-        <td class="no-col">66</td>
-        <td>Verify Email</td>
-        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
-        <td>Allows a User to verify their email address by submitting the One-Time Password (OTP) sent to their registered email.</td>
-        <td>An OTP has been generated and sent to the User's email. The User's email is stored in TempData.</td>
-    </tr>
-    <tr>
-        <td class="no-col">67</td>
-        <td>Change Password</td>
-        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
-        <td>Allows an authenticated User to update their password. The system verifies the current password, hashes the new one, and forces logout.</td>
-        <td>User must be logged in with a valid session (AccessToken).</td>
-    </tr>
-    <tr>
-        <td class="no-col">68</td>
-        <td>Update Personal Info</td>
-        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
-        <td>Allows an authenticated User to update their personal details. Handles image upload and updates cookies.</td>
-        <td>User must be logged in with a valid session.</td>
-    </tr>
-    <tr>
-        <td class="no-col">69</td>
-        <td>View Profile</td>
-        <td><a href="Manage User Profile.html">Manage User Profile</a></td>
-        <td>Allows an authenticated User to view their personal profile information such as full name, username, email, phone number, bio, and verification status.</td>
-        <td>User must be logged in with a valid session.</td>
-    </tr>
-    <tr>
-        <td class="no-col">44</td>
-        <td>Gift Courses</td>
-        <td><a href="#">Manage Gift</a></td>
-        <td>Allows the user to configure gift details—including the recipient's name, email, card theme, and a personal message with a live preview—before proceeding to the checkout page.</td>
-        <td>The user must be authenticated. The target course must be retrievable from the system.</td>
-    </tr>
-    <tr>
-        <td class="no-col">45</td>
-        <td>Pay for a gift</td>
-        <td><a href="#">Manage Gift</a></td>
-        <td>Allows the giver to enter and validate the recipient's personal identity details (full name and email address), ensuring accurate delivery coordinates for the automated redeem voucher.</td>
-        <td>The user must be authenticated. The gift details must have been successfully configured and passed to the checkout page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">46</td>
-        <td>Receive a gifts</td>
-        <td><a href="#">Manage Gift</a></td>
-        <td>Allows the recipient to view the gift card and redeem the gifted course. If the user is not logged in, the system prompts them to log in or register. Once authenticated, the user clicks the claim button to enroll in the course and mark the gift as claimed, which also automatically cancels any pending refund requests for that gift.</td>
-        <td>The redemption token must be valid and exist in the system. The gift must not be already claimed or refunded.</td>
-    </tr>
-    <tr>
-        <td class="no-col">47</td>
-        <td>Become an Instructor</td>
-        <td><a href="#">Become an Instructor</a></td>
-        <td>Allows a registered Learner to submit an application (biography, skills, CV/ID documents) to join the platform's instructor team. Once submitted, the application awaits administrative review.</td>
-        <td>Users must be successfully authenticated (logged in). Users must not already possess an approved or active Instructor account profile.</td>
-    </tr>
-    <tr>
-        <td class="no-col">48</td>
-        <td>Setup payout</td>
-        <td><a href="#">Become an Instructor</a></td>
-        <td>Allows approved instructors to link their financial profiles with Stripe Connect or enter manual banking credentials to receive earned course purchase commissions.</td>
-        <td>User must be successfully authenticated (logged in). The user's account must be approved as an Instructor by the system.</td>
-    </tr>
-    <tr>
-        <td class="no-col">49</td>
-        <td>View Transaction List</td>
-        <td><a href="#">Manage Transaction</a></td>
-        <td>Allows an authenticated student to view a paginated list of their purchase transactions, search by course title, filter by payment status, sort by date/price, navigate details, request a refund for eligible purchases within 14 days, and submit a billing support ticket.</td>
-        <td>User must be successfully authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">50</td>
-        <td>Search Transaction History</td>
-        <td><a href="#">Manage Transaction</a></td>
-        <td>Allows the user to search their purchase/transaction history by course title. The search is submitted to the server via a GET request which reloads the page with the filtered list.</td>
-        <td>The User must be successfully authenticated. The User must have accessed their purchase history page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">51</td>
-        <td>Request Refund</td>
-        <td><a href="#">Manage Transaction</a></td>
-        <td>Allows an authenticated student to request a refund for a course purchased within a 14-day window. The system automatically checks strict eligibility metrics (learning progress, past course refunds, recent refund frequency, and account flags). If any auto-rejection rule is violated, the request is immediately declined with an abstract reason; otherwise, it is submitted to the Admin for manual review.</td>
-        <td>The user must be successfully authenticated. The target transaction status must be successful, and not already refunded or pending refund. The transaction must have occurred within the last 14 days. The transaction must belong to the logged-in user.</td>
-    </tr>
-    <tr>
-        <td class="no-col">52</td>
-        <td>View Transaction Detail</td>
-        <td><a href="#">Manage Transaction</a></td>
-        <td>Provides a detailed invoice receipt of a specific course purchase transaction, displaying detailed financial breakdowns, purchaser information, and payment gateway metadata.</td>
-        <td>Users must be successfully authenticated (logged in). Users must have placed at least one transaction. The specified transaction must exist and be associated with the Customer's account.</td>
-    </tr>
-    <tr>
-        <td class="no-col">53</td>
-        <td>View balance</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows instructors to track their financial metrics and cash flows filtered by month/year, including gross sales revenue, refunded amount, actual net earnings, pending escrow holdings, Stripe wallet balances, and successful withdrawals.</td>
-        <td>The instructor must be logged in. The user's account must be active as an approved Instructor with a linked Stripe Connect account.</td>
-    </tr>
-    <tr>
-        <td class="no-col">54</td>
-        <td>View Instructor's Transaction History</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Displays a detailed list of course purchases made by learners for courses owned by the active instructor. Provides search, filtering, sorting, and direct links to view the financial breakdown of each transaction.</td>
-        <td>The instructor must be logged in. The user's account must be active as an approved Instructor with a linked Stripe Connect account.</td>
-    </tr>
-    <tr>
-        <td class="no-col">55</td>
-        <td>View payout history</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows instructors to track their historical and pending payout transfers, including sequential numbering, course sale references, net payout amounts, and real-time Stripe settlement statuses.</td>
-        <td>The instructor must be logged in. The instructor must have a valid session cookie.</td>
-    </tr>
-    <tr>
-        <td class="no-col">56</td>
-        <td>Sort Instructor's Transaction History</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows an approved instructor to sort their learner purchases transaction history by date or amount to easily audit and analyze their course sales revenues.</td>
-        <td>Instructors must be successfully authenticated. Instructor's account status must be approved (ApprovalStatus = "Approved").</td>
-    </tr>
-    <tr>
-        <td class="no-col">57</td>
-        <td>Filter Instructor's Transaction History</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows an instructor to search and filter their transaction history list ("Learner Purchases" tab) by name/purchaser, status, month, and year.</td>
-        <td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">58</td>
-        <td>Filter payout History</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows an instructor to search and filter their payout history list ("Payout History" tab) by course title, Stripe ID, status, month, and year.</td>
-        <td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">59</td>
-        <td>Sort payout History</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows an instructor to sort their payout history list ("Payout History" tab) based on date or payout amount.</td>
-        <td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">60</td>
-        <td>View Instructor's Transaction History Detail</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows instructors to view the comprehensive financial ledger breakdown, coupon usage, Stripe gateway references, purchaser info, and refund dispute details for a specific transaction.</td>
-        <td>The instructor must be logged in. The transaction record must belong to a course owned by the logged-in instructor. There is at least one transaction in the record.</td>
-    </tr>
-    <tr>
-        <td class="no-col">61</td>
-        <td>View Instructor's Course Revenue</td>
-        <td><a href="#">Manage Instructor Finance</a></td>
-        <td>Allows instructors to view the sales breakdown and revenue statistics for each of their courses, including monthly revenue, yearly revenue, lifetime revenue, sales quantity, and growth trends.</td>
-        <td>The instructor must be logged in. The user's account must be active as an approved Instructor with linked Stripe settings.</td>
-    </tr>
-    <tr>
-        <td class="no-col">62</td>
-        <td>View Profile (For Manager)</td>
-        <td><a href="#">Manage Profile for manager</a></td>
-        <td>Allows managers (Super Admin or Staff Support) to view their profile details, including system account information, and update their account password through a secure modal.</td>
-        <td>The manager must be logged in.</td>
-    </tr>
-    <tr>
-        <td class="no-col">63</td>
-        <td>Edit Profile (For Manager)</td>
-        <td><a href="#">Manage Profile for manager</a></td>
-        <td>Allows managers (Super Admin or Staff Support) to edit their profile information, upload a profile picture, and save the updated details to the system.</td>
-        <td>The manager must be logged in.</td>
-    </tr>
-    <tr>
-        <td class="no-col">64</td>
-        <td>View Balance (For System)</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to track platform-wide financial summary statistics, splits, payouts, Stripe gateway balances, and view current configuration settings.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
-    </tr>
-    <tr>
-        <td class="no-col">65</td>
-        <td>View Instructor Payouts</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
-    </tr>
-    <tr>
-        <td class="no-col">66</td>
-        <td>View Funds Withdrawal History</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
-    </tr>
-    <tr>
-        <td class="no-col">67</td>
-        <td>View List of Refund Requests</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to view the list of pending refund requests submitted by learners within the 14-day window. Shows purchase and request details, and provides actionable links and decision triggers.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
-    </tr>
-    <tr>
-        <td class="no-col">68</td>
-        <td>Approve Refund Request</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to approve a learner's pending refund request. The system automatically performs a Stripe refund, reverses the instructor's payout (if already transferred), updates the database ledger status, and revokes the student's course access.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one refund request record.</td>
-    </tr>
-    <tr>
-        <td class="no-col">69</td>
-        <td>Reject Refund Request</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to reject a student's pending refund request. The system reverts the transaction status to succeeded, records the administrative rejection note, retains the student's course access, and notifies the student.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one refund request record.</td>
-    </tr>
-    <tr>
-        <td class="no-col">70</td>
-        <td>View transaction detail (For System)</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to view the detailed information of a specific transaction, including the buyer profile, course information, financial split figures, and any associated refund logs.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one transaction record.</td>
-    </tr>
-    <tr>
-        <td class="no-col">71</td>
-        <td>View transaction list (For System)</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to track all course purchase transactions across the entire platform. Provides search, filtering by status, sorting, and direct links to view the details of each transaction.</td>
-        <td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
-    </tr>
-    <tr>
-        <td class="no-col">72</td>
-        <td>Search transactions (For System)</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows authenticated Admin users to search the system-wide transaction history by course title, student (buyer) name, or instructor name.</td>
-        <td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
-    </tr>
-    <tr>
-        <td class="no-col">73</td>
-        <td>Filter transactions(For System)</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows authenticated Admin users to filter the system-wide transaction history by transaction status.</td>
-        <td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
-    </tr>
-    <tr>
-        <td class="no-col">74</td>
-        <td>Sort transactions(For System)</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows authenticated Admin users to sort the system-wide transaction history by date or amount.</td>
-        <td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
-    </tr>
-    <tr>
-        <td class="no-col">75</td>
-        <td>Set Transfer Rate</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to update the percentage of course purchase revenue allocated to instructors. The new rate is stored in system configurations, applied to all future transactions, and broadcasted to onboarded instructors.</td>
-        <td>The administrator must be successfully logged into the system. The system configuration repository is accessible.</td>
-    </tr>
-    <tr>
-        <td class="no-col">76</td>
-        <td>Set Payout Schedule of Instructor</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to configure the days of the month when automatic bulk payouts are triggered for instructors. The new payout days are saved in the system configurations.</td>
-        <td>The administrator must be successfully logged into the system. The system configuration repository is accessible.</td>
-    </tr>
-    <tr>
-        <td class="no-col">77</td>
-        <td>Withdraw Funds</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows administrators to manually transfer accumulated platform net profit from the Stripe available balance directly into the platform's corporate bank account.</td>
-        <td>The administrator must be successfully logged into the system. The platform's Stripe Connect available balance must be at least $0.50. Account successfully linked to Stripe's bank account.</td>
-    </tr>
-    <tr>
-        <td class="no-col">78</td>
-        <td>Filter financial dashboard by period</td>
-        <td><a href="#">Manage System Finance</a></td>
-        <td>Allows authenticated Admin users to filter the financial dashboard data (including revenue overview cards, Stripe balance metrics, monthly performance chart, and transaction list) by selecting a specific month and year.</td>
-        <td>The administrator must be successfully logged into the system.</td>
-    </tr>
-    <tr>
-        <td class="no-col">79</td>
-        <td>Checkout</td>
-        <td><a href="#">Checkout</a></td>
-        <td>This use case facilitates the secure payment process for one or more courses using the Stripe payment gateway, resulting in course enrollment upon successful transaction.</td>
-        <td>User must be authenticated. Cart must contain at least one course (or a single course selected for Direct Buy).</td>
-        <td>Add wishlist items</td>
-        <td><a href="#">Manage Wishlist</a></td>
-        <td>Allows an authenticated User to add a course to their personal wishlist. The system checks if the course is already in the wishlist, creates a wishlist record, saves it to the database, and updates the heart icon state dynamically via AJAX.</td>
-        <td>User must be logged in. The target course must exist and not already be in the User's wishlist.</td>
-        <td>Assign Quiz To Course</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to assign an existing quiz to a lesson within their course.</td>
-        <td>Instructor must be the owner of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">45</td>
-        <td>View Question Bank</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Displays a summary of lessons and question counts for a specific course.</td>
-        <td>Instructor must be the owner of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">46</td>
-        <td>View Course Questions</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Displays the list of questions associated with a specific lesson in a course.</td>
-        <td>Instructor must be the owner of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">47</td>
-        <td>Create Question</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to create a new quiz question and its options.</td>
-        <td>Instructor must be the owner of the course.</td>
-    </tr>
-    <tr>
-        <td class="no-col">48</td>
-        <td>Edit Question</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to edit an existing quiz question and its options.</td>
-        <td>Instructor must be the owner of the course containing the question.</td>
-    </tr>
-    <tr>
-        <td class="no-col">49</td>
-        <td>Delete Question</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to permanently delete a quiz question from the question bank.</td>
-        <td>Instructor must be the owner of the course containing the question.</td>
-    </tr>
-    <tr>
-        <td class="no-col">50</td>
-        <td>View Quiz List</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Displays a list of all quizzes created by the instructor.</td>
-        <td>Instructor must be authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">51</td>
-        <td>Create Quiz</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to create a new quiz with specific configurations and distributions.</td>
-        <td>Instructor must be authenticated.</td>
-    </tr>
-    <tr>
-        <td class="no-col">52</td>
-        <td>Delete Quiz</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to soft-delete a quiz they own.</td>
-        <td>Instructor must be the owner of the quiz.</td>
-    </tr>
-    <tr>
-        <td class="no-col">53</td>
-        <td>Edit Quiz Settings</td>
-        <td><a href="Quiz Course.html">Quiz Course</a></td>
-        <td>Allows an Instructor to update configurations and distributions for an existing quiz.</td>
-        <td>Instructor must be the owner of the quiz.</td>
-    </tr>
-    <tr>
-        <td class="no-col">54</td>
-        <td>View Course Moderation List</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Displays all courses submitted by instructors that are pending review.</td>
-        <td>Actor must be authenticated and have staff or admin role.</td>
-    </tr>
-    <tr>
-        <td class="no-col">55</td>
-        <td>Search Courses</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Searches course list by title or instructor name for moderation purposes.</td>
-        <td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">56</td>
-        <td>Sort Courses</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Sorts courses in the moderation list by submission date or threat level.</td>
-        <td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">57</td>
-        <td>Filter Courses</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Filters courses by categories or moderation status (Pending, Approved, Rejected).</td>
-        <td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
-    </tr>
-    <tr>
-        <td class="no-col">58</td>
-        <td>Approve Course Submission</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Approves a submitted course, marking it as published and visible on the marketplace.</td>
-        <td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or rejected, archived, permanently locked if re-approving).</td>
-    </tr>
-    <tr>
-        <td class="no-col">59</td>
-        <td>Reject Course Submission</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Rejects a submitted course with reasons and feedback for the instructor.</td>
-        <td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or approved/published if rejecting an active course).</td>
-    </tr>
-    <tr>
-        <td class="no-col">60</td>
-        <td>Flag Course for Content Violation</td>
-        <td><a href="Admin Course.html">Admin Course</a></td>
-        <td>Flags a course for content or policy violations, hiding it from public display.</td>
-        <td>Actor must be authenticated and have staff or admin role. The course status must be pending, approved/published, rejected, or archived. The course's current flag count must be less than 3.</td>
-    </tr>
-    <tr>
-        <td class="no-col">14</td>
-        <td>Publish courses</td>
-        <td><a href="#">Publish courses</a></td>
-        <td>Allows instructors to request system approval to publish draft courses. The system validates the submission immediately, returns a confirmation status, and triggers AI-assisted moderation asynchronously.</td>
-        <td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
-    </tr>
-</table>
+<tr>
+<th>No</th>
+<th>Function Name</th>
+<th>Sheet Name</th>
+<th>Description</th>
+<th>Pre-Condition</th>
+</tr>
+<tr>
+<td class="no-col">1</td>
+<td>Report A Course</td>
+<td><a href="#">Manage User Report</a></td>
+<td>Allows a user to report a course for violations (e.g., misleading content, copyright violation, spam, adult content). The system allows adding multiple reasons, validates the input, and submits the report to the server for moderation.</td>
+<td>Authenticated enrolled user (not owner/manager). Course is in a reportable state.</td>
+</tr>
+<tr>
+<td class="no-col">2</td>
+<td>Report A Review</td>
+<td><a href="#">Manage User Report</a></td>
+<td>Allows a user to report a course or lesson review for violations such as spam, offensive content, or fake reviews. The system prompts the user to select a reason and optionally provide a description before submitting the report for moderation.</td>
+<td>Authenticated user.</td>
+</tr>
+<tr>
+<td class="no-col">3</td>
+<td>View List of User Reports</td>
+<td><a href="#">Manage User Report</a></td>
+<td>Displays reported courses, reported course reviews, and reported lesson reviews submitted by users. All category reports are accessible via tabs and subtabs; Actor can switch between category subtabs without a page reload.</td>
+<td>Authenticated Staff or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">4</td>
+<td>View Report Detail</td>
+<td><a href="#">Manage User Report</a></td>
+<td>Displays details and evidence of a reported violation.</td>
+<td>Authenticated Staff or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">5</td>
+<td>Filter Reports</td>
+<td><a href="#">Manage User Report</a></td>
+<td>Filters reports by type (Course, Review, Lesson) or status.</td>
+<td>Authenticated Staff or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">6</td>
+<td>Resolve Report</td>
+<td><a href="#">Manage User Report</a></td>
+<td>Resolves a report by taking moderation action (e.g., removing content) and updating status.</td>
+<td>Authenticated Staff or Admin. Target report is in a resolvable state.</td>
+</tr>
+<tr>
+<td class="no-col">7</td>
+<td>Add AI Model</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Allows an Admin to register a new AI moderation model configuration in the system by filling out the model registration form. The system validates all required fields before persisting the new model record to the database.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">8</td>
+<td>Update AI Model</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Allows an Admin to update an existing AI model's configuration details. The edit form allows modification of provider, version, path, and description. The system validates all required fields before persisting the changes to the database.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">9</td>
+<td>Delete AI Model</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Allows an Admin to soft-delete an AI model by toggling its status between active and inactive. No data is permanently removed; an active model is set to inactive and an inactive model is restored to active.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">10</td>
+<td>View AI Model Details</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Displays the full configuration details of a selected AI model in a details dialog. The detail data is pre-loaded with the page and presented client-side without an additional server request.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">11</td>
+<td>View AI Model List</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Displays a paginated list of all registered AI moderation models, showing each model's name, version, type, process type, status, and last modified date. Admin can navigate between pages using pagination controls.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">12</td>
+<td>Set Confidence Threshold</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Allows an Admin to configure the spam confidence, toxicity confidence, and similarity score thresholds used by the automated AI moderation system. The current threshold values are pre-filled from the database on page load. If no configuration exists, system defaults are applied.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">13</td>
+<td>View Activity Log</td>
+<td><a href="#">Manage AI Service</a></td>
+<td>Displays chronological paginated logs of AI moderation events across three categories: course moderation, course review moderation, and lesson review moderation. All category logs are loaded at page load; Admin can switch between category subtabs without a page reload.</td>
+<td>Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">14</td>
+<td>Add to cart</td>
+<td><a href="#">Manage Cart</a></td>
+<td>This use case allows an authenticated user to add one or more courses to their shopping cart to purchase them together in a single transaction.</td>
+<td>User or Instructor must be successfully authenticated and have a verified email status.</td>
+</tr>
+<tr>
+<td class="no-col">15</td>
+<td>View Cart items</td>
+<td><a href="#">Manage Cart</a></td>
+<td>Displays the list of courses added to the active user's shopping cart, calculates the pricing summary (subtotal, coupon discounts, final payable amount), and lists available checkout coupon options.</td>
+<td>User must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">16</td>
+<td>Delete cart items</td>
+<td><a href="#">Manage Cart</a></td>
+<td>Allows authenticated Users or Instructors to remove a course from their shopping cart.</td>
+<td>User or Instructor must be successfully authenticated and has at least one course item in their shopping cart.</td>
+</tr>
+<tr>
+<td class="no-col">17</td>
+<td>View Chat List</td>
+<td><a href="#">Chat</a></td>
+<td>Allows authenticated Users or Instructors to view their list of active conversations, including partner avatar, partner name, last message snippet, timestamp, online status, and unread message count badge.</td>
+<td>Actor must be successfully authenticated and approved.</td>
+</tr>
+<tr>
+<td class="no-col">18</td>
+<td>Delete Chats</td>
+<td><a href="#">Chat</a></td>
+<td>Allows the User or Instructor to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</td>
+<td>Actor must be successfully authenticated and have an active conversation open.</td>
+</tr>
+<tr>
+<td class="no-col">19</td>
+<td>Send Messages</td>
+<td><a href="#">Chat</a></td>
+<td>Allows the User or Instructor to send text messages and optionally attach files within an active conversation room. The message is transmitted in real time to other participants.</td>
+<td>Actor must be successfully authenticated and have an active conversation open.</td>
+</tr>
+<tr>
+<td class="no-col">20</td>
+<td>View Chat History</td>
+<td><a href="#">Chat</a></td>
+<td>Allows the User or Instructor to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</td>
+<td>Actor must be successfully authenticated and have access to the selected chat.</td>
+</tr>
+<tr>
+<td class="no-col">21</td>
+<td>Search Chat History</td>
+<td><a href="#">Chat</a></td>
+<td>Allows the Actor to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</td>
+<td>Actor must be successfully authenticated and is on the Chat messages page.</td>
+</tr>
+<tr>
+<td class="no-col">22</td>
+<td>View Chat List</td>
+<td><a href="#">Manage Chat</a></td>
+<td>Allows the Actor to view their list of active support or moderation conversations, view pending support request tickets, search for specific conversations, filter by unread status, and sort the conversation list.</td>
+<td>Actor must be successfully authenticated as Staff or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">23</td>
+<td>View Chat History</td>
+<td><a href="#">Manage Chat</a></td>
+<td>Allows authenticated Actor users to view the entire message exchange history of a selected conversation, which automatically marks unread messages in the room as read.</td>
+<td>Actor must be successfully authenticated as Staff or Admin and have access to the selected chat room.</td>
+</tr>
+<tr>
+<td class="no-col">24</td>
+<td>Send Messages</td>
+<td><a href="#">Manage Chat</a></td>
+<td>Allows authenticated Actor users to send text messages and optionally attach files (images or documents) within an active support/moderation conversation room. The message is transmitted in real time to the recipient.</td>
+<td>Actor must be successfully authenticated as Staff or Admin and have an active conversation open.</td>
+</tr>
+<tr>
+<td class="no-col">25</td>
+<td>Delete Chats</td>
+<td><a href="#">Manage Chat</a></td>
+<td>Allows authenticated Staff or Admin users to clear their personal chat history of a conversation. Clearing history only removes the messages from the active participant's perspective by updating their participant cleared timestamp.</td>
+<td>Actor must be successfully authenticated as Staff or Admin and have an active conversation open.</td>
+</tr>
+<tr>
+<td class="no-col">26</td>
+<td>Search Chat History</td>
+<td><a href="#">Manage Chat</a></td>
+<td>Allows authenticated Staff or Admin users to search their conversation list by sending a query to the backend, which searches participant profiles and returns matching conversation rooms.</td>
+<td>Actor must be successfully authenticated as Staff or Admin and is on the Chat page under the Admin Panel dashboard.</td>
+</tr>
+<tr>
+<td class="no-col">27</td>
+<td>View Instructor Applications</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff and Admin users to view the list of pending instructor registration requests with applicant details, search, filter, and sort options.</td>
+<td>User must be successfully authenticated as a Staff member or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">28</td>
+<td>Approve Instructor Applications</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff or Admin users to approve an instructor's pending registration application, which promotes their role to Instructor in the database and updates their status.</td>
+<td>User must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
+</tr>
+<tr>
+<td class="no-col">29</td>
+<td>Reject Instructor Application</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff or Admin users to reject an instructor's pending registration application. A detailed rejection reason is required, which is recorded in the database.</td>
+<td>Users must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
+</tr>
+<tr>
+<td class="no-col">30</td>
+<td>View Instructor Applications Detail</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff or Admin users to inspect the detailed credentials of an instructor applicant, including their external LinkedIn, YouTube, and Facebook profiles, and submitted resume or portfolio documents.</td>
+<td>User must be successfully authenticated as a Staff member or Admin and the application must exist in a pending status.</td>
+</tr>
+<tr>
+<td class="no-col">31</td>
+<td>Search Instructor Applications</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff or Admin users to search the pending instructor applications list by name, email, professional title, or expertise specialization in real-time.</td>
+<td>User must be successfully authenticated as a Staff member or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">32</td>
+<td>Filter Instructor Applications</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff or Admin users to filter the pending instructor applications list by applicant expertise or specialization.</td>
+<td>User must be successfully authenticated as a Staff member or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">33</td>
+<td>Sort Instructor Applications</td>
+<td><a href="#">Manage Instructor Application</a></td>
+<td>Allows authenticated Staff or Admin users to sort the pending instructor applications list by application date (newest/oldest) or alphabetical order of the applicant's name.</td>
+<td>User must be successfully authenticated as a Staff member or Admin.</td>
+</tr>
+<tr>
+<td class="no-col">34</td>
+<td>View Notification list</td>
+<td><a href="#">Notification</a></td>
+<td>Allows users and instructors to view their list of notifications, search, sort, filter, view details, mark notifications as read, mark all notifications as read, or delete notifications.</td>
+<td>Actor must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">35</td>
+<td>View Notification Detail</td>
+<td><a href="#">Notification</a></td>
+<td>Allows users and instructors to view the detailed content of a notification in a modal dialog. If the notification is unread, the system automatically marks it as read.</td>
+<td>User or Instructor must be successfully authenticated and the notifications page must be successfully loaded.</td>
+</tr>
+<tr>
+<td class="no-col">36</td>
+<td>Mark As Read</td>
+<td><a href="#">Notification</a></td>
+<td>Allows users and instructors to mark their received notifications as read. The system updates the notification status in the database, notifies active client sessions in real-time, and updates the unread count in the UI.</td>
+<td>User or Instructor must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">37</td>
+<td>Delete Notifications</td>
+<td><a href="#">Notification</a></td>
+<td>Allows users and instructors to permanently delete a notification. The system displays a confirmation dialog before sending the request to the database.</td>
+<td>User or Instructor must be successfully authenticated and the notification must exist.</td>
+</tr>
+<tr>
+<td class="no-col">38</td>
+<td>Send Notifications</td>
+<td><a href="#">Manage Notification</a></td>
+<td>Allows authenticated Staff or Admin users to compose and send notifications either to a specific registered user (using email tags) or broadcasted to all users.</td>
+<td>Staff or Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">39</td>
+<td>View Notification List</td>
+<td><a href="#">Manage Notification</a></td>
+<td>Allows authenticated Staff or Admin to view the list of all system-sent notifications, with search, role tab filtering, status filtering, sorting, page navigation, and detail view modal options.</td>
+<td>Staff or Admin must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">40</td>
+<td>View Notification Detail</td>
+<td><a href="#">Manage Notification</a></td>
+<td>Allows authenticated Staff or Admin to view the detailed recipient, title, content, creation timestamp, and read status of a notification. If a Staff member views an unread notification addressed to themselves, the system automatically marks it as read.</td>
+<td>Staff or Admin must be successfully authenticated and the target notification must exist.</td>
+</tr>
+<tr>
+<td class="no-col">41</td>
+<td>Search Notifications</td>
+<td><a href="#">Manage Notification</a></td>
+<td>Allows authenticated Staff or Admin to search the system notifications log by recipient name, email address, message title, or content.</td>
+<td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
+</tr>
+<tr>
+<td class="no-col">42</td>
+<td>Sort Notifications</td>
+<td><a href="#">Manage Notification</a></td>
+<td>Allows authenticated Staff or Admin to sort the system notifications log by timestamp, title, or recipient name.</td>
+<td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
+</tr>
+<tr>
+<td class="no-col">43</td>
+<td>Filter Notifications</td>
+<td><a href="#">Manage Notification</a></td>
+<td>Allows authenticated Staff or Admin users to filter the system notifications log by recipient role and/or read status.</td>
+<td>Staff or Admin must be successfully authenticated and is on the System Notifications page.</td>
+</tr>
+<tr>
+<td class="no-col">44</td>
+<td>View Course List</td>
+<td><a href="#">User Course</a></td>
+<td>Allows Guests and Users to browse, search, filter, and sort the public list of courses on the marketplace. Authenticated Users can toggle course wishlist status, add courses to their shopping cart, or view their enrollment status directly from the course cards.</td>
+<td>None.</td>
+</tr>
+<tr>
+<td class="no-col">45</td>
+<td>Filter Courses</td>
+<td><a href="#">User Course</a></td>
+<td>Allows Guests and Users to filter the list of courses by category, rating stars, and price (Free vs. Paid). The filters can be applied singly or in combination.</td>
+<td>None.</td>
+</tr>
+<tr>
+<td class="no-col">46</td>
+<td>Sort Courses</td>
+<td><a href="#">User Course</a></td>
+<td>Allows Guests and Users to order the displayed courses by Newest, Highest Rated, Price: Low to High, or Price: High to Low.</td>
+<td>None.</td>
+</tr>
+<tr>
+<td class="no-col">47</td>
+<td>View Course Details</td>
+<td><a href="#">User Course</a></td>
+<td>Allows Guests and Users to view the detailed information of a course, including its description, curriculum, instructor profile, and student reviews. The system determines the visibility of course content and available actions (e.g., "Add to cart", "Enroll Now", "Go to learning") based on the actor's authentication and enrollment status.</td>
+<td>None.</td>
+</tr>
+<tr>
+<td class="no-col">48</td>
+<td>View Review List</td>
+<td><a href="#">User Course</a></td>
+<td>Displays the list of public course reviews, star ratings, and statistics, allowing sorting/filtering by star rating and pagination.</td>
+<td>Course details must be accessible.</td>
+</tr>
+<tr>
+<td class="no-col">49</td>
+<td>Search Courses</td>
+<td><a href="#">User Course</a></td>
+<td>Allows Guests and Users to search for courses by entering keywords that match titles, descriptions, and skills. The search is executed in real-time with a brief debounce delay, presenting matching results in the course catalog.</td>
+<td>None.</td>
+</tr>
+<tr>
+<td class="no-col">50</td>
+<td>View Instructor Profile</td>
+<td><a href="#">User Course</a></td>
+<td>Displays the public profile page of an instructor along with their list of created courses.</td>
+<td>The instructor's application must be approved.</td>
+</tr>
+<tr>
+<td class="no-col">51</td>
+<td>Add Personal Reviews</td>
+<td><a href="#">User Course</a></td>
+<td>Allows learners to submit reviews and star ratings for courses (or lessons) they are enrolled in, enforcing learning progress checks.</td>
+<td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
+</tr>
+<tr>
+<td class="no-col">52</td>
+<td>Delete Personal Reviews</td>
+<td><a href="#">User Course</a></td>
+<td>Allows users to delete the course reviews they have previously submitted.</td>
+<td>Actor must be authenticated. Actor must be the author of the review.</td>
+</tr>
+<tr>
+<td class="no-col">53</td>
+<td>Go To Learning</td>
+<td><a href="#">User Course</a></td>
+<td>Opens the course player to watch video lectures, read text content, and view course slides.</td>
+<td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
+</tr>
+<tr>
+<td class="no-col">54</td>
+<td>View Learning Progress</td>
+<td><a href="#">User Course</a></td>
+<td>Allows Users and Instructors to track learning progress for enrolled or owned courses. Actors can view progress percentages on their enrolled courses dashboard, continue learning in the course player, view videos, read text documents, download learning materials, and automatically update their progress checks. When all materials are completed, the course is marked as completed.</td>
+<td>Actor must be authenticated. Actor must be enrolled in the course, or be the owner (Instructor) of the course.</td>
+</tr>
+<tr>
+<td class="no-col">55</td>
+<td>View purchased course list</td>
+<td><a href="#">User Course</a></td>
+<td>Displays all courses successfully purchased or enrolled in by the user.</td>
+<td>Actor must be authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">56</td>
+<td>Enroll courses</td>
+<td><a href="#">User Course</a></td>
+<td>Grants immediate course access (for free courses) or updates status after payment confirmation (for paid courses).</td>
+<td>Actor must be authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">57</td>
+<td>Create Courses</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Drafts basic details for a new course, including title, pricing, description, and curriculum outline.</td>
+<td>Instructor must be authenticated and approved.</td>
+</tr>
+<tr>
+<td class="no-col">58</td>
+<td>Edit Course</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows instructors to modify details of their courses with integrated automatic debounced saving and content security hashing.</td>
+<td>User must be successfully authenticated as an approved Instructor. The course must exist and belong to the active Instructor.</td>
+</tr>
+<tr>
+<td class="no-col">59</td>
+<td>Add Lesson</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an instructor to add a new lesson to an existing course.</td>
+<td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+</tr>
+<tr>
+<td class="no-col">60</td>
+<td>Remove Lesson</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an instructor to remove an existing lesson from a course.</td>
+<td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+</tr>
+<tr>
+<td class="no-col">61</td>
+<td>Add Learning Materials</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an instructor to add new learning materials to an empty lesson.</td>
+<td>User must be successfully authenticated as an approved instructor. The lesson must exist and belong to a course owned by the active instructor.</td>
+</tr>
+<tr>
+<td class="no-col">62</td>
+<td>Edit Learning Material Details</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an instructor to edit the title and description of an existing learning material.</td>
+<td>User must be successfully authenticated as an approved instructor. The material must exist and belong to a lesson in a course owned by the active instructor.</td>
+</tr>
+<tr>
+<td class="no-col">63</td>
+<td>Remove Learning Materials</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an instructor to remove an existing learning material from a lesson.</td>
+<td>User must be successfully authenticated as an approved instructor. The material must exist and belong to a course owned by the active instructor.</td>
+</tr>
+<tr>
+<td class="no-col">64</td>
+<td>Remove Course</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an instructor to remove an existing course.</td>
+<td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+</tr>
+<tr>
+<td class="no-col">65</td>
+<td>View Instructor's Course List</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Allows an approved instructor to view their course portfolio and manage courses.</td>
+<td>The actor must be authenticated and have an approved instructor profile.</td>
+</tr>
+<tr>
+<td class="no-col">66</td>
+<td>Hide courses</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Temporarily hides a course from public display on the marketplace.</td>
+<td>Instructor must be authenticated, be the owner of the course, and course status must be Published.</td>
+</tr>
+<tr>
+<td class="no-col">67</td>
+<td>View list of removed learning materials</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Displays a list of deleted learning materials (instructor's trash bin).</td>
+<td>Instructor must be authenticated and approved.</td>
+</tr>
+<tr>
+<td class="no-col">68</td>
+<td>Restore learning materials</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Restores deleted learning materials back to active lessons.</td>
+<td>Instructor must be authenticated and approved. The material must be currently in the trash bin.</td>
+</tr>
+<tr>
+<td class="no-col">69</td>
+<td>Permanently delete learning materials</td>
+<td><a href="Instructor Course.html">Instructor Course</a></td>
+<td>Permanently deletes files from the storage server.</td>
+<td>Instructor must be authenticated and approved. The material must be currently in the trash bin.</td>
+</tr>
+<tr>
+<td class="no-col">70</td>
+<td>Start Quiz Attempt</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows a user to start an attempt on a quiz assigned to a course lesson.</td>
+<td>User must be enrolled in the course and the quiz must be available.</td>
+</tr>
+<tr>
+<td class="no-col">71</td>
+<td>Submit Quiz Attempt</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows a user to submit their answers for an active quiz attempt for grading.</td>
+<td>User must have an active, unsubmitted quiz attempt.</td>
+</tr>
+<tr>
+<td class="no-col">72</td>
+<td>View Attempt Detail</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Displays detailed results of a completed quiz attempt, including answers and scores.</td>
+<td>The quiz attempt must exist and be owned by the user.</td>
+</tr>
+<tr>
+<td class="no-col">73</td>
+<td>View Quiz History</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Displays a paginated list of all past quiz attempts for a user on a specific quiz.</td>
+<td>User must be authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">74</td>
+<td>Register</td>
+<td><a href="Authentication.html">Authentication</a></td>
+<td>Allows a Guest to create a new user account on the platform by providing an email, username, full name, password, and password confirmation. Upon successful creation, the account is set to active but unverified, and the Guest is prompted to verify their email.</td>
+<td>Guest must not be currently logged into the system.</td>
+</tr>
+<tr>
+<td class="no-col">75</td>
+<td>Login</td>
+<td><a href="Authentication.html">Authentication</a></td>
+<td>Allows any registered actor to authenticate using local credentials. The system verifies credentials, checks suspension, sets cookies, and redirects.</td>
+<td>Actor is on the Login page and not currently authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">76</td>
+<td>Login with Google</td>
+<td><a href="Authentication.html">Authentication</a></td>
+<td>Allows a User or Instructor to log in using Google credentials. Registers a new account if first time. Suspended accounts are blocked.</td>
+<td>Actor is on the Login page and not currently authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">77</td>
+<td>Forget Password</td>
+<td><a href="Authentication.html">Authentication</a></td>
+<td>Allows an unauthenticated actor to perform a secure password reset via email OTP verification.</td>
+<td>Actor must not be currently authenticated in the system.</td>
+</tr>
+<tr>
+<td class="no-col">78</td>
+<td>Logout</td>
+<td><a href="Authentication.html">Authentication</a></td>
+<td>Allows an authenticated actor to safely terminate their session, revoking tokens and deleting cookies.</td>
+<td>Actor must be currently logged in and authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">79</td>
+<td>Add Account</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to register a new Staff account within the account management panel by specifying details.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">80</td>
+<td>Update Account</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to update profile details, change status, and reset the password of an existing Staff account. The system validates entries and manages lockout records if the account status is updated to or from banned.</td>
+<td>Admin must be logged in with Admin role privileges. The target account must exist and belong to a Staff member.</td>
+</tr>
+<tr>
+<td class="no-col">81</td>
+<td>Delete Account</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to deactivate (ban) or reactivate a registered account. Banning an account places a severe 100-year lockout suspension on it. Reactivating the account deletes all active lockout entries, immediately restoring access.</td>
+<td>Admin must be logged in with Admin role privileges. The target account must exist in the system.</td>
+</tr>
+<tr>
+<td class="no-col">82</td>
+<td>View Account Detail</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to view detailed profile information of any account in the system. The details retrieved dynamically vary depending on the account's role (User, Instructor, Staff, or Admin).</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">83</td>
+<td>View Account List</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to view a paginated list of all registered accounts. The Admin can search for accounts, filter them by role, and navigate through the pages.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">84</td>
+<td>Filter Accounts</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to filter the displayed account list by selecting specific role criteria, such as User (student), Instructor, Staff, or Registered Staff.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">85</td>
+<td>Search Accounts</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to search for accounts by specifying a keyword that matches the account's Email, Phone Number, Display Name, or Full Name.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">86</td>
+<td>Flag Accounts for Violation</td>
+<td><a href="Manage Account.html">Manage Account</a></td>
+<td>Allows an Admin to flag a user account for a policy violation. The flag count increments, and the account status transitions through warning levels. On the 3rd flag, the account is automatically banned for 30 days.</td>
+<td>Admin must be logged in with Admin role privileges. The target account must exist and not be currently banned or already at the max flag limit.</td>
+</tr>
+<tr>
+<td class="no-col">87</td>
+<td>View Coupons List</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to browse a list of all coupons in the system.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">88</td>
+<td>Add Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to create a new coupon in the coupon warehouse by specifying details like code, type, value, and validity.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">89</td>
+<td>Edit Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to update properties of an existing coupon (End Date, Usage Limit, or Active Status).</td>
+<td>Admin must be logged in with Admin role privileges. Target coupon must exist.</td>
+</tr>
+<tr>
+<td class="no-col">90</td>
+<td>Delete Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to soft-delete (disable) a coupon by marking it inactive and shifting its end date.</td>
+<td>Admin must be logged in with Admin role privileges. Target coupon must exist.</td>
+</tr>
+<tr>
+<td class="no-col">91</td>
+<td>Search Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to filter the coupon list by searching for a specific keyword matching the Coupon Code.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">92</td>
+<td>Sort Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to sort the displayed coupon list ascending or descending based on selected columns.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">93</td>
+<td>Filter Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an Admin to filter the displayed coupon list by selecting active status or coupon type.</td>
+<td>Admin must be logged in with Admin role privileges.</td>
+</tr>
+<tr>
+<td class="no-col">94</td>
+<td>Apply Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an authenticated User to apply a coupon code to their shopping cart and updates cart totals.</td>
+<td>User must be logged in. Cart must have items.</td>
+</tr>
+<tr>
+<td class="no-col">95</td>
+<td>Cancel Coupons</td>
+<td><a href="Manage Coupons.html">Manage Coupons</a></td>
+<td>Allows an authenticated User to remove an applied coupon from their shopping cart and restores original prices.</td>
+<td>User must be logged in. A coupon must be currently applied.</td>
+</tr>
+<tr>
+<td class="no-col">96</td>
+<td>Verify Email</td>
+<td><a href="Manage User Profile.html">Manage User Profile</a></td>
+<td>Allows a User to verify their email address by submitting the One-Time Password (OTP) sent to their registered email.</td>
+<td>An OTP has been generated and sent to the User's email. The User's email is stored in TempData.</td>
+</tr>
+<tr>
+<td class="no-col">97</td>
+<td>Change Password</td>
+<td><a href="Manage User Profile.html">Manage User Profile</a></td>
+<td>Allows an authenticated User to update their password. The system verifies the current password, hashes the new one, and forces logout.</td>
+<td>User must be logged in with a valid session (AccessToken).</td>
+</tr>
+<tr>
+<td class="no-col">98</td>
+<td>Update Personal Info</td>
+<td><a href="Manage User Profile.html">Manage User Profile</a></td>
+<td>Allows an authenticated User to update their personal details. Handles image upload and updates cookies.</td>
+<td>User must be logged in with a valid session.</td>
+</tr>
+<tr>
+<td class="no-col">99</td>
+<td>View Profile</td>
+<td><a href="Manage User Profile.html">Manage User Profile</a></td>
+<td>Allows an authenticated User to view their personal profile information such as full name, username, email, phone number, bio, and verification status.</td>
+<td>User must be logged in with a valid session.</td>
+</tr>
+<tr>
+<td class="no-col">100</td>
+<td>Gift Courses</td>
+<td><a href="#">Manage Gift</a></td>
+<td>Allows the user to configure gift details—including the recipient's name, email, card theme, and a personal message with a live preview—before proceeding to the checkout page.</td>
+<td>The user must be authenticated. The target course must be retrievable from the system.</td>
+</tr>
+<tr>
+<td class="no-col">101</td>
+<td>Pay for a gift</td>
+<td><a href="#">Manage Gift</a></td>
+<td>Allows the giver to enter and validate the recipient's personal identity details (full name and email address), ensuring accurate delivery coordinates for the automated redeem voucher.</td>
+<td>The user must be authenticated. The gift details must have been successfully configured and passed to the checkout page.</td>
+</tr>
+<tr>
+<td class="no-col">102</td>
+<td>Receive a gift</td>
+<td><a href="Manage Gift.html">Manage Gift</a></td>
+<td>Allows the recipient to view the gift card and redeem the gifted course. If the user is not logged in, the system prompts them to log in or register. Once authenticated, the user clicks the claim button to enroll in the course and mark the gift as claimed, which also automatically cancels any pending refund requests for that gift.</td>
+<td>The redemption token must be valid and exist in the system. The gift must not be already claimed or refunded.</td>
+</tr>
+<tr>
+<td class="no-col">103</td>
+<td>Become an Instructor</td>
+<td><a href="#">Become an Instructor</a></td>
+<td>Allows a registered Learner to submit an application (biography, skills, CV/ID documents) to join the platform's instructor team. Once submitted, the application awaits administrative review.</td>
+<td>Users must be successfully authenticated (logged in). Users must not already possess an approved or active Instructor account profile.</td>
+</tr>
+<tr>
+<td class="no-col">104</td>
+<td>Setup payout</td>
+<td><a href="#">Become an Instructor</a></td>
+<td>Allows approved instructors to link their financial profiles with Stripe Connect or enter manual banking credentials to receive earned course purchase commissions.</td>
+<td>User must be successfully authenticated (logged in). The user's account must be approved as an Instructor by the system.</td>
+</tr>
+<tr>
+<td class="no-col">105</td>
+<td>View Transaction List</td>
+<td><a href="#">Manage Transaction</a></td>
+<td>Allows an authenticated student to view a paginated list of their purchase transactions, search by course title, filter by payment status, sort by date/price, navigate details, request a refund for eligible purchases within 14 days, and submit a billing support ticket.</td>
+<td>User must be successfully authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">106</td>
+<td>Search Transaction History</td>
+<td><a href="#">Manage Transaction</a></td>
+<td>Allows the user to search their purchase/transaction history by course title. The search is submitted to the server via a GET request which reloads the page with the filtered list.</td>
+<td>The User must be successfully authenticated. The User must have accessed their purchase history page.</td>
+</tr>
+<tr>
+<td class="no-col">107</td>
+<td>Request Refund</td>
+<td><a href="#">Manage Transaction</a></td>
+<td>Allows an authenticated student to request a refund for a course purchased within a 14-day window. The system automatically checks strict eligibility metrics (learning progress, past course refunds, recent refund frequency, and account flags). If any auto-rejection rule is violated, the request is immediately declined with an abstract reason; otherwise, it is submitted to the Admin for manual review.</td>
+<td>The user must be successfully authenticated. The target transaction status must be successful, and not already refunded or pending refund. The transaction must have occurred within the last 14 days. The transaction must belong to the logged-in user.</td>
+</tr>
+<tr>
+<td class="no-col">108</td>
+<td>View Transaction Detail</td>
+<td><a href="#">Manage Transaction</a></td>
+<td>Provides a detailed invoice receipt of a specific course purchase transaction, displaying detailed financial breakdowns, purchaser information, and payment gateway metadata.</td>
+<td>Users must be successfully authenticated (logged in). Users must have placed at least one transaction. The specified transaction must exist and be associated with the Customer's account.</td>
+</tr>
+<tr>
+<td class="no-col">109</td>
+<td>View balance</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows instructors to track their financial metrics and cash flows filtered by month/year, including gross sales revenue, refunded amount, actual net earnings, pending escrow holdings, Stripe wallet balances, and successful withdrawals.</td>
+<td>The instructor must be logged in. The user's account must be active as an approved Instructor with a linked Stripe Connect account.</td>
+</tr>
+<tr>
+<td class="no-col">110</td>
+<td>View Instructor's Transaction History</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Displays a detailed list of course purchases made by learners for courses owned by the active instructor. Provides search, filtering, sorting, and direct links to view the financial breakdown of each transaction.</td>
+<td>The instructor must be logged in. The user's account must be active as an approved Instructor with a linked Stripe Connect account.</td>
+</tr>
+<tr>
+<td class="no-col">111</td>
+<td>View payout history</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows instructors to track their historical and pending payout transfers, including sequential numbering, course sale references, net payout amounts, and real-time Stripe settlement statuses.</td>
+<td>The instructor must be logged in. The instructor must have a valid session cookie.</td>
+</tr>
+<tr>
+<td class="no-col">112</td>
+<td>Sort Instructor's Transaction History</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows an approved instructor to sort their learner purchases transaction history by date or amount to easily audit and analyze their course sales revenues.</td>
+<td>Instructors must be successfully authenticated. Instructor's account status must be approved (ApprovalStatus = "Approved").</td>
+</tr>
+<tr>
+<td class="no-col">113</td>
+<td>Filter Instructor's Transaction History</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows an instructor to search and filter their transaction history list ("Learner Purchases" tab) by name/purchaser, status, month, and year.</td>
+<td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
+</tr>
+<tr>
+<td class="no-col">114</td>
+<td>Filter payout History</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows an instructor to search and filter their payout history list ("Payout History" tab) by course title, Stripe ID, status, month, and year.</td>
+<td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
+</tr>
+<tr>
+<td class="no-col">115</td>
+<td>Sort payout History</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows an instructor to sort their payout history list ("Payout History" tab) based on date or payout amount.</td>
+<td>The instructor is successfully authenticated. The instructor is on the instructor transaction history page.</td>
+</tr>
+<tr>
+<td class="no-col">116</td>
+<td>View Instructor's Transaction History Detail</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows instructors to view the comprehensive financial ledger breakdown, coupon usage, Stripe gateway references, purchaser info, and refund dispute details for a specific transaction.</td>
+<td>The instructor must be logged in. The transaction record must belong to a course owned by the logged-in instructor. There is at least one transaction in the record.</td>
+</tr>
+<tr>
+<td class="no-col">117</td>
+<td>View Instructor's Course Revenue</td>
+<td><a href="#">Manage Instructor Finance</a></td>
+<td>Allows instructors to view the sales breakdown and revenue statistics for each of their courses, including monthly revenue, yearly revenue, lifetime revenue, sales quantity, and growth trends.</td>
+<td>The instructor must be logged in. The user's account must be active as an approved Instructor with linked Stripe settings.</td>
+</tr>
+<tr>
+<td class="no-col">118</td>
+<td>View Profile (For Manager)</td>
+<td><a href="#">Manage Profile for manager</a></td>
+<td>Allows managers (Super Admin or Staff Support) to view their profile details, including system account information, and update their account password through a secure modal.</td>
+<td>The manager must be logged in.</td>
+</tr>
+<tr>
+<td class="no-col">119</td>
+<td>Edit Profile (For Manager)</td>
+<td><a href="#">Manage Profile for manager</a></td>
+<td>Allows managers (Super Admin or Staff Support) to edit their profile information, upload a profile picture, and save the updated details to the system.</td>
+<td>The manager must be logged in.</td>
+</tr>
+<tr>
+<td class="no-col">120</td>
+<td>View Balance (For System)</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to track platform-wide financial summary statistics, splits, payouts, Stripe gateway balances, and view current configuration settings.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+</tr>
+<tr>
+<td class="no-col">121</td>
+<td>View Instructor Payouts</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+</tr>
+<tr>
+<td class="no-col">122</td>
+<td>View Funds Withdrawal History</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to track payout records generated for instructors from course sales, including split rates, payout amounts, and Stripe transfer statuses.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+</tr>
+<tr>
+<td class="no-col">123</td>
+<td>View List of Refund Requests</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to view the list of pending refund requests submitted by learners within the 14-day window. Shows purchase and request details, and provides actionable links and decision triggers.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+</tr>
+<tr>
+<td class="no-col">124</td>
+<td>Approve Refund Request</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to approve a learner's pending refund request. The system automatically performs a Stripe refund, reverses the instructor's payout (if already transferred), updates the database ledger status, and revokes the student's course access.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one refund request record.</td>
+</tr>
+<tr>
+<td class="no-col">125</td>
+<td>Reject Refund Request</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to reject a student's pending refund request. The system reverts the transaction status to succeeded, records the administrative rejection note, retains the student's course access, and notifies the student.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one refund request record.</td>
+</tr>
+<tr>
+<td class="no-col">126</td>
+<td>View transaction detail (For System)</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to view the detailed information of a specific transaction, including the buyer profile, course information, financial split figures, and any associated refund logs.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions. The user must have at least one transaction record.</td>
+</tr>
+<tr>
+<td class="no-col">127</td>
+<td>View transaction list (For System)</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to track all course purchase transactions across the entire platform. Provides search, filtering by status, sorting, and direct links to view the details of each transaction.</td>
+<td>The administrator must be successfully logged into the system. The administrator account must have platform-wide financial management permissions.</td>
+</tr>
+<tr>
+<td class="no-col">128</td>
+<td>Search transactions (For System)</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows authenticated Admin users to search the system-wide transaction history by course title, student (buyer) name, or instructor name.</td>
+<td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
+</tr>
+<tr>
+<td class="no-col">129</td>
+<td>Filter transactions(For System)</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows authenticated Admin users to filter the system-wide transaction history by transaction status.</td>
+<td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
+</tr>
+<tr>
+<td class="no-col">130</td>
+<td>Sort transactions(For System)</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows authenticated Admin users to sort the system-wide transaction history by date or amount.</td>
+<td>User must be successfully authenticated as an Admin. Admin is on the Financial Management dashboard under the Transaction History tab.</td>
+</tr>
+<tr>
+<td class="no-col">131</td>
+<td>Set Transfer Rate</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to update the percentage of course purchase revenue allocated to instructors. The new rate is stored in system configurations, applied to all future transactions, and broadcasted to onboarded instructors.</td>
+<td>The administrator must be successfully logged into the system. The system configuration repository is accessible.</td>
+</tr>
+<tr>
+<td class="no-col">132</td>
+<td>Set Payout Schedule of Instructor</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to configure the days of the month when automatic bulk payouts are triggered for instructors. The new payout days are saved in the system configurations.</td>
+<td>The administrator must be successfully logged into the system. The system configuration repository is accessible.</td>
+</tr>
+<tr>
+<td class="no-col">133</td>
+<td>Withdraw Funds</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows administrators to manually transfer accumulated platform net profit from the Stripe available balance directly into the platform's corporate bank account.</td>
+<td>The administrator must be successfully logged into the system. The platform's Stripe Connect available balance must be at least $0.50. Account successfully linked to Stripe's bank account.</td>
+</tr>
+<tr>
+<td class="no-col">134</td>
+<td>Filter financial dashboard by period</td>
+<td><a href="#">Manage System Finance</a></td>
+<td>Allows authenticated Admin users to filter the financial dashboard data (including revenue overview cards, Stripe balance metrics, monthly performance chart, and transaction list) by selecting a specific month and year.</td>
+<td>The administrator must be successfully logged into the system.</td>
+</tr>
+<tr>
+<td class="no-col">135</td>
+<td>Checkout</td>
+<td><a href="#">Checkout</a></td>
+<td>This use case facilitates the secure payment process for one or more courses using the Stripe payment gateway, resulting in course enrollment upon successful transaction.</td>
+<td>User must be authenticated. Cart must contain at least one course (or a single course selected for Direct Buy).</td>
+</tr>
+<tr>
+<td class="no-col">136</td>
+<td>View Question Bank</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Displays a summary of lessons and question counts for a specific course.</td>
+<td>Instructor must be the owner of the course.</td>
+</tr>
+<tr>
+<td class="no-col">137</td>
+<td>View Course Questions</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Displays the list of questions associated with a specific lesson in a course.</td>
+<td>Instructor must be the owner of the course.</td>
+</tr>
+<tr>
+<td class="no-col">138</td>
+<td>Create Question</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to create a new quiz question and its options.</td>
+<td>Instructor must be the owner of the course.</td>
+</tr>
+<tr>
+<td class="no-col">139</td>
+<td>Edit Question</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to edit an existing quiz question and its options.</td>
+<td>Instructor must be the owner of the course containing the question.</td>
+</tr>
+<tr>
+<td class="no-col">140</td>
+<td>Delete Question</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to permanently delete a quiz question from the question bank.</td>
+<td>Instructor must be the owner of the course containing the question.</td>
+</tr>
+<tr>
+<td class="no-col">141</td>
+<td>View Quiz List</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Displays a list of all quizzes created by the instructor.</td>
+<td>Instructor must be authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">142</td>
+<td>Create Quiz</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to create a new quiz with specific configurations and distributions.</td>
+<td>Instructor must be authenticated.</td>
+</tr>
+<tr>
+<td class="no-col">143</td>
+<td>Delete Quiz</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to soft-delete a quiz they own.</td>
+<td>Instructor must be the owner of the quiz.</td>
+</tr>
+<tr>
+<td class="no-col">144</td>
+<td>Edit Quiz Settings</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to update configurations and distributions for an existing quiz.</td>
+<td>Instructor must be the owner of the quiz.</td>
+</tr>
+<tr>
+<td class="no-col">145</td>
+<td>View Course Moderation List</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Displays all courses submitted by instructors that are pending review.</td>
+<td>Actor must be authenticated and have staff or admin role.</td>
+</tr>
+<tr>
+<td class="no-col">146</td>
+<td>Search Courses</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Searches course list by title or instructor name for moderation purposes.</td>
+<td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
+</tr>
+<tr>
+<td class="no-col">147</td>
+<td>Sort Courses</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Sorts courses in the moderation list by submission date or threat level.</td>
+<td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
+</tr>
+<tr>
+<td class="no-col">148</td>
+<td>Filter Courses</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Filters courses by categories or moderation status (Pending, Approved, Rejected).</td>
+<td>Actor must be authenticated and have staff or admin role. Actor must be on the Course Moderation Page.</td>
+</tr>
+<tr>
+<td class="no-col">149</td>
+<td>Approve Course Submission</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Approves a submitted course, marking it as published and visible on the marketplace.</td>
+<td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or rejected, archived, permanently locked if re-approving).</td>
+</tr>
+<tr>
+<td class="no-col">150</td>
+<td>Reject Course Submission</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Rejects a submitted course with reasons and feedback for the instructor.</td>
+<td>Actor must be authenticated and have staff or admin role. The course status must be pending review (or approved/published if rejecting an active course).</td>
+</tr>
+<tr>
+<td class="no-col">151</td>
+<td>Flag Course for Content Violation</td>
+<td><a href="Admin Course.html">Admin Course</a></td>
+<td>Flags a course for content or policy violations, hiding it from public display.</td>
+<td>Actor must be authenticated and have staff or admin role. The course status must be pending, approved/published, rejected, or archived. The course's current flag count must be less than 3.</td>
+</tr>
+<tr>
+<td class="no-col">152</td>
+<td>Publish courses</td>
+<td><a href="#">Publish courses</a></td>
+<td>Allows instructors to request system approval to publish draft courses. The system validates the submission immediately, returns a confirmation status, and triggers AI-assisted moderation asynchronously.</td>
+<td>User must be successfully authenticated as an approved instructor. The course must exist and belong to the active instructor.</td>
+</tr>
 
+<tr>
+<td class="no-col">153</td>
+<td>Add wishlist items</td>
+<td><a href="Manage Wishlist.html">Manage Wishlist</a></td>
+<td>Allows an authenticated user to add a course to their wishlist to save it for later.</td>
+<td>User must be logged in. The target course must exist and not already be in the wishlist.</td>
+</tr>
+<tr>
+<td class="no-col">154</td>
+<td>View Wishlist</td>
+<td><a href="Manage Wishlist.html">Manage Wishlist</a></td>
+<td>Displays the list of courses in the user's wishlist.</td>
+<td>User must be logged in.</td>
+</tr>
+<tr>
+<td class="no-col">155</td>
+<td>Delete Wishlist Items</td>
+<td><a href="Manage Wishlist.html">Manage Wishlist</a></td>
+<td>Allows an authenticated user to remove a course from their wishlist.</td>
+<td>User must be logged in. The course must exist in the user's wishlist.</td>
+</tr>
+<tr>
+<td class="no-col">156</td>
+<td>Assign Quiz To Course</td>
+<td><a href="Quiz Course.html">Quiz Course</a></td>
+<td>Allows an Instructor to link an existing quiz to one of their courses within the course editor page.</td>
+<td>Actor must be the owner of the course.</td>
+</tr>
+</table>
 </body>
 </html>
