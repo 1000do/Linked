@@ -138,25 +138,7 @@ public class QuizService : IQuizService
             pool.AddRange(courseQuestions);
         }
 
-        // Map to Response. Wait, QuizQuestionResponse is in another namespace?
-        // QuizService doesn't have MapToResponse for QuizQuestion. Let's create a local mapping or use QuestionBankService's mapper?
-        // Wait, I can just return List<QuizQuestionResponse> by mapping it here.
-        return pool.DistinctBy(q => q.QuestionId).Select(q => new QuizQuestionResponse
-        {
-            QuestionId = q.QuestionId,
-            CourseId = q.CourseId,
-            LessonId = q.LessonId,
-            QuestionText = q.QuestionText,
-            Explanation = q.Explanation,
-            QuestionType = q.QuestionType,
-            Options = q.QuizOptions.Select(o => new QuizOptionResponse
-            {
-                OptionId = o.OptionId,
-                OptionText = o.OptionText,
-                IsCorrect = o.IsCorrect,
-                OrderIndex = o.OrderIndex
-            }).ToList()
-        }).ToList();
+        return pool.DistinctBy(q => q.QuestionId).Select(MapToQuestionResponse).ToList();
     }
 
     public async Task SoftDeleteQuizAsync(int quizId, int instructorId)
@@ -588,30 +570,13 @@ public class QuizService : IQuizService
         CreatedAt = quiz.CreatedAt,
         UpdatedAt = quiz.UpdatedAt,
         Questions = new List<QuizQuestionResponse>(),
-        Distributions = quiz.QuizLessonDistributions.Select(d => new QuizLessonDistributionResponse
+        Distributions = quiz.QuizLessonDistributions?.Select(d => new QuizLessonDistributionResponse
         {
             LessonId = d.LessonId,
             QuestionCount = d.QuestionCount
         }).ToList() ?? new List<QuizLessonDistributionResponse>()
     };
 
-    private static QuizQuestionResponse MapToQuestionResponse(QuizQuestion q) => new()
-    {
-        QuestionId = q.QuestionId,
-        QuestionText = q.QuestionText,
-        QuestionType = q.QuestionType,
-        CourseId = q.CourseId,
-        LessonId = q.LessonId,
-        Options = q.QuizOptions
-            .OrderBy(o => o.OrderIndex)
-            .Select(o => new QuizOptionResponse
-            {
-                OptionId = o.OptionId,
-                OptionText = o.OptionText,
-                IsCorrect = o.IsCorrect,
-                OrderIndex = o.OrderIndex
-            }).ToList()
-    };
 
     private static CourseQuizResponse MapToCourseQuizResponse(CourseQuiz cq, Quiz quiz) => new()
     {
@@ -626,6 +591,25 @@ public class QuizService : IQuizService
         IsHidden = cq.IsHidden,
         OrderIndex = cq.OrderIndex,
         AddedAt = cq.AddedAt
+    };
+
+    private static QuizQuestionResponse MapToQuestionResponse(QuizQuestion q) => new()
+    {
+        QuestionId = q.QuestionId,
+        CourseId = q.CourseId,
+        LessonId = q.LessonId,
+        QuestionText = q.QuestionText,
+        Explanation = q.Explanation,
+        QuestionType = q.QuestionType,
+        Options = q.QuizOptions
+            .OrderBy(o => o.OrderIndex)
+            .Select(o => new QuizOptionResponse
+            {
+                OptionId = o.OptionId,
+                OptionText = o.OptionText,
+                IsCorrect = o.IsCorrect,
+                OrderIndex = o.OrderIndex
+            }).ToList()
     };
 }
 
