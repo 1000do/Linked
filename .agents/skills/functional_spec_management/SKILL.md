@@ -1,6 +1,6 @@
 ---
 name: functional_spec_management
-description: Specializes in creating, formatting, and editing Functional Specification documents in HTML format. Ensures the output uses Times New Roman 12pt font and normal text without any HTML heading tags (h1-h6).
+description: Specializes in creating, formatting, and editing Functional Specification documents in HTML format. Ensures the output uses Times New Roman 12pt font, #000000 text color, and <h4> for main titles.
 ---
 
 # Functional Specification Management Skill
@@ -8,15 +8,16 @@ description: Specializes in creating, formatting, and editing Functional Specifi
 This skill provides comprehensive instructions for formatting, writing, and editing Functional Specification documents based on the provided standard format. The output MUST be a valid HTML document using Times New Roman font, size 12pt.
 
 ## 1. Output Format and Styling
-*   **Create New File:** You MUST create a new `.html` file (e.g., `fs_add_lesson.html` in the appropriate directory) for the functional specification. Do NOT edit, overwrite, or replace the contents of the existing use case file.
+*   **Create New File:** You MUST create a new `.html` file (e.g., `fs_add_lesson.html` in the `functional_specs` directory) for the functional specification. Do NOT edit, overwrite, or replace the contents of the existing use case file.
 *   **Format:** The final output MUST be an `.html` file. Do NOT output Markdown.
-*   **Font and Styling:** Use `font-family: 'Times New Roman', serif;` and `font-size: 12pt;`.
-*   **No Headings Allowed:** DO NOT use any HTML heading tags (`<h1>`, `<h2>`, `<h3>`, etc.). Instead of headings, use normal `<p>` tags with `<strong>` or `<b>` for emphasis.
+*   **Font and Styling:** Use `font-family: 'Times New Roman', serif;`, `font-size: 12pt;`, and `color: #000000;`.
+*   **Headings:** Use `<h4>` for the main use case title. Do not use other HTML heading tags (`<h1>`, `<h2>`, `<h3>`, etc.). For sub-sections, use normal `<p>` tags with `<strong>` or `<b>` for emphasis.
 *   **Style Template:** Incorporate the following CSS in the `<head>` of the HTML:
     ```html
     <style>
         body {
             font-family: 'Times New Roman', serif;
+            color: #000000;
             font-size: 12pt;
             line-height: 1.5;
             margin: 0;
@@ -27,14 +28,15 @@ This skill provides comprehensive instructions for formatting, writing, and edit
         hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
         ul, ol { margin: 8px 0; padding-left: 20px; }
         li { margin-bottom: 4px; }
+        h4 { font-family: 'Times New Roman', serif; font-weight: bold; font-size: 12pt; margin: 8px 0; }
     </style>
     ```
 
 ## 2. Document Structure
 Every functional specification MUST follow this exact structure using valid HTML tags:
 
-<p><strong>[Identifier]. [Function Name]</strong></p>
-(e.g., `<p><strong>a. View Course List</strong></p>`)
+<h4>[Identifier]. [Function Name]</h4>
+(e.g., `<h4>a. View Course List</h4>`)
 
 <p><strong>Function Trigger:</strong> [Clear statement of the user action]</p>
 
