@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: #000000;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+        h4 { font-family: 'Times New Roman', serif; font-weight: bold; font-size: 12pt; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h4>4.20.13. Delete Quiz</h4>
+
+    <p><strong>Function Trigger:</strong> The instructor clicks "Delete" on a quiz.</p>
+
+    <p><strong>Function Description:</strong> Deletes an existing quiz from the system.</p>
+
+    <p><strong>Screen Layout:</strong><br>[image_placeholder]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The user must have Instructor privileges and own the quiz.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Delete Quiz Successfully:</strong>
+                    <ul>
+                        <li>Instructor clicks "Delete" next to a quiz.</li>
+                        <li>The system requests confirmation.</li>
+                        <li>Instructor confirms.</li>
+                        <li>The system unlinks the quiz from any curriculum and performs a soft delete.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The quiz is removed from the instructor's active list.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Active Attempt Error:</strong> Deletion may be prevented if students are currently taking the quiz.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: #000000;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+        h4 { font-family: 'Times New Roman', serif; font-weight: bold; font-size: 12pt; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h4>4.20.1. Start Quiz Attempt</h4>
+
+    <p><strong>Function Trigger:</strong> The user clicks the "Start Quiz" button on the quiz learning page.</p>
+
+    <p><strong>Function Description:</strong> Begins taking a multiple-choice quiz.</p>
+
+    <p><strong>Screen Layout:</strong><br>[image_placeholder]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The user must be logged in and enrolled in the course.</li>
+                <li>The quiz must be available (e.g., active, within allowable attempt limits).</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Start Quiz Attempt Successfully:</strong>
+                    <ul>
+                        <li>User accesses the quiz learning page.</li>
+                        <li>User clicks the "Start Quiz" button.</li>
+                        <li>The system validates the quiz availability and the user's enrollment status.</li>
+                        <li>The system randomly selects questions based on the question distribution settings.</li>
+                        <li>The system creates a new quiz attempt record.</li>
+                        <li>The system displays the quiz questions for the user to answer.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>A new quiz attempt record is saved to the database.</li>
+                <li>The user is presented with the quiz questions interface.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid (Not Logged In):</strong> The system redirects the user to the Login page.</li>
+                <li><strong>Quiz Not Found:</strong> The system displays a quiz not found error message.</li>
+                <li><strong>Unauthorized Access or Quiz Unavailable:</strong> The system displays an error message regarding unauthorized access.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Attempt Limits Check:</strong> The system verifies if the user has reached the maximum number of allowed attempts before starting a new one.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>
