@@ -9,6 +9,16 @@ class ModerationStatus(str, Enum):
     FLAGGED = "FLAGGED"
     MANUAL_AUDIT = "MANUAL_AUDIT"
     PENDING = "PENDING"
+    SKIPPED = "SKIPPED"
+    
+class DuplicationStatus(str,Enum):
+    MATCH_FOUND = "MATCH_FOUND"
+    NO_MATCH = "NO_MATCH"
+
+class HarmfulClassificationLabel(str,Enum):
+    SAFE = "SAFE"
+    TOXIC = "TOXIC"
+    SPAM = "SPAM"
 
 
 class ModerationStage(int, Enum):
@@ -16,6 +26,8 @@ class ModerationStage(int, Enum):
     DUPLICATION = 1
     TOXICITY = 2
     VISION = 3
+
+
 
 
 class StageLog(BaseModel):
@@ -26,6 +38,7 @@ class StageLog(BaseModel):
     result: str = Field(..., description="Result: NO_MATCH, MATCH_FOUND, FLAGGED, APPROVED, etc.")
     reason: str = Field(..., description="Explanation of result")
     flagged_fields: List[str] = Field(default_factory=list, validation_alias="flagged_content", serialization_alias="flagged_fields")
+    manual_audit_fields: List[str] = Field(default_factory=list, validation_alias="manual_audit_content", serialization_alias="manual_audit_fields")
     details: Dict[str, Any] = Field(default_factory=dict)
     latency_ms: float = Field(0.0)
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in this decision")
@@ -336,6 +349,7 @@ class CourseModerationResponse(BaseModel):
     course_id: int = Field(..., validation_alias="courseId", serialization_alias="course_id")
     moderation_status: str = Field(..., validation_alias="moderationStatus", serialization_alias="moderation_status")
     flagged_fields: List[str] = Field(default_factory=list, validation_alias="flaggedFields", serialization_alias="flagged_fields")
+    manual_audit_fields: List[str] = Field(default_factory=list, validation_alias="manualAuditFields", serialization_alias="manual_audit_fields")
     overall_confidence_score: float = Field(..., validation_alias="overallConfidenceScore", serialization_alias="overall_confidence_score")
     total_latency_ms: float = Field(..., validation_alias="totalLatencyMs", serialization_alias="total_latency_ms")
     stage_logs: List[StageLog] = Field(default_factory=list, validation_alias="stageLogs", serialization_alias="stage_logs")
@@ -360,3 +374,30 @@ class HealthResponse(BaseModel):
     version: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     details: Optional[Dict[str, str]] = Field(None)
+
+
+# ============================================================================
+# REVIEW MODERATION REQUESTS/RESPONSES
+# ============================================================================
+
+class ReviewAiModerationRequest(BaseModel):
+    review_comment: str = Field(..., alias="reviewComment")
+    spam_score_threshold: float = Field(..., alias="spamScoreThreshold")
+    toxic_score_threshold: float = Field(..., alias="toxicScoreThreshold")
+    classification_model: AiModelDto = Field(..., alias="classificationModel")
+    
+    class Config:
+        populate_by_name = True
+
+
+class ReviewAiModerationResponse(BaseModel):
+    moderation_status: str = Field(..., validation_alias="moderationStatus", serialization_alias="moderation_status")
+    confidence_score: float = Field(..., validation_alias="confidenceScore", serialization_alias="confidence_score")
+    reason: str = Field(...)
+    latency_ms: float = Field(..., validation_alias="latencyMs", serialization_alias="latency_ms")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    details: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    model_id: int = Field(..., validation_alias="modelId", serialization_alias="model_id")
+    
+    class Config:
+        populate_by_name = True

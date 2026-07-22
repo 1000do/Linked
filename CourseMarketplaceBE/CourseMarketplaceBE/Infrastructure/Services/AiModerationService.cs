@@ -81,6 +81,13 @@ namespace CourseMarketplaceBE.Infrastructure.Services
             return await response.Content.ReadFromJsonAsync<CourseModerationResult>() ?? new CourseModerationResult { CourseId = semanticReq.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
         }
 
+        public async Task<ReviewAiModerationResponse> ModerateReviewAsync(ReviewAiModerationRequest request)
+        {
+            var response = await _httpClient.PostAsJsonAsync($"{BaseUrl}/{UrlConst.ReviewModerationURL}", request);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<ReviewAiModerationResponse>() ?? new ReviewAiModerationResponse { ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
+        }
+
 
 
         public async Task<bool> HealthCheckAsync()

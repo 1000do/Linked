@@ -12,6 +12,7 @@ namespace CourseMarketplaceBE.Application.IServices
     public interface IAiModerationService
     {
         Task<CourseModerationResult> ModerateCourseFullPipelineAsync(SemanticDuplicationRequest semanticReq, CourseHarmfulRequest harmfulReq);
+        Task<ReviewAiModerationResponse> ModerateReviewAsync(ReviewAiModerationRequest request);
         Task<bool> HealthCheckAsync();
     }
 }
