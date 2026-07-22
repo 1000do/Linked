@@ -11,7 +11,9 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
 
-namespace CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.IServices;
+
+namespace CourseMarketplaceBE.Application.Services;
 
 public class UserProfileService : IUserProfileService
 {
