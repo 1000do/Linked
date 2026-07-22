@@ -28,6 +28,33 @@ class HarmfulHandler(BaseHandler):
         self.redis_service = redis_service or RedisService()
         self.text_extraction_service = text_extraction_service or TextExtractionService()
 
+    def _map_result_to_priority(self, result: str) -> int:
+        priority = {
+            ModerationStatus.APPROVED.value: 1,
+            ModerationStatus.PENDING.value: 2,
+            ModerationStatus.MANUAL_AUDIT.value: 3,
+            ModerationStatus.FLAGGED.value: 4,
+        }
+        return priority.get(result, 0)
+
+    def _compute_overall_conf(self, res1: str, res2: str, conf1: float, conf2: float) -> float:
+        prior1 = self._map_result_to_priority(res1)
+        prior2 = self._map_result_to_priority(res2)
+        if prior1 == prior2:
+            return (conf1 + conf2) / 2
+        elif prior1 > prior2:
+            return conf1
+        else:
+            return conf2
+
+    def _aggregate_result(self, res1: str, res2: str) -> str:
+        prior1 = self._map_result_to_priority(res1)
+        prior2 = self._map_result_to_priority(res2)
+        if prior1 >= prior2:
+            return res1
+        else:
+            return res2
+
     async def orchestrate_stage2(self, request: HarmfulCourseRequest) -> CourseModerationResponse:
         """
         Orchestrate Stage 2 harmful (toxicity & spam) detection.
@@ -61,13 +88,17 @@ class HarmfulHandler(BaseHandler):
                 course_id=course_id,
                 moderation_status=ModerationStatus.MANUAL_AUDIT.value,
                 flagged_fields=[],
+                manual_audit_fields=["all"],
                 overall_confidence_score=0.0,
                 total_latency_ms=total_latency,
                 stage_logs=[]
             )
 
+        all_flagged_fields = []
+        all_manual_audit_fields = []
+
         # 2. Check Text Harmful (Step 1)
-        text_flagged, text_flagged_fields, step1_logs = await self.harmful_service.check_text_harmful(
+        step1_result, step1_conf, text_flagged_fields, text_manual_audit_fields, step1_logs = await self.harmful_service.check_text_harmful(
             course=course,
             model_id=model_id,
             spam_threshold=spam_threshold,
@@ -75,11 +106,19 @@ class HarmfulHandler(BaseHandler):
         )
         
         all_stage_logs.extend(step1_logs)
-        all_flagged_fields = []
         all_flagged_fields.extend(text_flagged_fields)
+        all_manual_audit_fields.extend(text_manual_audit_fields)
 
+        text_flagged = len(text_flagged_fields) > 0
+        text_manual_audit = len(text_manual_audit_fields) > 0
+
+        flagged_log_string = f"Harmful text content detected for Course ID {course_id}. Flagged: {text_flagged_fields}" if text_flagged else ""
+        manual_log_string = f"Suspicious text content detected for Course ID {course_id}. Fields: {text_manual_audit_fields}" if text_manual_audit else ""
+        
         if text_flagged:
-            self.logger.warning(f"Harmful text content detected for Course ID {course_id}. Flagged: {text_flagged_fields}")
+            self.logger.warning(f"{flagged_log_string}. {manual_log_string}")
+        elif text_manual_audit:
+            self.logger.warning(manual_log_string)
 
         # 3. Process candidates for media checking (Step 2)
         step2_candidates: Dict[str, Any] = {}
@@ -118,7 +157,7 @@ class HarmfulHandler(BaseHandler):
                             self.logger.error(f"Failed to download material {material.material_id} for harmful check: {e}")
 
         # Check Media Harmful (Step 2)
-        media_flagged, media_flagged_fields, step2_logs = await self.harmful_service.check_media_text_harmful(
+        step2_result, step2_conf, media_flagged_fields, media_manual_audit_fields, step2_logs = await self.harmful_service.check_media_text_harmful(
             candidates=step2_candidates,
             model_id=model_id,
             spam_threshold=spam_threshold,
@@ -127,37 +166,32 @@ class HarmfulHandler(BaseHandler):
         
         all_stage_logs.extend(step2_logs)
         all_flagged_fields.extend(media_flagged_fields)
+        all_manual_audit_fields.extend(media_manual_audit_fields)
         total_latency = (time.time() - stage_start) * 1000
 
+        media_flagged = len(media_flagged_fields) > 0
+        media_manual_audit = len(media_manual_audit_fields) > 0
+
+        flagged_log_string = f"Harmful media content detected for Course ID {course_id}. Flagged: {media_flagged_fields}" if media_flagged else ""
+        manual_log_string = f"Suspicious media content detected for Course ID {course_id}. Files: {media_manual_audit_fields}" if media_manual_audit else ""
+        
         if media_flagged:
-            self.logger.warning(f"Harmful media content detected for Course ID {course_id}. Flagged: {media_flagged_fields}")
-            
-        if text_flagged or media_flagged:
-            conf1 = step1_logs[0].get("confidence_score", 0.9) if (step1_logs and isinstance(step1_logs[0], dict)) else (step1_logs[0].confidence_score if step1_logs else 0.9)
-            conf2 = step2_logs[0].get("confidence_score", 0.85) if (step2_logs and isinstance(step2_logs[0], dict)) else (step2_logs[0].confidence_score if step2_logs else 0.85)
-            
-            if text_flagged and media_flagged:
-                overall_conf = max(conf1, conf2)
-            elif text_flagged:
-                overall_conf = conf1
-            else:
-                overall_conf = conf2
+            self.logger.warning(f"{flagged_log_string}. {manual_log_string}")
+        elif media_manual_audit:
+            self.logger.warning(manual_log_string)
 
-            return CourseModerationResponse(
-                course_id=course_id,
-                moderation_status=ModerationStatus.FLAGGED.value,
-                flagged_fields=all_flagged_fields,
-                overall_confidence_score=overall_conf,
-                total_latency_ms=total_latency,
-                stage_logs=all_stage_logs
-            )
+        overall_conf = self._compute_overall_conf(step1_result, step2_result, step1_conf, step2_conf)
+        moderation_status = self._aggregate_result(step1_result, step2_result)
 
-        self.logger.info(f"Stage 2 approved for Course ID {course_id}")
+        if moderation_status == ModerationStatus.APPROVED.value:
+            self.logger.info(f"Stage 2 approved for Course ID {course_id}")
+
         return CourseModerationResponse(
             course_id=course_id,
-            moderation_status=ModerationStatus.APPROVED.value,
-            flagged_fields=[],
-            overall_confidence_score=1.0,
+            moderation_status=moderation_status,
+            flagged_fields=all_flagged_fields,
+            manual_audit_fields=all_manual_audit_fields,
+            overall_confidence_score=overall_conf,
             total_latency_ms=total_latency,
             stage_logs=all_stage_logs
         )
