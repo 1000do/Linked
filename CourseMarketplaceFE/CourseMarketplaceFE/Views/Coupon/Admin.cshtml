@@ -141,6 +141,7 @@
                 <div class="space-y-2">
                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">End Date</label>
                     <input id="endDate" type="date" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-600 focus:outline-none focus:border-primary transition-all bg-white" />
+                    <p id="err-date" class="text-rose-500 text-[10px] font-black mt-1.5 hidden flex items-center gap-1.5 ml-1 uppercase tracking-tight"><span class="material-symbols-outlined text-[14px]">error</span> Invalid date</p>
                 </div>
             </div>
 
@@ -287,10 +288,18 @@
                         </div>
                     </td>
                     <td class="px-6 py-4 align-middle text-center">
-                        ${x.isActive 
-                            ? `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Running</span>`
-                            : `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Stopped</span>`
-                        }
+                        ${(() => {
+                            if (!x.isActive) {
+                                return `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Stopped</span>`;
+                            }
+                            
+                            const now = new Date();
+                            if (x.endDate && new Date(x.endDate) < now) {
+                                return `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-rose-700 bg-rose-50 px-2.5 py-1 rounded border border-rose-200"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Expired</span>`;
+                            }
+                            
+                            return `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Running</span>`;
+                        })()}
                     </td>
                     <td class="px-6 py-4 align-middle text-right">
                         <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -423,7 +432,24 @@
             if (!codeVal) { showError("err-code", "Code is required"); isValid = false; }
             if (isNaN(valueVal) || valueVal <= 0) { showError("err-value", "Value must be greater than 0"); isValid = false; }
             if (typeVal === "percentage" && valueVal > 100) { showError("err-value", "Percentage must not exceed 100%"); isValid = false; }
-            if (startVal && endVal && new Date(startVal) > new Date(endVal)) { showError("err-date", "End date must fall after start date"); isValid = false; }
+            
+            if (endVal) {
+                const end = new Date(endVal);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // normalize today to midnight
+
+                if (end < today) {
+                    showError("err-date", "End date cannot be in the past"); 
+                    isValid = false;
+                } else if (startVal) {
+                    const start = new Date(startVal);
+                    if (start > end) {
+                        showError("err-date", "End date must fall after start date"); 
+                        isValid = false; 
+                    }
+                }
+            }
+
             if (usageVal !== "") {
                 const usageNum = parseInt(usageVal);
                 if (isNaN(usageNum) || usageNum < 0) { showError("err-usage", "Usage limit must be positive"); isValid = false; }

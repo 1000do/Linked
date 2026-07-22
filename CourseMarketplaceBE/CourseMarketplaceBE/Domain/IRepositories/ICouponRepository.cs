@@ -37,4 +37,7 @@ public interface ICouponRepository
     Task<Coupon?> GetValidCouponAsync(string couponCode, DateTime now);
 
     Task<List<Coupon>> GetActiveAvailableCouponsAsync(DateTime now);
+
+    /// <summary>Lấy danh sách các coupon đã quá ngày hết hạn nhưng vẫn đang ở trạng thái active, bao gồm cả các khóa học đang sử dụng.</summary>
+    Task<List<Coupon>> GetExpiredActiveCouponsWithCoursesAsync(DateTime now);
 }

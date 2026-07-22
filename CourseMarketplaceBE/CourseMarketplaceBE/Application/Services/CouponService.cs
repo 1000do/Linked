@@ -130,7 +130,7 @@ public class CouponService : ICouponService
             throw new InvalidOperationException("Coupons cannot be applied to free courses.");
 
         var coupon = await ValidateAndGetCouponForApplicationAsync(couponId);
-        
+
         await AssignCouponToCourseAsync(course, couponId);
     }
 
@@ -181,6 +181,9 @@ public class CouponService : ICouponService
         if (type == "percentage" && value > 100)
             throw new ArgumentException("Discount percentage cannot exceed 100%.");
 
+        if (end.HasValue && end.Value.Date < DateTime.UtcNow.Date)
+            throw new ArgumentException("EndDate cannot be in the past.");
+
         if (start.HasValue && end.HasValue && start > end)
             throw new ArgumentException("StartDate must be before EndDate.");
 
@@ -190,16 +193,16 @@ public class CouponService : ICouponService
 
     private static CouponResponse MapToResponse(Coupon x) => new()
     {
-        CouponId      = x.CouponId,
-        CouponCode    = x.CouponCode,
-        CouponType    = x.CouponType ?? "fixed",
+        CouponId = x.CouponId,
+        CouponCode = x.CouponCode,
+        CouponType = x.CouponType ?? "fixed",
         DiscountValue = x.DiscountValue,
         MinOrderValue = x.MinOrderValue,
-        StartDate     = x.StartDate,
-        EndDate       = x.EndDate,
-        UsageLimit    = x.UsageLimit,
-        UsedCount     = x.UsedCount,
-        IsActive      = x.IsActive
+        StartDate = x.StartDate,
+        EndDate = x.EndDate,
+        UsageLimit = x.UsageLimit,
+        UsedCount = x.UsedCount,
+        IsActive = x.IsActive
     };
 
     private async Task EnsureCouponCodeIsUniqueAsync(string couponCode)
@@ -213,16 +216,16 @@ public class CouponService : ICouponService
     {
         return new Coupon
         {
-            CouponCode    = req.CouponCode.Trim().ToUpper(),
-            CouponType    = type,
+            CouponCode = req.CouponCode.Trim().ToUpper(),
+            CouponType = type,
             DiscountValue = req.DiscountValue,
             MinOrderValue = req.MinOrderValue < 0 ? 0 : req.MinOrderValue,
-            StartDate     = req.StartDate,
-            EndDate       = req.EndDate,
-            UsageLimit    = req.UsageLimit,
-            UsedCount     = 0,
-            IsActive      = true,
-            ManagerId     = managerId
+            StartDate = req.StartDate,
+            EndDate = req.EndDate,
+            UsageLimit = req.UsageLimit,
+            UsedCount = 0,
+            IsActive = true,
+            ManagerId = managerId
         };
     }
 
@@ -230,6 +233,8 @@ public class CouponService : ICouponService
     {
         if (req.EndDate.HasValue)
         {
+            if (req.EndDate.Value.Date < DateTime.UtcNow.Date)
+                throw new ArgumentException("EndDate cannot be in the past.");
             if (coupon.StartDate.HasValue && req.EndDate < coupon.StartDate)
                 throw new ArgumentException("EndDate must be after StartDate.");
             coupon.EndDate = req.EndDate;
