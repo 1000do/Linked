@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Publish courses</li>
+    <li><b>Test requirement:</b> Tests for publishing draft courses, including validation and background AI moderation</li>
+    <li><b>Number of TCs:</b> 13</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Publish courses</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Submit Course for Review Successfully</td>
+        <td>1. Login as an approved Instructor.<br>2. Access the course editor for a valid draft course.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays a success message, the course status is updated to pending, and a background AI moderation task is queued.</td>
+        <td>Instructor must be authenticated. Course is in draft status and meets all requirements.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Background AI Moderation Notification (Success)</td>
+        <td>1. Complete TC-001.<br>2. Wait for the background AI moderation process to finish.<br>3. Login as an Admin.<br>4. Access the notification center or admin manual audit dashboard.</td>
+        <td>The Admin receives a notification requesting a manual audit for the newly submitted course.</td>
+        <td>Background task from TC-001 has been queued and processed.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Invalid Course Landing Page Fields</td>
+        <td>1. Login as an Instructor.<br>2. Access the course editor.<br>3. Leave required landing page fields empty or enter invalid data.<br>4. Click the 'Submit for Review' button.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Invalid Course Curriculum</td>
+        <td>1. Login as an Instructor.<br>2. Access the course editor for a course with no lessons or missing video content.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays a curriculum validation error message.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Video Duration Limits Exceeded (Stripe Not Linked)</td>
+        <td>1. Login as an Instructor without an active Stripe Connect profile.<br>2. Attempt to publish a course with more than 30 minutes of video content.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays an error message regarding video duration limits.</td>
+        <td>Instructor is authenticated and does not have Stripe Connect linked.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Video Duration Limits Exceeded (Free Course)</td>
+        <td>1. Login as an Instructor.<br>2. Set course price to 0 and attempt to publish with more than 60 minutes of video content.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays an error message regarding video duration limits.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Session Invalid</td>
+        <td>1. Access the course editor as an unauthenticated user (simulate session expiry).<br>2. Click the 'Submit for Review' button.</td>
+        <td>The system displays an authentication error message and redirects the user to the login page.</td>
+        <td>User is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Course Not Found</td>
+        <td>1. Login as an Instructor.<br>2. Access the course editor.<br>3. Simulate another process deleting the course.<br>4. Click the 'Submit for Review' button.</td>
+        <td>The system displays a course not found error message and redirects the user back to the course list page.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Invalid Instructor Rights (Locked Out)</td>
+        <td>1. Login as an Instructor with an active lockout status.<br>2. Access the course editor.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays an error message regarding invalid instructor rights.</td>
+        <td>Instructor is authenticated and has an active lockout.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Invalid Instructor Rights (Not Owner)</td>
+        <td>1. Login as an Instructor.<br>2. Intercept the request to submit a course belonging to another instructor.</td>
+        <td>The system displays an error message regarding invalid instructor rights.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Invalid Course Status</td>
+        <td>1. Login as an Instructor.<br>2. Access the course editor for a course that is already 'Pending Review' or 'Permanently Archived'.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays an error message indicating the course status cannot be modified.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Database Save Failed</td>
+        <td>1. Login as an Instructor.<br>2. Simulate a database error.<br>3. Click the 'Submit for Review' button.</td>
+        <td>The system displays a database transaction failure message.</td>
+        <td>Instructor must be authenticated.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>AI Service Unhealthy/Timeout - Graceful Degradation</td>
+        <td>1. Simulate AI service offline or timeout.<br>2. Login as an Instructor.<br>3. Submit a valid course for review.<br>4. Wait for background task.<br>5. Login as Admin.</td>
+        <td>The background process logs the failure, flags the course directly for admin manual review, and the Admin still receives the audit notification.</td>
+        <td>AI Service is unreachable.</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td>Passed</td>
+        <td>2026-07-18</td>
+        <td>AnHK</td>
+        <td></td>
+    </tr>
+</table>
+</body>
+</html>

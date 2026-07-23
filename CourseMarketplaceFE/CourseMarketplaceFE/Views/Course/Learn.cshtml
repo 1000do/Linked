@@ -684,6 +684,18 @@
                         <p class="text-sm text-slate-400 italic pt-1">${r.comment}</p>
                     </div>
                 </div>
+            ` : (r.reviewStatus === 'pending') ? `
+                <div class="border-t border-slate-100 pt-6 group" id="review-card-${r.reviewId}">
+                    <div class="flex gap-3 items-start p-3 bg-amber-50 rounded-xl border border-amber-200">
+                        <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[16px] text-amber-500">hourglass_empty</span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-amber-800 mb-1">Review pending moderation</p>
+                            <p class="text-sm text-amber-700">Your review is currently under AI moderation and will be visible to others once approved.</p>
+                        </div>
+                    </div>
+                </div>
             ` : r.isRemoved ? `
                 <div class="border-t border-slate-100 pt-6" id="review-card-${r.reviewId}">
                     <div class="flex gap-3 items-start">

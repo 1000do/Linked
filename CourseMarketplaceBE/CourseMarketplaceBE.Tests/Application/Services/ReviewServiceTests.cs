@@ -24,6 +24,11 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IReportSubmissionService _reportServiceMock;
         private readonly IUserRepository _userRepoMock;
         private readonly ILockoutRepository _lockoutRepoMock;
+        private readonly IBackgroundTaskQueue _taskQueueMock;
+        private readonly IAiModerationService _aiModerationServiceMock;
+        private readonly ISystemConfigRepository _systemConfigRepositoryMock;
+        private readonly IAiModelRepository _aiModelRepositoryMock;
+        private readonly Microsoft.Extensions.Logging.ILogger<ReviewService> _loggerMock;
         private readonly ReviewService _sut;
 
         public ReviewServiceTests()
@@ -35,15 +40,20 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _reportServiceMock = Substitute.For<IReportSubmissionService>();
             _userRepoMock = Substitute.For<IUserRepository>();
             _lockoutRepoMock = Substitute.For<ILockoutRepository>();
+            _taskQueueMock = Substitute.For<IBackgroundTaskQueue>();
+            _aiModerationServiceMock = Substitute.For<IAiModerationService>();
+            _systemConfigRepositoryMock = Substitute.For<ISystemConfigRepository>();
+            _aiModelRepositoryMock = Substitute.For<IAiModelRepository>();
+            _loggerMock = Substitute.For<Microsoft.Extensions.Logging.ILogger<ReviewService>>();
 
             _sut = new ReviewService(
                 _reviewRepoMock,
                 _enrollmentRepoMock,
                 _courseRepoMock,
-                _notifMock,
                 _reportServiceMock,
-                _userRepoMock,
-                _lockoutRepoMock
+                _lockoutRepoMock,
+                _taskQueueMock,
+                _loggerMock
             );
         }
 

@@ -212,8 +212,6 @@ public class ReviewRepository : IReviewRepository
         _context.LessonReviews.Update(review);
     }
 
-    // ── Save ─────────────────────────────────────────────────────────────
-
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();

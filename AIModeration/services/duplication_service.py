@@ -4,7 +4,7 @@ import logging
 import time
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
-from core.models import StageLog, CourseModerationResponse, ModerationStatus, MaterialEmbeddingResponse
+from core.models import StageLog, CourseModerationResponse, ModerationStatus, DuplicationStatus, MaterialEmbeddingResponse
 from core.exceptions import CacheNotFoundException, DataValidationException, ModerationException
 from services.base_service import BaseService
 from repositories.cache_repository import CacheRepository
@@ -133,7 +133,7 @@ class DuplicationService(BaseService):
                 log_entry = self.build_stage_log(
                     stage=self.STAGE,
                     step=step,
-                    result="SKIPPED",
+                    result=ModerationStatus.SKIPPED.value,
                     reason="No new embeddings provided for semantic check",
                     confidence_score=1.0,
                     latency_ms=latency_ms,
@@ -164,14 +164,14 @@ class DuplicationService(BaseService):
 
                     # if MATCH FOUND
                     if match_id:
-                        result = "MATCH_FOUND"
+                        result = DuplicationStatus.MATCH_FOUND.value
                         reason = f"Found a semantic duplication for {candidate} on existing_material_{match_id} (cosine similarity: {score} >= {threshold})"
                         flagged_content = [candidate]
 
                         flagged_candidates.append(candidate_id)
                         similarity_scores.append(score)
                     else:
-                        result = "NO_MATCH"
+                        result = DuplicationStatus.NO_MATCH.value
                         reason = f"No semantic duplicates found for {candidate} (average cosine similarity: {score} < {threshold})"
                         flagged_content = None
                                             
@@ -210,7 +210,7 @@ class DuplicationService(BaseService):
             
            
             
-            result_str = "MATCH_FOUND" if is_duplicate else "NO_MATCH"
+            result_str = DuplicationStatus.MATCH_FOUND.value if is_duplicate else DuplicationStatus.NO_MATCH.value
             reason_str = (
                 f"Found {len(flagged_candidates)} semantically duplicate materials (cosine similarity > {threshold})"
                 if is_duplicate

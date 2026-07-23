@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Text.Json;
 using AutoMapper;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
@@ -113,6 +114,55 @@ public class AiModerationLogService : IAiModerationLogService
         catch (CourseAiUsageLogException ex)
         {
             throw new BadRequestException(ex.Message);
+        }
+    }
+
+    public async Task<int> SaveReviewModerationLogAsync(LogReviewAiModerationCommand cmd)
+    {
+        var inputJson = cmd.Request != null ? JsonSerializer.Serialize(new ReviewAiModerationLogInput
+        {
+            ReviewComment = cmd.Request.ReviewComment,
+            SpamScoreThreshold = cmd.Request.SpamScoreThreshold,
+            ToxicScoreThreshold = cmd.Request.ToxicScoreThreshold
+        }) : null;
+
+        var outputJson = cmd.Response != null ? JsonSerializer.Serialize(new ReviewAiModerationLogOutput
+        {
+            ModerationStatus = cmd.Response.ModerationStatus,
+            ConfidenceScore = cmd.Response.ConfidenceScore,
+            Reason = cmd.Response.Reason,
+            Details = cmd.Response.Details
+        }) : null;
+
+        if (cmd.Review.LessonId.HasValue)
+        {
+            var log = new LessonReviewModerationLog
+            {
+                LessonReviewId = cmd.Review.ReviewId == 0 ? null : cmd.Review.ReviewId,
+                InputJson = inputJson,
+                OutputJson = outputJson,
+                LatencyMs = cmd.Response?.LatencyMs,
+                ErrorMessage = cmd.ErrorMessage,
+                LogCreatedAt = System.DateTime.UtcNow,
+                ModelId = cmd.Request?.ClassificationModel?.ModelId
+            };
+            await _lessonReviewLogRepo.AddAsync(log);
+            return await _lessonReviewLogRepo.SaveChangesAsync();
+        }
+        else
+        {
+            var log = new CourseReviewModerationLog
+            {
+                CourseReviewId = cmd.Review.ReviewId == 0 ? null : cmd.Review.ReviewId,
+                InputJson = inputJson,
+                OutputJson = outputJson,
+                LatencyMs = cmd.Response?.LatencyMs,
+                ErrorMessage = cmd.ErrorMessage,
+                LogCreatedAt = System.DateTime.UtcNow,
+                ModelId = cmd.Request?.ClassificationModel?.ModelId
+            };
+            await _courseReviewLogRepo.AddAsync(log);
+            return await _courseReviewLogRepo.SaveChangesAsync();
         }
     }
 }

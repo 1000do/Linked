@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
@@ -116,7 +116,7 @@ public class ReviewController : ControllerBase
         {
             bool requireCompletion = string.Equals(source, "detail", StringComparison.OrdinalIgnoreCase);
             await _reviewService.SubmitReviewAsync(userId.Value, request, requireCompletion);
-            return Ok(ApiResponse<string>.SuccessResponse("Review submitted successfully!"));
+            return Ok(ApiResponse<string>.SuccessResponse("Review has been sent for auditing and will appear when approved."));
         }
         catch (BadRequestException ex)
         {
@@ -147,7 +147,7 @@ public class ReviewController : ControllerBase
         try
         {
             await _reviewService.UpdateReviewAsync(userId.Value, request);
-            return Ok(ApiResponse<string>.SuccessResponse("Review updated successfully."));
+            return Ok(ApiResponse<string>.SuccessResponse("Review has been sent for auditing and will appear when approved."));
         }
         catch (InvalidOperationException ex)
         {
