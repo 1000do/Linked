@@ -1,221 +1,252 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<style>
-    body {
-        font-family: Tahoma, sans-serif;
-        font-size: 10pt;
-        color: black;
-        background-color: transparent;
-    }
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 5px;
-        text-align: left;
-        vertical-align: top;
-    }
-    .table2-header {
-        background-color: #76923c;
-        color: white;
-        font-weight: bold;
-    }
 
-     .table2-header th{
-        text-align: center;
-    }
-    .func-row {
-        background-color: #ccffff;
-        color: black;
-        font-weight: bold;
-    }
-    ul.summary-list {
-        list-style-type: disc;
-        margin-bottom: 20px;
-    }
-</style>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            font-size: 10pt;
+            color: black;
+            background-color: transparent;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .table2-header {
+            background-color: #76923c;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table2-header th {
+            text-align: center;
+        }
+
+        .func-row {
+            background-color: #ccffff;
+            color: black;
+            font-weight: bold;
+        }
+
+        ul.summary-list {
+            list-style-type: disc;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-<ul class="summary-list">
-    <li><b>Feature:</b> Checkout</li>
-    <li><b>Test requirement:</b> Tests for the secure payment process, course enrollment, Stripe integration, and instructor payout calculation.</li>
-    <li><b>Number of TCs:</b> 8</li>
-</ul>
+    <ul class="summary-list">
+        <li><b>Feature:</b> Checkout</li>
+        <li><b>Test requirement:</b> Tests for the secure payment process, course enrollment, Stripe integration, and
+            instructor payout calculation.</li>
+        <li><b>Number of TCs:</b> 8</li>
+    </ul>
 
-<table class="table2">
-    <tr class="table2-header">
-        <th>Test Case ID</th>
-        <th>Test Case Description</th>
-        <th>Test Case Procedure</th>
-        <th>Expected Results</th>
-        <th>Pre-conditions</th>
-        <th>Round 1</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 2</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 3</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Note</th>
-    </tr>
+    <table class="table2">
+        <tr class="table2-header">
+            <th>Test Case ID</th>
+            <th>Test Case Description</th>
+            <th>Test Case Procedure</th>
+            <th>Expected Results</th>
+            <th>Pre-conditions</th>
+            <th>Round 1</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 2</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 3</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Note</th>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Checkout</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Checkout</td>
+        </tr>
 
-    <tr>
-        <td>TC-001</td>
-        <td>Process Checkout Successfully</td>
-        <td>1. Login as a User.<br>2. Add a course to the cart and navigate to checkout.<br>3. Review the cart and click "Checkout".<br>4. Enter valid Stripe payment card information on the Stripe secure form.<br>5. Click the checkout button on Stripe form.</td>
-        <td>The system validates the transaction and records the order. The student is enrolled. The cart is cleared. The system calculates the instructor payout by deducting Stripe fees and system commission from the selling price (BR-282), schedules the payout in a "Pending" status for 14 days (BR-283), dynamically sets the currency based on the instructor's Stripe account country (BR-284), and displays a success notification.</td>
-        <td>User is successfully authenticated. Cart contains at least one course.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-001</td>
+            <td>Process Checkout Successfully</td>
+            <td>1. Login as a User.<br>2. Add a course to the cart and navigate to checkout.<br>3. Review the cart and
+                click "Checkout".<br>4. Enter valid Stripe payment card information on the Stripe secure form.<br>5.
+                Click the checkout button on Stripe form.</td>
+            <td>The system validates the transaction and records the order. The student is enrolled. The cart is
+                cleared. The system calculates the instructor payout by deducting Stripe fees and system commission from
+                the selling price (BR-282), schedules the payout in a "Pending" status for 14 days (BR-283), dynamically
+                sets the currency based on the instructor's Stripe account country (BR-284), and displays a success
+                notification.</td>
+            <td>User is successfully authenticated. Cart contains at least one course.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-002</td>
-        <td>Coupon Application - Valid Coupon</td>
-        <td>1. Navigate to the checkout page with a valid coupon code attached to the request.<br>2. Proceed with valid Stripe payment.</td>
-        <td>The system detects and validates the coupon, calculates the discount amount, and applies discounted prices to the line items. The payment succeeds with the discounted amount, and payout (BR-282), holding (BR-283), and currency logic (BR-284) apply to the discounted total.</td>
-        <td>User is authenticated. Cart contains at least one course. A valid coupon is available.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-002</td>
+            <td>Coupon Application - Valid Coupon</td>
+            <td>1. Navigate to the checkout page with a valid coupon code attached to the request.<br>2. Proceed with
+                valid Stripe payment.</td>
+            <td>The system detects and validates the coupon, calculates the discount amount, and applies discounted
+                prices to the line items. The payment succeeds with the discounted amount, and payout (BR-282), holding
+                (BR-283), and currency logic (BR-284) apply to the discounted total.</td>
+            <td>User is authenticated. Cart contains at least one course. A valid coupon is available.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-003</td>
-        <td>Coupon Application - Invalid/Expired Coupon</td>
-        <td>1. Navigate to the checkout page with an invalid or expired coupon code attached.<br>2. Observe the checkout session preparation.</td>
-        <td>The system ignores the invalid/expired discount and prepares the checkout session using the original course prices.</td>
-        <td>User is authenticated. Cart contains at least one course. An invalid coupon is applied.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-003</td>
+            <td>Coupon Application - Invalid/Expired Coupon</td>
+            <td>1. Navigate to the checkout page with an invalid or expired coupon code attached.<br>2. Observe the
+                checkout session preparation.</td>
+            <td>The system ignores the invalid/expired discount and prepares the checkout session using the original
+                course prices.</td>
+            <td>User is authenticated. Cart contains at least one course. An invalid coupon is applied.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-004</td>
-        <td>Incorrect Card Information</td>
-        <td>1. Navigate to the checkout page.<br>2. Enter incorrect card details (e.g., wrong CVC or invalid card number) on the Stripe payment form.<br>3. Attempt to submit payment.</td>
-        <td>Stripe displays an error message directly on the payment form (e.g., "Incorrect card number" or "Your card was declined"). The order is not processed.</td>
-        <td>User is authenticated. Cart contains at least one course.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-004</td>
+            <td>Incorrect Card Information</td>
+            <td>1. Navigate to the checkout page.<br>2. Enter incorrect card details (e.g., wrong CVC or invalid card
+                number) on the Stripe payment form.<br>3. Attempt to submit payment.</td>
+            <td>Stripe displays an error message directly on the payment form (e.g., "Incorrect card number" or "Your
+                card was declined"). The order is not processed.</td>
+            <td>User is authenticated. Cart contains at least one course.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-005</td>
-        <td>Payment Cancellation</td>
-        <td>1. Navigate to the checkout page and view the Stripe payment form.<br>2. Cancel the payment on the secure Stripe payment page.</td>
-        <td>Stripe redirects the user back to the shopping cart page. The system displays a payment cancellation notice and restores the cart contents.</td>
-        <td>User is authenticated. Cart contains at least one course.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-005</td>
+            <td>Payment Cancellation</td>
+            <td>1. Navigate to the checkout page and view the Stripe payment form.<br>2. Cancel the payment on the
+                secure Stripe payment page.</td>
+            <td>Stripe redirects the user back to the shopping cart page. The system displays a payment cancellation
+                notice and restores the cart contents.</td>
+            <td>User is authenticated. Cart contains at least one course.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-006</td>
-        <td>Payment Declined (Stripe Exception)</td>
-        <td>1. Enter valid card details but simulate a failed transaction reported by Stripe API after submission.</td>
-        <td>The system receives the failure from Stripe, notifies the user of the failed transaction, and allows them to retry with a different payment method.</td>
-        <td>User is authenticated. Cart contains at least one course.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-006</td>
+            <td>Payment Declined (Stripe Exception)</td>
+            <td>1. Enter valid card details but simulate a failed transaction reported by Stripe API after submission.
+            </td>
+            <td>The system receives the failure from Stripe, notifies the user of the failed transaction, and allows
+                them to retry with a different payment method.</td>
+            <td>User is authenticated. Cart contains at least one course.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-007</td>
-        <td>Session Invalid (Unauthenticated Checkout Attempt)</td>
-        <td>1. Attempt to access the checkout endpoint or submit a checkout session request as an unauthenticated user.</td>
-        <td>The system prevents the checkout process, displays an authentication error message, and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-007</td>
+            <td>Session Invalid (Unauthenticated Checkout Attempt)</td>
+            <td>1. Attempt to access the checkout endpoint or submit a checkout session request as an unauthenticated
+                user.</td>
+            <td>The system prevents the checkout process, displays an authentication error message, and redirects the
+                user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-008</td>
-        <td>Empty Cart Checkout Attempt</td>
-        <td>1. Login as a User.<br>2. Ensure the shopping cart is completely empty.<br>3. Attempt to trigger the checkout process.</td>
-        <td>The system prevents the checkout process and displays a validation error indicating that the cart must contain at least one course.</td>
-        <td>User is authenticated. Cart is empty.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-008</td>
+            <td>Empty Cart Checkout Attempt</td>
+            <td>1. Login as a User.<br>2. Ensure the shopping cart is completely empty.<br>3. Attempt to trigger the
+                checkout process.</td>
+            <td>The system prevents the checkout process and displays a validation error indicating that the cart must
+                contain at least one course.</td>
+            <td>User is authenticated. Cart is empty.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-</table>
+    </table>
 
 </body>
+
 </html>
