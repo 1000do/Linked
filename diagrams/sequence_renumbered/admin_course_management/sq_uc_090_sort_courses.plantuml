@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -33,7 +40,7 @@ participant "AdminModerationController" as fe_ctrl <<frontend controller>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":CourseModerationService" as sv
 participant ":ICourseRepository" as repo
-participant ":PagedResult<CourseModerationDto>" as res
+participant ":CourseModerationDto" as res
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -50,12 +57,12 @@ ctx -> db++:7. Fetch pending courses
 db -->> ctx--:8. Return query results
 ctx -->> repo--:9. Return entities and totalCount
 
-repo -> res++:10. Call PagedResult(courses, totalCount)
-res -->> repo--:11. Return PagedResult object
+repo -> res++:10. Call CourseModerationDto() (via Select)
+res -->> repo--:11. Return List<CourseModerationDto>
 
-repo -->> sv--:12. Return PagedResult object
-sv -->> be_ctrl--:13. Return PagedResult object
+repo -->> sv--:12. Return List<CourseModerationDto>
+sv -->> be_ctrl--:13. Return List<CourseModerationDto>
 
 be_ctrl -->> fe_ctrl--:14. Return statusCode 200
-fe_ctrl -->> view--:15. Return View(PagedResult)
+fe_ctrl -->> view--:15. Return View(List<CourseModerationDto>)
 view -->> act--:16. Display list of pending courses

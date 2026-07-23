@@ -1,0 +1,1898 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body { font-family: Tahoma, sans-serif; font-size: 8pt; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; font-size: 8pt; }
+    th, td { border: 1px solid #ccc; padding: 4px; }
+    .header-dark { background-color: #000080; color: white; font-weight: bold; }
+    .col-category { background-color: #000080; color: white; font-weight: bold; border-top: none; border-bottom: none; border-left: 1px solid black; border-right: 1px solid black; }
+    .empty-th { background-color: #000080; border-top: 1px solid black; border-bottom: 1px solid black; border-left: none; border-right: none; }
+    .empty-category { background-color: #000080; border-top: none; border-bottom: none; border-left: 1px solid black; border-right: 1px solid black; }
+    .subcat-detail { border-top: 1px solid black; border-bottom: 1px solid black; border-left: none; border-right: none; }
+    .subcat-left { border-left: 1px solid black; font-weight: bold; }
+    .detail-right { border-right: 1px solid black; }
+    .o-mark { font-size: 11pt; font-weight: bold; text-align: center; border: 1px solid black; }
+    .utc-header { background-color: #000080; color: white; font-weight: bold; text-align: center; writing-mode: vertical-rl; border: 1px solid black; }
+    .vertical-text { text-align: center; writing-mode: vertical-rl; border: 1px solid black; }
+    .normal-cell { border: 1px solid black; }
+    .summary-table th, .summary-table td { border: 1px solid black; }
+</style>
+</head>
+<body>
+<h3>Function: GetAll</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetAll</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetAll</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">5</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetAll</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">IsAdmin is true</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">IsAdmin is false</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Passes null filter and returns mapped</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Passes managerId and returns mapped</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">B</td>
+    <td class="normal-cell">B</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetById</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetById</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetById</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">5</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetById</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Not found</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Found</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Null</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Mapped response</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: Create</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">Create</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">Create</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">8</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for Create</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">8</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">6</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">8</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Invalid Type</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Invalid Discount Value</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Percentage > 100</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Invalid Dates</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Invalid Usage Limit</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Code Already Exists</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid Request Fixed</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid Request Percentage</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Builds and saves coupon</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`ArgumentException`</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`InvalidOperationException`</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: Update</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">Update</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">Update</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">9</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for Update</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Not found</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">EndDate before StartDate</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">UsageLimit < UsedCount</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid Partial Request</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Updates properties and saves</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`KeyNotFoundException`</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`ArgumentException`</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: SoftDelete</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SoftDelete</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SoftDelete</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">10</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SoftDelete</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Not found</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Found</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Sets IsActive false and saves</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`KeyNotFoundException`</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetActivePlatformCouponsAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetActivePlatformCouponsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetActivePlatformCouponsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetActivePlatformCouponsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Call function</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns Mapped Responses</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ApplyCouponToCourseAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ApplyCouponToCourseAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ApplyCouponToCourseAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ApplyCouponToCourseAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">11</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">9</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">11</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+    <th class="utc-header">UTCID09</th>
+    <th class="utc-header">UTCID10</th>
+    <th class="utc-header">UTCID11</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Course Not Found</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Not Owner</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Course In Cart</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Free Course</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Coupon Not Found</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Coupon Not Active</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Coupon Expired</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Coupon Not Started</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Coupon Usage Limit Reached</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid Published Course</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid Draft Course</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Sets Draft and Applies Coupon</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Applies Coupon Without Status Change</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`KeyNotFoundException`</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`UnauthorizedAccessException`</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`InvalidOperationException`</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: RemoveCouponFromCourseAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">RemoveCouponFromCourseAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">RemoveCouponFromCourseAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for RemoveCouponFromCourseAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid Request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Removes Coupon And Clears Cache</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ApplyCoupon</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ApplyCoupon</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ApplyCoupon</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">NgocNN</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">NgocNN</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">4</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ApplyCoupon</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">8</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">5</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">8</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+    <th class="utc-header">UTCID03</th>
+    <th class="utc-header">UTCID04</th>
+    <th class="utc-header">UTCID05</th>
+    <th class="utc-header">UTCID06</th>
+    <th class="utc-header">UTCID07</th>
+    <th class="utc-header">UTCID08</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Not Active</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Not Started</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Expired</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Usage Limit Reached</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Min Order Value Not Met</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Fixed Discount</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Percentage Discount</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Discount > Price</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Calculates Final Price</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns Zero</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">`InvalidOperationException`</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">N</td>
+    <td class="normal-cell">B</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+    <td class="vertical-text">20/07/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+</body></html>

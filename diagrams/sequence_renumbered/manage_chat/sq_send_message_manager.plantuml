@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -42,7 +49,8 @@ participant ":Message" as msg_ett
 participant ":MessageAttachment" as msg_att_ett
 participant ":MessageDto" as msg_dto
 participant ":IChatRepository" as repo
-
+participant ":IUserRepository" as user_repo
+participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -120,43 +128,49 @@ end
     repo-->>sv--:0.1.7.2.5. Return success
     
     sv->sv++:0.1.7.2.6. Call UpdateChatAndNotifyRecipientsAsync(senderId, dto.ChatId, message.SentAt)
+    sv->redis++:0.1.7.2.7. Call IncrementUnreadCountAsync(accountId, chatId)
+    redis-->>sv--:0.1.7.2.8. Return
     sv--
     
-    sv->repo++:0.1.7.2.7. Call SaveChangesAsync()
-    repo->ctx++:0.1.7.2.8. Call SaveChangesAsync()
-    ctx->db++:0.1.7.2.9. Save changes (Execute INSERT & UPDATE statements)
+    sv->repo++:0.1.7.2.9. Call SaveChangesAsync()
+    repo->ctx++:0.1.7.2.10. Call SaveChangesAsync()
+    ctx->db++:0.1.7.2.11. Save changes (Execute INSERT & UPDATE statements)
     
 alt Database Save Failure
-        db-->>ctx:0.1.7.2.9.1. Throw DbUpdateException
-        ctx-->>repo:0.1.7.2.9.1.1. Throw DbUpdateException
-        repo-->>sv:0.1.7.2.9.1.2. Throw DbUpdateException
-        sv-->>hub:0.1.7.2.9.1.3. Throw DbUpdateException
-        hub->hub++:0.1.7.2.9.1.4. Send error message to Caller
+        db-->>ctx:0.1.7.2.11.1. Throw DbUpdateException
+        ctx-->>repo:0.1.7.2.11.1.1. Throw DbUpdateException
+        repo-->>sv:0.1.7.2.11.1.2. Throw DbUpdateException
+        sv-->>hub:0.1.7.2.11.1.3. Throw DbUpdateException
+        hub->hub++:0.1.7.2.11.1.4. Send error message to Caller
         hub--
-        hub-->>view:0.1.7.2.9.1.5. Send error event via SignalR
-        view-->>act:0.1.7.2.9.1.6. Display database error message
+        hub-->>view:0.1.7.2.11.1.5. Send error event via SignalR
+        view-->>act:0.1.7.2.11.1.6. Display database error message
 else Database Save Success
-        db-->>ctx--:0.1.7.2.9.2. Return result
-        ctx-->>repo--:0.1.7.2.9.2.1. Return result
-        repo-->>sv--:0.1.7.2.9.2.2. Return result
+        db-->>ctx--:0.1.7.2.11.2. Return result
+        ctx-->>repo--:0.1.7.2.11.2.1. Return result
+        repo-->>sv--:0.1.7.2.11.2.2. Return result
         
-        sv->sv++:0.1.7.2.9.2.3. Fetch sender details
-        sv--
+        sv->user_repo++:0.1.7.2.11.2.3. Call GetByIdAsync(senderId)
+        user_repo->ctx++:0.1.7.2.11.2.4. Call GetByIdAsync(senderId)
+        ctx->db++:0.1.7.2.11.2.5. Execute SELECT query
+        db-->>ctx--:0.1.7.2.11.2.6. Return User
+        ctx-->>user_repo--:0.1.7.2.11.2.7. Return User
+        user_repo-->>sv--:0.1.7.2.11.2.8. Return User
         
-        sv->msg_dto++:0.1.7.2.9.2.4. Call MessageDto()
-        msg_dto-->>sv--:0.1.7.2.9.2.5. Return MessageDto object
+        sv->msg_dto++:0.1.7.2.11.2.9. Call MessageDto()
+        msg_dto-->>sv--:0.1.7.2.11.2.10. Return MessageDto object
         
-        sv-->>hub--:0.1.7.2.9.2.6. Return MessageDto
+        sv-->>hub--:0.1.7.2.11.2.11. Return MessageDto
         
-        hub->hub++:0.1.7.2.9.2.7. Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
+        hub->hub++:0.1.7.2.11.2.12. Broadcast ReceiveMessage to Group Chat ("Chat_{chatId}")
         hub--
-        hub-->>view--:0.1.7.2.9.2.8. Broadcast message via SignalR Group
+        hub-->>view--:0.1.7.2.11.2.13. Broadcast message via SignalR Group
         
-        view->view++:0.1.7.2.9.2.9. appendMessage(msg)
+        view->view++:0.1.7.2.11.2.14. appendMessage(msg)
         view--
-        view->view++:0.1.7.2.9.2.10. scrollToBottom()
+        view->view++:0.1.7.2.11.2.15. scrollToBottom()
         view--
-        view-->>act--:0.1.7.2.9.2.11. Display sent message on UI
+        view-->>act--:0.1.7.2.11.2.16. Display sent message on UI
 end
 
 

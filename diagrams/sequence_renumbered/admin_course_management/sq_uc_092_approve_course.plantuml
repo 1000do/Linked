@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -34,7 +41,7 @@ participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":CourseModerationService" as sv
 participant ":IEmbeddingService" as embed_sv
 participant ":INotificationService" as notif_sv
-participant ":IRedisCacheService" as redis
+participant ":IRedisService" as redis
 participant ":ICourseRepository" as repo
 participant ":IMaterialRepository" as material_repo
 participant ":ILessonRepository" as lesson_repo

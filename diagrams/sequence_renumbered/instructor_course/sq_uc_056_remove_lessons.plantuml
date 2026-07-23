@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,18 +36,17 @@ mainframe Remove Lessons
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
 participant ":ILessonRepository" as repo
-participant ":IMaterialRepository" as material_repo
 participant ":ICourseRepository" as course_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++:1. Click Delete Lesson
-view -> fe_ctrl++:2. DELETE /Lesson/DeleteLesson/{id}
+view -> fe_ctrl++:2. DELETE /InstructorCourse/RemoveLesson/{lessonId}
 fe_ctrl -> be_ctrl++:3. DELETE /api/lessons/{id}
 
 be_ctrl -> sv++:4. Call DeleteLessonAsync(id, instructorId)
@@ -58,37 +64,51 @@ alt Lesson Not Found
     fe_ctrl -->> view:10.1.2. Return JSON (success=false)
     view -->> act:10.1.3. Display lesson not found message
 else Lesson Found
-    sv -> sv++:10.2. Call ValidateInstructorAndCourseStateAsync()
+    sv -> sv++:10.2. Validate Instructor and Course State
     sv--
     
-    sv -> material_repo++:10.2.1. Call GetMaterialsByLessonIdAsync(id)
-    material_repo -->> sv--:10.2.2. Return materials
-    
-    sv -> sv++:10.2.3. Soft delete all materials and move to trash
-    sv--
-    
-    sv -> sv++:10.2.4. Set lesson.IsRemoved = true
-    sv--
-    
-    sv -> repo++:10.2.5. Call SaveChangesAsync()
-    repo -> ctx++:10.2.6. Save changes to database
-    ctx -> db++:10.2.7. Update Lesson (Soft Delete)
-    db -->> ctx--:10.2.8. Return returnCode
-    ctx -->> repo--:10.2.9. Return numberOfRowsAffected
-    repo -->> sv--:10.2.10. Return numberOfRowsAffected
-    
-opt Course is Published
-        sv -> sv++:10.2.10.1. Set course.CourseStatus = "draft"
+alt Validation Failed
+        sv -->> be_ctrl:10.2.1. throw BadRequestException
+        be_ctrl -->> fe_ctrl:10.2.1.1. Return statusCode 400
+        fe_ctrl -->> view:10.2.1.2. Return JSON (success=false)
+        view -->> act:10.2.1.3. Display error message
+else Valid to Delete
+        sv -> sv++:10.2.2. Soft delete materials and move to trash
         sv--
-        sv -> course_repo++:10.2.10.1.1. Call SaveChangesAsync()
-        course_repo -->> sv--:10.2.10.1.2. Return result
+        
+        sv -> repo++:10.2.2.1. Call Update(lesson) (Set IsRemoved=true)
+        repo -> ctx++:10.2.2.2. Update entity state
+        ctx -->> repo--:10.2.2.3. Return
+        repo -->> sv--:10.2.2.4. Return
+        
+opt Course is Published
+            sv -> sv++:10.2.2.4.1. Set course.CourseStatus = "draft"
+            sv--
 end
-    
-    sv -> sv++:10.2.11. Call InvalidateCourseCacheAsync(courseId)
-    sv--
-    
-    sv -->> be_ctrl--:10.2.12. Return success
-    be_ctrl -->> fe_ctrl--:10.2.13. Return statusCode 200
-    fe_ctrl -->> view--:10.2.14. Return JSON (success=true)
-    view -->> act--:10.2.15. Display lesson removed successfully
+        
+        sv -> repo++:10.2.2.5. Call SaveChangesAsync()
+        repo -> ctx++:10.2.2.6. Save changes to database
+        ctx -> db++:10.2.2.7. Update Lesson (Soft Delete)
+        db -->> ctx--:10.2.2.8. Return returnCode
+        ctx -->> repo--:10.2.2.9. Return numberOfRowsAffected
+        repo -->> sv--:10.2.2.10. Return numberOfRowsAffected
+        
+        sv -> sv++:10.2.2.11. Check numberOfRowsAffected
+        sv--
+        
+alt numberOfRowsAffected > 0
+            sv -> sv++:10.2.2.11.1. Call Cache Invalidation Logic
+            sv--
+            
+            sv -->> be_ctrl--:10.2.2.11.1.1. Return success
+            be_ctrl -->> fe_ctrl--:10.2.2.11.1.2. Return statusCode 200
+            fe_ctrl -->> view--:10.2.2.11.1.3. Return JSON (success=true)
+            view -->> act--:10.2.2.11.1.4. Display lesson removed successfully
+else numberOfRowsAffected = 0
+            sv -->> be_ctrl--:10.2.2.11.2. throw InvalidOperationException
+            be_ctrl -->> fe_ctrl--:10.2.2.11.2.1. Return statusCode 400
+            fe_ctrl -->> view--:10.2.2.11.2.2. Return JSON (success=false)
+            view -->> act--:10.2.2.11.2.3. Display error message
+end
+end
 end
