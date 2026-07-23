@@ -14,7 +14,7 @@ For clarity, ensure you understand the following definitions before proceeding:
 - **Test case**: A test case generated from this skill is a system-test-level test case (use-case-level test case), meaning it requires the entire working application from the UI down the stack to the database.
 
 ## Phase 1: Context Gathering & Executability Analysis
-1. **Context Verification**: The very first thing you must do is check: "Did the user provide enough context for this skill to run correctly (use case specs, business rules, sequence diagrams)?" If they did not, prompt the user to provide this necessary context before proceeding.
+1. **Context Verification**: The very first thing you must do is check: "Did the user provide enough context for this skill to run correctly (use case specs, business rules, sequence diagrams)?" and "Did the user specify a Tester name?". If they did not, prompt the user to provide this necessary context and the Tester name before proceeding. Do NOT hardcode names like "TaiTP".
 2. **Analyze Sources**: Review the Use Case Specs, Business Rules, Sequence Diagrams, and actual Code Implementation (Controllers, Services, SignalR hubs, Background tasks, etc.).
 3. **Validate Executability**: You MUST validate that every proposed test case is genuinely executable. 
    - *Executable* means the actor can perform the whole test procedure and see the result on the UI.
@@ -31,7 +31,11 @@ Iterate through this checklist and validate the test suite content. Do not proce
 - [ ] Are all test cases from the Use Case specs and Business Rules covered?
 - [ ] Is every test case genuinely executable according to the actual code implementation?
 - [ ] Have background task scenarios been properly designed with multiple actors and/or delays accounted for where necessary?
-- [ ] Does each test case have a clear Expected Result that is observable on the UI?
+- [ ] **Procedure Completeness**: Is EVERY Test Case Procedure a complete, standalone sequence? (e.g., ALWAYS start from login/accessing the page. NEVER use shorthand continuations like "Back to step 3").
+- [ ] **Expected Result Specificity**: Are the Expected Results descriptive and specific to the scenario (e.g., stating exactly what happens on the UI or database)? NEVER use generic phrases like "The system handles the alternative flow successfully."
+- [ ] Are preconditions reasonably inferred when original preconditions are empty or "None" (e.g., "Actor can be a Guest or an authenticated User.")?
+- [ ] Are use case titles robustly parsed (handling HTML formatting edge cases like line breaks) and stripped of the `UC-XX-` prefix (e.g. `View Course List` instead of `UC-02-View Course List`) before using them as test suite group headers?
+- [ ] **Description Formatting**: Are Test Case Descriptions explicitly stripped of ANY technical Use Case prefixes (e.g., remove "A.2.1", "EX-1", "B.3") while keeping the full human-readable scenario name?
 - [ ] Is the language used descriptive and human-readable, with no technical jargon? (It must clearly describe what can be done and observed on the UI).
 - [ ] Are use case hints (e.g., `(UC-15, Normal Flow)`) excluded from the final output?
 
@@ -42,6 +46,9 @@ Only proceed to this checklist once Checklist 1 is fully passed.
 - [ ] **Summary Layout**: Is the summary section formatted as a bulleted list (Feature, Test requirement, Number of TCs) instead of a table?
 - [ ] **ID Formatting**: Are test case IDs plain text without HTML tags (e.g., `TC-001`, NOT `<b>TC-001</b>`)?
 - [ ] **Function Rows**: Do function rows use `<tr class="func-row">` and span all columns?
+- [ ] **Test Rounds**: Are there exactly 3 full execution rounds populated (Round 1, Round 2, and Round 3) for each test case to ensure no rounds are missing?
+- [ ] **Test Dates**: Are the test dates dynamically calculated based on the current date: Round 1 (3 weeks ago), Round 2 (2 weeks ago), Round 3 (1 week ago)?
+- [ ] **Tester**: Is the Tester column populated with the name explicitly provided by the user?
 - [ ] **Update Function Overview.html**: 
     - Has the `Function Overview.html` been updated without altering any of its existing styling (content updates only)?
     - Does `Function Name` = the exact Use Case?
