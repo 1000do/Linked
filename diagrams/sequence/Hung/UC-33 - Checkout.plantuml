@@ -5,7 +5,7 @@
 
         arrow {
             ' Set the maximum width of the text on arrows
-            MaximumWidth 300
+            MaximumWidth 150
 
         }
         actor{

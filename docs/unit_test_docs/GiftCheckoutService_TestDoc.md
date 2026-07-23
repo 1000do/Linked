@@ -294,28 +294,30 @@
     <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
-    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="2" style="text-align: center;">9</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">9</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">9</td>
   </tr>
 </table>
 
 - **Test requirement:** Verify the functionality of ProcessGiftFulfillmentAsync.
 
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
-| :--- | :--- | :--- | :--- | :---: |
-| **Condition** | **Precondition** |  |  |  |
-|  |  | EmailAndNotiExceptions |  | O |
-| **Confirm** | **Return** |  |  |  |
-|  |  | CatchesAndContinues |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
-|  | **Passed/Failed** |  |  | P |
-|  | **Executed Date** |  |  | 19/07/2026 |
-|  | **Defect ID** |  |  |  |
+  | Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 | UTCID08 | UTCID09 |
+  | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+  | **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |  |  |
+  |  |  | EmailAndNotiExceptions |  | O |  |  |  |  |  |  |  |  |
+  |  |  | FullMetadataAndSenderFullName |  |  | O | O | O | O | O | O | O | O |
+  | **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |  |  |
+  |  |  | CatchesAndContinues |  | O |  |  |  |  |  |  |  |  |
+  |  |  | UsesProvidedValues |  |  | O | O | O | O | O | O | O | O |
+  | **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N | N | N | N | N | N | N | N | N |
+  |  | **Passed/Failed** |  |  | P | P | P | P | P | P | P | P | P |
+  |  | **Executed Date** |  |  | 19/07/2026 | 21/07/2026 | 21/07/2026 | 21/07/2026 | 21/07/2026 | 21/07/2026 | 21/07/2026 | 21/07/2026 | 21/07/2026 |
+  |  | **Defect ID** |  |  |  |  |  |  |  |  |  |  |  |
 
 ## Function: `GetCurrencyFromCountry`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
@@ -371,4 +373,5 @@
 |  | **Passed/Failed** |  |  | P |
 |  | **Executed Date** |  |  | 19/07/2026 |
 |  | **Defect ID** |  |  |  |
+
 
