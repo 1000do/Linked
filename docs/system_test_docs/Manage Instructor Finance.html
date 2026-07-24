@@ -1,883 +1,930 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<style>
-    body {
-        font-family: Tahoma, sans-serif;
-        font-size: 10pt;
-        color: black;
-        background-color: transparent;
-    }
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 5px;
-        text-align: left;
-        vertical-align: top;
-    }
-    .table2-header {
-        background-color: #76923c;
-        color: white;
-        font-weight: bold;
-    }
 
-     .table2-header th{
-        text-align: center;
-    }
-    .func-row {
-        background-color: #ccffff;
-        color: black;
-        font-weight: bold;
-    }
-    ul.summary-list {
-        list-style-type: disc;
-        margin-bottom: 20px;
-    }
-</style>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            font-size: 10pt;
+            color: black;
+            background-color: transparent;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .table2-header {
+            background-color: #76923c;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table2-header th {
+            text-align: center;
+        }
+
+        .func-row {
+            background-color: #ccffff;
+            color: black;
+            font-weight: bold;
+        }
+
+        ul.summary-list {
+            list-style-type: disc;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-<ul class="summary-list">
-    <li><b>Feature:</b> Manage Instructor Finance</li>
-    <li><b>Test requirement:</b> Tests for tracking financial metrics, transaction history, payouts, and revenue.</li>
-    <li><b>Number of TCs:</b> 43</li>
-</ul>
+    <ul class="summary-list">
+        <li><b>Feature:</b> Manage Instructor Finance</li>
+        <li><b>Test requirement:</b> Tests for tracking financial metrics, transaction history, payouts, and revenue.
+        </li>
+        <li><b>Number of TCs:</b> 43</li>
+    </ul>
 
-<table class="table2">
-    <tr class="table2-header">
-        <th>Test Case ID</th>
-        <th>Test Case Description</th>
-        <th>Test Case Procedure</th>
-        <th>Expected Results</th>
-        <th>Pre-conditions</th>
-        <th>Round 1</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 2</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 3</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Note</th>
-    </tr>
+    <table class="table2">
+        <tr class="table2-header">
+            <th>Test Case ID</th>
+            <th>Test Case Description</th>
+            <th>Test Case Procedure</th>
+            <th>Expected Results</th>
+            <th>Pre-conditions</th>
+            <th>Round 1</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 2</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 3</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Note</th>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View balance</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View balance</td>
+        </tr>
 
-    <tr>
-        <td>TC-001</td>
-        <td>View Earnings Dashboard Successfully</td>
-        <td>1. Login as an authenticated Instructor.<br>2. Click the "Revenue & Payouts" link in the dashboard navigation.<br>3. Observe the Earnings Dashboard.</td>
-        <td>The system displays the Earnings Dashboard header, automated payout scheduler banner, detailed financial cards, and the Transaction Revenue Chart for the default period.</td>
-        <td>Instructor is logged in. Account is approved with a linked Stripe Connect account.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-001</td>
+            <td>View Earnings Dashboard Successfully</td>
+            <td>1. Login as an authenticated Instructor.<br>2. Click the "Revenue & Payouts" link in the dashboard
+                navigation.<br>3. Observe the Earnings Dashboard.</td>
+            <td>The system displays the Earnings Dashboard header, automated payout scheduler banner, detailed financial
+                cards, and the Transaction Revenue Chart for the default period.</td>
+            <td>Instructor is logged in. Account is approved with a linked Stripe Connect account.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-002</td>
-        <td>Filter Balances by Month and Year</td>
-        <td>1. Access the Earnings Dashboard.<br>2. Select a specific Month and Year from the period filter dropdowns.<br>3. Click the "Filter" button.</td>
-        <td>The system retrieves and updates the financial statistics cards and chart data for the selected period.</td>
-        <td>Instructor is logged in and on the Earnings Dashboard.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-002</td>
+            <td>Filter Balances by Month and Year</td>
+            <td>1. Access the Earnings Dashboard.<br>2. Select a specific Month and Year from the period filter
+                dropdowns.<br>3. Click the "Filter" button.</td>
+            <td>The system retrieves and updates the financial statistics cards and chart data for the selected period.
+            </td>
+            <td>Instructor is logged in and on the Earnings Dashboard.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-003</td>
-        <td>Sync Balances Manually from Stripe</td>
-        <td>1. Access the Earnings Dashboard.<br>2. Click the "Sync from Stripe" button.</td>
-        <td>The system requests Stripe to synchronize data, updates the wallet and payout status in the DB, and displays a success message.</td>
-        <td>Instructor is logged in and on the Earnings Dashboard.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-003</td>
+            <td>Sync Balances Manually from Stripe</td>
+            <td>1. Access the Earnings Dashboard.<br>2. Click the "Sync from Stripe" button.</td>
+            <td>The system requests Stripe to synchronize data, updates the wallet and payout status in the DB, and
+                displays a success message.</td>
+            <td>Instructor is logged in and on the Earnings Dashboard.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-004</td>
-        <td>Session Expired / Unauthorized Access</td>
-        <td>1. Attempt to access the /Instructor/Payouts URL as an unauthenticated user or after session expiry.</td>
-        <td>The system redirects the user to the Account Login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-004</td>
+            <td>Session Expired / Unauthorized Access</td>
+            <td>1. Attempt to access the /Instructor/Payouts URL as an unauthenticated user or after session expiry.
+            </td>
+            <td>The system redirects the user to the Account Login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View Instructor's Transaction History</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View Instructor's Transaction History</td>
+        </tr>
 
-    <tr>
-        <td>TC-005</td>
-        <td>View Transaction History Successfully</td>
-        <td>1. Navigate to the Earnings dashboard.<br>2. Observe the "Learner Purchases" tab.<br>3. Review the transaction list and total count.</td>
-        <td>The system defaults to the Learner Purchases tab, displays the total record count, and populates the table with Date, Course/Purchaser, Net Earnings, Status, and Actions column.</td>
-        <td>Instructor is logged in and has sales transactions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-005</td>
+            <td>View Transaction History Successfully</td>
+            <td>1. Navigate to the Earnings dashboard.<br>2. Observe the "Learner Purchases" tab.<br>3. Review the
+                transaction list and total count.</td>
+            <td>The system defaults to the Learner Purchases tab, displays the total record count, and populates the
+                table with Date, Course/Purchaser, Net Earnings, Status, and Actions column.</td>
+            <td>Instructor is logged in and has sales transactions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-006</td>
-        <td>Empty History Display</td>
-        <td>1. Navigate to the Earnings dashboard as an instructor with no sales.<br>2. Observe the "Learner Purchases" tab.</td>
-        <td>The system displays an empty state screen with a message indicating no transactions yet, and the profit chart displays a flat line showing zero profits.</td>
-        <td>Instructor is logged in but has no sales.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-006</td>
+            <td>Empty History Display</td>
+            <td>1. Navigate to the Earnings dashboard as an instructor with no sales.<br>2. Observe the "Learner
+                Purchases" tab.</td>
+            <td>The system displays an empty state screen with a message indicating no transactions yet, and the profit
+                chart displays a flat line showing zero profits.</td>
+            <td>Instructor is logged in but has no sales.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-007</td>
-        <td>Filtering Balances by Month and Year</td>
-        <td>1. Select a specific month and year from the period filter dropdown menu.<br>2. Click the "Filter" button.</td>
-        <td>The page reloads and displays the transaction list and balances corresponding to the selected period.</td>
-        <td>Instructor is logged in and on the Learner Purchases tab.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-007</td>
+            <td>Filtering Balances by Month and Year</td>
+            <td>1. Select a specific month and year from the period filter dropdown menu.<br>2. Click the "Filter"
+                button.</td>
+            <td>The page reloads and displays the transaction list and balances corresponding to the selected period.
+            </td>
+            <td>Instructor is logged in and on the Learner Purchases tab.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-008</td>
-        <td>Session Expired / Unauthorized Access</td>
-        <td>1. Attempt to access the /Transaction/Instructor URL as an unauthenticated user.</td>
-        <td>The system redirects the user to the Account Login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-008</td>
+            <td>Session Expired / Unauthorized Access</td>
+            <td>1. Attempt to access the /Transaction/Instructor URL as an unauthenticated user.</td>
+            <td>The system redirects the user to the Account Login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View payout history</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View payout history</td>
+        </tr>
 
-    <tr>
-        <td>TC-009</td>
-        <td>View Payout History List Successfully</td>
-        <td>1. Access the Payouts / Earnings tab in the dashboard.<br>2. Observe the payout history table.</td>
-        <td>The system retrieves and displays a paginated list of payout records containing No., Course Title, Net Payout, and visual Status badges.</td>
-        <td>Instructor is logged in and has payout records.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-009</td>
+            <td>View Payout History List Successfully</td>
+            <td>1. Access the Payouts / Earnings tab in the dashboard.<br>2. Observe the payout history table.</td>
+            <td>The system retrieves and displays a paginated list of payout records containing No., Course Title, Net
+                Payout, and visual Status badges.</td>
+            <td>Instructor is logged in and has payout records.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-010</td>
-        <td>Filter & Search Payouts</td>
-        <td>1. Input a keyword in the search box or select a Status.<br>2. Click the "Filter" button.</td>
-        <td>The system refreshes the list to show matching payout items.</td>
-        <td>Instructor is logged in and on the Payout History tab.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-010</td>
+            <td>Filter & Search Payouts</td>
+            <td>1. Input a keyword in the search box or select a Status.<br>2. Click the "Filter" button.</td>
+            <td>The system refreshes the list to show matching payout items.</td>
+            <td>Instructor is logged in and on the Payout History tab.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-011</td>
-        <td>Displaying Refunded/Deducted Payouts</td>
-        <td>1. Access the Payout History tab.<br>2. View a payout record for an approved learner refund.</td>
-        <td>The system displays a negative entry (deduction) on the ledger, with Net Payout in red text and a red status badge showing "Refunded".</td>
-        <td>Instructor has an approved refund on their record.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-011</td>
+            <td>Displaying Refunded/Deducted Payouts</td>
+            <td>1. Access the Payout History tab.<br>2. View a payout record for an approved learner refund.</td>
+            <td>The system displays a negative entry (deduction) on the ledger, with Net Payout in red text and a red
+                status badge showing "Refunded".</td>
+            <td>Instructor has an approved refund on their record.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-012</td>
-        <td>Stripe Transfer Fails</td>
-        <td>1. Access the Payout History tab.<br>2. View a payout record that failed during Stripe bulk execution.</td>
-        <td>The system marks the payout record as failed and displays a red status badge showing "Failed".</td>
-        <td>Instructor has a failed Stripe transfer.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-012</td>
+            <td>Stripe Transfer Fails</td>
+            <td>1. Access the Payout History tab.<br>2. View a payout record that failed during Stripe bulk execution.
+            </td>
+            <td>The system marks the payout record as failed and displays a red status badge showing "Failed".</td>
+            <td>Instructor has a failed Stripe transfer.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-013</td>
-        <td>Session Expired / Unauthorized Access</td>
-        <td>1. Attempt to access the /Instructor/Payouts URL as an unauthenticated user.</td>
-        <td>The system redirects the user to the Account Login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-013</td>
+            <td>Session Expired / Unauthorized Access</td>
+            <td>1. Attempt to access the /Instructor/Payouts URL as an unauthenticated user.</td>
+            <td>The system redirects the user to the Account Login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Sort Instructor's Transaction History</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Sort Instructor's Transaction History</td>
+        </tr>
 
-    <tr>
-        <td>TC-014</td>
-        <td>Sort Transaction History Successfully</td>
-        <td>1. Access the "Learner Purchases" tab.<br>2. Click the sorting dropdown and select a sorting option (e.g., date or amount).<br>3. Click the "Filter" button.</td>
-        <td>The system displays the sorted list of transactions according to the selected sorting option, preserving active filters.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-014</td>
+            <td>Sort Transaction History Successfully</td>
+            <td>1. Access the "Learner Purchases" tab.<br>2. Click the sorting dropdown and select a sorting option
+                (e.g., date or amount).<br>3. Click the "Filter" button.</td>
+            <td>The system displays the sorted list of transactions according to the selected sorting option, preserving
+                active filters.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-015</td>
-        <td>Reset sort</td>
-        <td>1. Access the "Learner Purchases" tab with an active sort.<br>2. Click the "Reset" link.</td>
-        <td>The system resets the sorting dropdown to the default option and queries/displays the default list of transactions.</td>
-        <td>Instructor is logged in and has applied a sort option.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-015</td>
+            <td>Reset sort</td>
+            <td>1. Access the "Learner Purchases" tab with an active sort.<br>2. Click the "Reset" link.</td>
+            <td>The system resets the sorting dropdown to the default option and queries/displays the default list of
+                transactions.</td>
+            <td>Instructor is logged in and has applied a sort option.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-016</td>
-        <td>No transactions found</td>
-        <td>1. Apply sorting and filtering criteria that yield no results.<br>2. Click the "Filter" button.</td>
-        <td>The system detects no records and displays a "No purchases recorded for this period." message.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-016</td>
+            <td>No transactions found</td>
+            <td>1. Apply sorting and filtering criteria that yield no results.<br>2. Click the "Filter" button.</td>
+            <td>The system detects no records and displays a "No purchases recorded for this period." message.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-017</td>
-        <td>Session Invalid</td>
-        <td>1. Simulate sorting submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-017</td>
+            <td>Session Invalid</td>
+            <td>1. Simulate sorting submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-018</td>
-        <td>Database query failure</td>
-        <td>1. Simulate a database failure during sorting query.<br>2. Click the "Filter" button.</td>
-        <td>The server fails to query data, and the system displays an error message regarding query failure.</td>
-        <td>Instructor is logged in. DB is unreachable.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-018</td>
+            <td>Database query failure</td>
+            <td>1. Simulate a database failure during sorting query.<br>2. Click the "Filter" button.</td>
+            <td>The server fails to query data, and the system displays an error message regarding query failure.</td>
+            <td>Instructor is logged in. DB is unreachable.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Filter Instructor's Transaction History</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Filter Instructor's Transaction History</td>
+        </tr>
 
-    <tr>
-        <td>TC-019</td>
-        <td>Filter Transaction History Successfully</td>
-        <td>1. Access the "Learner Purchases" tab.<br>2. Enter a search query, select status, month, and year.<br>3. Click the "Filter" button.</td>
-        <td>The system displays the list of transactions matching the specified filter criteria.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-019</td>
+            <td>Filter Transaction History Successfully</td>
+            <td>1. Access the "Learner Purchases" tab.<br>2. Enter a search query, select status, month, and year.<br>3.
+                Click the "Filter" button.</td>
+            <td>The system displays the list of transactions matching the specified filter criteria.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-020</td>
-        <td>Reset filter</td>
-        <td>1. Access the "Learner Purchases" tab with active filters.<br>2. Click the "Reset" link.</td>
-        <td>The system resets search query and dropdowns to default values and displays the default list of transactions.</td>
-        <td>Instructor is logged in and has applied filters.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-020</td>
+            <td>Reset filter</td>
+            <td>1. Access the "Learner Purchases" tab with active filters.<br>2. Click the "Reset" link.</td>
+            <td>The system resets search query and dropdowns to default values and displays the default list of
+                transactions.</td>
+            <td>Instructor is logged in and has applied filters.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-021</td>
-        <td>No matching results found</td>
-        <td>1. Apply filters that yield no results.<br>2. Click the "Filter" button.</td>
-        <td>The server returns an empty list, and the system displays a message indicating no purchases were recorded for this period.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-021</td>
+            <td>No matching results found</td>
+            <td>1. Apply filters that yield no results.<br>2. Click the "Filter" button.</td>
+            <td>The server returns an empty list, and the system displays a message indicating no purchases were
+                recorded for this period.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-022</td>
-        <td>Session Invalid</td>
-        <td>1. Simulate filtering submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-022</td>
+            <td>Session Invalid</td>
+            <td>1. Simulate filtering submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Filter payout History</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Filter payout History</td>
+        </tr>
 
-    <tr>
-        <td>TC-023</td>
-        <td>Filter Payout History Successfully</td>
-        <td>1. Access the "Payout History" tab.<br>2. Enter a search query, select status, month, and year.<br>3. Click the "Filter" button.</td>
-        <td>The system displays the list of payouts matching the specified filter criteria.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-023</td>
+            <td>Filter Payout History Successfully</td>
+            <td>1. Access the "Payout History" tab.<br>2. Enter a search query, select status, month, and year.<br>3.
+                Click the "Filter" button.</td>
+            <td>The system displays the list of payouts matching the specified filter criteria.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-024</td>
-        <td>Reset filter</td>
-        <td>1. Access the "Payout History" tab with active filters.<br>2. Click the "Reset" link.</td>
-        <td>The system resets the payout filters to default values and displays the default list of payouts.</td>
-        <td>Instructor is logged in and has applied filters.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-024</td>
+            <td>Reset filter</td>
+            <td>1. Access the "Payout History" tab with active filters.<br>2. Click the "Reset" link.</td>
+            <td>The system resets the payout filters to default values and displays the default list of payouts.</td>
+            <td>Instructor is logged in and has applied filters.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-025</td>
-        <td>No matching results found</td>
-        <td>1. Apply payout filters that yield no results.<br>2. Click the "Filter" button.</td>
-        <td>The server returns an empty list, and the system displays a message indicating no payouts were recorded for this period.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-025</td>
+            <td>No matching results found</td>
+            <td>1. Apply payout filters that yield no results.<br>2. Click the "Filter" button.</td>
+            <td>The server returns an empty list, and the system displays a message indicating no payouts were recorded
+                for this period.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-026</td>
-        <td>Session Invalid</td>
-        <td>1. Simulate payout filtering submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-026</td>
+            <td>Session Invalid</td>
+            <td>1. Simulate payout filtering submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Sort payout History</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Sort payout History</td>
+        </tr>
 
-    <tr>
-        <td>TC-027</td>
-        <td>Sort Payout History Successfully</td>
-        <td>1. Access the "Payout History" tab.<br>2. Select a sorting option.<br>3. Click the "Filter" button.</td>
-        <td>The system queries and displays the list of payouts sorted according to the selected option.</td>
-        <td>Instructor is logged in.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-027</td>
+            <td>Sort Payout History Successfully</td>
+            <td>1. Access the "Payout History" tab.<br>2. Select a sorting option.<br>3. Click the "Filter" button.</td>
+            <td>The system queries and displays the list of payouts sorted according to the selected option.</td>
+            <td>Instructor is logged in.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-028</td>
-        <td>Reset sort</td>
-        <td>1. Access the "Payout History" tab with an active sort.<br>2. Click the "Reset" link.</td>
-        <td>The system resets the sorting dropdown and displays the default list of payouts.</td>
-        <td>Instructor is logged in and has applied a sort.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-028</td>
+            <td>Reset sort</td>
+            <td>1. Access the "Payout History" tab with an active sort.<br>2. Click the "Reset" link.</td>
+            <td>The system resets the sorting dropdown and displays the default list of payouts.</td>
+            <td>Instructor is logged in and has applied a sort.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-029</td>
-        <td>Session Invalid</td>
-        <td>1. Simulate payout sorting submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-029</td>
+            <td>Session Invalid</td>
+            <td>1. Simulate payout sorting submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View Instructor's Transaction History Detail</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View Instructor's Transaction History Detail</td>
+        </tr>
 
-    <tr>
-        <td>TC-030</td>
-        <td>View Instructor's Transaction History Detail Successfully</td>
-        <td>1. Access the Earnings dashboard under the Learner Purchases tab.<br>2. Click the "View" button next to a transaction row.</td>
-        <td>The system retrieves and displays the transaction details page containing Transaction Overview, Product Details, Purchaser Details, Stripe secure references, and Split Summary Card.</td>
-        <td>Instructor is logged in. The transaction belongs to their course.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-030</td>
+            <td>View Instructor's Transaction History Detail Successfully</td>
+            <td>1. Access the Earnings dashboard under the Learner Purchases tab.<br>2. Click the "View" button next to
+                a transaction row.</td>
+            <td>The system retrieves and displays the transaction details page containing Transaction Overview, Product
+                Details, Purchaser Details, Stripe secure references, and Split Summary Card.</td>
+            <td>Instructor is logged in. The transaction belongs to their course.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-031</td>
-        <td>Refund Request Pending Banner</td>
-        <td>1. Access a transaction detail page where the transaction has a refund pending status.</td>
-        <td>The system displays a top warning banner showing the refund request date and the student's stated refund reason.</td>
-        <td>Transaction has a refund pending status.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-031</td>
+            <td>Refund Request Pending Banner</td>
+            <td>1. Access a transaction detail page where the transaction has a refund pending status.</td>
+            <td>The system displays a top warning banner showing the refund request date and the student's stated refund
+                reason.</td>
+            <td>Transaction has a refund pending status.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-032</td>
-        <td>Refund Approved Banner</td>
-        <td>1. Access a transaction detail page where the transaction has a refunded status.</td>
-        <td>The system displays a top alert banner showing the refund reason and administrator's settlement note, and highlights ledger deductions in red in the Split Summary Card.</td>
-        <td>Transaction has a refunded status.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-032</td>
+            <td>Refund Approved Banner</td>
+            <td>1. Access a transaction detail page where the transaction has a refunded status.</td>
+            <td>The system displays a top alert banner showing the refund reason and administrator's settlement note,
+                and highlights ledger deductions in red in the Split Summary Card.</td>
+            <td>Transaction has a refunded status.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-033</td>
-        <td>Refund Request Rejected Banner</td>
-        <td>1. Access a transaction detail page where a refund request was rejected.</td>
-        <td>The system displays a top informational banner showing the student's original refund reason and the administrator's rejection note.</td>
-        <td>Transaction has a completed status and a refund rejection note.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-033</td>
+            <td>Refund Request Rejected Banner</td>
+            <td>1. Access a transaction detail page where a refund request was rejected.</td>
+            <td>The system displays a top informational banner showing the student's original refund reason and the
+                administrator's rejection note.</td>
+            <td>Transaction has a completed status and a refund rejection note.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-034</td>
-        <td>Session Invalid</td>
-        <td>1. Attempt to access the transaction detail URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-034</td>
+            <td>Session Invalid</td>
+            <td>1. Attempt to access the transaction detail URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-035</td>
-        <td>Transaction Not Found</td>
-        <td>1. Attempt to access a transaction detail URL with a non-existent transaction ID.</td>
-        <td>The system detects the ID does not exist, displays a warning message, and redirects the instructor to the Earnings dashboard page.</td>
-        <td>Transaction ID does not exist.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-035</td>
+            <td>Transaction Not Found</td>
+            <td>1. Attempt to access a transaction detail URL with a non-existent transaction ID.</td>
+            <td>The system detects the ID does not exist, displays a warning message, and redirects the instructor to
+                the Earnings dashboard page.</td>
+            <td>Transaction ID does not exist.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-036</td>
-        <td>Unauthorized Transaction Access</td>
-        <td>1. Attempt to access a transaction detail URL for a course not owned by the logged-in instructor.</td>
-        <td>The system detects unauthorized access, displays an authorization error message, and redirects the instructor to the Earnings dashboard page.</td>
-        <td>Transaction record does not belong to the instructor's course.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-036</td>
+            <td>Unauthorized Transaction Access</td>
+            <td>1. Attempt to access a transaction detail URL for a course not owned by the logged-in instructor.</td>
+            <td>The system detects unauthorized access, displays an authorization error message, and redirects the
+                instructor to the Earnings dashboard page.</td>
+            <td>Transaction record does not belong to the instructor's course.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View Instructor's Course Revenue</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View Instructor's Course Revenue</td>
+        </tr>
 
-    <tr>
-        <td>TC-037</td>
-        <td>View Instructor's Course Revenue Successfully</td>
-        <td>1. Access the Earnings dashboard page.<br>2. Click the "Course Revenues" tab.</td>
-        <td>The system displays the course revenue table containing: Course Title, Sales Quantity, Monthly Revenue, Yearly Revenue, and Lifetime Revenue.</td>
-        <td>Instructor is logged in and has active Stripe settings.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-037</td>
+            <td>View Instructor's Course Revenue Successfully</td>
+            <td>1. Access the Earnings dashboard page.<br>2. Click the "Course Revenues" tab.</td>
+            <td>The system displays the course revenue table containing: Course Title, Sales Quantity, Monthly Revenue,
+                Yearly Revenue, and Lifetime Revenue.</td>
+            <td>Instructor is logged in and has active Stripe settings.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-038</td>
-        <td>Refund Request Pending Banner</td>
-        <td>1. Access the Course Revenues tab with a pending refund transaction simulated in the dataset.</td>
-        <td>The system detects the refund pending status and displays a top warning banner showing the refund request date and reason.</td>
-        <td>Data state matches inherited spec flow A.7.1.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-038</td>
+            <td>Refund Request Pending Banner</td>
+            <td>1. Access the Course Revenues tab with a pending refund transaction simulated in the dataset.</td>
+            <td>The system detects the refund pending status and displays a top warning banner showing the refund
+                request date and reason.</td>
+            <td>Data state matches inherited spec flow A.7.1.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-039</td>
-        <td>Refund Approved Banner</td>
-        <td>1. Access the Course Revenues tab with an approved refund transaction simulated in the dataset.</td>
-        <td>The system displays a top alert banner showing the refund reason and administrator's settlement note, and highlights negative deductions.</td>
-        <td>Data state matches inherited spec flow A.7.2.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-039</td>
+            <td>Refund Approved Banner</td>
+            <td>1. Access the Course Revenues tab with an approved refund transaction simulated in the dataset.</td>
+            <td>The system displays a top alert banner showing the refund reason and administrator's settlement note,
+                and highlights negative deductions.</td>
+            <td>Data state matches inherited spec flow A.7.2.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-040</td>
-        <td>Refund Request Rejected Banner</td>
-        <td>1. Access the Course Revenues tab with a rejected refund transaction simulated in the dataset.</td>
-        <td>The system displays a top informational banner showing the original refund reason and administrator's rejection note.</td>
-        <td>Data state matches inherited spec flow A.7.3.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-040</td>
+            <td>Refund Request Rejected Banner</td>
+            <td>1. Access the Course Revenues tab with a rejected refund transaction simulated in the dataset.</td>
+            <td>The system displays a top informational banner showing the original refund reason and administrator's
+                rejection note.</td>
+            <td>Data state matches inherited spec flow A.7.3.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-041</td>
-        <td>Session Invalid</td>
-        <td>1. Attempt to access the Course Revenues tab URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-041</td>
+            <td>Session Invalid</td>
+            <td>1. Attempt to access the Course Revenues tab URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-042</td>
-        <td>Transaction Not Found</td>
-        <td>1. Access the Course Revenues tab with an invalid transaction ID simulated in the URL parameters.</td>
-        <td>The system detects the invalid ID, displays a warning message regarding transactions not found, and redirects to the Earnings dashboard.</td>
-        <td>Data state matches inherited spec flow EX-5.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-042</td>
+            <td>Transaction Not Found</td>
+            <td>1. Access the Course Revenues tab with an invalid transaction ID simulated in the URL parameters.</td>
+            <td>The system detects the invalid ID, displays a warning message regarding transactions not found, and
+                redirects to the Earnings dashboard.</td>
+            <td>Data state matches inherited spec flow EX-5.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-043</td>
-        <td>Unauthorized Transaction Access</td>
-        <td>1. Access the Course Revenues tab with an unauthorized transaction ID simulated in the URL parameters.</td>
-        <td>The system detects unauthorized access, displays an authorization error message, and redirects the instructor to the Earnings dashboard.</td>
-        <td>Data state matches inherited spec flow EX-5.2.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-043</td>
+            <td>Unauthorized Transaction Access</td>
+            <td>1. Access the Course Revenues tab with an unauthorized transaction ID simulated in the URL parameters.
+            </td>
+            <td>The system detects unauthorized access, displays an authorization error message, and redirects the
+                instructor to the Earnings dashboard.</td>
+            <td>Data state matches inherited spec flow EX-5.2.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-</table>
+    </table>
 
 </body>
+
 </html>
