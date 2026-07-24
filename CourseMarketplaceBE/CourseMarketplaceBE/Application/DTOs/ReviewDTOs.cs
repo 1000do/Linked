@@ -60,6 +60,7 @@ public class EnrollmentStatusResponse
     public bool CanReview { get; set; }
     public string? ReviewBlockedReason { get; set; }
     public bool HasReviewed { get; set; }
+    public List<int> ReviewedLessonIds { get; set; } = new();
     /// <summary>true nếu user là chủ nhân khóa học (instructor)</summary>
     public bool IsOwner { get; set; }
 }
