@@ -150,6 +150,7 @@ public class Program
         builder.Services.AddScoped<IEmbeddingService, EmbeddingService>();
         builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
         builder.Services.AddScoped<IReviewService, CourseMarketplaceBE.Application.Services.ReviewService>();
+        builder.Services.AddScoped<IReviewAiModerationService, CourseMarketplaceBE.Application.Services.ReviewAiModerationService>();
         builder.Services.AddScoped<ILandingPageService, LandingPageService>();
         builder.Services.AddScoped<IWishlistRepository, WishlistRepository>();
         builder.Services.AddScoped<IWishlistService, WishlistService>();

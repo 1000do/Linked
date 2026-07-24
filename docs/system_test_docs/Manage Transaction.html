@@ -1,359 +1,397 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<style>
-    body {
-        font-family: Tahoma, sans-serif;
-        font-size: 10pt;
-        color: black;
-        background-color: transparent;
-    }
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 5px;
-        text-align: left;
-        vertical-align: top;
-    }
-    .table2-header {
-        background-color: #76923c;
-        color: white;
-        font-weight: bold;
-    }
 
-     .table2-header th{
-        text-align: center;
-    }
-    .func-row {
-        background-color: #ccffff;
-        color: black;
-        font-weight: bold;
-    }
-    ul.summary-list {
-        list-style-type: disc;
-        margin-bottom: 20px;
-    }
-</style>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            font-size: 10pt;
+            color: black;
+            background-color: transparent;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .table2-header {
+            background-color: #76923c;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table2-header th {
+            text-align: center;
+        }
+
+        .func-row {
+            background-color: #ccffff;
+            color: black;
+            font-weight: bold;
+        }
+
+        ul.summary-list {
+            list-style-type: disc;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-<ul class="summary-list">
-    <li><b>Feature:</b> Manage Transaction</li>
-    <li><b>Test requirement:</b> Tests for viewing history, searching, requesting refunds, and viewing details of transactions.</li>
-    <li><b>Number of TCs:</b> 15</li>
-</ul>
+    <ul class="summary-list">
+        <li><b>Feature:</b> Manage Transaction</li>
+        <li><b>Test requirement:</b> Tests for viewing history, searching, requesting refunds, and viewing details of
+            transactions.</li>
+        <li><b>Number of TCs:</b> 15</li>
+    </ul>
 
-<table class="table2">
-    <tr class="table2-header">
-        <th>Test Case ID</th>
-        <th>Test Case Description</th>
-        <th>Test Case Procedure</th>
-        <th>Expected Results</th>
-        <th>Pre-conditions</th>
-        <th>Round 1</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 2</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 3</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Note</th>
-    </tr>
+    <table class="table2">
+        <tr class="table2-header">
+            <th>Test Case ID</th>
+            <th>Test Case Description</th>
+            <th>Test Case Procedure</th>
+            <th>Expected Results</th>
+            <th>Pre-conditions</th>
+            <th>Round 1</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 2</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 3</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Note</th>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View Transaction List</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View Transaction List</td>
+        </tr>
 
-    <tr>
-        <td>TC-001</td>
-        <td>View Transaction History Successfully</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.</td>
-        <td>The system successfully retrieves and displays the user's paginated list of purchase transactions along with the total purchases metric.</td>
-        <td>User is authenticated and has existing purchase transactions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-001</td>
+            <td>View Transaction History Successfully</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.</td>
+            <td>The system successfully retrieves and displays the user's paginated list of purchase transactions along
+                with the total purchases metric.</td>
+            <td>User is authenticated and has existing purchase transactions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-002</td>
-        <td>Empty transaction list</td>
-        <td>1. Login as an authenticated User with no purchase history.<br>2. Access the Purchase History page.<br>3. Observe the page contents.<br>4. Click the "Explore Courses" button.</td>
-        <td>The system displays an empty history card with a "No transactions found" message. Clicking the "Explore Courses" button redirects the user to the home page.</td>
-        <td>User is authenticated and has no purchase transactions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-002</td>
+            <td>Empty transaction list</td>
+            <td>1. Login as an authenticated User with no purchase history.<br>2. Access the Purchase History
+                page.<br>3. Observe the page contents.<br>4. Click the "Explore Courses" button.</td>
+            <td>The system displays an empty history card with a "No transactions found" message. Clicking the "Explore
+                Courses" button redirects the user to the home page.</td>
+            <td>User is authenticated and has no purchase transactions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-003</td>
-        <td>Session Invalid</td>
-        <td>1. Attempt to access the Purchase History page as an unauthenticated User.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-003</td>
+            <td>Session Invalid</td>
+            <td>1. Attempt to access the Purchase History page as an unauthenticated User.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Search Transaction History</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Search Transaction History</td>
+        </tr>
 
-    <tr>
-        <td>TC-004</td>
-        <td>Search Transaction History Successfully</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Enter a valid keyword matching a purchased course title into the search input field.<br>4. Click the "Apply" button or press "Enter".</td>
-        <td>The page reloads and displays the filtered list of transactions containing the searched keyword. The search input field retains the entered keyword, and a "Reset" button appears.</td>
-        <td>User is authenticated and has purchase history.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-004</td>
+            <td>Search Transaction History Successfully</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Enter a valid keyword
+                matching a purchased course title into the search input field.<br>4. Click the "Apply" button or press
+                "Enter".</td>
+            <td>The page reloads and displays the filtered list of transactions containing the searched keyword. The
+                search input field retains the entered keyword, and a "Reset" button appears.</td>
+            <td>User is authenticated and has purchase history.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-005</td>
-        <td>Reset Search</td>
-        <td>1. Perform a successful search as described in TC-004.<br>2. Click the "Reset" button.</td>
-        <td>The page reloads, the search input field is cleared, the "Reset" button disappears, and the full, unfiltered transaction history list is displayed.</td>
-        <td>User is on the Purchase History page with an active search filter.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-005</td>
+            <td>Reset Search</td>
+            <td>1. Perform a successful search as described in TC-004.<br>2. Click the "Reset" button.</td>
+            <td>The page reloads, the search input field is cleared, the "Reset" button disappears, and the full,
+                unfiltered transaction history list is displayed.</td>
+            <td>User is on the Purchase History page with an active search filter.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-006</td>
-        <td>No Matching Results Found</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Enter a keyword that does not match any purchased courses into the search input field.<br>4. Click the "Apply" button or press "Enter".</td>
-        <td>The system displays an empty state screen with the title "No transactions found" and a description, along with an "Explore Courses" button.</td>
-        <td>User is authenticated and has purchase history.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-006</td>
+            <td>No Matching Results Found</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Enter a keyword that
+                does not match any purchased courses into the search input field.<br>4. Click the "Apply" button or
+                press "Enter".</td>
+            <td>The system displays an empty state screen with the title "No transactions found" and a description,
+                along with an "Explore Courses" button.</td>
+            <td>User is authenticated and has purchase history.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-007</td>
-        <td>Session Invalid</td>
-        <td>1. Perform a search query using the Purchase History page URL parameters as an unauthenticated User.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-007</td>
+            <td>Session Invalid</td>
+            <td>1. Perform a search query using the Purchase History page URL parameters as an unauthenticated User.
+            </td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">Request Refund</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">Request Refund</td>
+        </tr>
 
-    <tr>
-        <td>TC-008</td>
-        <td>Submit Refund Request Successfully</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "Refund Request" button next to an eligible transaction.<br>4. Enter a valid reason in the confirmation modal text field.<br>5. Click the "Submit Request" button.</td>
-        <td>The system updates the transaction status to "refund pending", creates a new pending refund request record, displays a success message, and reloads the page to reflect the updated status.</td>
-        <td>User is authenticated. Target transaction is successful, not already refunded, occurred within 14 days, and belongs to the user. User meets eligibility metrics.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-008</td>
+            <td>Submit Refund Request Successfully</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "Refund
+                Request" button next to an eligible transaction.<br>4. Enter a valid reason in the confirmation modal
+                text field.<br>5. Click the "Submit Request" button.</td>
+            <td>The system updates the transaction status to "refund pending", creates a new pending refund request
+                record, displays a success message, and reloads the page to reflect the updated status.</td>
+            <td>User is authenticated. Target transaction is successful, not already refunded, occurred within 14 days,
+                and belongs to the user. User meets eligibility metrics.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-009</td>
-        <td>Auto-Rejection Triggered</td>
-        <td>1. Login as an authenticated User who violates at least one auto-rejection rule (e.g., >20% course completed).<br>2. Access the Purchase History page.<br>3. Click the "Refund Request" button next to a transaction.<br>4. Enter a reason and click the "Submit Request" button.</td>
-        <td>The system keeps the transaction status unchanged, saves the auto-rejection decision in logs, and displays a rejection message showing the corresponding abstract reason.</td>
-        <td>User is authenticated but violates refund eligibility metrics (e.g., learning progress).</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-009</td>
+            <td>Auto-Rejection Triggered</td>
+            <td>1. Login as an authenticated User who violates at least one auto-rejection rule (e.g., >20% course
+                completed).<br>2. Access the Purchase History page.<br>3. Click the "Refund Request" button next to a
+                transaction.<br>4. Enter a reason and click the "Submit Request" button.</td>
+            <td>The system keeps the transaction status unchanged, saves the auto-rejection decision in logs, and
+                displays a rejection message showing the corresponding abstract reason.</td>
+            <td>User is authenticated but violates refund eligibility metrics (e.g., learning progress).</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-010</td>
-        <td>Session Invalid</td>
-        <td>1. Simulate submitting a refund request via the API as an unauthenticated User.</td>
-        <td>The system detects the invalid session and returns an unauthorized error, redirecting to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-010</td>
+            <td>Session Invalid</td>
+            <td>1. Simulate submitting a refund request via the API as an unauthenticated User.</td>
+            <td>The system detects the invalid session and returns an unauthorized error, redirecting to the login page.
+            </td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-011</td>
-        <td>Missing Refund Reason</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "Refund Request" button next to an eligible transaction.<br>4. Leave the reason text field empty.<br>5. Click the "Submit Request" button.</td>
-        <td>The system blocks the submission and displays a validation alert stating "You must enter a refund reason!".</td>
-        <td>User is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-011</td>
+            <td>Missing Refund Reason</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "Refund
+                Request" button next to an eligible transaction.<br>4. Leave the reason text field empty.<br>5. Click
+                the "Submit Request" button.</td>
+            <td>The system blocks the submission and displays a validation alert stating "You must enter a refund
+                reason!".</td>
+            <td>User is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr class="func-row">
-        <td colspan="15">View Transaction Detail</td>
-    </tr>
+        <tr class="func-row">
+            <td colspan="15">View Transaction Detail</td>
+        </tr>
 
-    <tr>
-        <td>TC-012</td>
-        <td>View Transaction Detail Successfully</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "View Details" button next to a successful transaction record.</td>
-        <td>The system successfully displays the full receipt details including Transaction ID, Payment Date/Time, Buyer details, Course details, and Price breakdown (Subtotal, Discount, Total).</td>
-        <td>User is authenticated and has placed at least one transaction.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-012</td>
+            <td>View Transaction Detail Successfully</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "View
+                Details" button next to a successful transaction record.</td>
+            <td>The system successfully displays the full receipt details including Transaction ID, Payment Date/Time,
+                Buyer details, Course details, and Price breakdown (Subtotal, Discount, Total).</td>
+            <td>User is authenticated and has placed at least one transaction.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-013</td>
-        <td>Refunded Transaction</td>
-        <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "View Details" button next to a refunded transaction record.</td>
-        <td>The system displays a refund notification banner showing the refund reason and admin approval note, displays the transaction amount as a negative value, and updates the status badge to "Refunded".</td>
-        <td>User is authenticated. Target transaction has been refunded.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-013</td>
+            <td>Refunded Transaction</td>
+            <td>1. Login as an authenticated User.<br>2. Access the Purchase History page.<br>3. Click the "View
+                Details" button next to a refunded transaction record.</td>
+            <td>The system displays a refund notification banner showing the refund reason and admin approval note,
+                displays the transaction amount as a negative value, and updates the status badge to "Refunded".</td>
+            <td>User is authenticated. Target transaction has been refunded.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-014</td>
-        <td>Session Invalid</td>
-        <td>1. Attempt to access the Transaction Detail page via URL as an unauthenticated User.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-014</td>
+            <td>Session Invalid</td>
+            <td>1. Attempt to access the Transaction Detail page via URL as an unauthenticated User.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-    <tr>
-        <td>TC-015</td>
-        <td>Transaction Not Found</td>
-        <td>1. Login as an authenticated User.<br>2. Simulate accessing the Transaction Detail page with an invalid or non-existent transaction ID in the URL.</td>
-        <td>The system fails to find the record, redirects the user back to the Purchase History list, and displays a "Transaction not found" error message via TempData.</td>
-        <td>User is authenticated. Target transaction does not exist or does not belong to the user.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
+        <tr>
+            <td>TC-015</td>
+            <td>Transaction Not Found</td>
+            <td>1. Login as an authenticated User.<br>2. Simulate accessing the Transaction Detail page with an invalid
+                or non-existent transaction ID in the URL.</td>
+            <td>The system fails to find the record, redirects the user back to the Purchase History list, and displays
+                a "Transaction not found" error message via TempData.</td>
+            <td>User is authenticated. Target transaction does not exist or does not belong to the user.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
 
-</table>
+    </table>
 
 </body>
+
 </html>

@@ -134,6 +134,8 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string ModerationStatus { get; set; } = Domain.Constants.ModerationStatus.Pending.ToValue(); // APPROVED, FLAGGED, MANUAL_AUDIT, PENDING
         [JsonPropertyName("flagged_fields")]
         public List<string> FlaggedFields { get; set; } = [];
+        [JsonPropertyName("manual_audit_fields")]
+        public List<string> ManualAuditFields { get; set; } = [];
         [JsonPropertyName("overall_confidence_score")]
         public float OverallConfidenceScore { get; set; } = 0f;
         [JsonPropertyName("total_latency_ms")]
@@ -159,6 +161,8 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? Reason { get; set; }
         [JsonPropertyName("flagged_fields")]
         public List<string> FlaggedFields { get; set; } = [];
+        [JsonPropertyName("manual_audit_fields")]
+        public List<string> ManualAuditFields { get; set; } = [];
         [JsonPropertyName("details")]
         public Dictionary<string, object>? Details { get; set; }
         [JsonPropertyName("latency_ms")]
@@ -245,6 +249,8 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? Reason { get; set; } = "";
         [JsonPropertyName("flagged_fields")]
         public List<string>? FlaggedFields { get; set; } = [];
+        [JsonPropertyName("manual_audit_fields")]
+        public List<string>? ManualAuditFields { get; set; } = [];
         [JsonPropertyName("details")]
         public Dictionary<string, object>? Details { get; set; } = [];
         [JsonPropertyName("confidence_score")]
@@ -317,5 +323,89 @@ namespace CourseMarketplaceBE.Application.DTOs
         public bool IsEnabled { get; set; } = true;
         public Dictionary<string, float> ConfigJson { get; set; } = new();
         public string? Role { get; set; }
+    }
+
+    public class TempReviewDto
+    {
+        public int ReviewId { get; set; }
+        public int AuthorId { get; set; }
+        public int CourseId { get; set; }
+        public int? LessonId { get; set; }
+        public string ReviewComment { get; set; } = string.Empty;
+        public float Rating { get; set; }
+    }
+
+    public class ReviewAiModerationRequest
+    {
+        [JsonPropertyName("review_comment")] 
+        public string ReviewComment { get; set; } = string.Empty;
+
+        [JsonPropertyName("spam_score_threshold")] 
+        public float SpamScoreThreshold { get; set; }
+
+        [JsonPropertyName("toxic_score_threshold")] 
+        public float ToxicScoreThreshold { get; set; }
+
+        [JsonPropertyName("classification_model")] 
+        public AiModelDto ClassificationModel { get; set; } = null!;
+    }
+
+    public class ReviewAiModerationResponse
+    {
+        [JsonPropertyName("moderation_status")] 
+        public string ModerationStatus { get; set; } = string.Empty;
+
+        [JsonPropertyName("confidence_score")] 
+        public float ConfidenceScore { get; set; }
+
+        [JsonPropertyName("reason")] 
+        public string Reason { get; set; } = string.Empty;
+
+        [JsonPropertyName("latency_ms")] 
+        public float LatencyMs { get; set; }
+
+        [JsonPropertyName("timestamp")] 
+        public DateTime Timestamp { get; set; }
+
+        [JsonPropertyName("details")] 
+        public Dictionary<string, object>? Details { get; set; }
+
+        [JsonPropertyName("model_id")] 
+        public int ModelId { get; set; }
+    }
+
+    public class LogReviewAiModerationCommand
+    {
+        public TempReviewDto Review { get; set; } = null!;
+        public ReviewAiModerationRequest Request { get; set; } = null!;
+        public ReviewAiModerationResponse Response { get; set; } = null!;
+        public string? ErrorMessage { get; set; }
+    }
+
+    public class ReviewAiModerationLogInput
+    {
+        [JsonPropertyName("review_comment")] 
+        public string ReviewComment { get; set; } = string.Empty;
+
+        [JsonPropertyName("spam_score_threshold")] 
+        public float SpamScoreThreshold { get; set; }
+
+        [JsonPropertyName("toxic_score_threshold")] 
+        public float ToxicScoreThreshold { get; set; }
+    }
+
+    public class ReviewAiModerationLogOutput
+    {
+        [JsonPropertyName("moderation_status")] 
+        public string ModerationStatus { get; set; } = string.Empty;
+
+        [JsonPropertyName("confidence_score")] 
+        public float ConfidenceScore { get; set; }
+
+        [JsonPropertyName("reason")] 
+        public string Reason { get; set; } = string.Empty;
+
+        [JsonPropertyName("details")] 
+        public Dictionary<string, object>? Details { get; set; }
     }
 }

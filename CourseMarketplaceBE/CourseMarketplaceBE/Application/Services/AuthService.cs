@@ -10,7 +10,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Google.Apis.Auth;
 
-namespace CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.IServices;
+
+namespace CourseMarketplaceBE.Application.Services;
 
 public class AuthService : IAuthService
 {

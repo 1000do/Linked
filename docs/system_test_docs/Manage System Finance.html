@@ -1,1249 +1,1298 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<style>
-    body {
-        font-family: Tahoma, sans-serif;
-        font-size: 10pt;
-        color: black;
-        background-color: transparent;
-    }
-    table {
-        border-collapse: collapse;
-        width: 100%;
-        margin-bottom: 20px;
-    }
-    th, td {
-        border: 1px solid black;
-        padding: 5px;
-        text-align: left;
-        vertical-align: top;
-    }
-    .table2-header {
-        background-color: #76923c;
-        color: white;
-        font-weight: bold;
-    }
 
-     .table2-header th{
-        text-align: center;
-    }
-    .func-row {
-        background-color: #ccffff;
-        color: black;
-        font-weight: bold;
-    }
-    ul.summary-list {
-        list-style-type: disc;
-        margin-bottom: 20px;
-    }
-</style>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            font-size: 10pt;
+            color: black;
+            background-color: transparent;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .table2-header {
+            background-color: #76923c;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table2-header th {
+            text-align: center;
+        }
+
+        .func-row {
+            background-color: #ccffff;
+            color: black;
+            font-weight: bold;
+        }
+
+        ul.summary-list {
+            list-style-type: disc;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
+
 <body>
 
-<ul class="summary-list">
-    <li><b>Feature:</b> Manage System Finance</li>
-    <li><b>Test requirement:</b> Tests for tracking platform-wide financial summary statistics, configuration settings, instructor payouts, and refund request processing.</li>
-    <li><b>Number of TCs:</b> 62</li>
-</ul>
-
-<table class="table2">
-    <tr class="table2-header">
-        <th>Test Case ID</th>
-        <th>Test Case Description</th>
-        <th>Test Case Procedure</th>
-        <th>Expected Results</th>
-        <th>Pre-conditions</th>
-        <th>Round 1</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 2</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Round 3</th>
-        <th>Test date</th>
-        <th>Tester</th>
-        <th>Note</th>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">View Balance (For System)</td>
-    </tr>
-
-    <tr>
-        <td>TC-001</td>
-        <td>View Transaction Balance Successfully</td>
-        <td>1. Login as an Admin.<br>2. Access the Admin Finance dashboard page.</td>
-        <td>The system successfully retrieves and displays Course Revenue cards, Revenue Splits & Distributions cards, Stripe Gateway Balances cards, and current configuration settings.</td>
-        <td>Admin is successfully authenticated and has financial management permissions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-002</td>
-        <td>Filter Balances by Month and Year</td>
-        <td>1. Select a specific Month and Year from the period filter dropdowns.<br>2. Click the "Filter" button.</td>
-        <td>The system retrieves and displays the updated financial statistics and chart data for the selected period.</td>
-        <td>Admin is on the Admin Finance dashboard page.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-003</td>
-        <td>Sync Balances Manually from Stripe</td>
-        <td>1. Click the "Sync from Stripe" button on the dashboard.</td>
-        <td>The system requests Stripe synchronization, updates wallet and payout status in the DB, and displays a success message.</td>
-        <td>Admin is on the Admin Finance dashboard page.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-004</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Attempt to access the Admin Finance dashboard URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">View Instructor Payouts</td>
-    </tr>
-
-    <tr>
-        <td>TC-005</td>
-        <td>View Instructor Payouts Successfully</td>
-        <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Instructor Payouts" tab.</td>
-        <td>The system displays the payouts table containing Instructor Name, Tx ID, Payout Share, Split Rate, Stripe Status, and Action column.</td>
-        <td>Admin is authenticated and has financial permissions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-006</td>
-        <td>Sync Payout Statuses from Stripe</td>
-        <td>1. Access the "Instructor Payouts" tab.<br>2. Click the "Sync with Stripe" button.</td>
-        <td>The system syncs status updates from Stripe, updates the database, and displays a success message.</td>
-        <td>Admin is on the Instructor Payouts tab.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-007</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Attempt to access the Instructor Payouts URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">View Funds Withdrawal History</td>
-    </tr>
-
-    <tr>
-        <td>TC-008</td>
-        <td>View Platform Funds Withdrawal History Successfully</td>
-        <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Manager Bank Withdrawals" tab.</td>
-        <td>The system displays the withdrawals table containing Reference ID, Amount, Status badge, and Initiated Date.</td>
-        <td>Admin is authenticated and has financial permissions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-009</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Attempt to access the Manager Bank Withdrawals URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">View List of Refund Requests</td>
-    </tr>
-
-    <tr>
-        <td>TC-010</td>
-        <td>View List of Refund Requests Successfully</td>
-        <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Refund Requests" tab.</td>
-        <td>The system displays the list of pending refund requests including transaction details, course title, student name, and refund reason.</td>
-        <td>Admin is authenticated and has financial permissions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-011</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Attempt to access the Refund Requests URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Approve Refund Request</td>
-    </tr>
-
-    <tr>
-        <td>TC-012</td>
-        <td>Approve Refund Request Successfully</td>
-        <td>1. Access the "Refund Requests" tab.<br>2. Click the "Approve" button on a pending request row.<br>3. Input optional feedback and click "Approve & Refund".</td>
-        <td>The system reverses the instructor's transfer, refunds via Stripe, updates DB statuses to refunded, revokes student's course access, and sends a notification.</td>
-        <td>Admin is authenticated. There is a pending refund request record.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-013</td>
-        <td>Click Cancel</td>
-        <td>1. Click the "Approve" button on a pending request row.<br>2. Click the "Cancel" button on the confirmation dialog.</td>
-        <td>The system closes the confirmation dialog without taking any refund actions.</td>
-        <td>Admin is on the Refund Requests tab.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-014</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate submitting a refund approval request via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-015</td>
-        <td>Transaction Not Found</td>
-        <td>1. Simulate submitting a refund approval for a non-existent transaction ID.</td>
-        <td>The system displays a transaction not found error message.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-016</td>
-        <td>Status is Not Pending</td>
-        <td>1. Attempt to approve a refund request that is already approved or rejected.</td>
-        <td>The system displays an error message indicating the transaction is not in a pending status.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-017</td>
-        <td>Transfer Reversal Failed</td>
-        <td>1. Approve a refund where the instructor's transfer reversal on Stripe fails.</td>
-        <td>The system displays an error message regarding the failure to reverse the instructor's transfer and aborts.</td>
-        <td>Admin is authenticated. Transfer reversal encounters an error on Stripe.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-018</td>
-        <td>Stripe Refund Failed</td>
-        <td>1. Approve a refund where the main customer refund on Stripe fails.</td>
-        <td>The system displays an error message regarding the failure to process the refund on Stripe and aborts.</td>
-        <td>Admin is authenticated. Stripe refund encounters an error.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Reject Refund Request</td>
-    </tr>
-
-    <tr>
-        <td>TC-019</td>
-        <td>Reject Refund Request Successfully</td>
-        <td>1. Access the "Refund Requests" tab.<br>2. Click the "Reject" button on a pending request row.<br>3. Input a rejection reason.<br>4. Click "Reject Request".</td>
-        <td>The system reverts the transaction status to "succeeded", saves the rejection note, notifies the student, and keeps enrollment active.</td>
-        <td>Admin is authenticated. There is a pending refund request record.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-020</td>
-        <td>Click Cancel</td>
-        <td>1. Click the "Reject" button on a pending request row.<br>2. Click the "Cancel" button on the confirmation dialog.</td>
-        <td>The system closes the confirmation dialog without taking any actions.</td>
-        <td>Admin is on the Refund Requests tab.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-021</td>
-        <td>Reject Reason Missing</td>
-        <td>1. Click the "Reject" button on a pending request row.<br>2. Leave the feedback input empty.<br>3. Click "Reject Request".</td>
-        <td>The system displays a validation error message: "You must enter a rejection reason!".</td>
-        <td>Admin is on the Refund Requests tab.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-022</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate submitting a refund rejection request via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-023</td>
-        <td>Transaction Not Found</td>
-        <td>1. Simulate submitting a refund rejection for a non-existent transaction ID.</td>
-        <td>The system displays a transaction not found error message.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-024</td>
-        <td>Status is Not Pending</td>
-        <td>1. Attempt to reject a refund request that is already approved or rejected.</td>
-        <td>The system displays an error message indicating the transaction is not in a pending status.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-025</td>
-        <td>Transfer Reversal Failed</td>
-        <td>1. Reject a refund where the instructor's transfer reversal encounters a Stripe anomaly.</td>
-        <td>The system displays an error message regarding the failure to reverse the instructor's transfer.</td>
-        <td>Data state matches inherited spec flow EX-6.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-026</td>
-        <td>Stripe Refund Failed</td>
-        <td>1. Reject a refund where the Stripe refund process encounters an anomaly.</td>
-        <td>The system displays an error message regarding the failure to process the refund on Stripe.</td>
-        <td>Data state matches inherited spec flow EX-7.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">View transaction detail (For System)</td>
-    </tr>
-
-    <tr>
-        <td>TC-027</td>
-        <td>View transaction detail successfully</td>
-        <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Details" button next to a transaction row.</td>
-        <td>The system displays the Transaction Details page containing: ID, status, gross amount, course details, buyer profile, financial split card, and refund logs (if any).</td>
-        <td>Admin is authenticated. Transaction record exists.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-028</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Attempt to access the transaction detail URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-029</td>
-        <td>Transaction Not Found</td>
-        <td>1. Attempt to access a transaction detail URL with a non-existent transaction ID.</td>
-        <td>The system displays a transaction not found error message.</td>
-        <td>Transaction ID does not exist.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">View transaction list (For System)</td>
-    </tr>
-
-    <tr>
-        <td>TC-030</td>
-        <td>View Transaction History Successfully</td>
-        <td>1. Access the Admin Finance dashboard page.<br>2. Observe the "Transactions" tab.</td>
-        <td>The system displays the transaction table with columns: ID, Stripe Tx ID, Course, Purchased By, Instructor, Amount, Date, and Status badge.</td>
-        <td>Admin is authenticated and has financial permissions.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-031</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Attempt to access the Transactions tab URL as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Search transactions (For System)</td>
-    </tr>
-
-    <tr>
-        <td>TC-032</td>
-        <td>Search Transactions Successfully</td>
-        <td>1. Access the "Transaction History" tab.<br>2. Enter a search term (course title, student name, etc.).<br>3. Click "Filter" or press Enter.</td>
-        <td>The system queries the database and displays only those transactions matching the search keyword while preserving active date filters.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-033</td>
-        <td>Clear search keyword</td>
-        <td>1. Access the "Transaction History" tab with an active search.<br>2. Click the "Clear Filters" button.</td>
-        <td>The system resets the search keyword to its default and displays the full transaction list for the active period.</td>
-        <td>Admin has an active search filter.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-034</td>
-        <td>No matching transactions found</td>
-        <td>1. Enter a search term that yields no results.<br>2. Click "Filter".</td>
-        <td>The server returns an empty list, and the system displays "No transactions matched your criteria".</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-035</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate searching submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-036</td>
-        <td>Unauthorized Access</td>
-        <td>1. Simulate searching submission via API as a user without Admin privileges.</td>
-        <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
-        <td>User is authenticated but not an Admin.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Filter transactions(For System)</td>
-    </tr>
-
-    <tr>
-        <td>TC-037</td>
-        <td>Filter Transactions Successfully</td>
-        <td>1. Access the "Transaction History" tab.<br>2. Select a status option (e.g. "Succeeded").<br>3. Click the "Filter" button.</td>
-        <td>The system queries the database and displays only transactions matching the selected status.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-038</td>
-        <td>Clear filters</td>
-        <td>1. Access the "Transaction History" tab with an active status filter.<br>2. Click the "Clear Filters" button.</td>
-        <td>The system resets the status filter to default and displays the full transaction list.</td>
-        <td>Admin has an active status filter.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-039</td>
-        <td>No matching transactions found</td>
-        <td>1. Apply a status filter that yields no results.<br>2. Click "Filter".</td>
-        <td>The server returns an empty list, and the system displays "No transactions matched your criteria".</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-040</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate filtering submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-041</td>
-        <td>Unauthorized Access</td>
-        <td>1. Simulate filtering submission via API as a user without Admin privileges.</td>
-        <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
-        <td>User is authenticated but not an Admin.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Sort transactions(For System)</td>
-    </tr>
-
-    <tr>
-        <td>TC-042</td>
-        <td>Sort Transactions Successfully</td>
-        <td>1. Access the "Transaction History" tab.<br>2. Select a sorting option (e.g. "Amount: High to Low").<br>3. Click the "Filter" button.</td>
-        <td>The system queries the database and displays the transactions ordered by the selected sorting option.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-043</td>
-        <td>Clear filters</td>
-        <td>1. Access the "Transaction History" tab with an active sort order.<br>2. Click the "Clear Filters" button.</td>
-        <td>The system resets the sorting order to its default ("Date: Newest") and displays the default transaction list.</td>
-        <td>Admin has an active sorting order applied.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-044</td>
-        <td>No transactions found</td>
-        <td>1. Apply a sort on an empty dataset.<br>2. Click "Filter".</td>
-        <td>The server returns an empty list, and the system displays "No transactions matched your criteria".</td>
-        <td>Admin is authenticated. Dataset is empty.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-045</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate sorting submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-046</td>
-        <td>Unauthorized Access</td>
-        <td>1. Simulate sorting submission via API as a user without Admin privileges.</td>
-        <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
-        <td>User is authenticated but not an Admin.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Set Transfer Rate</td>
-    </tr>
-
-    <tr>
-        <td>TC-047</td>
-        <td>Set Revenue Share Split Rate Successfully</td>
-        <td>1. Access the Admin Finance dashboard.<br>2. Enter a valid percentage in the "Instructor Share (%)" field.<br>3. Click "Save Rate".<br>4. Click the confirmation button.</td>
-        <td>The system saves the rate to configurations, triggers notifications to onboarded instructors, and refreshes the dashboard view.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-048</td>
-        <td>Click Cancel</td>
-        <td>1. Enter a valid percentage and click "Save Rate".<br>2. Click "Cancel" on the confirmation dialog.</td>
-        <td>The system closes the confirmation dialog without saving changes.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-049</td>
-        <td>Invalid Rate Entered</td>
-        <td>1. Enter a rate outside the permitted range (e.g., 20% or 100%).<br>2. Click "Save Rate".</td>
-        <td>The system displays an "Invalid Split Rate" error dialog indicating the rate must be between 30% and 95%.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-050</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate setting the transfer rate via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Set Payout Schedule of Instructor</td>
-    </tr>
-
-    <tr>
-        <td>TC-051</td>
-        <td>Set Payout Schedule Successfully</td>
-        <td>1. Access the Admin Finance dashboard.<br>2. Enter comma-separated day(s) (e.g., "15, 18") in the "Trigger Day(s)" field.<br>3. Click "Save Schedule".<br>4. Click confirmation button.</td>
-        <td>The system updates the payout days configuration in the DB and refreshes the dashboard view showing the new days.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-052</td>
-        <td>Click Cancel</td>
-        <td>1. Enter valid days and click "Save Schedule".<br>2. Click "Cancel" on the confirmation dialog.</td>
-        <td>The system closes the confirmation dialog without saving changes.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-053</td>
-        <td>Invalid Payout Days Entered</td>
-        <td>1. Enter empty configuration or days outside the 15-20 range.<br>2. Click "Save Schedule".</td>
-        <td>The system displays the "Invalid Payout Days" or "Empty Configuration" error dialog.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-054</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate setting the payout schedule via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Withdraw Funds</td>
-    </tr>
-
-    <tr>
-        <td>TC-055</td>
-        <td>Withdraw Funds Successfully</td>
-        <td>1. Access the Admin Finance dashboard.<br>2. Enter an amount and optional explanation in the "Withdraw Funds to Bank" card.<br>3. Click "Withdraw Now".<br>4. Click "Confirm & Initiate".</td>
-        <td>The system requests a Stripe payout to the registered bank, creates a withdrawal log, updates balances via SignalR, and shows a success notification.</td>
-        <td>Admin is authenticated. Stripe available balance is >= $0.50.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-056</td>
-        <td>Click Cancel</td>
-        <td>1. Enter an amount and click "Withdraw Now".<br>2. Click "Cancel" on the confirmation dialog.</td>
-        <td>The system closes the confirmation dialog without initiating the withdrawal.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-057</td>
-        <td>Invalid Amount Entered</td>
-        <td>1. Enter a value less than $0.50 or exceeding the available balance.<br>2. Click "Withdraw Now".</td>
-        <td>The system displays the "Invalid Withdrawal Amount" error dialog.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-058</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate submitting a withdrawal request via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr class="func-row">
-        <td colspan="15">Filter financial dashboard by period</td>
-    </tr>
-
-    <tr>
-        <td>TC-059</td>
-        <td>Filter Financial Dashboard by Period Successfully</td>
-        <td>1. Select a month and a year from the respective selectors on the Financial Management page.<br>2. Click the "Filter" button next to the year selector.</td>
-        <td>The system requests and displays updated financial summaries, balance metrics, payout logs, bank withdrawals, and transaction records for the selected period.</td>
-        <td>Admin is authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-060</td>
-        <td>No financial data found for the selected period</td>
-        <td>1. Select a period with no financial activity.<br>2. Click the "Filter" button.</td>
-        <td>The system displays overview cards with zero amounts, an empty chart, and a message indicating no transactions matched in the table.</td>
-        <td>Admin is authenticated. Selected period has no data.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-061</td>
-        <td>Session Invalid (Not Logged In)</td>
-        <td>1. Simulate filtering submission via API as an unauthenticated user.</td>
-        <td>The system displays an authentication error message and redirects the user to the login page.</td>
-        <td>User is not authenticated.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-    <tr>
-        <td>TC-062</td>
-        <td>Unauthorized Access</td>
-        <td>1. Simulate filtering submission via API as a user without Admin privileges.</td>
-        <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
-        <td>User is authenticated but not an Admin.</td>
-        <td>Passed</td>
-        <td>2026-07-19</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-07-26</td>
-        <td>HungPH</td>
-        <td>Passed</td>
-        <td>2026-08-02</td>
-        <td>HungPH</td>
-        <td></td>
-    </tr>
-
-</table>
+    <ul class="summary-list">
+        <li><b>Feature:</b> Manage System Finance</li>
+        <li><b>Test requirement:</b> Tests for tracking platform-wide financial summary statistics, configuration
+            settings, instructor payouts, and refund request processing.</li>
+        <li><b>Number of TCs:</b> 62</li>
+    </ul>
+
+    <table class="table2">
+        <tr class="table2-header">
+            <th>Test Case ID</th>
+            <th>Test Case Description</th>
+            <th>Test Case Procedure</th>
+            <th>Expected Results</th>
+            <th>Pre-conditions</th>
+            <th>Round 1</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 2</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Round 3</th>
+            <th>Test date</th>
+            <th>Tester</th>
+            <th>Note</th>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">View Balance (For System)</td>
+        </tr>
+
+        <tr>
+            <td>TC-001</td>
+            <td>View Transaction Balance Successfully</td>
+            <td>1. Login as an Admin.<br>2. Access the Admin Finance dashboard page.</td>
+            <td>The system successfully retrieves and displays Course Revenue cards, Revenue Splits & Distributions
+                cards, Stripe Gateway Balances cards, and current configuration settings.</td>
+            <td>Admin is successfully authenticated and has financial management permissions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-002</td>
+            <td>Filter Balances by Month and Year</td>
+            <td>1. Select a specific Month and Year from the period filter dropdowns.<br>2. Click the "Filter" button.
+            </td>
+            <td>The system retrieves and displays the updated financial statistics and chart data for the selected
+                period.</td>
+            <td>Admin is on the Admin Finance dashboard page.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-003</td>
+            <td>Sync Balances Manually from Stripe</td>
+            <td>1. Click the "Sync from Stripe" button on the dashboard.</td>
+            <td>The system requests Stripe synchronization, updates wallet and payout status in the DB, and displays a
+                success message.</td>
+            <td>Admin is on the Admin Finance dashboard page.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-004</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Attempt to access the Admin Finance dashboard URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">View Instructor Payouts</td>
+        </tr>
+
+        <tr>
+            <td>TC-005</td>
+            <td>View Instructor Payouts Successfully</td>
+            <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Instructor Payouts" tab.</td>
+            <td>The system displays the payouts table containing Instructor Name, Tx ID, Payout Share, Split Rate,
+                Stripe Status, and Action column.</td>
+            <td>Admin is authenticated and has financial permissions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-006</td>
+            <td>Sync Payout Statuses from Stripe</td>
+            <td>1. Access the "Instructor Payouts" tab.<br>2. Click the "Sync with Stripe" button.</td>
+            <td>The system syncs status updates from Stripe, updates the database, and displays a success message.</td>
+            <td>Admin is on the Instructor Payouts tab.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-007</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Attempt to access the Instructor Payouts URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">View Funds Withdrawal History</td>
+        </tr>
+
+        <tr>
+            <td>TC-008</td>
+            <td>View Platform Funds Withdrawal History Successfully</td>
+            <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Manager Bank Withdrawals" tab.</td>
+            <td>The system displays the withdrawals table containing Reference ID, Amount, Status badge, and Initiated
+                Date.</td>
+            <td>Admin is authenticated and has financial permissions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-009</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Attempt to access the Manager Bank Withdrawals URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">View List of Refund Requests</td>
+        </tr>
+
+        <tr>
+            <td>TC-010</td>
+            <td>View List of Refund Requests Successfully</td>
+            <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Refund Requests" tab.</td>
+            <td>The system displays the list of pending refund requests including transaction details, course title,
+                student name, and refund reason.</td>
+            <td>Admin is authenticated and has financial permissions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-011</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Attempt to access the Refund Requests URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Approve Refund Request</td>
+        </tr>
+
+        <tr>
+            <td>TC-012</td>
+            <td>Approve Refund Request Successfully</td>
+            <td>1. Access the "Refund Requests" tab.<br>2. Click the "Approve" button on a pending request row.<br>3.
+                Input optional feedback and click "Approve & Refund".</td>
+            <td>The system reverses the instructor's transfer, refunds via Stripe, updates DB statuses to refunded,
+                revokes student's course access, and sends a notification.</td>
+            <td>Admin is authenticated. There is a pending refund request record.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-013</td>
+            <td>Click Cancel</td>
+            <td>1. Click the "Approve" button on a pending request row.<br>2. Click the "Cancel" button on the
+                confirmation dialog.</td>
+            <td>The system closes the confirmation dialog without taking any refund actions.</td>
+            <td>Admin is on the Refund Requests tab.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-014</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate submitting a refund approval request via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-015</td>
+            <td>Transaction Not Found</td>
+            <td>1. Simulate submitting a refund approval for a non-existent transaction ID.</td>
+            <td>The system displays a transaction not found error message.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-016</td>
+            <td>Status is Not Pending</td>
+            <td>1. Attempt to approve a refund request that is already approved or rejected.</td>
+            <td>The system displays an error message indicating the transaction is not in a pending status.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-017</td>
+            <td>Transfer Reversal Failed</td>
+            <td>1. Approve a refund where the instructor's transfer reversal on Stripe fails.</td>
+            <td>The system displays an error message regarding the failure to reverse the instructor's transfer and
+                aborts.</td>
+            <td>Admin is authenticated. Transfer reversal encounters an error on Stripe.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-018</td>
+            <td>Stripe Refund Failed</td>
+            <td>1. Approve a refund where the main customer refund on Stripe fails.</td>
+            <td>The system displays an error message regarding the failure to process the refund on Stripe and aborts.
+            </td>
+            <td>Admin is authenticated. Stripe refund encounters an error.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Reject Refund Request</td>
+        </tr>
+
+        <tr>
+            <td>TC-019</td>
+            <td>Reject Refund Request Successfully</td>
+            <td>1. Access the "Refund Requests" tab.<br>2. Click the "Reject" button on a pending request row.<br>3.
+                Input a rejection reason.<br>4. Click "Reject Request".</td>
+            <td>The system reverts the transaction status to "succeeded", saves the rejection note, notifies the
+                student, and keeps enrollment active.</td>
+            <td>Admin is authenticated. There is a pending refund request record.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-020</td>
+            <td>Click Cancel</td>
+            <td>1. Click the "Reject" button on a pending request row.<br>2. Click the "Cancel" button on the
+                confirmation dialog.</td>
+            <td>The system closes the confirmation dialog without taking any actions.</td>
+            <td>Admin is on the Refund Requests tab.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-021</td>
+            <td>Reject Reason Missing</td>
+            <td>1. Click the "Reject" button on a pending request row.<br>2. Leave the feedback input empty.<br>3. Click
+                "Reject Request".</td>
+            <td>The system displays a validation error message: "You must enter a rejection reason!".</td>
+            <td>Admin is on the Refund Requests tab.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-022</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate submitting a refund rejection request via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-023</td>
+            <td>Transaction Not Found</td>
+            <td>1. Simulate submitting a refund rejection for a non-existent transaction ID.</td>
+            <td>The system displays a transaction not found error message.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-024</td>
+            <td>Status is Not Pending</td>
+            <td>1. Attempt to reject a refund request that is already approved or rejected.</td>
+            <td>The system displays an error message indicating the transaction is not in a pending status.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-025</td>
+            <td>Transfer Reversal Failed</td>
+            <td>1. Reject a refund where the instructor's transfer reversal encounters a Stripe anomaly.</td>
+            <td>The system displays an error message regarding the failure to reverse the instructor's transfer.</td>
+            <td>Data state matches inherited spec flow EX-6.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-026</td>
+            <td>Stripe Refund Failed</td>
+            <td>1. Reject a refund where the Stripe refund process encounters an anomaly.</td>
+            <td>The system displays an error message regarding the failure to process the refund on Stripe.</td>
+            <td>Data state matches inherited spec flow EX-7.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">View transaction detail (For System)</td>
+        </tr>
+
+        <tr>
+            <td>TC-027</td>
+            <td>View transaction detail successfully</td>
+            <td>1. Access the Admin Finance dashboard page.<br>2. Click the "Details" button next to a transaction row.
+            </td>
+            <td>The system displays the Transaction Details page containing: ID, status, gross amount, course details,
+                buyer profile, financial split card, and refund logs (if any).</td>
+            <td>Admin is authenticated. Transaction record exists.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-028</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Attempt to access the transaction detail URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-029</td>
+            <td>Transaction Not Found</td>
+            <td>1. Attempt to access a transaction detail URL with a non-existent transaction ID.</td>
+            <td>The system displays a transaction not found error message.</td>
+            <td>Transaction ID does not exist.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">View transaction list (For System)</td>
+        </tr>
+
+        <tr>
+            <td>TC-030</td>
+            <td>View Transaction History Successfully</td>
+            <td>1. Access the Admin Finance dashboard page.<br>2. Observe the "Transactions" tab.</td>
+            <td>The system displays the transaction table with columns: ID, Stripe Tx ID, Course, Purchased By,
+                Instructor, Amount, Date, and Status badge.</td>
+            <td>Admin is authenticated and has financial permissions.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-031</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Attempt to access the Transactions tab URL as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Search transactions (For System)</td>
+        </tr>
+
+        <tr>
+            <td>TC-032</td>
+            <td>Search Transactions Successfully</td>
+            <td>1. Access the "Transaction History" tab.<br>2. Enter a search term (course title, student name,
+                etc.).<br>3. Click "Filter" or press Enter.</td>
+            <td>The system queries the database and displays only those transactions matching the search keyword while
+                preserving active date filters.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-033</td>
+            <td>Clear search keyword</td>
+            <td>1. Access the "Transaction History" tab with an active search.<br>2. Click the "Clear Filters" button.
+            </td>
+            <td>The system resets the search keyword to its default and displays the full transaction list for the
+                active period.</td>
+            <td>Admin has an active search filter.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-034</td>
+            <td>No matching transactions found</td>
+            <td>1. Enter a search term that yields no results.<br>2. Click "Filter".</td>
+            <td>The server returns an empty list, and the system displays "No transactions matched your criteria".</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-035</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate searching submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-036</td>
+            <td>Unauthorized Access</td>
+            <td>1. Simulate searching submission via API as a user without Admin privileges.</td>
+            <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
+            <td>User is authenticated but not an Admin.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Filter transactions(For System)</td>
+        </tr>
+
+        <tr>
+            <td>TC-037</td>
+            <td>Filter Transactions Successfully</td>
+            <td>1. Access the "Transaction History" tab.<br>2. Select a status option (e.g. "Succeeded").<br>3. Click
+                the "Filter" button.</td>
+            <td>The system queries the database and displays only transactions matching the selected status.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-038</td>
+            <td>Clear filters</td>
+            <td>1. Access the "Transaction History" tab with an active status filter.<br>2. Click the "Clear Filters"
+                button.</td>
+            <td>The system resets the status filter to default and displays the full transaction list.</td>
+            <td>Admin has an active status filter.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-039</td>
+            <td>No matching transactions found</td>
+            <td>1. Apply a status filter that yields no results.<br>2. Click "Filter".</td>
+            <td>The server returns an empty list, and the system displays "No transactions matched your criteria".</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-040</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate filtering submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-041</td>
+            <td>Unauthorized Access</td>
+            <td>1. Simulate filtering submission via API as a user without Admin privileges.</td>
+            <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
+            <td>User is authenticated but not an Admin.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Sort transactions(For System)</td>
+        </tr>
+
+        <tr>
+            <td>TC-042</td>
+            <td>Sort Transactions Successfully</td>
+            <td>1. Access the "Transaction History" tab.<br>2. Select a sorting option (e.g. "Amount: High to
+                Low").<br>3. Click the "Filter" button.</td>
+            <td>The system queries the database and displays the transactions ordered by the selected sorting option.
+            </td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-043</td>
+            <td>Clear filters</td>
+            <td>1. Access the "Transaction History" tab with an active sort order.<br>2. Click the "Clear Filters"
+                button.</td>
+            <td>The system resets the sorting order to its default ("Date: Newest") and displays the default transaction
+                list.</td>
+            <td>Admin has an active sorting order applied.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-044</td>
+            <td>No transactions found</td>
+            <td>1. Apply a sort on an empty dataset.<br>2. Click "Filter".</td>
+            <td>The server returns an empty list, and the system displays "No transactions matched your criteria".</td>
+            <td>Admin is authenticated. Dataset is empty.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-045</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate sorting submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-046</td>
+            <td>Unauthorized Access</td>
+            <td>1. Simulate sorting submission via API as a user without Admin privileges.</td>
+            <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
+            <td>User is authenticated but not an Admin.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Set Transfer Rate</td>
+        </tr>
+
+        <tr>
+            <td>TC-047</td>
+            <td>Set Revenue Share Split Rate Successfully</td>
+            <td>1. Access the Admin Finance dashboard.<br>2. Enter a valid percentage in the "Instructor Share (%)"
+                field.<br>3. Click "Save Rate".<br>4. Click the confirmation button.</td>
+            <td>The system saves the rate to configurations, triggers notifications to onboarded instructors, and
+                refreshes the dashboard view.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-048</td>
+            <td>Click Cancel</td>
+            <td>1. Enter a valid percentage and click "Save Rate".<br>2. Click "Cancel" on the confirmation dialog.</td>
+            <td>The system closes the confirmation dialog without saving changes.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-049</td>
+            <td>Invalid Rate Entered</td>
+            <td>1. Enter a rate outside the permitted range (e.g., 20% or 100%).<br>2. Click "Save Rate".</td>
+            <td>The system displays an "Invalid Split Rate" error dialog indicating the rate must be between 30% and
+                95%.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-050</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate setting the transfer rate via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Set Payout Schedule of Instructor</td>
+        </tr>
+
+        <tr>
+            <td>TC-051</td>
+            <td>Set Payout Schedule Successfully</td>
+            <td>1. Access the Admin Finance dashboard.<br>2. Enter comma-separated day(s) (e.g., "15, 18") in the
+                "Trigger Day(s)" field.<br>3. Click "Save Schedule".<br>4. Click confirmation button.</td>
+            <td>The system updates the payout days configuration in the DB and refreshes the dashboard view showing the
+                new days.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-052</td>
+            <td>Click Cancel</td>
+            <td>1. Enter valid days and click "Save Schedule".<br>2. Click "Cancel" on the confirmation dialog.</td>
+            <td>The system closes the confirmation dialog without saving changes.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-053</td>
+            <td>Invalid Payout Days Entered</td>
+            <td>1. Enter empty configuration or days outside the 15-20 range.<br>2. Click "Save Schedule".</td>
+            <td>The system displays the "Invalid Payout Days" or "Empty Configuration" error dialog.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-054</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate setting the payout schedule via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Withdraw Funds</td>
+        </tr>
+
+        <tr>
+            <td>TC-055</td>
+            <td>Withdraw Funds Successfully</td>
+            <td>1. Access the Admin Finance dashboard.<br>2. Enter an amount and optional explanation in the "Withdraw
+                Funds to Bank" card.<br>3. Click "Withdraw Now".<br>4. Click "Confirm & Initiate".</td>
+            <td>The system requests a Stripe payout to the registered bank, creates a withdrawal log, updates balances
+                via SignalR, and shows a success notification.</td>
+            <td>Admin is authenticated. Stripe available balance is >= $0.50.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-056</td>
+            <td>Click Cancel</td>
+            <td>1. Enter an amount and click "Withdraw Now".<br>2. Click "Cancel" on the confirmation dialog.</td>
+            <td>The system closes the confirmation dialog without initiating the withdrawal.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-057</td>
+            <td>Invalid Amount Entered</td>
+            <td>1. Enter a value less than $0.50 or exceeding the available balance.<br>2. Click "Withdraw Now".</td>
+            <td>The system displays the "Invalid Withdrawal Amount" error dialog.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-058</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate submitting a withdrawal request via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr class="func-row">
+            <td colspan="15">Filter financial dashboard by period</td>
+        </tr>
+
+        <tr>
+            <td>TC-059</td>
+            <td>Filter Financial Dashboard by Period Successfully</td>
+            <td>1. Select a month and a year from the respective selectors on the Financial Management page.<br>2. Click
+                the "Filter" button next to the year selector.</td>
+            <td>The system requests and displays updated financial summaries, balance metrics, payout logs, bank
+                withdrawals, and transaction records for the selected period.</td>
+            <td>Admin is authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-060</td>
+            <td>No financial data found for the selected period</td>
+            <td>1. Select a period with no financial activity.<br>2. Click the "Filter" button.</td>
+            <td>The system displays overview cards with zero amounts, an empty chart, and a message indicating no
+                transactions matched in the table.</td>
+            <td>Admin is authenticated. Selected period has no data.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-061</td>
+            <td>Session Invalid (Not Logged In)</td>
+            <td>1. Simulate filtering submission via API as an unauthenticated user.</td>
+            <td>The system displays an authentication error message and redirects the user to the login page.</td>
+            <td>User is not authenticated.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+        <tr>
+            <td>TC-062</td>
+            <td>Unauthorized Access</td>
+            <td>1. Simulate filtering submission via API as a user without Admin privileges.</td>
+            <td>The server detects unauthorized access and redirects the user to the access denied error page.</td>
+            <td>User is authenticated but not an Admin.</td>
+            <td>Passed</td>
+            <td>2026-07-19</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-07-26</td>
+            <td>HungPH</td>
+            <td>Passed</td>
+            <td>2026-08-02</td>
+            <td>HungPH</td>
+            <td></td>
+        </tr>
+
+    </table>
 
 </body>
+
 </html>
