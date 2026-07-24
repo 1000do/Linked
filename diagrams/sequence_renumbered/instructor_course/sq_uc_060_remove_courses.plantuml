@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -32,9 +39,7 @@ participant "InstructorDashboardPage" as view
 participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "CourseController" as be_ctrl <<backend controller>>
 participant ":CourseCommandService" as sv
-participant ":IReviewLockoutRepository" as lockout_repo
 participant ":ICourseRepository" as repo
-participant ":ILessonRepository" as lesson_repo
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -58,73 +63,53 @@ alt Course Not Found
     fe_ctrl -->> view:10.1.2. Return JSON (success=false)
     view -->> act:10.1.3. Display course not found message
 else Course Found
-alt Not Course Owner
-        sv -->> be_ctrl:10.2.1. throw UnauthorizedAccessException
-        be_ctrl -->> fe_ctrl:10.2.1.1. Return statusCode 403
+    sv -> sv++:10.2. Validate Instructor State (e.g., Owner, Lockout status)
+    sv--
+    
+alt Validation Failed (e.g., Not Owner, Locked out)
+        sv -->> be_ctrl:10.2.1. throw Exception
+        be_ctrl -->> fe_ctrl:10.2.1.1. Return error status
         fe_ctrl -->> view:10.2.1.2. Return JSON (success=false)
-        view -->> act:10.2.1.3. Display unauthorized message
-else Is Course Owner
-        sv -> lockout_repo++:10.2.2. Call GetActiveLockoutAsync(instructorId, "instructor")
-        lockout_repo -->> sv--:10.2.2.1. Return activeLockout
+        view -->> act:10.2.1.3. Display error message
+else Instructor Valid
+        sv -> sv++:10.2.2. Validate Course State (e.g., Pending review, Archived, Has enrollments)
+        sv--
         
-alt Account is locked out
-            sv -->> be_ctrl:10.2.2.1.1. throw BadRequestException
-            be_ctrl -->> fe_ctrl:10.2.2.1.1.1. Return statusCode 400
-            fe_ctrl -->> view:10.2.2.1.1.2. Return JSON (success=false)
-            view -->> act:10.2.2.1.1.3. Display lockout restriction message
-else Account is active
-alt Archived and Flagged >= 3
-                sv -->> be_ctrl:10.2.2.1.2.1. throw BadRequestException
-                be_ctrl -->> fe_ctrl:10.2.2.1.2.1.1. Return statusCode 400
-                fe_ctrl -->> view:10.2.2.1.2.1.2. Return JSON (success=false)
-                view -->> act:10.2.2.1.2.1.3. Display permanently discontinued message
-else Pending Review
-                sv -->> be_ctrl:10.2.2.1.2.2. throw InvalidOperationException
-                be_ctrl -->> fe_ctrl:10.2.2.1.2.2.1. Return statusCode 400
-                fe_ctrl -->> view:10.2.2.1.2.2.2. Return JSON (success=false)
-                view -->> act:10.2.2.1.2.2.3. Display pending review message
+alt Validation Failed
+            sv -->> be_ctrl:10.2.2.1. throw Exception
+            be_ctrl -->> fe_ctrl:10.2.2.1.1. Return error status
+            fe_ctrl -->> view:10.2.2.1.2. Return JSON (success=false)
+            view -->> act:10.2.2.1.3. Display course state error message
 else Can Delete
-                sv -> repo++:10.2.2.1.2.3. Call HasEnrollmentsAsync(id)
-                repo -->> sv--:10.2.2.1.2.3.1. Return hasEnrollments flag
-                
-alt hasEnrollments == true
-                    sv -->> be_ctrl:10.2.2.1.2.3.1.1. throw BadRequestException
-                    be_ctrl -->> fe_ctrl:10.2.2.1.2.3.1.1.1. Return statusCode 400
-                    fe_ctrl -->> view:10.2.2.1.2.3.1.1.2. Return JSON (success=false)
-                    view -->> act:10.2.2.1.2.3.1.1.3. Display active students error message
-else hasEnrollments == false
-                    sv -> sv++:10.2.2.1.2.3.1.2. Set course.IsRemoved = true
-                    sv--
-                    
-                    sv -> lesson_repo++:10.2.2.1.2.3.1.2.1. Call GetByCourseIdAsync(id)
-                    lesson_repo -->> sv--:10.2.2.1.2.3.1.2.2. Return lessons
-                    
-                    sv -> sv++:10.2.2.1.2.3.1.2.3. Soft delete course and cascade to lessons
-                    sv--
-                    
-                    sv -> repo++:10.2.2.1.2.3.1.2.4. Call SaveChangesAsync()
-                    repo -> ctx++:10.2.2.1.2.3.1.2.5. Save changes to database
-                    ctx -> db++:10.2.2.1.2.3.1.2.6. Update entities (Soft Delete)
-                    
+            sv -> sv++:10.2.2.2. Soft delete course, cascade to lessons and materials
+            sv--
+            
+            sv -> repo++:10.2.2.2.1. Call Update(course)
+            repo -> ctx++:10.2.2.2.2. Update entity state
+            ctx -->> repo--:10.2.2.2.3. Return
+            repo -->> sv--:10.2.2.2.4. Return
+            
+            sv -> repo++:10.2.2.2.5. Call SaveChangesAsync()
+            repo -> ctx++:10.2.2.2.6. Save changes to database
+            ctx -> db++:10.2.2.2.7. Update entities (Soft Delete)
+            
 alt Database Save Failure
-                        db -->> ctx:10.2.2.1.2.3.1.2.6.1. throw DbUpdateException
-                        ctx -->> repo:10.2.2.1.2.3.1.2.6.1.1. throw DbUpdateException
-                        repo -->> sv:10.2.2.1.2.3.1.2.6.1.2. throw DbUpdateException
-                        sv -->> be_ctrl:10.2.2.1.2.3.1.2.6.1.3. throw DbUpdateException
-                        be_ctrl -->> fe_ctrl:10.2.2.1.2.3.1.2.6.1.4. Return statusCode 500
-                        fe_ctrl -->> view:10.2.2.1.2.3.1.2.6.1.5. Return JSON (success=false)
-                        view -->> act:10.2.2.1.2.3.1.2.6.1.6. Display server error message
+                db -->> ctx:10.2.2.2.7.1. throw DbUpdateException
+                ctx -->> repo:10.2.2.2.7.1.1. throw DbUpdateException
+                repo -->> sv:10.2.2.2.7.1.2. throw DbUpdateException
+                sv -->> be_ctrl:10.2.2.2.7.1.3. throw DbUpdateException
+                be_ctrl -->> fe_ctrl:10.2.2.2.7.1.4. Return statusCode 500
+                fe_ctrl -->> view:10.2.2.2.7.1.5. Return JSON (success=false)
+                view -->> act:10.2.2.2.7.1.6. Display server error message
 else Database Save Success
-                        db -->> ctx--:10.2.2.1.2.3.1.2.6.2. Return returnCode
-                        ctx -->> repo--:10.2.2.1.2.3.1.2.6.2.1. Return numberOfRowsAffected
-                        repo -->> sv--:10.2.2.1.2.3.1.2.6.2.2. Return numberOfRowsAffected
-                        
-                        sv -->> be_ctrl--:10.2.2.1.2.3.1.2.6.2.3. Return success
-                        be_ctrl -->> fe_ctrl--:10.2.2.1.2.3.1.2.6.2.4. Return statusCode 200
-                        fe_ctrl -->> view--:10.2.2.1.2.3.1.2.6.2.5. Return JSON (success=true)
-                        view -->> act--:10.2.2.1.2.3.1.2.6.2.6. Display course deleted successfully
-end
-end
+                db -->> ctx--:10.2.2.2.7.2. Return returnCode
+                ctx -->> repo--:10.2.2.2.7.2.1. Return numberOfRowsAffected
+                repo -->> sv--:10.2.2.2.7.2.2. Return numberOfRowsAffected
+                
+                sv -->> be_ctrl--:10.2.2.2.7.2.3. Return success
+                be_ctrl -->> fe_ctrl--:10.2.2.2.7.2.4. Return statusCode 200
+                fe_ctrl -->> view--:10.2.2.2.7.2.5. Return JSON (success=true)
+                view -->> act--:10.2.2.2.7.2.6. Display course deleted successfully
 end
 end
 end

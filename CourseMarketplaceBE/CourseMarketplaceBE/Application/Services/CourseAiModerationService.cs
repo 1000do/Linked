@@ -353,6 +353,26 @@ namespace CourseMarketplaceBE.Application.Services
             AiThreatLevel threatLevel = AiThreatLevel.None;
             string feedback = "";
 
+            var flaggedReasons = new List<string>();
+            var manualAuditReasons = new List<string>();
+
+            foreach (var log in result.StageLogs)
+            {
+                if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
+                {
+                    var fields = string.Join(", ", log.FlaggedFields);
+                    var reasonText = log.Reason ?? "AI moderation flag";
+                    flaggedReasons.Add($"[{fields}] {reasonText}");
+                }
+                
+                if (log.ManualAuditFields != null && log.ManualAuditFields.Any())
+                {
+                    var fields = string.Join(", ", log.ManualAuditFields);
+                    var reasonText = log.Reason ?? "AI suggested manual audit";
+                    manualAuditReasons.Add($"[{fields}] {reasonText}");
+                }
+            }
+
             if (statusStr == ModerationStatus.Approved.ToValue())
             {
                 threatLevel = AiThreatLevel.Approved;
@@ -362,17 +382,6 @@ namespace CourseMarketplaceBE.Application.Services
             {
                 threatLevel = AiThreatLevel.FlaggedOrRejected;
 
-                var flaggedReasons = new List<string>();
-                foreach (var log in result.StageLogs)
-                {
-                    if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
-                    {
-                        var fields = string.Join(", ", log.FlaggedFields);
-                        var reasonText = log.Reason ?? "AI moderation flag";
-                        flaggedReasons.Add($"[{fields}] {reasonText}");
-                    }
-                }
-
                 if (flaggedReasons.Any())
                 {
                     feedback = "AI flagged the following issues:\n- " + string.Join("\n- ", flaggedReasons);
@@ -381,12 +390,24 @@ namespace CourseMarketplaceBE.Application.Services
                 {
                     feedback = "Course content violates the moderation policy according to AI.";
                 }
+
+                if (manualAuditReasons.Any())
+                {
+                    feedback += "\n\nAdditionally, AI suggested manual audit for the following:\n- " + string.Join("\n- ", manualAuditReasons);
+                }
             }
             else if (statusStr == ModerationStatus.ManualAudit.ToValue())
             {
                 threatLevel = AiThreatLevel.ManualAudit;
-                feedback = "AI suggested manual audit due to low confidence in its moderation result";
                 
+                if (manualAuditReasons.Any())
+                {
+                    feedback = "AI suggested manual audit for the following:\n- " + string.Join("\n- ", manualAuditReasons);
+                }
+                else
+                {
+                    feedback = "AI suggested manual audit due to low confidence in its moderation result.";
+                }
             }
 
             return (threatLevel, feedback);
@@ -428,6 +449,7 @@ namespace CourseMarketplaceBE.Application.Services
                     Result = stage.Result,
                     Reason = stage.Reason,
                     FlaggedFields = stage.FlaggedFields,
+                    ManualAuditFields = stage.ManualAuditFields,
                     Details = stage.Details,
                     ConfidenceScore = stage.ConfidenceScore
 

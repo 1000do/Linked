@@ -60,49 +60,33 @@
         <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-5 flex flex-col gap-4">
             <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
                 <span class="material-symbols-outlined text-emerald-600 text-[18px]">integration_instructions</span>
-                AI Integration Mapping
+                AI Integration Mapping <span class="text-[10px] font-normal px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full ml-1">Read-Only</span>
             </h3>
-            <form id="integrationForm" onsubmit="submitIntegration(event)" class="flex flex-col gap-3 flex-1">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+            <div class="flex flex-col gap-3 flex-1 mt-1">
+                <div class="grid grid-cols-1 gap-y-3">
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-bold text-slate-700">Course Harmful Text Classifier</label>
-                        <select id="courseHarmfulText" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
-                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "classifier" && x.ProcessType == "text")) {
-                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.CourseHarmfulTextClassifierPath)">@m.ModelName (@m.ModelPath)</option>
-                            }
-                        </select>
+                        <label class="text-xs font-bold text-slate-700">Harmful Text Classifier (Course & Review)</label>
+                        <div class="px-3.5 py-2 text-[13px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 break-all">
+                            @{ var harmfulTextModel = Model.AllActiveModels.FirstOrDefault(x => x.ModelPath == Model.Config.CourseHarmfulTextClassifierPath); }
+                            <span class="font-semibold text-slate-800">@(harmfulTextModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(Model.Config.CourseHarmfulTextClassifierPath))</span>
+                        </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-bold text-slate-700">Course Text Embedding</label>
-                        <select id="courseTextEmbed" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
-                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "embedding_generator" && x.ProcessType == "text")) {
-                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.CourseTextEmbeddingGeneratorPath)">@m.ModelName (@m.ModelPath)</option>
-                            }
-                        </select>
+                        <div class="px-3.5 py-2 text-[13px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 break-all">
+                            @{ var textEmbedModel = Model.AllActiveModels.FirstOrDefault(x => x.ModelPath == Model.Config.CourseTextEmbeddingGeneratorPath); }
+                            <span class="font-semibold text-slate-800">@(textEmbedModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(Model.Config.CourseTextEmbeddingGeneratorPath))</span>
+                        </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-bold text-slate-700">Course Media Embedding</label>
-                        <select id="courseMediaEmbed" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
-                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "embedding_generator" && x.ProcessType == "media")) {
-                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.CourseMediaEmbeddingGeneratorPath)">@m.ModelName (@m.ModelPath)</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-bold text-slate-700">Review Harmful Text Classifier</label>
-                        <select id="reviewHarmfulText" class="px-3.5 py-2 text-[13px] border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors">
-                            @foreach (var m in Model.AllActiveModels.Where(x => x.ModelType == "classifier" && x.ProcessType == "text")) {
-                                <option value="@m.ModelPath" selected="@(m.ModelPath == Model.Config.ReviewHarmfulTextClassifierPath)">@m.ModelName (@m.ModelPath)</option>
-                            }
-                        </select>
+                        <div class="px-3.5 py-2 text-[13px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 break-all">
+                            @{ var mediaEmbedModel = Model.AllActiveModels.FirstOrDefault(x => x.ModelPath == Model.Config.CourseMediaEmbeddingGeneratorPath); }
+                            <span class="font-semibold text-slate-800">@(mediaEmbedModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(Model.Config.CourseMediaEmbeddingGeneratorPath))</span>
+                        </div>
                     </div>
                 </div>
-                <div class="flex justify-end mt-4 lg:mt-auto">
-                    <button type="submit" class="px-4 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg transition-colors shadow-sm">
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -563,59 +547,7 @@
             }
         }
 
-        async function submitIntegration(e) {
-            e.preventDefault();
-            
-            const selectIds = ['courseHarmfulText', 'courseTextEmbed', 'courseMediaEmbed', 'reviewHarmfulText'];
-            const keyMapping = {
-                'courseHarmfulText': 'course_harmful_text_classifier',
-                'courseTextEmbed': 'course_text_embedding_generator',
-                'courseMediaEmbed': 'course_media_embedding_generator',
-                'reviewHarmfulText': 'review_harmful_text_classifier'
-            };
-            
-            for (let id of selectIds) {
-                const el = document.getElementById(id);
-                if (!el.value) {
-                    return Swal.fire('Error', 'All integration configurations are required.', 'error');
-                }
-            }
-            
-            const confirm = await Swal.fire({
-                title: 'Update Integrations?',
-                text: "This will change which models handle specific features.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#0f172a',
-                cancelButtonColor: '#94a3b8',
-                confirmButtonText: 'Yes, update mappings',
-                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
-            });
 
-            if (!confirm.isConfirmed) return;
-
-            let success = true;
-            for (let id of selectIds) {
-                const el = document.getElementById(id);
-                const res = await fetch('/AdminAiService/UpdateIntegration', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ConfigKey: keyMapping[id], ConfigValue: el.value })
-                });
-                if(!res.ok) success = false;
-            }
-
-            if (success) {
-                Swal.fire({ 
-                    title: 'Success', 
-                    text: 'Integration configs saved', 
-                    icon: 'success', 
-                    customClass: { 
-                        popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
-            } else {
-                Swal.fire('Error', 'Failed to update some configurations', 'error');
-            }
-        }
 
         async function toggleModelStatus(id) {
             const confirm = await Swal.fire({
@@ -721,5 +653,61 @@
                 Swal.fire('Error', 'Failed to load page.', 'error');
             }
         }
+
+        /*
+        async function submitIntegration(e) {
+            e.preventDefault();
+            
+            const selectIds = ['harmfulText', 'courseTextEmbed', 'courseMediaEmbed'];
+            const configsToUpdate = [
+                { key: 'course_harmful_text_classifier', elementId: 'harmfulText' },
+                { key: 'review_harmful_text_classifier', elementId: 'harmfulText' },
+                { key: 'course_text_embedding_generator', elementId: 'courseTextEmbed' },
+                { key: 'course_media_embedding_generator', elementId: 'courseMediaEmbed' }
+            ];
+            
+            for (let id of selectIds) {
+                const el = document.getElementById(id);
+                if (!el.value) {
+                    return Swal.fire('Error', 'All integration configurations are required.', 'error');
+                }
+            }
+            
+            const confirm = await Swal.fire({
+                title: 'Update Integrations?',
+                text: "This will change which models handle specific features.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#0f172a',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Yes, update mappings',
+                customClass: { popup: 'rounded-2xl border border-slate-100 shadow-xl' }
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            let success = true;
+            for (let config of configsToUpdate) {
+                const el = document.getElementById(config.elementId);
+                const res = await fetch('/AdminAiService/UpdateIntegration', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ConfigKey: config.key, ConfigValue: el.value })
+                });
+                if(!res.ok) success = false;
+            }
+
+            if (success) {
+                Swal.fire({ 
+                    title: 'Success', 
+                    text: 'Integration configs saved', 
+                    icon: 'success', 
+                    customClass: { 
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
+            } else {
+                Swal.fire('Error', 'Failed to update some configurations', 'error');
+            }
+        }
+        */
     </script>
 }

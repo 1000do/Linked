@@ -20,6 +20,7 @@ public interface IReviewRepository
     // ── Lookup theo enrollment (cho upsert check cũ — giờ không dùng cho submit nhưng giữ để GetEnrollmentStatus) ──
     Task<CourseReview?> GetCourseReviewByEnrollmentAsync(int enrollmentId);
     Task<LessonReview?> GetLessonReviewByEnrollmentAsync(int enrollmentId, int lessonId);
+    Task<List<int>> GetReviewedLessonIdsAsync(int enrollmentId);
 
     // ── Lookup theo reviewId (có include Enrollment.User để verify owner) ──
     Task<CourseReview?> GetCourseReviewByIdAsync(int reviewId);

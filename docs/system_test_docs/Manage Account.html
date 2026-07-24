@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage Account</li>
+    <li><b>Test requirement:</b> Tests for managing accounts, including adding, updating, deleting, viewing details, listing, filtering, searching, and flagging accounts for violation</li>
+    <li><b>Number of TCs:</b> 17</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Add Account</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Add Account Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Manage Accounts page.<br>3. Click Add Staff Member.<br>4. Enter Email, Display Name, Temporary Password, Phone Number.<br>5. Click Save.</td>
+        <td>The system saves the new Account and Manager record, displays a success message, and redirects to the account list view.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Mandatory Fields Missing</td>
+        <td>1. Login as Admin.<br>2. Access the Manage Accounts page.<br>3. Click Add Staff Member.<br>4. Leave Email, Password, or Display Name empty.<br>5. Click Save.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Email Already Registered</td>
+        <td>1. Login as Admin.<br>2. Access the Manage Accounts page.<br>3. Click Add Staff Member.<br>4. Enter an email address that already exists in the database.<br>5. Click Save.</td>
+        <td>The system displays the error message 'Email is already registered.'</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Update Account</td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Update Account Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Edit button on a specific staff account.<br>4. Modify the staff details.<br>5. Click Save.</td>
+        <td>The system updates the profile fields, manages lockouts if the status changed, displays a success message, and redirects to the account list.</td>
+        <td>Admin must be logged in with Admin role privileges. The target account must exist and belong to a Staff member.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Mandatory Fields Missing</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Edit button on a specific staff account.<br>4. Clear the Display Name field.<br>5. Click Save.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Delete Account</td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Toggle Ban Successfully (Active to Banned)</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Toggle Ban button next to an active account.</td>
+        <td>The system changes the status to banned, creates a 100-year lockout record, displays a success message, and refreshes the list.</td>
+        <td>Admin must be logged in with Admin role privileges. Target account is active and not Super Admin.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Unban Account Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Toggle Ban button next to a banned account.</td>
+        <td>The system changes the status to active, deletes all active lockout records, displays a success message, and refreshes the list.</td>
+        <td>Admin must be logged in with Admin role privileges. Target account is banned.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Super Admin Ban Blocked</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Toggle Ban button next to the Super Admin account.</td>
+        <td>The system displays the error message 'Cannot ban the Super Admin account.'</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Account Detail</td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>View Account Detail Successfully (User Role)</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click on a specific User account in the list.</td>
+        <td>The system retrieves and displays the account details, including total spent on courses and total enrollment counts.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>View Account Detail Successfully (Instructor Role)</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click on a specific Instructor account in the list.</td>
+        <td>The system retrieves and displays the account details, including title, expertise categories, Stripe credentials, total revenue, and payouts.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Account List</td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>View Account List Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Manage Accounts page.</td>
+        <td>The system displays a paginated list of all registered accounts ordered by creation date descending.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Session Invalid</td>
+        <td>1. Access the Manage Accounts page as an unauthenticated user.</td>
+        <td>The system redirects the actor to the Login page.</td>
+        <td>Actor is not authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Filter Accounts</td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Filter Accounts Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Account List page.<br>3. Select a role filter value from the dropdown menu.</td>
+        <td>The system queries the database and displays the paginated account list matching the selected role.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Search Accounts</td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Search Accounts Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Account List page.<br>3. Enter a keyword in the search input box.</td>
+        <td>The system queries the database and displays the paginated account list matching the search keyword (email, phone, display name, full name).</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Flag Accounts for Violation</td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Flag Account Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Flag Account button next to the target account.<br>4. Enter a violation reason and click Submit.</td>
+        <td>The system increments the account flag count, updates the status, saves the changes, sends a notification to the user, and displays the updated status.</td>
+        <td>Admin must be logged in. Target account must not be banned or at the max flag limit.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Unflag Account Successfully</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Unflag Account button next to a flagged account.<br>4. Enter a reason and click Submit.</td>
+        <td>The system decrements the flag count, updates the status, removes any active lockout if unbanned, and sends an unflagging notification.</td>
+        <td>Admin must be logged in. Target account must have a flag count > 0.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Account Ineligible</td>
+        <td>1. Login as Admin.<br>2. Access the Account Management page.<br>3. Click the Flag Account button next to an account that is already banned or has reached 3 flags.</td>
+        <td>The system displays an error message indicating that the account cannot be flagged.</td>
+        <td>Admin must be logged in with Admin role privileges.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+</table>
+
+</body>
+</html>

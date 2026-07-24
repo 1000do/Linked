@@ -1,0 +1,142 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Report Course Review
+
+actor User as act
+participant "CourseDetailsPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "ReportController" as fe_ctrl <<frontend controller>>
+participant "ReportController" as be_ctrl <<backend controller>>
+participant ":IReportSubmissionService" as sv
+participant ":CourseReviewReport" as ett
+participant ":IReportRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Click "Report" button on a course review
+view -->> act:2. Display report review form modal
+view--
+
+act -> view++:3. Select reason, input description, click "Submit Report"
+
+opt Invalid form input
+    view -->> act:3.1. Display validation error message
+end
+
+view -> fe_ctrl++:4. POST /Report/ReportCourseReview
+
+fe_ctrl -> fe_ctrl++:5. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:5.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:5.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:5.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:5.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++:5.3. Validate ModelState
+    fe_ctrl--
+    
+opt Invalid ModelState
+        fe_ctrl -->> view:5.3.2. Return BadRequest()
+        view -->> act:5.3.2.1. Display error message
+end
+
+    fe_ctrl -> be_ctrl++:5.4. POST /api/report/course-reviews
+    be_ctrl -> sv++:5.5. Call CreateCourseReviewReportAsync(reporterId, request)
+    
+    sv -> sv++:5.6. Validate course review report request
+    sv--
+    
+alt Review Not Found
+        sv -->> be_ctrl:5.6.1. throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:5.6.1.1. Return statusCode 404
+        fe_ctrl -->> view:5.6.1.2. Return NotFound()
+        view -->> act:5.6.1.3. Display error message
+else Validation Failure
+        sv -->> be_ctrl:5.6.2. throw BadRequestException
+        be_ctrl -->> fe_ctrl:5.6.2.1. Return statusCode 400
+        fe_ctrl -->> view:5.6.2.2. Return BadRequest()
+        view -->> act:5.6.2.3. Display error message
+else Valid course review report request
+        sv -> ett++:5.6.3. Call CourseReviewReport()
+        ett -->> sv--:5.6.3.1. Return CourseReviewReport object
+
+        sv -> repo++:5.6.3.2. AddCourseReviewReportAsync(report)
+        repo -> ctx++:5.6.3.3. Add(report)
+        ctx -->> repo:5.6.3.4. Return result
+        ctx--
+        repo -->> sv:5.6.3.5. Return result
+        repo--
+        
+        sv -> sv++:5.6.3.6. Call SaveChangesAndHandleExceptionsAsync()
+        sv -> repo++:5.6.3.7. SaveChangesAsync()
+        repo -> ctx++:5.6.3.8. SaveChangesAsync()
+        ctx -> db++:5.6.3.9. Save changes to database
+        
+alt Database Save Failure
+            db -->> ctx:5.6.3.9.1. throw DbUpdateException
+            ctx -->> repo:5.6.3.9.1.1. throw DbUpdateException
+            repo -->> sv:5.6.3.9.1.2. throw ReportException
+            sv -->> be_ctrl:5.6.3.9.1.3. throw BadRequestException
+            be_ctrl -->> fe_ctrl:5.6.3.9.1.4. Return statusCode 400
+            fe_ctrl -->> view:5.6.3.9.1.5. Return BadRequest()
+            view -->> act:5.6.3.9.1.6. Display error message regarding report submission failure
+else Database Save Success
+            db -->> ctx:5.6.3.9.2. Return result
+            db--
+            ctx -->> repo:5.6.3.9.2.1. Return result
+            ctx--
+            repo -->> sv:5.6.3.9.2.2. Return result
+            repo--
+            sv--
+            
+            sv -> sv++:5.6.3.9.2.3. Call NotifyManagersAsync()
+            sv--
+            
+            sv -->> be_ctrl:5.6.3.9.2.4. Return true
+            sv--
+            be_ctrl -->> fe_ctrl--:5.6.3.9.2.5. Return statusCode 200
+            fe_ctrl -->> view--:5.6.3.9.2.6. Return Ok()
+            view -->> act--:5.6.3.9.2.7. Display success message regarding report submission
+end
+end
+end
+@enduml

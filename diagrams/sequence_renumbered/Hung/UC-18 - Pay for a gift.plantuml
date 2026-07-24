@@ -1,0 +1,182 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+hide footbox
+mainframe Pay for a gift
+
+actor User as act
+participant "GiftCheckoutPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "MyCoursesPage" as my_courses_view
+participant "GiftController" as fe_gift_ctrl <<frontend controller>>
+participant "CheckoutController" as be_ctrl <<backend controller>>
+participant ":IGiftCheckoutService" as sv
+participant ":CheckoutResponse" as res_dto
+participant ":OrderInfo" as order_ett
+participant ":OrderItem" as item_ett
+participant ":Transaction" as tx_ett
+participant ":IPaymentGatewayService" as stripe
+participant ":ICheckoutRepository" as repo
+
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+
+' == Access Gift Checkout ==
+act -> view++:1. Access Gift Checkout page
+' view -> fe_gift_ctrl++:2. GET /Gift/Checkout
+' fe_gift_ctrl -->> view--:3. Return View
+' view -> view++:4. Mount Stripe Elements (Empty Card Form)
+' view--
+' view -->> act:5. Display checkout page and card entry form
+
+' == Initiate Payment Intent ==
+act -> view:6. Fill in Card details (Name, Card Number, Expiry, CVC)
+act -> view:7. Click "Pay Securely" button
+
+view -> view++:8. Validate form inputs
+view--
+opt Invalid form inputs
+    view -->> act:8.1. Highlight invalid fields and display error message
+end
+
+' note right of view: Intent is created ON SUBMIT\nto prevent incomplete intents in Stripe
+view -> fe_gift_ctrl++:9. POST /Gift/CreateGiftPaymentIntentAjax (AJAX)
+
+fe_gift_ctrl -> fe_gift_ctrl ++:10. Validate actor's authentication and authorization
+fe_gift_ctrl --
+
+alt Session Invalid
+    fe_gift_ctrl -->> login_view:10.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act --:10.1.1. Display login form
+else Unauthorized Access
+    fe_gift_ctrl -->> error_view:10.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act --:10.2.1. Display error message
+else Valid actor's authentication and authorization
+    
+    fe_gift_ctrl -> be_ctrl ++:10.3. POST /api/checkout/gift-intent
+    
+    be_ctrl -> sv++:10.3.1. InitiateGiftPaymentIntentAsync(userId, request)
+    
+    sv -> sv++:10.3.2. ValidateCourseForGiftAsync(course, recipientEmail, courseId)
+    sv--
+
+alt Gift Details Missing or Invalid
+    sv -->> be_ctrl:10.3.2.1. throw ArgumentException
+    be_ctrl -->> fe_gift_ctrl:10.3.2.1.1. Return statusCode 400
+    fe_gift_ctrl -->> view:10.3.2.1.2. Return JSON (success=false, message)
+    view -->> act:10.3.2.1.3. Display error message
+else Valid Gift Details
+    sv -> stripe++:10.3.2.2. CreatePaymentIntentAsync(purchasePrice, "usd", metadata)
+    stripe -->> sv--:10.3.2.2.1. Return ClientSecret and PaymentIntentId
+    
+    sv -> res_dto++:10.3.2.2.2. Call CheckoutResponse(ClientSecret, PaymentIntentId)
+    res_dto -->> sv--:10.3.2.2.3. Return CheckoutResponse object
+    
+        sv -->> be_ctrl--:10.3.2.2.4. Return CheckoutResponse object
+        be_ctrl -->> fe_gift_ctrl--:10.3.2.2.5. Return statusCode 200
+        fe_gift_ctrl -->> view--:10.3.2.2.6. Return JSON (ClientSecret)
+end
+end
+
+' == Process Stripe Payment ==
+view -> stripe++:11. stripe.confirmCardPayment(clientSecret, cardDetails)
+stripe -->> view--:12. Return payment result
+
+view -> view++:13. Validate payment result
+view--
+
+alt Payment declined
+    view -->> act:13.1. Display payment error message
+else Payment Successful
+    view -> fe_gift_ctrl++:13.2. GET /Gift/CheckoutSuccess?payment_intent_id=...
+    deactivate view
+    
+    fe_gift_ctrl -> be_ctrl++:13.2.1. GET /api/checkout/gift-success-intent
+    
+    be_ctrl -> sv++:13.2.2. ProcessPaymentIntentSuccessAsync(paymentIntentId)
+        
+
+        sv -> stripe++:13.2.3. GetPaymentIntentMetadataAsync(paymentIntentId)
+        stripe -->> sv--:13.2.4. Return metadata
+        
+        sv -> sv++:13.2.5. Call ProcessSuccessfulGiftPaymentCoreAsync
+        
+
+        sv -> order_ett++:13.2.6. Call OrderInfo(...)
+        order_ett -->> sv--:13.2.7. Return OrderInfo object
+        
+        sv -> repo++:13.2.8. AddOrderAsync(order)
+        repo -->> sv--:13.2.9. Return Task
+        
+        sv -> item_ett++:13.2.10. Call OrderItem(...)
+        item_ett -->> sv--:13.2.11. Return OrderItem object
+        
+        sv -> repo++:13.2.12. AddOrderItemAsync(orderItem)
+        repo -->> sv--:13.2.13. Return Task
+        
+        sv -> tx_ett++:13.2.14. Call Transaction(...)
+        tx_ett -->> sv--:13.2.15. Return Transaction object
+        
+        sv -> repo++:13.2.16. AddTransactionAsync(transaction)
+        repo -->> sv--:13.2.17. Return Task
+        
+        sv -> repo++:13.2.18. SaveChangesAsync()
+        repo -> ctx++:13.2.19. SaveChangesAsync()
+        ctx -> db++:13.2.20. Save changes to database
+        db -->> ctx--:13.2.21. Return numberOfRowsAffected
+        ctx -->> repo--:13.2.22. Return numberOfRowsAffected
+        repo -->> sv--:13.2.23. Return numberOfRowsAffected
+        
+        sv -> sv++:13.2.24. Call ProcessGiftFulfillmentAsync (Create gift record, send email & notification)
+        sv--
+        
+        sv -> sv++:13.2.25. Call ProcessPayoutAndNotificationAsync (Create payout & notify instructor)
+        sv--
+        
+
+        sv--
+        sv -->> be_ctrl--:13.2.26. Return result
+        
+        be_ctrl -->> fe_gift_ctrl--:13.2.27. Return statusCode 200
+        
+        fe_gift_ctrl -->> my_courses_view--:13.2.28. Redirect to /Course/MyCourses
+        activate my_courses_view
+        my_courses_view -->> act--:13.2.29. Display checkout success message
+end
+
+
+@enduml

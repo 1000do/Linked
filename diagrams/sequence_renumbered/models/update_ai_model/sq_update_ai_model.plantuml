@@ -1,0 +1,140 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+
+mainframe Update AI Model
+
+actor Admin as act
+participant "AiServiceManagementPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "AdminAiServiceController" as fe_ctrl <<frontend controller>>
+participant "AdminAiServiceController" as be_ctrl <<backend controller>>
+participant ":IAiModelManagementService" as sv
+participant ":AiModelAdminDto" as res
+participant ":IAiModelRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Click the edit icon on a model entry
+view -> view++:2. Open edit modal with pre-filled details
+view--
+act -> view:3. Modify model details and click "Save Changes"
+
+
+
+view -> view++:4. Validate form inputs
+view--
+
+opt Form Validation Failed
+    view -->> act:4.1. Display validation error message
+end
+
+view -> fe_ctrl++:5. Send POST request to /AdminAiService/EditModel?id={id}
+
+fe_ctrl -> fe_ctrl++:6. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:6.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:6.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:6.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:6.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> fe_ctrl++:6.3. Validate ModelState
+    fe_ctrl--
+
+opt Invalid ModelState
+        fe_ctrl -->> view:6.3.2. Return BadRequest()
+        view -->> act:6.3.2.1. Display validation error message
+end
+    fe_ctrl -> be_ctrl++:6.4. Send PUT request to /api/admin/ai-service/models/{id}
+    
+    be_ctrl -> sv++:6.5. Call UpdateModelAsync(id, req)
+    
+    sv -> repo++:6.6. Call GetByIdAsync(id)
+    repo -> ctx++:6.7. Find model by ID via DbSet
+    ctx -> db++:6.8. Query AI Model
+    db -->> ctx--:6.9. Return model or null
+    ctx -->> repo--:6.10. Return model or null
+    repo -->> sv--:6.11. Return model or null
+    
+    sv -> sv++:6.12. Validate model update request
+    sv--
+    
+alt Model Not Found
+        sv -->> be_ctrl:6.12.1. throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:6.12.1.1. Return statusCode 404
+        fe_ctrl -->> view:6.12.1.2. Return BadRequest()
+        view -->> act:6.12.1.3. Display error message
+else Valid model update request
+        sv -> sv++:6.12.2. Update model fields
+        sv--
+        
+        sv -> repo++:6.12.2.1. Call Update(model)
+        repo -->> sv--:6.12.2.2. Return updated model
+        
+        sv -> repo++:6.12.2.3. Call SaveChangesAsync()
+        repo -> ctx++:6.12.2.4. Call SaveChangesAsync()
+        ctx -> db++:6.12.2.5. Save changes to database
+        
+alt Database Save Failure
+            db -->> ctx:6.12.2.5.1. throw DbUpdateException
+            ctx -->> repo:6.12.2.5.1.1. throw DbUpdateException
+            repo -->> sv:6.12.2.5.1.2. throw AiModelException
+            sv -->> be_ctrl:6.12.2.5.1.3. throw BadRequestException
+            be_ctrl -->> fe_ctrl:6.12.2.5.1.4. Return statusCode 400
+            fe_ctrl -->> view:6.12.2.5.1.5. Return BadRequest()
+            view -->> act:6.12.2.5.1.6. Display error message
+else Database Save Success
+            db -->> ctx--:6.12.2.5.2. Return numberOfRowsAffected
+            ctx -->> repo--:6.12.2.5.2.1. Return numberOfRowsAffected
+            repo -->> sv--:6.12.2.5.2.2. Return numberOfRowsAffected
+            
+            sv -> res++:6.12.2.5.2.3. Call AiModelAdminDto()
+            res -->> sv--:6.12.2.5.2.4. Return AiModelAdminDto object
+            
+            sv -->> be_ctrl--:6.12.2.5.2.5. Return AiModelAdminDto object
+            be_ctrl -->> fe_ctrl--:6.12.2.5.2.6. Return statusCode 200
+            fe_ctrl -->> view--:6.12.2.5.2.7. Return Ok()
+            view -->> act--:6.12.2.5.2.8. Display success notification
+end
+end
+end
+
+@enduml

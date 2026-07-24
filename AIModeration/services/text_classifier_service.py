@@ -1,5 +1,6 @@
 """Service for text toxicity and spam classification using pre-trained models."""
 
+from core.models import ModerationStatus, HarmfulClassificationLabel
 import json
 import logging
 import os
@@ -128,13 +129,13 @@ class TextClassifierService(BaseService):
         high_conf_spams = [
             r 
             for r in chunk_results
-            if (r["spam_label"] != "SAFE" and r['spam_score'] >= spam_threshold)
+            if (r["spam_label"] != HarmfulClassificationLabel.SAFE.value and r['spam_score'] >= spam_threshold)
         ]
         
         high_conf_toxics = [
             r 
             for r in chunk_results
-            if (r["toxic_label"] != 'SAFE' and r['toxic_score'] >= toxic_threshold)
+            if (r["toxic_label"] != HarmfulClassificationLabel.SAFE.value and r['toxic_score'] >= toxic_threshold)
         ]
         
         
@@ -165,7 +166,8 @@ class TextClassifierService(BaseService):
             
             return {
                 'text': most_severe_threat['text'],
-                'action': 'FLAGGED',
+                'action': ModerationStatus.FLAGGED.value,
+                'reason': 'Severe Threat',
                 'score': most_severe_threat['score'],
                 'raw_label': most_severe_threat['label']
             }
@@ -174,13 +176,13 @@ class TextClassifierService(BaseService):
         low_conf_spams = [
             r 
             for r in chunk_results
-            if (r["spam_label"] != "SAFE" and r['spam_score'] < spam_threshold)
+            if (r["spam_label"] != HarmfulClassificationLabel.SAFE.value and r['spam_score'] < spam_threshold)
             
         ]
         low_conf_toxics = [
             r 
             for r in chunk_results
-            if (r["toxic_label"] != 'SAFE' and r['toxic_score'] < toxic_threshold)
+            if (r["toxic_label"] != HarmfulClassificationLabel.SAFE.value and r['toxic_score'] < toxic_threshold)
         ]
         
         if low_conf_spams or low_conf_toxics:
@@ -209,8 +211,8 @@ class TextClassifierService(BaseService):
             
             return {
                 "text": most_suspicious_threat['text'],
-                "action": "MANUAL_AUDIT", 
-                "reason": "Probable Threat (Low Confidence)", 
+                "action": ModerationStatus.MANUAL_AUDIT.value, 
+                "reason": "Probable Threat", 
                 "score": most_suspicious_threat['score'], 
                 "raw_label": most_suspicious_threat['label']
             }
@@ -219,12 +221,12 @@ class TextClassifierService(BaseService):
         low_conf_non_spams = [
             r 
             for r in chunk_results
-            if (r["spam_label"] == "SAFE" and r['spam_score'] < spam_threshold)
+            if (r["spam_label"] == HarmfulClassificationLabel.SAFE.value and r['spam_score'] < spam_threshold)
         ]
         low_conf_non_toxics = [
             r 
             for r in chunk_results
-            if (r["toxic_label"] == 'SAFE' and r['toxic_score'] < toxic_threshold)
+            if (r["toxic_label"] == HarmfulClassificationLabel.SAFE.value and r['toxic_score'] < toxic_threshold)
         ]
         if low_conf_non_spams or low_conf_non_toxics:
             self.logger.info(f"Low confidence safe:\n {json.dumps(low_conf_non_spams + low_conf_non_toxics, indent= 4,ensure_ascii=False)}")
@@ -253,22 +255,37 @@ class TextClassifierService(BaseService):
                 
             return {
                 "text": most_confused_safe['text'],
-                "action": "MANUAL_AUDIT", 
-                "reason": "Ambiguous Content (Low Confidence Safe)", 
+                "action": ModerationStatus.MANUAL_AUDIT.value, 
+                "reason": "Ambiguous Content", 
                 "score": most_confused_safe['score'], 
                 "raw_label": most_confused_safe['label']
             }
 
         # 4. APPROVED (Safest average)
         avg_score = sum(r["spam_score"] + r['toxic_score'] for r in chunk_results) / (2 * len(chunk_results))
-        return {"action": "APPROVED", "score": avg_score, "raw_label": "SAFE"}
+        return {
+            "action": ModerationStatus.APPROVED.value,
+            "reason": "No Threat Found",
+            "score": avg_score,
+            "raw_label": HarmfulClassificationLabel.SAFE.value
+        }
+
+    def _get_empty_details():
+        return {
+            "text": "",
+            "score": 1.0,
+            "raw_label": HarmfulClassificationLabel.SAFE.value,
+            "latency_ms": 0.0,
+            "reason": "Empty text"
+        }
 
     def classify_text(self, text: str, spam_threshold: float = 0.85, toxic_threshold: float = 0.85, window_size: int = 128, stride: int = 64) -> Tuple[str, float, Dict[str, Any]]:
         """
         Classify text for toxicity and spam using sliding windows.
         """
+        
         if not text or not text.strip():
-            return "APPROVED", 1.0, {"action": "APPROVED", "score": 1.0, "raw_label": "SAFE"}
+            return ModerationStatus.APPROVED.value, 1.0, self._get_empty_details()
 
         start_time = time.time()
         try:
@@ -279,13 +296,13 @@ class TextClassifierService(BaseService):
             elapsed_ms = (time.time() - start_time) * 1000
             
             # Map aggregated action to return tuple format
-            action = agg.get("action", "APPROVED")
+            action = agg.get("action", ModerationStatus.APPROVED.value)
             score = agg.get("score", 1.0)
             
             details = {
                 "text": agg.get("text", text[:60] + "..."),
                 "score": score,
-                "raw_label": agg.get("raw_label", "SAFE"),
+                "raw_label": agg.get("raw_label", HarmfulClassificationLabel.SAFE.value),
                 "latency_ms": elapsed_ms,
                 "reason": agg.get("reason", "Inference complete")
             }
@@ -299,8 +316,11 @@ class TextClassifierService(BaseService):
         """
         Classify a list of extracted texts for toxicity and spam using batched inference.
         """
+
+
         if not texts:
-            return "APPROVED", 1.0, {"action": "APPROVED", "score": 1.0, "raw_label": "SAFE"}
+            return ModerationStatus.APPROVED.value, 1.0, self._get_empty_details()
+
 
         start_time = time.time()
         try:
@@ -330,7 +350,7 @@ class TextClassifierService(BaseService):
                             break
                             
             if not all_chunks:
-                return "APPROVED", 1.0, {"action": "APPROVED", "score": 1.0, "raw_label": "SAFE"}
+                return ModerationStatus.APPROVED.value, 1.0, self._get_empty_details()
 
             # 2. Process in batches to maximize CPU/GPU efficiency
             batch_size = 16
@@ -384,7 +404,7 @@ class TextClassifierService(BaseService):
             self.logger.info(f"Aggregated results:\n{json.dumps(agg, indent=4,ensure_ascii=False)}")
             elapsed_ms = (time.time() - start_time) * 1000
             
-            action = agg.get("action", "APPROVED")
+            action = agg.get("action", ModerationStatus.APPROVED.value)
             score = agg.get("score", 1.0)
             
             # Combine up to a reasonable length for display
@@ -395,7 +415,7 @@ class TextClassifierService(BaseService):
             details = {
                 "text": agg.get("text", display_text),
                 "score": score,
-                "raw_label": agg.get("raw_label", "SAFE"),
+                "raw_label": agg.get("raw_label", HarmfulClassificationLabel.SAFE.value),
                 "latency_ms": elapsed_ms,
                 "reason": agg.get("reason", "Inference complete")
             }

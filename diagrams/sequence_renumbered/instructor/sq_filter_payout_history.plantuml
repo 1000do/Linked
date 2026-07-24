@@ -94,10 +94,13 @@ else Status == "Approved"
         
         fe_ctrl -->> view --:3.3.2.2.15. Return View(vm)
         
+        view -> view ++:3.3.2.2.16. Check vm.Items.Count
+        view --
+        
 alt vm.Items.Count == 0
-            view -->> act:3.3.2.2.15.1. Display empty message "No payouts found"
+            view -->> act:3.3.2.2.16.1. Display empty message "No payouts found"
 else vm.Items.Count > 0
-            view -->> act --:3.3.2.2.15.2. Display filtered payout list
+            view -->> act --:3.3.2.2.16.2. Display filtered payout list
 end
 end
 end

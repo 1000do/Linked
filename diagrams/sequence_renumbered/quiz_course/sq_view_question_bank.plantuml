@@ -1,0 +1,79 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Question Bank (Lessons Summary)
+
+actor Instructor as act
+participant "QuestionBankPage" as view
+participant "QuestionBankController" as fe_ctrl <<frontend controller>>
+participant "QuestionBankController" as be_ctrl <<backend controller>>
+participant ":QuestionBankService" as sv
+participant ":QuestionBankLessonSummaryResponse" as res
+participant ":ILessonRepository" as lesson_repo
+participant ":IQuestionBankRepository" as repo
+
+act ++
+act -> view++:1. Select a course
+view -> fe_ctrl++:2. GET /QuestionBank/CourseLessonsSummary?courseId={courseId}
+
+fe_ctrl -> be_ctrl++:3. GET /api/QuestionBank/courses/{courseId}/lessons-summary
+
+be_ctrl -> sv++:4. Call GetLessonsSummaryByCourseAsync(courseId, instructorId)
+
+sv -> sv++:5. Validate Course Ownership
+sv--
+
+alt Course Not Found Or Unauthorized
+    sv -->> be_ctrl:5.1. throw UnauthorizedAccessException
+    be_ctrl -->> fe_ctrl:5.1.1. Return statusCode 403
+    fe_ctrl -->> view:5.1.2. Return JSON (success=false)
+    view -->> act:5.1.3. Display unauthorized error message
+else Authorized
+
+sv -> lesson_repo++:5.2. Call GetByCourseIdAsync(courseId)
+lesson_repo -->> sv--:5.2.1. Return List<Lesson>
+
+sv -> repo++:5.2.2. Call GetQuestionsByCourseAsync(courseId)
+repo -->> sv--:5.2.3. Return List<QuizQuestion>
+
+loop For each lesson in List<Lesson>
+    sv -> res++:5.2.4. Call QuestionBankLessonSummaryResponse()
+    res -->> sv--:5.2.5. Return QuestionBankLessonSummaryResponse object
+end
+
+    sv -->> be_ctrl--:5.2.6. Return List<QuestionBankLessonSummaryResponse>
+    be_ctrl -->> fe_ctrl--:5.2.7. Return statusCode 200
+    fe_ctrl -->> view--:5.2.8. Return JSON (success=true)
+    view -->> act--:5.2.9. Display lessons summary
+end

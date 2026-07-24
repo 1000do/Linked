@@ -35,7 +35,6 @@ participant "TransactionController" as fe_ctrl <<frontend controller>>
 participant ":TransactionPagedVM" as vm
 participant "TransactionController" as be_ctrl <<backend controller>>
 participant ":ITransactionService" as sv
-participant ":PagedResult" as paged_dto
 participant ":ITransactionRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
@@ -64,40 +63,31 @@ else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++:4.3.2. GET /api/transactions/my?keyword=searchTerm
     be_ctrl -> sv++:4.3.3. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
-    sv -> sv++:4.3.4. Validate pagination parameters
-    sv--
+    sv -> repo++:4.3.4. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
 
-    sv -> repo++:4.3.5. GetUserTransactionsAsync(userId, page, pageSize, keyword, sortBy, status)
+    repo -> ctx++:4.3.5. Calculate totalCount and query items with keyword filter
+    ctx -> db++:4.3.6. Execute query
+    db -->> ctx--:4.3.7. Return data
+    ctx -->> repo--:4.3.8. Return items and totalCount
 
-    repo -> ctx++:4.3.6. Calculate totalCount and query items with keyword filter
-    ctx -> db++:4.3.7. Execute query
-    db -->> ctx--:4.3.8. Return data
-    ctx -->> repo--:4.3.9. Return items and totalCount
+    repo -->> sv--:4.3.9. Return items and totalCount
 
-    repo -->> sv--:4.3.10. Return items and totalCount
-
-    sv -> paged_dto++:4.3.11. Call PagedResult(items, totalCount, page, pageSize)
-    paged_dto -->> sv--:4.3.12. Return PagedResult object
+    sv -->> be_ctrl--:4.3.10. Return PagedResult<TransactionListDto> object
+    be_ctrl -->> fe_ctrl--:4.3.11. Return statusCode 200
     
-    sv -->> be_ctrl:4.3.13. Return PagedResult object
-    deactivate sv
-    be_ctrl -->> fe_ctrl:4.3.14. Return statusCode 200
-    deactivate be_ctrl
-    
-    fe_ctrl -> fe_ctrl++:4.3.15. Deserialize JSON to TransactionPagedVM
+    fe_ctrl -> fe_ctrl++:4.3.12. Deserialize JSON to TransactionPagedVM
     fe_ctrl--
     
-    fe_ctrl -->> view:4.3.16. Return View(vm)
-    deactivate fe_ctrl
+    fe_ctrl -->> view--:4.3.13. Return View(vm)
 
-    view -> view++:4.3.17. Check totalCount and keyword
+    view -> view++:4.3.14. Check totalCount and keyword
     view--
     
 alt Matching results found (totalCount > 0)
-        view -->> act:4.3.17.1. Display filtered list of transactions
+        view -->> act:4.3.14.1. Display filtered list of transactions
 
 else No matching results found (totalCount == 0)
-        view -->> act--:4.3.17.2. Display empty state screen with "No transactions found" message
+        view -->> act--:4.3.14.2. Display empty state screen with "No transactions found" message
 end
 end
 

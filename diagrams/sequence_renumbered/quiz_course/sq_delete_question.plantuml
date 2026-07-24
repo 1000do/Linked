@@ -1,0 +1,110 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Delete Question
+
+actor Instructor as act
+participant "QuestionBankPage" as view
+participant "QuestionBankController" as fe_ctrl <<frontend controller>>
+participant "QuestionBankController" as be_ctrl <<backend controller>>
+participant ":QuestionBankService" as sv
+participant ":IQuestionBankRepository" as repo
+participant ":ICourseRepository" as course_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Confirm delete question
+view -> fe_ctrl++:2. DELETE /QuestionBank/DeleteQuestion?qId={qId}
+
+fe_ctrl -> be_ctrl++:3. DELETE /api/QuestionBank/questions/{questionId}
+
+be_ctrl -> sv++:4. Call DeleteQuestionAsync(questionId, instructorId)
+
+sv -> repo++:5. Call GetQuestionByIdAsync(questionId)
+repo -->> sv--:6. Return QuizQuestion entity
+
+alt Question Not Found
+    sv -->> be_ctrl:6.1. throw KeyNotFoundException
+    be_ctrl -->> fe_ctrl:6.1.1. Return statusCode 404
+    fe_ctrl -->> view:6.1.2. Return JSON (success=false)
+    view -->> act:6.1.3. Display not found error message
+else Question Found
+    sv -> course_repo++:6.2. Call GetByIdAsync(courseId)
+    course_repo -->> sv--:6.2.1. Return course entity
+
+    sv -> sv++:6.2.2. Validate Course Ownership
+    sv--
+    
+alt Course Not Found Or Unauthorized
+        sv -->> be_ctrl:6.2.2.1. throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl:6.2.2.1.1. Return statusCode 403
+        fe_ctrl -->> view:6.2.2.1.2. Return JSON (success=false)
+        view -->> act:6.2.2.1.3. Display unauthorized error message
+else Authorized
+        sv -> repo++:6.2.2.2. Call DeleteQuestionAsync(questionId)
+        
+        repo -> ctx++:6.2.2.2.1. Call FindAsync(questionId)
+        ctx -> db++:6.2.2.2.2. Query database
+        db -->> ctx--:6.2.2.2.3. Return record
+        
+alt Question Exists in Context
+            repo -> ctx:6.2.2.2.3.1. Call Remove(question)
+            repo -> ctx:6.2.2.2.3.1.1. Call SaveChangesAsync()
+            ctx -> db++:6.2.2.2.3.1.2. Delete record from database
+            
+alt Database Delete Failure
+                db -->> ctx:6.2.2.2.3.1.2.1. throw DbUpdateException
+                ctx -->> repo:6.2.2.2.3.1.2.1.1. throw DbUpdateException
+                repo -->> sv:6.2.2.2.3.1.2.1.2. throw DbUpdateException
+                sv -->> be_ctrl:6.2.2.2.3.1.2.1.3. throw DbUpdateException
+                be_ctrl -->> fe_ctrl:6.2.2.2.3.1.2.1.4. Return statusCode 500
+                fe_ctrl -->> view:6.2.2.2.3.1.2.1.5. Return JSON (success=false)
+                view -->> act:6.2.2.2.3.1.2.1.6. Display server error message
+else Database Delete Success
+                db -->> ctx--:6.2.2.2.3.1.2.2. Return returnCode
+                ctx -->> repo:6.2.2.2.3.1.2.2.1. Return numberOfRowsAffected
+end
+else Question Not In Context
+            repo -> repo:6.2.2.2.3.2. Return
+end
+        
+        repo -->> sv--:6.2.2.2.4. Return result
+        
+        sv -->> be_ctrl--:6.2.2.2.5. Return result
+        be_ctrl -->> fe_ctrl--:6.2.2.2.6. Return statusCode 204
+        fe_ctrl -->> view--:6.2.2.2.7. Return JSON (success=true)
+        view -->> act--:6.2.2.2.8. Display question deleted successfully
+end
+end

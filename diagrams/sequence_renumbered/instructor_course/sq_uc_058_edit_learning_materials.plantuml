@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -29,84 +36,73 @@ mainframe Edit Learning Materials
 
 actor Instructor as act
 participant "CourseEditorPage" as view
-participant "LessonController" as fe_ctrl <<frontend controller>>
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
 participant "LessonController" as be_ctrl <<backend controller>>
 participant ":LessonService" as sv
-participant ":IFileStorageService" as storage_sv
-participant ":IMaterialRepository" as repo
+participant ":ILessonRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++:1. Edit Material and click Save
-view -> fe_ctrl++:2. POST /Lesson/UpdateMaterial/{materialId}
+view -> fe_ctrl++:2. POST /InstructorCourse/UpdateMaterialDetails (requestBody)
 fe_ctrl -> be_ctrl++:3. PUT /api/lessons/materials/{materialId}
 
 be_ctrl -> sv++:4. Call UpdateMaterialDetailsAsync(materialId, request, instructorId)
 
-sv -> repo++:5. Call GetMaterialByIdAsync(materialId)
-repo -> ctx++:6. Execute query
-ctx -> db++:7. Fetch material
-db -->> ctx--:8. Return query results
-ctx -->> repo--:9. Return material entity
-repo -->> sv--:10. Return material entity
+sv -> sv++:5. Sanitize HTML Description
+sv--
 
-alt Material Not Found
-    sv -->> be_ctrl:10.1. throw Exception
-    be_ctrl -->> fe_ctrl:10.1.1. Return statusCode 404
-    fe_ctrl -->> view:10.1.2. Return JSON (success=false)
-    view -->> act:10.1.3. Display material not found message
-else Material Found
-    sv -> sv++:10.2. Call ValidateInstructorAndCourseStateAsync()
+sv -> sv++:6. Retrieve material and its lesson
+sv--
+
+alt Material Not Found OR Lesson Not Found
+    sv -->> be_ctrl:6.1. throw Exception
+    be_ctrl -->> fe_ctrl:6.1.1. Return statusCode 404
+    fe_ctrl -->> view:6.1.2. Return JSON (success=false)
+    view -->> act:6.1.3. Display not found message
+else Found
+    sv -> sv++:6.2. Validate Instructor and Course State
     sv--
     
-    sv -> repo++:10.2.1. Call GetMaterialsByLessonIdAsync(lessonId)
-    repo -->> sv--:10.2.2. Return current materials
-    
-alt Duplicate Title or Multiple Videos
-        sv -->> be_ctrl:10.2.2.1. throw BadRequestException
-        be_ctrl -->> fe_ctrl:10.2.2.1.1. Return statusCode 400
-        fe_ctrl -->> view:10.2.2.1.2. Return JSON (success=false)
-        view -->> act:10.2.2.1.3. Display validation error message
+alt Validation Failed (e.g., Unauthorized)
+        sv -->> be_ctrl:6.2.1. throw Exception
+        be_ctrl -->> fe_ctrl:6.2.1.1. Return statusCode 403
+        fe_ctrl -->> view:6.2.1.2. Return JSON (success=false)
+        view -->> act:6.2.1.3. Display validation error message
 else Valid
-        sv -> sv++:10.2.2.2. Call SanitizeHtml(description)
+        sv -> sv++:6.2.2. Update material properties
         sv--
         
-opt Has New MaterialFile
-            sv -> storage_sv++:10.2.2.2.1. Call UploadVideoAsync(MaterialFile)
-            storage_sv -->> sv--:10.2.2.2.1.1. Return uploadedUrl
+opt Course is Published
+            sv -> sv++:6.2.2.1. Set course.CourseStatus = "draft"
+            sv--
 end
         
-        sv -> sv++:10.2.2.3. Update material properties
-        sv--
-        
-        sv -> repo++:10.2.2.4. Call Update(material)
-        repo -->> sv--:10.2.2.5. Return tracking state
-        
-        sv -> repo++:10.2.2.6. Call SaveChangesAsync()
-        repo -> ctx++:10.2.2.7. Save changes to database
-        ctx -> db++:10.2.2.8. Update Material
+        sv -> repo++:6.2.3. Call SaveChangesAsync()
+        repo -> ctx++:6.2.4. Save changes to database
+        ctx -> db++:6.2.5. Update Material
         
 alt Database Save Failure
-            db -->> ctx:10.2.2.8.1. throw DbUpdateException
-            ctx -->> repo:10.2.2.8.1.1. throw DbUpdateException
-            repo -->> sv:10.2.2.8.1.2. throw DbUpdateException
-            sv -->> be_ctrl:10.2.2.8.1.3. throw DbUpdateException
-            be_ctrl -->> fe_ctrl:10.2.2.8.1.4. Return statusCode 500
-            fe_ctrl -->> view:10.2.2.8.1.5. Return JSON (success=false)
-            view -->> act:10.2.2.8.1.6. Display server error message
+            db -->> ctx:6.2.5.1. throw DbUpdateException
+            ctx -->> repo:6.2.5.1.1. throw DbUpdateException
+            repo -->> sv:6.2.5.1.2. throw DbUpdateException
+            sv -->> be_ctrl:6.2.5.1.3. throw DbUpdateException
+            be_ctrl -->> fe_ctrl:6.2.5.1.4. Return statusCode 500
+            fe_ctrl -->> view:6.2.5.1.5. Return JSON (success=false)
+            view -->> act:6.2.5.1.6. Display server error message
 else Database Save Success
-            db -->> ctx--:10.2.2.8.2. Return returnCode
-            ctx -->> repo--:10.2.2.8.2.1. Return numberOfRowsAffected
-            repo -->> sv--:10.2.2.8.2.2. Return numberOfRowsAffected
+            db -->> ctx--:6.2.5.2. Return returnCode
+            ctx -->> repo--:6.2.5.2.1. Return numberOfRowsAffected
+            repo -->> sv--:6.2.5.2.2. Return numberOfRowsAffected
             
-            sv -> sv++:10.2.2.8.2.3. Call InvalidateCourseCacheAsync(courseId)
+            sv -> sv++:6.2.5.2.3. Call Cache Invalidation Logic
             sv--
             
-            sv -->> be_ctrl--:10.2.2.8.2.4. Return MaterialResponse object
-            be_ctrl -->> fe_ctrl--:10.2.2.8.2.5. Return statusCode 200
-            fe_ctrl -->> view--:10.2.2.8.2.6. Return JSON (success=true)
-            view -->> act--:10.2.2.8.2.7. Display material updated successfully
+            sv -->> be_ctrl--:6.2.5.2.4. Return MaterialResponse object
+            be_ctrl -->> fe_ctrl--:6.2.5.2.5. Return statusCode 200
+            fe_ctrl -->> view--:6.2.5.2.6. Return JSON (success=true)
+            view -->> act--:6.2.5.2.7. Display material updated successfully
 end
 end
 end

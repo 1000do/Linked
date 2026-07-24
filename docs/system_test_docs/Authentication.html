@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Authentication</li>
+    <li><b>Test requirement:</b> Tests for authentication features including Register, Login, Login with Google, Forget Password, and Logout</li>
+    <li><b>Number of TCs:</b> 18</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Register</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Register Account Successfully</td>
+        <td>1. Access the registration page.<br>2. Enter valid registration details: Email (Gmail), Username, Full Name, Password, and Confirm Password.<br>3. Click the Register button.</td>
+        <td>The system saves a new account and redirects to the Verification Recommendation page displaying the registered email.</td>
+        <td>Guest is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Passwords Do Not Match</td>
+        <td>1. Access the registration page.<br>2. Enter registration details where Password and Confirm Password do not match.<br>3. Click the Register button.</td>
+        <td>The system displays a validation error message.</td>
+        <td>Guest is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Non-Gmail Email Address</td>
+        <td>1. Access the registration page.<br>2. Enter registration details with a non-Gmail email address.<br>3. Click the Register button.</td>
+        <td>The system displays an error message indicating only Gmail registration is supported.</td>
+        <td>Guest is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Skip Verification</td>
+        <td>1. Access the registration page.<br>2. Register successfully to reach Verification Recommendation page.<br>3. Click the Skip to Login link.</td>
+        <td>The system redirects to the Login page.</td>
+        <td>Guest is on the Verification Recommendation page.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Username Already Exists</td>
+        <td>1. Access the registration page.<br>2. Enter registration details with an already existing username.<br>3. Click the Register button.</td>
+        <td>The system displays an error message indicating the username is already in use.</td>
+        <td>Guest is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Login</td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Login Successfully</td>
+        <td>1. Access the login page.<br>2. Enter a valid Username or Email and Password.<br>3. Click the Sign In button.</td>
+        <td>The system appends authentication cookies and redirects based on user role.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Invalid Credentials</td>
+        <td>1. Access the login page.<br>2. Enter an incorrect Username/Email or Password.<br>3. Click the Sign In button.</td>
+        <td>The system displays an incorrect credentials error message.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>Account Suspended</td>
+        <td>1. Access the login page.<br>2. Enter credentials for an account that has an active lockout.<br>3. Click the Sign In button.</td>
+        <td>The system displays a suspension error message indicating the lockout end date/time.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Login with Google</td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Login with Google Successfully (Existing User)</td>
+        <td>1. Access the login page.<br>2. Click the Sign in with Google button.<br>3. Authenticate with a Google account already registered in the system.</td>
+        <td>The system validates the Google token, sets authentication cookies, and redirects based on user role.</td>
+        <td>Actor is not logged in, account exists.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>First Time Login (New User)</td>
+        <td>1. Access the login page.<br>2. Click the Sign in with Google button.<br>3. Authenticate with a Google account not registered in the system.</td>
+        <td>The system generates a unique username, saves a new account, sets authentication cookies, and redirects based on user role.</td>
+        <td>Actor is not logged in, account does not exist.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>Token Validation Failed</td>
+        <td>1. Access the login page.<br>2. Click the Sign in with Google button.<br>3. Trigger Google Identity authentication returning an invalid or expired token.</td>
+        <td>The system displays an authentication error message.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>Account Suspended</td>
+        <td>1. Access the login page.<br>2. Click the Sign in with Google button.<br>3. Authenticate with a suspended Google account.</td>
+        <td>The system displays a suspension warning indicating the lockout expiry date/time.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Forget Password</td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Reset Password Successfully</td>
+        <td>1. Access the Forgot Password page.<br>2. Enter a valid verified email and click Submit.<br>3. Receive OTP in email.<br>4. On the Verify OTP page, enter the OTP and click Verify.<br>5. On the Reset Password page, enter a new password and click Reset.</td>
+        <td>The system updates the password hash and consumes OTP, then redirects to the Login page with a success message.</td>
+        <td>Actor is not logged in, email exists and is verified.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Email Not Found</td>
+        <td>1. Access the Forgot Password page.<br>2. Enter an unregistered email and click Submit.</td>
+        <td>The system displays an 'Email not found' error message.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Google Account Password Reset Denied</td>
+        <td>1. Access the Forgot Password page.<br>2. Enter the email of an account linked to Google OAuth and click Submit.</td>
+        <td>The system displays a 'This account uses Google login' error message.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>Email Not Verified</td>
+        <td>1. Access the Forgot Password page.<br>2. Enter an unverified email and click Submit.</td>
+        <td>The system displays an 'Email is not verified' error message.</td>
+        <td>Actor is not logged in.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>Incorrect or Expired OTP</td>
+        <td>1. Access the Forgot Password page.<br>2. Submit a valid email to receive an OTP.<br>3. On the Verify OTP page, enter an incorrect or expired OTP and click Verify.</td>
+        <td>The system displays an 'Incorrect or expired OTP' error message.</td>
+        <td>Actor is not logged in, email exists and is verified.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Logout</td>
+    </tr>
+
+    <tr>
+        <td>TC-018</td>
+        <td>Logout Successfully</td>
+        <td>1. Login to the system.<br>2. Click the Logout button.</td>
+        <td>The system revokes the refresh token, deletes cookies, and redirects to the homepage in an unauthenticated state.</td>
+        <td>Actor is authenticated.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+</table>
+
+</body>
+</html>

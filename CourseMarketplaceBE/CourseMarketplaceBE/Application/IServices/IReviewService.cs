@@ -25,5 +25,8 @@ public interface IReviewService
     // ── Tiện ích ─────────────────────────────────────────────────────────
     Task<EnrollmentStatusResponse> GetEnrollmentStatusAsync(int userId, int courseId);
     Task ReportReviewAsync(int userId, int reviewId, string type, string reason);
+    Task<int> CreateReviewInDatabaseAsync(TempReviewDto tempDto, int enrollmentId, string reviewStatus);
+    Task<bool> UpdateReviewInDatabaseAsync(TempReviewDto tempDto, string reviewStatus);
+    Task<bool> UpdateReviewStatusInDatabaseAsync(int reviewId, bool isLessonReview, string reviewStatus, bool isRemoved = false);
 }
 

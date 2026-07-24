@@ -41,6 +41,10 @@ participant ":TransactionListDto" as tx_dto
 participant ":IInstructorService" as inst_sv
 participant ":IInstructorRepository" as inst_repo
 participant ":InstructorPayoutDto" as po_dto
+participant ":IAdminFinanceService" as fin_sv
+participant ":IAdminFinanceRepository" as fin_repo
+participant ":InstructorCourseRevenueProjection" as cr_proj
+participant ":InstructorCourseRevenueResponse" as cr_res
 participant ":InstructorFinancePageVM" as vm
 participant ":AppDbContext" as ctx
 database Database as db
@@ -71,11 +75,14 @@ alt Status != "Approved"
         app_view -->> act --:3.3.1.1. Display application status
 else Status == "Approved"
         
-par Fetch Balance Data Concurrently
-            fe_ctrl -> be_tx_ctrl ++:3.3.2.1. GET /api/transactions/instructor?page=1&pageSize=100000
+        fe_ctrl -> fe_ctrl ++:3.3.2. Fetch balance data concurrently
+        fe_ctrl --
+        
+par Fetch Transactions
+            fe_ctrl -> be_tx_ctrl ++:3.3.2.1. GET /api/transactions/instructor
             be_tx_ctrl -> tx_sv ++:3.3.2.1.1. Call GetInstructorTransactionsAsync(...)
             tx_sv -> tx_repo ++:3.3.2.1.2. Call GetInstructorTransactionsAsync(...)
-            tx_repo -> ctx ++:3.3.2.1.3. Query all Transactions
+            tx_repo -> ctx ++:3.3.2.1.3. Query transactions
             ctx -> db ++:3.3.2.1.4. Execute query
             db -->> ctx --:3.3.2.1.5. Return database records
             ctx -->> tx_repo --:3.3.2.1.6. Return data
@@ -85,27 +92,48 @@ par Fetch Balance Data Concurrently
             
             tx_repo -->> tx_sv --:3.3.2.1.9. Return list
             tx_sv -->> be_tx_ctrl --:3.3.2.1.10. Return PagedResult<TransactionListDto>
-            be_tx_ctrl -->> fe_ctrl --:3.3.2.1.11. Return statusCode 200 (All Transactions)
+            be_tx_ctrl -->> fe_ctrl --:3.3.2.1.11. Return statusCode 200
             
-            fe_ctrl -> be_inst_ctrl ++:3.3.2.1.12. GET /api/instructor/payouts?page=1&pageSize=100000
-            be_inst_ctrl -> inst_sv ++:3.3.2.1.13. Call GetPayoutsAsync(...)
-            inst_sv -> inst_repo ++:3.3.2.1.14. Call GetPayoutsAsync(...)
-            inst_repo -> ctx ++:3.3.2.1.15. Query all InstructorPayouts
-            ctx -> db ++:3.3.2.1.16. Execute query
-            db -->> ctx --:3.3.2.1.17. Return database records
-            ctx -->> inst_repo --:3.3.2.1.18. Return data
+else Fetch Payouts
+            fe_ctrl -> be_inst_ctrl ++:3.3.2.2. GET /api/instructor/payouts
+            be_inst_ctrl -> inst_sv ++:3.3.2.2.1. Call GetPayoutsAsync(...)
+            inst_sv -> inst_repo ++:3.3.2.2.2. Call GetPayoutsAsync(...)
+            inst_repo -> ctx ++:3.3.2.2.3. Query payouts
+            ctx -> db ++:3.3.2.2.4. Execute query
+            db -->> ctx --:3.3.2.2.5. Return database records
+            ctx -->> inst_repo --:3.3.2.2.6. Return data
             
-            inst_repo -> po_dto ++:3.3.2.1.19. Call InstructorPayoutDto()
-            po_dto -->> inst_repo --:3.3.2.1.20. Return InstructorPayoutDto object
+            inst_repo -> po_dto ++:3.3.2.2.7. Call InstructorPayoutDto()
+            po_dto -->> inst_repo --:3.3.2.2.8. Return InstructorPayoutDto object
             
-            inst_repo -->> inst_sv --:3.3.2.1.21. Return list
-            inst_sv -->> be_inst_ctrl --:3.3.2.1.22. Return PagedResult<InstructorPayoutDto>
-            be_inst_ctrl -->> fe_ctrl --:3.3.2.1.23. Return statusCode 200 (All Payouts)
+            inst_repo -->> inst_sv --:3.3.2.2.9. Return list
+            inst_sv -->> be_inst_ctrl --:3.3.2.2.10. Return PagedResult<InstructorPayoutDto>
+            be_inst_ctrl -->> fe_ctrl --:3.3.2.2.11. Return statusCode 200
             
-            fe_ctrl -> be_inst_ctrl ++:3.3.2.1.24. GET /api/instructor/payout-days
-            be_inst_ctrl -> inst_sv ++:3.3.2.1.25. Call GetPayoutDaysDelay()
-            inst_sv -->> be_inst_ctrl --:3.3.2.1.26. Return days config (e.g. 14)
-            be_inst_ctrl -->> fe_ctrl --:3.3.2.1.27. Return statusCode 200 (Days delay)
+else Fetch Course Revenues
+            fe_ctrl -> be_tx_ctrl ++:3.3.2.3. GET /api/transactions/instructor/course-revenues
+            be_tx_ctrl -> fin_sv ++:3.3.2.3.1. Call GetInstructorCourseRevenuesByInstructorAsync()
+            fin_sv -> fin_repo ++:3.3.2.3.2. Call GetInstructorCourseRevenuesByInstructorAsync()
+            fin_repo -> ctx ++:3.3.2.3.3. Query course revenues
+            ctx -> db ++:3.3.2.3.4. Execute query
+            db -->> ctx --:3.3.2.3.5. Return database records
+            ctx -->> fin_repo --:3.3.2.3.6. Return data
+            
+            fin_repo -> cr_proj ++:3.3.2.3.7. Call InstructorCourseRevenueProjection()
+            cr_proj -->> fin_repo --:3.3.2.3.8. Return projection list
+            fin_repo -->> fin_sv --:3.3.2.3.9. Return projection list
+            
+            fin_sv -> cr_res ++:3.3.2.3.10. Call InstructorCourseRevenueResponse()
+            cr_res -->> fin_sv --:3.3.2.3.11. Return response list
+            
+            fin_sv -->> be_tx_ctrl --:3.3.2.3.12. Return list
+            be_tx_ctrl -->> fe_ctrl --:3.3.2.3.13. Return statusCode 200
+            
+else Fetch Payout Days
+            fe_ctrl -> be_inst_ctrl ++:3.3.2.4. GET /api/instructor/payout-days
+            be_inst_ctrl -> fin_sv ++:3.3.2.4.1. Call GetPayoutDaysConfigAsync()
+            fin_sv -->> be_inst_ctrl --:3.3.2.4.2. Return days config
+            be_inst_ctrl -->> fe_ctrl --:3.3.2.4.3. Return statusCode 200
 end
         
         fe_ctrl -> fe_ctrl ++:3.3.3. Compute Financial Metrics (Gross, Refunded, Net Earnings, Pending, Withdrawn)

@@ -27,7 +27,6 @@
 hide footbox    
 mainframe Become an Instructor
 
-
 actor User as act
 participant "HomePage" as portal
 participant "ApplyPage" as view
@@ -55,47 +54,23 @@ fe_ctrl -> fe_ctrl++:3. Validate User's authentication and authorization
 fe_ctrl--
 
 alt Session Invalid
-    fe_ctrl -->> login_view++:3.1. Redirect to LoginPage
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
     login_view -->> act--:3.1.1. Display login form
 else Unauthorized Access
-    fe_ctrl -->> error_view++:3.2. Redirect to ErrorPage
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
     error_view -->> act--:3.2.1. Display error message
 else Valid User's authentication and authorization
-    fe_ctrl -> be_ctrl++:3.3. GET /api/instructor/dashboard
-    be_ctrl -->> fe_ctrl--:3.3.1. Return statusCode 200
-
-    fe_ctrl -> fe_ctrl++:3.3.2. Check ApprovalStatus
+    fe_ctrl -> fe_ctrl++:3.3. Load auxiliary dependencies (Profile, Countries, Categories)
     fe_ctrl--
 
-alt ApprovalStatus == "Pending" or "Approved"
-        fe_ctrl -->> status_view++:3.3.2.1. Return statusCode 302
-        status_view -->> act--:3.3.2.1.1. Display Application Status
-else ApprovalStatus == "Rejected"
-        fe_ctrl -> be_ctrl++:3.3.2.2. GET /api/instructor/apply-info
-        be_ctrl -->> fe_ctrl--:3.3.2.2.1. Return statusCode 200
-        
-        fe_ctrl -> view_model++:3.3.2.2.2. Call InstructorApplyViewModel(IsResubmit=true)
-        view_model -->> fe_ctrl--:3.3.2.2.3. Return InstructorApplyViewModel object
-        
-        fe_ctrl -> fe_ctrl++:3.3.2.2.4. Pre-fill ViewModel (IsResubmit = true)
-        fe_ctrl--
-        
-        fe_ctrl -> fe_ctrl++:3.3.2.2.5. Load auxiliary dependencies (Profile, Countries, Categories)
-        fe_ctrl--
+    fe_ctrl -> view_model++:3.3.1. Call InstructorApplyViewModel()
+    view_model -->> fe_ctrl--:3.3.2. Return InstructorApplyViewModel object
 
-        fe_ctrl -->> view++:3.3.2.2.6. Return statusCode 200
-        view -->> act--:3.3.2.2.7. Display instructor application form
-else ApprovalStatus == null
-        fe_ctrl -> fe_ctrl++:3.3.2.3. Load auxiliary dependencies (Profile, Countries, Categories)
-        fe_ctrl--
-
-        fe_ctrl -> view_model++:3.3.2.3.1. Call InstructorApplyViewModel()
-        view_model -->> fe_ctrl--:3.3.2.3.2. Return InstructorApplyViewModel object
-
-        fe_ctrl -->> view--:3.3.2.3.3. Return statusCode 200
-        activate view
-        view -->> act--:3.3.2.3.4. Display instructor application form
-end
+    fe_ctrl -->> view--:3.3.3. Return statusCode 200
+    activate view
+    view -->> act--:3.3.4. Display instructor application form
 end
 
 act -> view++:4. Fill professional details, Stripe country, and upload document(s)
@@ -109,68 +84,63 @@ alt Invalid Form Data
     fe_ctrl -->> view:7.1. Return statusCode 400
     view -->> act:7.1.1. Display validation errors inline
 else Valid Form Data
-    fe_ctrl -> be_ctrl++:7.2. POST /api/instructor/apply (FormData)
+    fe_ctrl -> be_ctrl++:7.2. POST /api/instructor/apply
     
     be_ctrl -> sv++:7.2.1. SubmitApplicationAsync(userId, request)
     
     sv -> user_repo++:7.2.2. GetAccountByIdAsync(userId)
-    user_repo -->> sv--:7.2.3. Return Account entity
+    user_repo -> ctx++:7.2.3. Query account from DbSet
+    ctx -> db++:7.2.4. Execute query
+    db -->> ctx--:7.2.5. Return data
+    ctx -->> user_repo--:7.2.6. Return data
+    user_repo -->> sv--:7.2.7. Return Account entity
     
-    sv -> sv++:7.2.4. Validate account verification and documents
+    sv -> sv++:7.2.8. Validate account verification and documents
     sv--
     
 alt Account Not Verified or Missing Documents
-        sv -->> be_ctrl:7.2.4.1. throw InvalidOperationException
-        be_ctrl -->> fe_ctrl:7.2.4.1.1. Return statusCode 400
-        fe_ctrl -->> view:7.2.4.1.2. Return statusCode 400
-        view -->> act:7.2.4.1.3. Display error message
+        sv -->> be_ctrl:7.2.8.1. throw InvalidOperationException
+        be_ctrl -->> fe_ctrl:7.2.8.1.1. Return statusCode 400
+        fe_ctrl -->> view:7.2.8.1.2. Return statusCode 400
+        view -->> act:7.2.8.1.3. Display error message
+        deactivate view
 else Account Verified and Documents Valid
-        sv -> repo++:7.2.4.2. GetByIdAsync(userId)
-        repo -->> sv--:7.2.4.2.1. Return Instructor entity
+        sv -> repo++:7.2.8.2. GetByIdAsync(userId)
+        repo -> ctx++:7.2.8.2.1. Query instructor from DbSet
+        ctx -> db++:7.2.8.2.2. Execute query
+        db -->> ctx--:7.2.8.2.3. Return data
+        ctx -->> repo--:7.2.8.2.4. Return data
+        repo -->> sv--:7.2.8.2.5. Return Instructor entity
         
-        sv -> upload++:7.2.4.2.2. UploadImageAsync(file)
-        upload -->> sv--:7.2.4.2.3. Return document URL
+        sv -> upload++:7.2.8.2.6. UploadImageAsync(file)
+        upload -->> sv--:7.2.8.2.7. Return document URL
         
-        sv -> sv++:7.2.4.2.4. Check if application already exists
+        sv -> sv++:7.2.8.2.8. Check if application already exists
         sv--
         
 alt Resubmitting a Rejected Application
-            sv -> sv++:7.2.4.2.4.1. Update existing application properties (ApprovalStatus = Pending)
+            sv -> sv++:7.2.8.2.8.1. Update existing application properties (ApprovalStatus = Pending)
             sv--
 else New Application
-            sv -> ett++:7.2.4.2.4.2. Call Instructor()
-            ett -->> sv--:7.2.4.2.4.2.1. Return Instructor object
-            sv -> repo++:7.2.4.2.4.2.2. AddAsync(instructor)
-            repo -->> sv--:7.2.4.2.4.2.3. Return result
+            sv -> ett++:7.2.8.2.8.2. Call Instructor()
+            ett -->> sv--:7.2.8.2.8.2.1. Return Instructor object
+            sv -> repo++:7.2.8.2.8.2.2. AddAsync(instructor)
+            repo -->> sv--:7.2.8.2.8.2.3. Return result
 end
         
-        sv -> repo++:7.2.4.2.5. SaveChangesAsync()
-        repo -> ctx++:7.2.4.2.6. Save changes to database
-        ctx -> db++:7.2.4.2.7. Execute INSERT / UPDATE
-        db -->> ctx--:7.2.4.2.8. Return numberOfRowsAffected
-        ctx -->> repo--:7.2.4.2.9. Return numberOfRowsAffected
-        repo -->> sv--:7.2.4.2.10. Return numberOfRowsAffected
+        sv -> repo++:7.2.8.2.9. SaveChangesAsync()
+        repo -> ctx++:7.2.8.2.10. Call SaveChangesAsync()
+        ctx -> db++:7.2.8.2.11. Save changes to database
+        db -->> ctx--:7.2.8.2.12. Return numberOfRowsAffected
+        ctx -->> repo--:7.2.8.2.13. Return numberOfRowsAffected
+        repo -->> sv--:7.2.8.2.14. Return numberOfRowsAffected
         
-        sv -> sv++:7.2.4.2.11. Check numberOfRowsAffected
-        sv--
-        
-alt Database Save Failure (numberOfRowsAffected = 0)
-            sv -->> be_ctrl:7.2.4.2.11.1. throw InvalidOperationException
-            sv--
-            be_ctrl -->> fe_ctrl:7.2.4.2.11.1.1. Return statusCode 500
-            be_ctrl--
-            fe_ctrl -->> view:7.2.4.2.11.1.2. Return statusCode 500
-            fe_ctrl--
-            view -->> act:7.2.4.2.11.1.3. Display error message
-            view--
-else Database Save Success (numberOfRowsAffected > 0)
-            sv -->> be_ctrl--:7.2.4.2.11.2. Return success message
-            be_ctrl -->> fe_ctrl--:7.2.4.2.11.2.1. Return statusCode 200
-            fe_ctrl -->> status_view++:7.2.4.2.11.2.2. Return statusCode 302
-            fe_ctrl--
-            deactivate view
-            status_view -->> act--:7.2.4.2.11.2.3. Display "Your application has been submitted successfully!"
-end
+        sv -->> be_ctrl--:7.2.8.2.15. Return success message
+        be_ctrl -->> fe_ctrl--:7.2.8.2.16. Return statusCode 200
+        fe_ctrl -->> status_view:7.2.8.2.17. Redirect to ApplicationStatusPage
+        fe_ctrl--
+        activate status_view
+        status_view -->> act--:7.2.8.2.18. Display "Your application has been submitted successfully!"
 end
 end
 

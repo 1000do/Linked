@@ -367,7 +367,8 @@ namespace CourseMarketplaceBE.Domain.Constants
     {
         Ok,
         Removed,
-        Violating
+        Violating,
+        Pending
     }
 
     public static class ReviewStatusExtensions
@@ -379,6 +380,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 ReviewStatus.Ok => "ok",
                 ReviewStatus.Removed => "removed",
                 ReviewStatus.Violating => "violating",
+                ReviewStatus.Pending => "pending",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid review status")
             };
         }

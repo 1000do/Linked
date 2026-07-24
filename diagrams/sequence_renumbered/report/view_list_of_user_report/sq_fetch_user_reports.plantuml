@@ -1,0 +1,136 @@
+@startuml 
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+
+hide footbox
+mainframe Fetch User Reports
+
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":IReportModerationService" as sv
+participant ":CourseReportDetailResponse" as c_res
+participant ":ReviewReportDetailResponse" as r_res
+participant ":IReportRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+fe_ctrl++
+par Fetch Course Reports
+    fe_ctrl -> be_ctrl++:0.1. GET /api/admin/moderation/reports/courses
+    be_ctrl -> sv++:0.1.1. Call GetAllCourseReportsAsync(request)
+    sv -> repo++:0.1.2. Call GetAllCourseReportsAsync(status, page, pageSize)
+    repo -> ctx++:0.1.3. Query course reports
+    ctx -> db++:0.1.4. Execute query
+    
+alt Database Query Failure
+        db -->> ctx:0.1.4.1. Return empty list, totalCount = 0
+        ctx -->> repo:0.1.4.1.1. Return empty list, totalCount = 0
+        repo -->> sv:0.1.4.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:0.1.4.1.3. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:0.1.4.1.4. Return statusCode 404
+else Database Query Success
+        db -->> ctx:0.1.4.2. Return data
+        db--
+        ctx -->> repo:0.1.4.2.1. Return data
+        ctx--
+        repo -->> sv:0.1.4.2.2. Return (reports, totalCount)
+        repo--
+        
+        sv -> c_res++:0.1.4.2.3. Map to PagedResult<CourseReportDetailResponse>
+        c_res -->> sv--:0.1.4.2.4. Return PagedResult
+        
+        sv -->> be_ctrl:0.1.4.2.5. Return PagedResult<CourseReportDetailResponse>
+        sv--
+        be_ctrl -->> fe_ctrl:0.1.4.2.6. Return statusCode 200
+        be_ctrl--
+end
+else Fetch Course Review Reports
+    fe_ctrl -> be_ctrl++:0.2. GET /api/admin/moderation/reports/course-reviews
+    be_ctrl -> sv++:0.2.1. Call GetAllCourseReviewReportsAsync(request)
+    sv -> repo++:0.2.2. Call GetAllCourseReviewReportsAsync(status, page, pageSize)
+    repo -> ctx++:0.2.3. Query course review reports
+    ctx -> db++:0.2.4. Execute query
+    
+alt Database Query Failure
+        db -->> ctx:0.2.4.1. Return empty list, totalCount = 0
+        ctx -->> repo:0.2.4.1.1. Return empty list, totalCount = 0
+        repo -->> sv:0.2.4.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:0.2.4.1.3. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:0.2.4.1.4. Return statusCode 404
+else Database Query Success
+        db -->> ctx:0.2.4.2. Return data
+        db--
+        ctx -->> repo:0.2.4.2.1. Return data
+        ctx--
+        repo -->> sv:0.2.4.2.2. Return (reports, totalCount)
+        repo--
+        
+        sv -> r_res++:0.2.4.2.3. Map to PagedResult<ReviewReportDetailResponse>
+        r_res -->> sv--:0.2.4.2.4. Return PagedResult
+        
+        sv -->> be_ctrl:0.2.4.2.5. Return PagedResult<ReviewReportDetailResponse>
+        sv--
+        be_ctrl -->> fe_ctrl:0.2.4.2.6. Return statusCode 200
+        be_ctrl--
+end
+else Fetch Lesson Review Reports
+    fe_ctrl -> be_ctrl++:0.3. GET /api/admin/moderation/reports/lesson-reviews
+    be_ctrl -> sv++:0.3.1. Call GetAllLessonReviewReportsAsync(request)
+    sv -> repo++:0.3.2. Call GetAllLessonReviewReportsAsync(status, page, pageSize)
+    repo -> ctx++:0.3.3. Query lesson review reports
+    ctx -> db++:0.3.4. Execute query
+    
+alt Database Query Failure
+        db -->> ctx:0.3.4.1. Return empty list, totalCount = 0
+        ctx -->> repo:0.3.4.1.1. Return empty list, totalCount = 0
+        repo -->> sv:0.3.4.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:0.3.4.1.3. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:0.3.4.1.4. Return statusCode 404
+else Database Query Success
+        db -->> ctx:0.3.4.2. Return data
+        db--
+        ctx -->> repo:0.3.4.2.1. Return data
+        ctx--
+        repo -->> sv:0.3.4.2.2. Return (reports, totalCount)
+        repo--
+        
+        sv -> r_res++:0.3.4.2.3. Map to PagedResult<ReviewReportDetailResponse>
+        r_res -->> sv--:0.3.4.2.4. Return PagedResult
+        
+        sv -->> be_ctrl:0.3.4.2.5. Return PagedResult<ReviewReportDetailResponse>
+        sv--
+        be_ctrl -->> fe_ctrl:0.3.4.2.6. Return statusCode 200
+        be_ctrl--
+end
+end
+@enduml

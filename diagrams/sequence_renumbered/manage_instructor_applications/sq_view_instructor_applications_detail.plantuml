@@ -1,6 +1,13 @@
 @startuml
 <style>
     sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
         actor{
             BackgroundColor white
             LineThickness 1.0
@@ -36,7 +43,7 @@ participant "AdminApprovalDetailPage" as detail_view
 participant "AdminApprovalController" as fe_ctrl <<frontend controller>>
 participant "AdminApprovalController" as be_ctrl <<backend controller>>
 participant ":IInstructorApprovalService" as sv
-participant ":InstructorApplicationDetailResponse" as app_detail_dto
+participant ":InstructorApprovalDto" as app_detail_dto
 participant ":IInstructorRepository" as repo
 participant ":AppDbContext" as ctx
 database Database as db

@@ -14,7 +14,7 @@
         }
         groupHeader{
             BackgroundColor white
-        }
+    
         referenceHeader{
             BackgroundColor white
         }

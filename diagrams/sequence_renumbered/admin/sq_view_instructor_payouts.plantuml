@@ -34,15 +34,14 @@ participant "LoginPage" as login_view
 participant "ErrorPage" as error_view
 participant "AdminFinanceController" as fe_ctrl <<frontend controller>>
 participant ":AdminFinanceUnifiedVM" as vm
+participant ":PayoutDetailVM" as view_model
 participant "AdminFinanceController" as be_ctrl <<backend controller>>
 participant ":IAdminFinanceService" as sv
 participant ":PayoutDetailResponse" as res
-participant ":PagedResult<PayoutDetailResponse>" as paged_res
 participant ":IAdminFinanceRepository" as repo
+participant ":PayoutDetailProjection" as proj
 participant ":AppDbContext" as ctx
 database Database as db
-participant ":ApiResponse" as api_resp
-participant ":PagedResult<PayoutDetailVM>" as paged_vm
 
 act ++
 act -> view++:1. Click "Instructor Payouts" tab
@@ -52,7 +51,7 @@ fe_ctrl -> vm++:3. Call AdminFinanceUnifiedVM()
 vm -->> fe_ctrl--:4. Return AdminFinanceUnifiedVM object
 
 fe_ctrl -> fe_ctrl++:5. Validate actor's authentication and authorization
-fe_ctrl--
+fe_ctrl --
 
 alt Session Invalid
     fe_ctrl -->> login_view:5.1. Redirect to LoginPage
@@ -72,37 +71,41 @@ else Valid actor's authentication and authorization
     repo -> ctx++:5.3.3. Execute query
     ctx -> db++:5.3.4. Execute query
 
+    db -> db++:5.3.5. Check query execution
+    db --
+
 alt Database Query Failure
-        db -->> ctx:5.3.4.1. Throw Exception
-        ctx -->> repo:5.3.4.1.1. Throw Exception
-        repo -->> sv:5.3.4.1.2. Throw Exception
-        sv -->> be_ctrl:5.3.4.1.3. Throw Exception
-        be_ctrl -->> fe_ctrl:5.3.4.1.4. Return statusCode 500
-        fe_ctrl -->> view:5.3.4.1.5. Return statusCode 500
-        view -->> act:5.3.4.1.6. Display error message
+        db -->> ctx:5.3.5.1. Throw Exception
+        ctx -->> repo:5.3.5.1.1. Throw Exception
+        repo -->> sv:5.3.5.1.2. Throw Exception
+        sv -->> be_ctrl:5.3.5.1.3. Throw Exception
+        be_ctrl -->> fe_ctrl:5.3.5.1.4. Return statusCode 500
+        fe_ctrl -->> view:5.3.5.1.5. Return statusCode 500
+        view -->> act:5.3.5.1.6. Display error message
 else Database Query Success
-        db -->> ctx--:5.3.4.2. Return List of PayoutDetailProjection and totalCount
-        ctx -->> repo--:5.3.4.2.1. Return List of PayoutDetailProjection and totalCount
-        repo -->> sv--:5.3.4.2.2. Return List of PayoutDetailProjection and totalCount
+        db -->> ctx--:5.3.5.2. Return entities
+        ctx -->> repo--:5.3.5.2.1. Return entities
+        
+        repo -> proj++:5.3.5.2.2. Map entities to PayoutDetailProjection
+        proj -->> repo--:5.3.5.2.3. Return PayoutDetailProjection
+        
+        repo -->> sv--:5.3.5.2.4. Return List<PayoutDetailProjection> and totalCount
 
-        sv -> res++:5.3.4.2.3. Call PayoutDetailResponse()
-        res -->> sv--:5.3.4.2.4. Return PayoutDetailResponse object
+        sv -> res++:5.3.5.2.5. Map PayoutDetailProjection to PayoutDetailResponse
+        res -->> sv--:5.3.5.2.6. Return PayoutDetailResponse
 
-        sv -> paged_res++:5.3.4.2.5. Call PagedResult<PayoutDetailResponse>()
-        paged_res -->> sv--:5.3.4.2.6. Return PagedResult<PayoutDetailResponse> object
+        sv -->> be_ctrl--:5.3.5.2.7. Return PagedResult<PayoutDetailResponse>
 
-        sv -->> be_ctrl--:5.3.4.2.7. Return PagedResult<PayoutDetailResponse> object
+        be_ctrl -->> fe_ctrl--:5.3.5.2.8. Return statusCode 200
 
-        be_ctrl -> api_resp++:5.3.4.2.8. Call ApiResponse.SuccessResponse()
-        api_resp -->> be_ctrl--:5.3.4.2.9. Return ApiResponse object
+        fe_ctrl -> view_model++:5.3.5.2.9. Deserialize JSON to PayoutDetailVM
+        view_model -->> fe_ctrl--:5.3.5.2.10. Return List<PayoutDetailVM>
+        
+        fe_ctrl -> vm++:5.3.5.2.11. Assign Payouts to AdminFinanceUnifiedVM
+        vm -->> fe_ctrl--:5.3.5.2.12. Return AdminFinanceUnifiedVM
 
-        be_ctrl -->> fe_ctrl--:5.3.4.2.10. Return statusCode 200 with ApiResponse
-
-        fe_ctrl -> paged_vm++:5.3.4.2.11. Call PagedResult<PayoutDetailVM>() (Deserialize JSON)
-        paged_vm -->> fe_ctrl--:5.3.4.2.12. Return PagedResult<PayoutDetailVM> object
-
-        fe_ctrl -->> view--:5.3.4.2.13. Return statusCode 200
-        view -->> act--:5.3.4.2.14. Display instructor payouts table
+        fe_ctrl -->> view--:5.3.5.2.13. Return View(vm)
+        view -->> act--:5.3.5.2.14. Display instructor payouts table
 end
 end
 @enduml

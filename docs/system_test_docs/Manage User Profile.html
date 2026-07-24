@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+        font-family: Tahoma, sans-serif;
+        font-size: 10pt;
+        color: black;
+        background-color: transparent;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    th, td {
+        border: 1px solid black;
+        padding: 5px;
+        text-align: left;
+        vertical-align: top;
+    }
+    .table2-header {
+        background-color: #76923c;
+        color: white;
+        font-weight: bold;
+    }
+
+     .table2-header th{
+        text-align: center;
+    }
+    .func-row {
+        background-color: #ccffff;
+        color: black;
+        font-weight: bold;
+    }
+    ul.summary-list {
+        list-style-type: disc;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+
+<ul class="summary-list">
+    <li><b>Feature:</b> Manage User Profile</li>
+    <li><b>Test requirement:</b> Tests for user profile functionalities including Verify Email, Change Password, Update Personal Info, and View Profile.</li>
+    <li><b>Number of TCs:</b> 17</li>
+</ul>
+
+<table class="table2">
+    <tr class="table2-header">
+        <th>Test Case ID</th>
+        <th>Test Case Description</th>
+        <th>Test Case Procedure</th>
+        <th>Expected Results</th>
+        <th>Pre-conditions</th>
+        <th>Round 1</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 2</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Round 3</th>
+        <th>Test date</th>
+        <th>Tester</th>
+        <th>Note</th>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Verify Email</td>
+    </tr>
+
+    <tr>
+        <td>TC-001</td>
+        <td>Verify Email Successfully</td>
+        <td>1. User enters the OTP code received in email on the Verify OTP form.<br>2. User clicks the Verify button.</td>
+        <td>The system consumes and validates the OTP, updates the account verification state to true, sets the IsVerified cookie, and redirects the User to their Profile page with a success message.</td>
+        <td>An OTP has been generated. The User's email is stored in TempData.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-002</td>
+        <td>Email Session Expired</td>
+        <td>1. Wait for email session to expire (TempData is null).<br>2. User enters OTP and clicks Verify.</td>
+        <td>The system redirects the User to the Login page.</td>
+        <td>An OTP has been generated. TempData has expired.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-003</td>
+        <td>Invalid OTP Format</td>
+        <td>1. User enters OTP code with invalid format.<br>2. User clicks the Verify button.</td>
+        <td>The system displays validation error messages.</td>
+        <td>The User's email is stored in TempData.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-004</td>
+        <td>Incorrect or Expired OTP</td>
+        <td>1. User enters an incorrect or expired OTP code.<br>2. User clicks the Verify button.</td>
+        <td>The system keeps the email in TempData and displays the error message 'Incorrect or expired OTP'.</td>
+        <td>The User's email is stored in TempData.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-005</td>
+        <td>Account Not Found</td>
+        <td>1. User enters valid OTP but the account associated with the email does not exist in the database.<br>2. User clicks the Verify button.</td>
+        <td>The system displays an error message and redirects the User to the Login page.</td>
+        <td>The User's email is stored in TempData.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Change Password</td>
+    </tr>
+
+    <tr>
+        <td>TC-006</td>
+        <td>Change Password Successfully</td>
+        <td>1. User accesses the Change Password page.<br>2. User enters current password, new password, and confirms the new password.<br>3. User clicks the Change Password button.</td>
+        <td>The system verifies the current password, hashes the new password, saves it to the database, deletes authentication cookies (logout), and redirects to the Login page with a success message.</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-007</td>
+        <td>Passwords Do Not Match</td>
+        <td>1. User accesses the Change Password page.<br>2. User enters current password, new password, and a non-matching confirm password.<br>3. User clicks the Change Password button.</td>
+        <td>The system displays the error message 'Password confirmation does not match.'</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-008</td>
+        <td>OAuth Account Modification Denied</td>
+        <td>1. Google OAuth user accesses the Change Password page.<br>2. User enters details and clicks the Change Password button.</td>
+        <td>The system displays an error message indicating that password change is not supported for external accounts.</td>
+        <td>User must be logged in via Google OAuth (no password hash).</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-009</td>
+        <td>Incorrect Current Password</td>
+        <td>1. User accesses the Change Password page.<br>2. User enters an incorrect current password.<br>3. User clicks the Change Password button.</td>
+        <td>The system displays the error message 'Current password is incorrect.'</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">Update Personal Info</td>
+    </tr>
+
+    <tr>
+        <td>TC-010</td>
+        <td>Update Personal Info Successfully</td>
+        <td>1. User enters personal info in the Edit Profile form.<br>2. User clicks the Save Changes button.</td>
+        <td>The system uploads the avatar image (if provided), updates User and Account entities in a transaction, updates local display cookies, and redirects the User to the Profile view with a success message.</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-011</td>
+        <td>No Access Token / Invalid Session</td>
+        <td>1. Simulate an expired session.<br>2. User clicks the Save Changes button.</td>
+        <td>The system detects the missing or invalid AccessToken and redirects the User to the Login page.</td>
+        <td>User session is invalid or expired.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-012</td>
+        <td>User Not Found</td>
+        <td>1. User submits profile changes but the user profile does not exist in the database.<br>2. User clicks the Save Changes button.</td>
+        <td>The system displays an error message.</td>
+        <td>User is logged in but profile is missing.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-013</td>
+        <td>Google Account Email Modification Blocked</td>
+        <td>1. Google OAuth user attempts to modify their email address.<br>2. User clicks the Save Changes button.</td>
+        <td>The system displays a block message indicating email changes are disabled for Google accounts.</td>
+        <td>User must be logged in via Google OAuth.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-014</td>
+        <td>Invalid Email Format</td>
+        <td>1. User enters a modified email that does not end with '@gmail.com'.<br>2. User clicks the Save Changes button.</td>
+        <td>The system displays an email format error message.</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-015</td>
+        <td>Email Already Taken</td>
+        <td>1. User enters a modified email that is already in use by another account.<br>2. User clicks the Save Changes button.</td>
+        <td>The system rolls back the database transaction and displays an error message.</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr class="func-row">
+        <td colspan="15">View Profile</td>
+    </tr>
+
+    <tr>
+        <td>TC-016</td>
+        <td>View Profile Successfully</td>
+        <td>1. User accesses the profile page.</td>
+        <td>The system parses the session, queries the database to retrieve user details, updates the local client IsVerified cookie, and renders the user profile information.</td>
+        <td>User must be logged in with a valid session.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+
+    <tr>
+        <td>TC-017</td>
+        <td>No Access Token / Invalid Session</td>
+        <td>1. User accesses the profile page without an AccessToken cookie.</td>
+        <td>The system redirects the User to the Login page.</td>
+        <td>AccessToken is missing or invalid.</td>
+        <td>Passed</td>
+        <td>2026-06-29</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-06</td>
+        <td>NgocNN</td>
+        <td>Passed</td>
+        <td>2026-07-13</td>
+        <td>NgocNN</td>
+        <td></td>
+    </tr>
+</table>
+
+</body>
+</html>
