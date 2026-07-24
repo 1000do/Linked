@@ -82,11 +82,11 @@ namespace CourseMarketplaceFE.Controllers
                 
                 int totalPages = 1;
                 int totalItems = paginatedCourses.Count;
-                if (data.TryGetProperty("totalPages", out var tp))
+                if (data.TryGetProperty("totalPages", out var tp) || data.TryGetProperty("TotalPages", out tp))
                 {
                     totalPages = tp.GetInt32();
                 }
-                if (data.TryGetProperty("totalCount", out var tc))
+                if (data.TryGetProperty("totalCount", out var tc) || data.TryGetProperty("TotalCount", out tc))
                 {
                     totalItems = tc.GetInt32();
                 }
