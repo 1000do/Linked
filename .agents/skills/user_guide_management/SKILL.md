@@ -79,4 +79,4 @@ When asked to create or edit a User Guide:
    - **Evaluate** your drafted output against the **Quality Assurance Checklist**.
    - **Iterate:** If any item in the checklist is NOT passed, you MUST revise your draft to fix the missing or incorrect formatting/content.
    - **Repeat** this evaluation and revision loop internally until ALL items in the checklist are PASSED.
-4. **Output:** You MUST create and write the fully validated formatted HTML directly to a `.html` file for the requested feature (using the `write_to_file` tool). Do not just output the HTML in a markdown code block in the chat. You may optionally output the final checklist state in your response to prove compliance.
+4. **Output:** You MUST create and write the fully validated formatted HTML directly to a `.html` file inside the `docs/user_guide/` directory (or its appropriate subdirectories) using the `write_to_file` tool. Do not just output the HTML in a markdown code block in the chat. You may optionally output the final checklist state in your response to prove compliance.
