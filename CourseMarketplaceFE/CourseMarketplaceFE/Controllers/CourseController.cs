@@ -15,7 +15,7 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor")]
 
         public async Task<IActionResult> MyCourses()
         {
@@ -82,11 +82,11 @@ namespace CourseMarketplaceFE.Controllers
                 
                 int totalPages = 1;
                 int totalItems = paginatedCourses.Count;
-                if (data.TryGetProperty("totalPages", out var tp))
+                if (data.TryGetProperty("totalPages", out var tp) || data.TryGetProperty("TotalPages", out tp))
                 {
                     totalPages = tp.GetInt32();
                 }
-                if (data.TryGetProperty("totalCount", out var tc))
+                if (data.TryGetProperty("totalCount", out var tc) || data.TryGetProperty("TotalCount", out tc))
                 {
                     totalItems = tc.GetInt32();
                 }
@@ -218,7 +218,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> EnrollFree(int id)
         {
             var response = await _apiClient.PostAsync($"enrollment/free-enroll/{id}");
@@ -371,7 +371,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Gửi review — source = detail | learn</summary>
         [HttpPost]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> SubmitReview([FromBody] JsonElement body, [FromQuery] string source = "learn")
         {
             var response = await _apiClient.PostJsonAsync($"review?source={source}", body);
@@ -395,7 +395,7 @@ namespace CourseMarketplaceFE.Controllers
             return Json(new { success = false, message = message ?? "Review submission error." });
         }
         [HttpPost]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> ReportReview([FromBody] JsonElement body)
         {
             var response = await _apiClient.PostJsonAsync("review/report", body);
@@ -436,7 +436,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Chỉnh sửa review (chỉ chủ review)</summary>
         [HttpPut]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> UpdateReview(int reviewId, string type, [FromBody] JsonElement body)
         {
             var response = await _apiClient.PutJsonAsync($"review/{reviewId}?type={type}", body);
@@ -462,7 +462,7 @@ namespace CourseMarketplaceFE.Controllers
 
         /// <summary>Xóa mềm review (chỉ chủ review)</summary>
         [HttpDelete]
-        [Authorize(Roles = "user")]
+        [Authorize(Roles = "user,instructor")]
         public async Task<IActionResult> DeleteReview(int reviewId, string type = "course")
         {
             var response = await _apiClient.DeleteAsync($"review/{reviewId}?type={type}");

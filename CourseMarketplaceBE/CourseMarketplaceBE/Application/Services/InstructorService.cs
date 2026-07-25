@@ -462,14 +462,27 @@ namespace CourseMarketplaceBE.Application.Services
             // Lấy danh sách khóa học published
             var courses = instructor.Courses
                 .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
-                .Select(c => new InstructorCourseDto
+                .Select(c =>
                 {
-                    CourseId = c.CourseId,
-                    Title = c.Title,
-                    ThumbnailUrl = c.CourseThumbnailUrl,
-                    Price = c.Price,
-                    Rating = 0, // Sẽ lấy từ view nếu cần
-                    TotalStudents = c.Enrollments?.Count ?? 0
+                    var validReviews = c.Enrollments?
+                        .Where(e => e.CourseReviews != null)
+                        .SelectMany(e => e.CourseReviews!)
+                        .Where(r => r.IsRemoved != true)
+                        .ToList();
+
+                    var avgRating = (validReviews != null && validReviews.Any())
+                        ? (decimal)(validReviews.Average(r => r.Rating) ?? 0)
+                        : 0m;
+
+                    return new InstructorCourseDto
+                    {
+                        CourseId = c.CourseId,
+                        Title = c.Title,
+                        ThumbnailUrl = c.CourseThumbnailUrl,
+                        Price = c.Price,
+                        Rating = Math.Round(avgRating, 1),
+                        TotalStudents = c.Enrollments?.Count ?? 0
+                    };
                 }).ToList();
 
             var totalReviews = await _repo.CountInstructorReviewsAsync(instructorId);

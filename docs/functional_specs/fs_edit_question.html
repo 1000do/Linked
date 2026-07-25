@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: #000000;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+        h4 { font-family: 'Times New Roman', serif; font-weight: bold; font-size: 12pt; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h4>4.20.9. Edit Question</h4>
+
+    <p><strong>Function Trigger:</strong> The instructor clicks the "Edit" icon next to a question.</p>
+
+    <p><strong>Function Description:</strong> Modifies the content and answers of an existing question.</p>
+
+    <p><strong>Screen Layout:</strong><br>[image_placeholder]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The user must have Instructor privileges and own the question.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Edit Question Successfully:</strong>
+                    <ul>
+                        <li>Instructor clicks "Edit" on a specific question.</li>
+                        <li>The system opens the question form populated with existing data.</li>
+                        <li>Instructor makes changes and clicks "Save".</li>
+                        <li>The system saves the updated details to the database.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The question is updated.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>In Use Warning:</strong> If the question is currently part of an active quiz with ongoing attempts, the system may block editing or warn the instructor.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

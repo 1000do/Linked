@@ -117,7 +117,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpPost("QuizAttempt/Submit")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Submit([FromBody] JsonElement payload)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))
@@ -149,7 +149,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/History/{quizId:int}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> History(int quizId, int page = 1, int pageSize = 10)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))
@@ -177,7 +177,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/Details/{attemptId:int}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> Details(int attemptId)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))
