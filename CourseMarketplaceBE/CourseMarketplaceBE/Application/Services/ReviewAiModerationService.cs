@@ -156,7 +156,7 @@ public class ReviewAiModerationService : IReviewAiModerationService
     {
         bool isApproved = moderationStatus.Equals(ModerationStatus.Approved.ToValue(), StringComparison.OrdinalIgnoreCase);
 
-        if (tempDto.ReviewId == 0) // New review
+        if (!tempDto.IsUpdate) // New review
         {
             await ProcessNewReviewModerationAsync(tempDto, moderationStatus, isApproved, notificationContent);
         }
@@ -170,25 +170,22 @@ public class ReviewAiModerationService : IReviewAiModerationService
     {
         if (isApproved || moderationStatus.Equals(ModerationStatus.ManualAudit.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            var enrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(tempDto.AuthorId, tempDto.CourseId);
-            if (enrollment == null) return;
-
-            string reviewStatus = isApproved ? ReviewStatus.Ok.ToValue() : ReviewStatus.Pending.ToValue();
-            int reviewId = await _reviewService.CreateReviewInDatabaseAsync(tempDto, enrollment.EnrollmentId, reviewStatus);
-
             if (isApproved)
             {
-                await NotifyAuthorAsync(tempDto, true, reviewId);
+                await _reviewService.UpdateReviewStatusInDatabaseAsync(tempDto.ReviewId, tempDto.LessonId.HasValue, ReviewStatus.Ok.ToValue());
+                await NotifyAuthorAsync(tempDto, true, tempDto.ReviewId);
                 await NotifyManagersAsync("Review Moderation Result", $"A new review was approved (Course ID: {tempDto.CourseId}).", null);
             }
             else
             {
+                // Manual Audit: remains Pending
                 string content = notificationContent ?? $"A new review requires manual audit (Course ID: {tempDto.CourseId}).";
                 await NotifyManagersAsync("Review Moderation Required", content, $"/AdminModeration/Reviews");
             }
         }
         else // Flagged/Rejected
         {
+            await _reviewService.UpdateReviewStatusInDatabaseAsync(tempDto.ReviewId, tempDto.LessonId.HasValue, ReviewStatus.Removed.ToValue(), true);
             await NotifyAuthorAsync(tempDto, false, null);
             await NotifyManagersAsync("Review Moderation Result", $"A review was flagged/rejected (Course ID: {tempDto.CourseId}).", null);
         }
@@ -198,22 +195,23 @@ public class ReviewAiModerationService : IReviewAiModerationService
     {
         if (isApproved || moderationStatus.Equals(ModerationStatus.ManualAudit.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
-            string reviewStatus = isApproved ? ReviewStatus.Ok.ToValue() : ReviewStatus.Pending.ToValue();
-            await _reviewService.UpdateReviewInDatabaseAsync(tempDto, reviewStatus);
-
             if (isApproved)
             {
+                await _reviewService.UpdateReviewInDatabaseAsync(tempDto, ReviewStatus.Ok.ToValue());
                 await NotifyAuthorAsync(tempDto, true, tempDto.ReviewId);
                 await NotifyManagersAsync("Review Moderation Result", $"A review update was approved (Course ID: {tempDto.CourseId}).", null);
             }
             else
             {
+                // Manual Audit: remains Pending
                 string content = notificationContent ?? $"An updated review requires manual audit (Review ID: {tempDto.ReviewId}).";
                 await NotifyManagersAsync("Review Moderation Required", content, $"/AdminModeration/Reviews");
             }
         }
         else // Flagged/Rejected update
         {
+            // Restore status to Ok, ignore the new comment/rating
+            await _reviewService.UpdateReviewStatusInDatabaseAsync(tempDto.ReviewId, tempDto.LessonId.HasValue, ReviewStatus.Ok.ToValue());
             await NotifyAuthorAsync(tempDto, false, tempDto.ReviewId);
             await NotifyManagersAsync("Review Moderation Result", $"A review update was flagged/rejected (Course ID: {tempDto.CourseId}).", null);
         }

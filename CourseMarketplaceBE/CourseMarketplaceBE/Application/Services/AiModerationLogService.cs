@@ -134,11 +134,11 @@ public class AiModerationLogService : IAiModerationLogService
             Details = cmd.Response.Details
         }) : null;
 
-        if (cmd.Review.LessonId.HasValue)
+        if (cmd.Review.LessonId.HasValue && cmd.Review.LessonId.Value > 0)
         {
             var log = new LessonReviewModerationLog
             {
-                LessonReviewId = cmd.Review.ReviewId == 0 ? null : cmd.Review.ReviewId,
+                LessonReviewId = cmd.Review.ReviewId,
                 InputJson = inputJson,
                 OutputJson = outputJson,
                 LatencyMs = cmd.Response?.LatencyMs,
@@ -153,7 +153,7 @@ public class AiModerationLogService : IAiModerationLogService
         {
             var log = new CourseReviewModerationLog
             {
-                CourseReviewId = cmd.Review.ReviewId == 0 ? null : cmd.Review.ReviewId,
+                CourseReviewId = cmd.Review.ReviewId,
                 InputJson = inputJson,
                 OutputJson = outputJson,
                 LatencyMs = cmd.Response?.LatencyMs,

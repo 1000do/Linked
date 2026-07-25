@@ -333,6 +333,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public int? LessonId { get; set; }
         public string ReviewComment { get; set; } = string.Empty;
         public float Rating { get; set; }
+        public bool IsUpdate { get; set; }
     }
 
     public class ReviewAiModerationRequest

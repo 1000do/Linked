@@ -375,21 +375,24 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> SubmitReview([FromBody] JsonElement body, [FromQuery] string source = "learn")
         {
             var response = await _apiClient.PostJsonAsync($"review?source={source}", body);
-            if (response.IsSuccessStatusCode)
-            {
-                return Json(new { success = true });
-            }
             var content = await response.Content.ReadAsStringAsync();
+            
+            string? message = null;
             try
             {
-                var json = JsonDocument.Parse(content);
-                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Review submission error.";
-                return Json(new { success = false, message });
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    message = msgEl.GetString();
+                }
             }
-            catch
+            catch { }
+
+            if (response.IsSuccessStatusCode)
             {
-                return Json(new { success = false, message = "Review submission error." });
+                return Json(new { success = true, message = message ?? "Your review has been submitted." });
             }
+            return Json(new { success = false, message = message ?? "Review submission error." });
         }
         [HttpPost]
         [Authorize(Roles = "user")]
@@ -437,18 +440,24 @@ namespace CourseMarketplaceFE.Controllers
         public async Task<IActionResult> UpdateReview(int reviewId, string type, [FromBody] JsonElement body)
         {
             var response = await _apiClient.PutJsonAsync($"review/{reviewId}?type={type}", body);
-            if (response.IsSuccessStatusCode)
-            {
-                return Json(new { success = true });
-            }
             var content = await response.Content.ReadAsStringAsync();
+            
+            string? message = null;
             try
             {
-                var json = JsonDocument.Parse(content);
-                var message = json.RootElement.TryGetProperty("message", out var msg) ? msg.GetString() : "Update error.";
-                return Json(new { success = false, message });
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                {
+                    message = msgEl.GetString();
+                }
             }
-            catch { return Json(new { success = false, message = "Update error." }); }
+            catch { }
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true, message = message ?? "Your review has been updated." });
+            }
+            return Json(new { success = false, message = message ?? "Update error." });
         }
 
         /// <summary>Xóa mềm review (chỉ chủ review)</summary>

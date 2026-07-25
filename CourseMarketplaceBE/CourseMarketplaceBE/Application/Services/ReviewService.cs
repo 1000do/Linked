@@ -228,6 +228,9 @@ public class ReviewService : IReviewService
             var ownerEnrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, courseId);
             bool hasReviewed = ownerEnrollment != null
                 && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
+            var reviewedLessonIds = ownerEnrollment != null 
+                ? await _reviewRepo.GetReviewedLessonIdsAsync(ownerEnrollment.EnrollmentId) 
+                : new List<int>();
 
             return new EnrollmentStatusResponse
             {
@@ -239,6 +242,7 @@ public class ReviewService : IReviewService
                 CanReview = true,
                 ReviewBlockedReason = null,
                 HasReviewed = hasReviewed,
+                ReviewedLessonIds = reviewedLessonIds,
                 IsOwner = true
             };
         }
@@ -262,6 +266,7 @@ public class ReviewService : IReviewService
         var pct = totalMaterials > 0 ? (double)learnedCount / totalMaterials * 100 : 0;
         var isCompleted = enrollment.IsCompleted == true;
         var hasReviewedNormal = (await _reviewRepo.GetCourseReviewByEnrollmentAsync(enrollment.EnrollmentId)) != null;
+        var reviewedLessonIdsNormal = await _reviewRepo.GetReviewedLessonIdsAsync(enrollment.EnrollmentId);
 
         return new EnrollmentStatusResponse
         {
@@ -275,6 +280,7 @@ public class ReviewService : IReviewService
                 ? "You need to complete at least 1 lesson before writing a review."
                 : null,
             HasReviewed = hasReviewedNormal,
+            ReviewedLessonIds = reviewedLessonIdsNormal,
             IsOwner = false
         };
     }
@@ -313,6 +319,18 @@ public class ReviewService : IReviewService
                 /* zero rows exception removed */
             }
         }
+        if (!request.LessonId.HasValue)
+        {
+            var existingReview = await _reviewRepo.GetCourseReviewByEnrollmentAsync(enrollment.EnrollmentId);
+            if (existingReview != null)
+                throw new BadRequestException("You have already reviewed this course.");
+        }
+        else
+        {
+            var existingReview = await _reviewRepo.GetLessonReviewByEnrollmentAsync(enrollment.EnrollmentId, request.LessonId.Value);
+            if (existingReview != null)
+                throw new BadRequestException("You have already reviewed this lesson.");
+        }
 
         if (request.Rating < 1 || request.Rating > 5)
             throw new InvalidOperationException("Rating must be between 1 and 5 stars.");
@@ -322,13 +340,17 @@ public class ReviewService : IReviewService
         // Prepare DTO for AI Moderation
         var tempReview = new TempReviewDto
         {
-            ReviewId = 0, // 0 indicates a new review
             AuthorId = userId,
             CourseId = request.CourseId,
             LessonId = request.LessonId,
             ReviewComment = request.Comment,
-            Rating = request.Rating
+            Rating = request.Rating,
+            IsUpdate = false
         };
+
+        // Persist review to database immediately with Pending status
+        int reviewId = await CreateReviewInDatabaseAsync(tempReview, enrollment.EnrollmentId, ReviewStatus.Pending.ToValue());
+        tempReview.ReviewId = reviewId;
 
         // Queue the moderation process in the background
         await _taskQueue.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(async (aiModService, token) =>
@@ -359,7 +381,8 @@ public class ReviewService : IReviewService
             ReviewId = request.ReviewId,
             AuthorId = userId,
             ReviewComment = request.Comment,
-            Rating = request.Rating
+            Rating = request.Rating,
+            IsUpdate = true
         };
 
         if (type == "lesson")
@@ -373,6 +396,8 @@ public class ReviewService : IReviewService
 
             tempReview.CourseId = review.Lesson?.CourseId ?? 0;
             tempReview.LessonId = review.LessonId;
+            
+            await UpdateReviewStatusInDatabaseAsync(request.ReviewId, true, ReviewStatus.Pending.ToValue());
         }
         else
         {
@@ -384,6 +409,8 @@ public class ReviewService : IReviewService
                 throw new InvalidOperationException("This review has been removed and cannot be edited.");
 
             tempReview.CourseId = review.Enrollment?.CourseId ?? 0;
+            
+            await UpdateReviewStatusInDatabaseAsync(request.ReviewId, false, ReviewStatus.Pending.ToValue());
         }
 
         // Queue the moderation process in the background
@@ -540,6 +567,30 @@ public class ReviewService : IReviewService
         return true;
     }
 
+    public async Task<bool> UpdateReviewStatusInDatabaseAsync(int reviewId, bool isLessonReview, string reviewStatus, bool isRemoved = false)
+    {
+        if (isLessonReview)
+        {
+            var review = await _reviewRepo.GetLessonReviewByIdAsync(reviewId);
+            if (review != null)
+            {
+                review.LessonReviewStatus = reviewStatus;
+                review.IsRemoved = isRemoved;
+                _reviewRepo.UpdateLessonReview(review);
+            }
+        }
+        else
+        {
+            var review = await _reviewRepo.GetCourseReviewByIdAsync(reviewId);
+            if (review != null)
+            {
+                review.CourseReviewStatus = reviewStatus;
+                review.IsRemoved = isRemoved;
+                _reviewRepo.UpdateCourseReview(review);
+            }
+        }
+        await _reviewRepo.SaveChangesAsync();
+        return true;
+    }
 
-    
 }
