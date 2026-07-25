@@ -550,7 +550,7 @@
                     });
                     Toast.fire({
                         icon: 'info',
-                        title: 'Vui lòng xem video theo thứ tự, không thể tua tiến!'
+                        title: 'Please watch the video in order; fast-forwarding is disabled!'
                     });
                 }
             }
@@ -570,7 +570,7 @@
                     });
                     Toast.fire({
                         icon: 'warning',
-                        title: 'Video đã tự động tạm dừng do bạn chuyển tab.'
+                        title: 'Video automatically paused because you switched tabs.'
                     });
                 }
             }
@@ -596,7 +596,7 @@
                     });
                     Toast.fire({
                         icon: 'warning',
-                        title: 'Bạn chưa xem đủ 95% thời lượng video để hoàn thành bài học.'
+                        title: 'You must watch at least 95% of the video duration to complete this lesson.'
                     });
                 }
             }
@@ -675,7 +675,7 @@
                     document.getElementById('learn-review-form').classList.add('hidden');
                     document.getElementById('learn-review-blocked').classList.remove('hidden');
                     document.getElementById('learn-blocked-msg').textContent = 
-                        'Bạn cần hoàn thành tất cả tài liệu trong bài học này trước khi viết đánh giá.';
+                        'You need to complete all materials in this lesson before writing a review.';
                 }
             }
         }
@@ -1181,8 +1181,8 @@
                 const sectionEl = document.querySelector(`.lesson-section[data-lesson-id="${lessonId}"]`);
                 if (sectionEl && sectionEl.dataset.isLocked === "true") {
                     Swal.fire({
-                        title: 'Bài học bị khóa 🔒',
-                        text: 'Bạn cần hoàn thành tất cả tài liệu trong các bài học phía trước để mở khóa bài học này.',
+                        title: 'Lesson Locked 🔒',
+                        text: 'You need to complete all materials in previous lessons to unlock this lesson.',
                         icon: 'warning',
                         confirmButtonColor: '#006a62',
                         customClass: { popup: 'rounded-2xl shadow-xl' }
