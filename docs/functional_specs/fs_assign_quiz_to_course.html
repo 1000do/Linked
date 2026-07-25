@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: #000000;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+        h4 { font-family: 'Times New Roman', serif; font-weight: bold; font-size: 12pt; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h4>4.20.5. Assign Quiz To Course</h4>
+
+    <p><strong>Function Trigger:</strong> The instructor clicks "Assign Quiz" in the curriculum builder.</p>
+
+    <p><strong>Function Description:</strong> Assigns an existing quiz to a specific chapter or course.</p>
+
+    <p><strong>Screen Layout:</strong><br>[image_placeholder]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The user must have Instructor privileges and own the course.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Assign Quiz Successfully:</strong>
+                    <ul>
+                        <li>Instructor selects a chapter and clicks "Add Item", then chooses "Quiz".</li>
+                        <li>The system lists all available unassigned quizzes or allows selecting from the bank.</li>
+                        <li>Instructor selects a quiz and confirms.</li>
+                        <li>The system links the quiz to the course chapter.</li>
+                        <li>The system updates the course curriculum layout.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The quiz is linked to the target course and is visible in the curriculum.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Quiz Already Assigned:</strong> The system prevents assigning a quiz that is already in another chapter of the same course.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Ownership Validation:</strong> The system ensures the instructor owns both the course and the quiz being assigned.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

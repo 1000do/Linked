@@ -333,6 +333,13 @@ public class ReviewService : IReviewService
             var existingReview = await _reviewRepo.GetLessonReviewByEnrollmentAsync(enrollment.EnrollmentId, request.LessonId.Value);
             if (existingReview != null)
                 throw new BadRequestException("You have already reviewed this lesson.");
+
+            if (!isOwner)
+            {
+                bool isLessonCompleted = await _enrollmentRepo.IsLessonCompletedAsync(enrollment.EnrollmentId, request.LessonId.Value);
+                if (!isLessonCompleted)
+                    throw new InvalidOperationException("You need to complete all materials in this lesson before writing a review.");
+            }
         }
 
         if (request.Rating < 1 || request.Rating > 5)

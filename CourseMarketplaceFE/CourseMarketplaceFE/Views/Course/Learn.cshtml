@@ -173,8 +173,8 @@
             <div class="flex-1 bg-white border-t border-slate-100 p-8 pb-20">
                 <div class="max-w-4xl mx-auto">
                     <div class="flex gap-8 border-b border-slate-100 mb-6 sticky top-0 bg-white z-10 pt-2">
-                        <button onclick="switchTab('overview', this)" class="tab-btn pb-4 border-b-2 border-[#006a62] text-[#006a62] font-bold text-sm">Overview</button>
-                        <button onclick="switchTab('reviews', this)" class="tab-btn pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Reviews</button>
+                        <button id="btn-tab-overview" onclick="switchTab('overview', this)" class="tab-btn pb-4 border-b-2 border-[#006a62] text-[#006a62] font-bold text-sm">Overview</button>
+                        <button id="btn-tab-reviews" onclick="switchTab('reviews', this)" class="tab-btn pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Reviews</button>
                     </div>
                     
                     <!-- Overview Tab Content -->
@@ -267,6 +267,9 @@
                                 <div class="flex items-center gap-2">
                                     <h3 class="font-bold text-sm text-[#191c1b]">@lesson.Title</h3>
                                     <span class="lesson-rating-badge hidden text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md leading-none"></span>
+                                    <span class="lesson-lock-icon hidden text-slate-400" title="Complete previous lesson to unlock">
+                                        <span class="material-symbols-outlined text-[16px]">lock</span>
+                                    </span>
                                 </div>
                             </div>
                             <span class="material-symbols-outlined text-slate-400">expand_more</span>
@@ -460,6 +463,54 @@
         let isCurrentVideoCompleted = false;
         let maxPlayedTime = 0;
 
+        const lessonMaterialsMap = {
+            @foreach(var l in Model.Lessons) {
+                @:@l.LessonId: [@string.Join(",", l.LearningMaterials.Select(m => m.MaterialId))],
+            }
+        };
+
+        const lessonOrderList = [
+            @foreach(var l in Model.Lessons) {
+                @:@l.LessonId,
+            }
+        ];
+
+        function isLessonCompleted(lessonId) {
+            const mIds = lessonMaterialsMap[lessonId];
+            if (!mIds || mIds.length === 0) return false;
+            return mIds.every(id => completedMaterialIdsArray.includes(id));
+        }
+
+        function updateSequentialLockState() {
+            let prevCompleted = true; // Lesson 0 is unlocked by default
+
+            lessonOrderList.forEach((lid, idx) => {
+                const sectionEl = document.querySelector(`.lesson-section[data-lesson-id="${lid}"]`);
+                if (!sectionEl) return;
+
+                const lockIcon = sectionEl.querySelector('.lesson-lock-icon');
+                const itemsContainer = sectionEl.querySelector('.lesson-items');
+
+                const isUnlocked = (idx === 0) || prevCompleted;
+
+                if (isUnlocked) {
+                    sectionEl.dataset.isLocked = "false";
+                    if (lockIcon) lockIcon.classList.add('hidden');
+                    if (itemsContainer) {
+                        itemsContainer.classList.remove('opacity-50', 'pointer-events-none', 'select-none');
+                    }
+                } else {
+                    sectionEl.dataset.isLocked = "true";
+                    if (lockIcon) lockIcon.classList.remove('hidden');
+                    if (itemsContainer) {
+                        itemsContainer.classList.add('opacity-50', 'pointer-events-none', 'select-none');
+                    }
+                }
+
+                prevCompleted = isLessonCompleted(lid);
+            });
+        }
+
         async function loadProgress() {
             try {
                 const res = await fetch('/Course/GetProgress/@Model.CourseId');
@@ -480,6 +531,10 @@
                     } else {
                         completedMaterialIdsArray = [];
                     }
+
+                    // Update lesson locks (Sequential Progression)
+                    updateSequentialLockState();
+                    updateReviewFormVisibility();
                 }
             } catch (e) {}
         }
@@ -492,13 +547,81 @@
                     body: JSON.stringify({ courseId: @Model.CourseId, materialId: materialId })
                 });
                 loadProgress();
-                // Re-check eligibility after progress update (user might now be able to review)
+                // Re-check eligibility after progress update
                 loadLearnEligibility();
             } catch (e) {}
         }
 
+        // Anti-seeking setup
+        videoPlayer.ontimeupdate = () => {
+            if (!videoPlayer.seeking && !isCurrentVideoCompleted) {
+                maxPlayedTime = Math.max(maxPlayedTime, videoPlayer.currentTime);
+            }
+        };
+
+        videoPlayer.onseeking = () => {
+            if (!isCurrentVideoCompleted) {
+                if (videoPlayer.currentTime > maxPlayedTime + 1.5) {
+                    videoPlayer.currentTime = maxPlayedTime;
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'info',
+                        title: 'Please watch the video in order; fast-forwarding is disabled!'
+                    });
+                }
+            }
+        };
+
+        // Anti-AFK (Tab Switching / Blur)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (videoPlayer && !videoPlayer.paused) {
+                    videoPlayer.pause();
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'warning',
+                        title: 'Video automatically paused because you switched tabs.'
+                    });
+                }
+            }
+        });
+
+        window.addEventListener('blur', () => {
+            if (videoPlayer && !videoPlayer.paused) {
+                videoPlayer.pause();
+            }
+        });
+
         videoPlayer.onended = () => {
-            if (currentMaterialId) markAsCompleted(currentMaterialId);
+            if (currentMaterialId) {
+                if (isCurrentVideoCompleted || maxPlayedTime >= (videoPlayer.duration * 0.95)) {
+                    markAsCompleted(currentMaterialId);
+                } else {
+                    const Toast = Swal.mixin({
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 4000,
+                        timerProgressBar: true
+                    });
+                    Toast.fire({
+                        icon: 'warning',
+                        title: 'You must watch at least 95% of the video duration to complete this lesson.'
+                    });
+                }
+            }
         };
 
         // ── Stats (dynamic from DB) ────────────────────────────────
@@ -565,14 +688,17 @@
             if (reviewedIds.includes(currentLessonId)) {
                 document.getElementById('learn-review-form').classList.add('hidden');
                 document.getElementById('learn-review-blocked').classList.add('hidden');
-            } else if (d.canReview) {
-                document.getElementById('learn-review-form').classList.remove('hidden');
-                document.getElementById('learn-review-blocked').classList.add('hidden');
             } else {
-                document.getElementById('learn-review-form').classList.add('hidden');
-                document.getElementById('learn-review-blocked').classList.remove('hidden');
-                document.getElementById('learn-blocked-msg').textContent = 
-                    d.reviewBlockedReason || 'You need to complete at least 1 lesson before reviewing.';
+                const isLessonComplete = isLessonCompleted(currentLessonId);
+                if (isLessonComplete) {
+                    document.getElementById('learn-review-form').classList.remove('hidden');
+                    document.getElementById('learn-review-blocked').classList.add('hidden');
+                } else {
+                    document.getElementById('learn-review-form').classList.add('hidden');
+                    document.getElementById('learn-review-blocked').classList.remove('hidden');
+                    document.getElementById('learn-blocked-msg').textContent = 
+                        'You need to complete all materials in this lesson before writing a review.';
+                }
             }
         }
 
@@ -619,7 +745,7 @@
                 const result = await response.json();
                 if (result.success) {
                     showSwalLikeSuccessPopup('Success!', result.message || 'Lesson review has been submitted.', () => {
-                        loadReviews();
+                        loadReviews(1);
                         loadLearnStats();
                         loadLessonRatings();
                         loadLearnEligibility();
@@ -638,16 +764,31 @@
         }
 
         // ── Load Reviews List ──────────────────────────────────────
-        async function loadReviews() {
+        let currentLearnReviewPage = 1;
+        const LEARN_REVIEW_PAGE_SIZE = 5;
+
+        async function loadReviews(page = 1) {
+            currentLearnReviewPage = page;
             const lessonList = document.getElementById('learn-reviews-list');
             
             // Load Lesson Reviews
             if (currentLessonId) {
                 try {
-                    const res = await fetch('/Course/GetLessonReviews/' + currentLessonId);
+                    const res = await fetch(`/Course/GetLessonReviews/${currentLessonId}?page=${page}&pageSize=${LEARN_REVIEW_PAGE_SIZE}`);
                     const result = await res.json();
                     if (result.success && result.data && result.data.items && result.data.items.length > 0) {
                         lessonList.innerHTML = result.data.items.map(r => renderReviewItem(r)).join('');
+
+                        const totalPages = Math.ceil(result.data.totalCount / LEARN_REVIEW_PAGE_SIZE);
+                        if (totalPages > 1) {
+                            lessonList.innerHTML += `
+                                <div class="flex justify-center items-center gap-2 mt-6 pb-4">
+                                    <button onclick="loadReviews(${page - 1})" class="px-3 py-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" ${page === 1 ? 'disabled' : ''}>Prev</button>
+                                    <span class="text-sm font-semibold text-slate-600">Page ${page} of ${totalPages}</span>
+                                    <button onclick="loadReviews(${page + 1})" class="px-3 py-1 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" ${page === totalPages ? 'disabled' : ''}>Next</button>
+                                </div>
+                            `;
+                        }
                     } else {
                         lessonList.innerHTML = '<p class="text-slate-400 italic">No reviews yet for this lesson.</p>';
                     }
@@ -662,7 +803,7 @@
                             }
                         }
                     }, 100);
-                } catch (e) { lessonList.innerHTML = renderErrorState('Error loading reviews for this lesson.', 'loadReviews()'); }
+                } catch (e) { lessonList.innerHTML = renderErrorState('Error loading reviews for this lesson.', `loadReviews(${page})`); }
             }
         }
 
@@ -961,7 +1102,7 @@
                 const result = await res.json();
                 if (result.success) {
                     showSwalLikeSuccessPopup('Updated!', result.message || 'Your review has been updated.', () => {
-                        loadReviews();
+                        loadReviews(currentLearnReviewPage);
                         loadLearnStats();
                         loadLessonRatings();
                     });
@@ -983,7 +1124,7 @@
                 const res = await fetch(`/Course/DeleteReview?reviewId=${reviewId}&type=${type}`, { method: 'DELETE' });
                 const result = await res.json();
             if (result.success) {
-                loadReviews();
+                loadReviews(currentLearnReviewPage);
                 loadLearnStats();
                 loadLessonRatings();
                 loadLearnEligibility();
@@ -1036,8 +1177,6 @@
                 }
             } catch (e) { console.error('Error loading lesson ratings:', e); }
         }
-
-
         // ── Tab Switching ──────────────────────────────────────────
         function switchTab(tabId, element) {
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1051,13 +1190,27 @@
             document.getElementById('tab-' + tabId).classList.remove('hidden');
 
             if (tabId === 'reviews') {
-                loadReviews();
+                loadReviews(1);
                 loadLearnStats();
                 loadLearnEligibility();
             }
         }
 
         function playMaterial(url, title, description, element, type, materialId, lessonId, isPending = false) {
+            if (lessonId) {
+                const sectionEl = document.querySelector(`.lesson-section[data-lesson-id="${lessonId}"]`);
+                if (sectionEl && sectionEl.dataset.isLocked === "true") {
+                    Swal.fire({
+                        title: 'Lesson Locked 🔒',
+                        text: 'You need to complete all materials in previous lessons to unlock this lesson.',
+                        icon: 'warning',
+                        confirmButtonColor: '#006a62',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                    return;
+                }
+            }
+
             if (!url) {
                 Swal.fire({
                     title: 'Empty Material',
@@ -1072,6 +1225,10 @@
             currentMaterialId = materialId;
             currentLessonId = lessonId;
             updateReviewFormVisibility();
+
+            // Show Reviews tab button when playing a lesson material
+            const reviewsTabBtn = document.getElementById('btn-tab-reviews');
+            if (reviewsTabBtn) reviewsTabBtn.classList.remove('hidden');
 
             // UI feedback
             document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active-material'));
@@ -1178,7 +1335,7 @@
             // If reviews tab is active, reload reviews and stats for the new lesson
             const reviewsTab = document.getElementById('tab-reviews');
             if (reviewsTab && !reviewsTab.classList.contains('hidden')) {
-                loadReviews();
+                loadReviews(1);
                 loadLearnStats();
                 loadLearnEligibility();
             }
@@ -1187,6 +1344,17 @@
         function playQuiz(quizId, title, description, element) {
             currentMaterialId = null; // Quizzes are not marked complete via video API
             currentLessonId = null;
+
+            // Hide Reviews tab button when taking a quiz
+            const reviewsTabBtn = document.getElementById('btn-tab-reviews');
+            if (reviewsTabBtn) reviewsTabBtn.classList.add('hidden');
+
+            // Switch to overview tab if currently viewing reviews tab
+            const reviewsTabContent = document.getElementById('tab-reviews');
+            const overviewTabBtn = document.getElementById('btn-tab-overview');
+            if (reviewsTabContent && !reviewsTabContent.classList.contains('hidden') && overviewTabBtn) {
+                switchTab('overview', overviewTabBtn);
+            }
 
             // UI feedback
             document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active-material'));

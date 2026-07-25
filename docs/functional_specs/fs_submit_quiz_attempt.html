@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            color: #000000;
+            font-size: 12pt;
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+        }
+        p { margin: 8px 0; }
+        strong { font-weight: bold; }
+        hr { border: none; border-top: 1px solid #ccc; margin: 20px 0; }
+        ul, ol { margin: 8px 0; padding-left: 20px; }
+        li { margin-bottom: 4px; }
+        h4 { font-family: 'Times New Roman', serif; font-weight: bold; font-size: 12pt; margin: 8px 0; }
+    </style>
+</head>
+<body>
+    <h4>4.20.2. Submit Quiz Attempt</h4>
+
+    <p><strong>Function Trigger:</strong> The user clicks the "Submit Quiz" button upon finishing the quiz.</p>
+
+    <p><strong>Function Description:</strong> Submits the quiz attempt after completion.</p>
+
+    <p><strong>Screen Layout:</strong><br>[image_placeholder]</p>
+
+    <p><strong>Function Details</strong></p>
+
+    <ul>
+        <li><strong>Preconditions</strong>
+            <ul>
+                <li>The user must be logged in and have an active quiz attempt.</li>
+            </ul>
+        </li>
+        <li><strong>Process</strong>
+            <ul>
+                <li><strong>Submit Quiz Attempt Successfully:</strong>
+                    <ul>
+                        <li>User completes the quiz questions and clicks "Submit Quiz".</li>
+                        <li>The system asks for confirmation to submit.</li>
+                        <li>User confirms the submission.</li>
+                        <li>The system calculates the score based on the submitted answers.</li>
+                        <li>The system updates the quiz attempt status to "Completed".</li>
+                        <li>The system saves the results to the database.</li>
+                        <li>The system redirects the user to the attempt detail page.</li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+        <li><strong>Alternative Flow (Auto-Submit on Time Up)</strong>
+            <ul>
+                <li>The system detects that the quiz time limit has expired.</li>
+                <li>The system automatically submits the user's current answers.</li>
+                <li>Back to step 4 of the normal process.</li>
+            </ul>
+        </li>
+        <li><strong>Postconditions</strong>
+            <ul>
+                <li>The quiz attempt is finalized, and the score is recorded.</li>
+            </ul>
+        </li>
+        <li><strong>Error Handling</strong>
+            <ul>
+                <li><strong>Session Invalid:</strong> The system redirects the user to the Login page.</li>
+                <li><strong>Attempt Already Submitted:</strong> The system prevents duplicate submission and displays an error.</li>
+            </ul>
+        </li>
+        <li><strong>Security Measures</strong>
+            <ul>
+                <li><strong>Server-Side Time Validation:</strong> The system strictly validates the submission time against the server clock to prevent client-side time manipulation.</li>
+            </ul>
+        </li>
+    </ul>
+</body>
+</html>

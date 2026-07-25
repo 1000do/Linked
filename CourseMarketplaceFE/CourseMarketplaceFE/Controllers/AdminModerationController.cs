@@ -20,7 +20,7 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
-        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy, int page = 1, int pageSize = 6)
         {
             ViewBag.Search = search;
             ViewBag.Category = category;
