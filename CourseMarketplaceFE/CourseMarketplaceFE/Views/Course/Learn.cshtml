@@ -167,8 +167,8 @@
             <div class="flex-1 bg-white border-t border-slate-100 p-8 pb-20">
                 <div class="max-w-4xl mx-auto">
                     <div class="flex gap-8 border-b border-slate-100 mb-6 sticky top-0 bg-white z-10 pt-2">
-                        <button onclick="switchTab('overview', this)" class="tab-btn pb-4 border-b-2 border-[#006a62] text-[#006a62] font-bold text-sm">Overview</button>
-                        <button onclick="switchTab('reviews', this)" class="tab-btn pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Reviews</button>
+                        <button id="btn-tab-overview" onclick="switchTab('overview', this)" class="tab-btn pb-4 border-b-2 border-[#006a62] text-[#006a62] font-bold text-sm">Overview</button>
+                        <button id="btn-tab-reviews" onclick="switchTab('reviews', this)" class="tab-btn pb-4 text-slate-400 font-bold text-sm hover:text-[#006a62] transition-colors">Reviews</button>
                     </div>
                     
                     <!-- Overview Tab Content -->
@@ -1204,6 +1204,10 @@
             currentLessonId = lessonId;
             updateReviewFormVisibility();
 
+            // Show Reviews tab button when playing a lesson material
+            const reviewsTabBtn = document.getElementById('btn-tab-reviews');
+            if (reviewsTabBtn) reviewsTabBtn.classList.remove('hidden');
+
             // UI feedback
             document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active-material'));
             element.classList.add('active-material');
@@ -1318,6 +1322,17 @@
         function playQuiz(quizId, title, description, element) {
             currentMaterialId = null; // Quizzes are not marked complete via video API
             currentLessonId = null;
+
+            // Hide Reviews tab button when taking a quiz
+            const reviewsTabBtn = document.getElementById('btn-tab-reviews');
+            if (reviewsTabBtn) reviewsTabBtn.classList.add('hidden');
+
+            // Switch to overview tab if currently viewing reviews tab
+            const reviewsTabContent = document.getElementById('tab-reviews');
+            const overviewTabBtn = document.getElementById('btn-tab-overview');
+            if (reviewsTabContent && !reviewsTabContent.classList.contains('hidden') && overviewTabBtn) {
+                switchTab('overview', overviewTabBtn);
+            }
 
             // UI feedback
             document.querySelectorAll('.material-item').forEach(el => el.classList.remove('active-material'));
