@@ -154,6 +154,15 @@ public class ReviewRepository : IReviewRepository
                                    && r.IsRemoved != true);
     }
 
+    public async Task<List<int>> GetReviewedLessonIdsAsync(int enrollmentId)
+    {
+        return await _context.LessonReviews
+            .Where(r => r.EnrollmentId == enrollmentId && r.IsRemoved != true)
+            .Select(r => r.LessonId ?? 0)
+            .Where(id => id > 0)
+            .ToListAsync();
+    }
+
     // ── Lookup theo reviewId ──────────────────────────────────────────────
 
     public async Task<CourseReview?> GetCourseReviewByIdAsync(int reviewId)
@@ -211,8 +220,6 @@ public class ReviewRepository : IReviewRepository
         review.UpdatedAt = DateTime.Now;
         _context.LessonReviews.Update(review);
     }
-
-    // ── Save ─────────────────────────────────────────────────────────────
 
     public async Task<int> SaveChangesAsync()
     {
