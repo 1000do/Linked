@@ -209,7 +209,10 @@
                         </form>
                     </div>
 
-                    <a asp-controller="Account" asp-action="Profile" class="hover:scale-105 transition-all">
+                    @{
+                        var profileHref = isStaffOrAdmin ? "/AdminProfile" : "/Account/Profile";
+                    }
+                    <a href="@profileHref" class="hover:scale-105 transition-all" title="Profile">
                         @await Html.PartialAsync("_UserAvatar", new { 
                             Url = avatarUrl, 
                             Role = userRole, 
