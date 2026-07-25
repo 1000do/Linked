@@ -119,7 +119,7 @@ public class CourseController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest($"Failed to create course");
+            return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
@@ -147,7 +147,7 @@ public class CourseController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update course"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -182,7 +182,7 @@ public class CourseController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update course status"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -210,7 +210,7 @@ public class CourseController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to delete course"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
