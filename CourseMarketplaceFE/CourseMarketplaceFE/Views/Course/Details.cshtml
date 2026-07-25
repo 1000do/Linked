@@ -594,8 +594,10 @@
                 </svg>
                 <div style="box-sizing:content-box; border-radius:50%; position:absolute; width:80px; height:80px; border:4px solid rgba(165,220,134,.2); left:-4px; top:-4px; z-index:2;"></div>
             </div>
-                </div>
-            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">${title}</h2>
+            <p class="text-sm text-slate-600 mb-6">${text}</p>
+            <button id="btn-${popupId}" class="bg-[#7066e0] text-white px-8 py-2.5 rounded-lg font-bold hover:bg-[#5f56c6] transition-colors focus:outline-none focus:ring-4 focus:ring-[#7066e0]/30 shadow-md">OK</button>
+        </div>
         `;
         document.body.appendChild(popup);
 

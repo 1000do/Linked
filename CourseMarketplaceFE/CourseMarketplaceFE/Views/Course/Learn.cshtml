@@ -80,7 +80,13 @@
                 </div>
             </div>
         </div>
+        <button type="button" onclick="toggleCurriculum()" class="lg:hidden p-2 text-white/80 hover:text-white rounded-xl hover:bg-white/10 transition-colors">
+            <span class="material-symbols-outlined text-[24px]">menu_book</span>
+        </button>
     </header>
+
+    <!-- CURRICULUM OVERLAY -->
+    <div id="curriculumOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden lg:hidden transition-opacity opacity-0 duration-300" onclick="toggleCurriculum()"></div>
 
     <div class="flex-1 flex overflow-hidden">
         <!-- Main Content -->
@@ -239,13 +245,15 @@
                         </div>
                     </div>
                 </div>
-            </div>
         </main>
 
         <!-- Sidebar (Curriculum) -->
-        <aside class="w-[350px] bg-white border-l border-slate-100 flex flex-col shrink-0 shadow-sm">
-            <div class="p-4 border-b border-slate-100 font-bold text-[#191c1b]">
+        <aside id="courseCurriculumSidebar" class="w-[320px] lg:w-[350px] bg-white border-l border-slate-100 flex flex-col shrink-0 shadow-2xl lg:shadow-sm fixed inset-y-0 right-0 translate-x-full transition-transform duration-300 ease-in-out z-[70] lg:relative lg:translate-x-0 lg:z-auto">
+            <div class="p-4 border-b border-slate-100 font-bold text-[#191c1b] flex items-center justify-between">
                 <span>Course Content</span>
+                <button type="button" onclick="toggleCurriculum()" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">close</span>
+                </button>
             </div>
             
             <div class="flex-1 overflow-y-auto custom-scrollbar">
@@ -357,6 +365,20 @@
     </form>
 
     <script>
+    function toggleCurriculum() {
+        const sidebar = document.getElementById('courseCurriculumSidebar');
+        const overlay = document.getElementById('curriculumOverlay');
+        
+        if (sidebar.classList.contains('translate-x-full')) {
+            sidebar.classList.remove('translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+        } else {
+            sidebar.classList.add('translate-x-full');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+    }
     function showSwalLikeSuccessPopup(title, text, callback) {
         const popupId = 'swal-custom-' + Date.now();
         const popup = document.createElement('div');
@@ -1237,12 +1259,22 @@
                             
                             // Make entire toast clickable
                             toast.style.cursor = 'pointer';
-                            toast.addEventListener('click', (e) => {
-                                if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') {
+                                toast.addEventListener('click', (e) => {
+                                    if (e.target.tagName === 'BUTTON') return;
+                                    e.preventDefault();
                                     const targetUrl = noti.linkAction || '/Notification';
-                                    window.location.href = targetUrl;
-                                }
-                            });
+                                    try {
+                                        const urlObj = new URL(targetUrl, window.location.origin);
+                                        if (urlObj.pathname.toLowerCase() === window.location.pathname.toLowerCase()) {
+                                            window.location.href = targetUrl;
+                                            window.location.reload();
+                                        } else {
+                                            window.location.href = targetUrl;
+                                        }
+                                    } catch (err) {
+                                        window.location.href = targetUrl;
+                                    }
+                                });
                         }
                     });
 

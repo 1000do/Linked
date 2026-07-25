@@ -43,6 +43,8 @@ DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
 DROP TABLE IF EXISTS message_moderation_logs CASCADE;
 DROP TABLE IF EXISTS lesson_review_moderation_logs CASCADE;
 DROP TABLE IF EXISTS course_review_moderation_logs CASCADE;
+DROP TABLE IF EXISTS lesson_review_moderation_records CASCADE;
+DROP TABLE IF EXISTS course_review_moderation_records CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS message_attachments CASCADE;
 DROP TABLE IF EXISTS quiz_attempt_answers CASCADE;
@@ -321,6 +323,34 @@ CREATE TABLE lesson_reviews (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_removed BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE course_review_moderation_records (
+    record_id SERIAL PRIMARY KEY,
+    course_review_id INT NOT NULL REFERENCES course_reviews(course_review_id) ON DELETE CASCADE,
+    is_update BOOLEAN NOT NULL,
+    temp_comment TEXT NOT NULL,
+    temp_rating NUMERIC(3,2) NOT NULL CHECK (temp_rating >= 0 AND temp_rating <= 5),
+    ai_moderation_status VARCHAR(50) NOT NULL CHECK (ai_moderation_status IN ('pending', 'manual_audit', 'flagged', 'approved')),
+    ai_moderation_note TEXT NOT NULL,
+    moderation_status VARCHAR(50) NOT NULL CHECK (moderation_status IN ('pending', 'approved', 'rejected')),
+    moderation_note TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
+
+CREATE TABLE lesson_review_moderation_records (
+    record_id SERIAL PRIMARY KEY,
+    lesson_review_id INT NOT NULL REFERENCES lesson_reviews(lesson_review_id) ON DELETE CASCADE,
+    is_update BOOLEAN NOT NULL,
+    temp_comment TEXT NOT NULL,
+    temp_rating NUMERIC(3,2) NOT NULL CHECK (temp_rating >= 0 AND temp_rating <= 5),
+    ai_moderation_status VARCHAR(50) NOT NULL CHECK (ai_moderation_status IN ('pending', 'manual_audit', 'flagged', 'approved')),
+    ai_moderation_note TEXT NOT NULL,
+    moderation_status VARCHAR(50) NOT NULL CHECK (moderation_status IN ('pending', 'approved', 'rejected')),
+    moderation_note TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 
 -- ==============================================================================

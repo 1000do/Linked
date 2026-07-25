@@ -95,6 +95,9 @@
         <div id="chat-content" class="chat-content-panel flex-1 flex flex-col min-h-0 overflow-hidden" style="display:none;">
             <header class="chat-header d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
+                    <button type="button" class="d-md-none text-slate-500 hover:text-slate-800 bg-transparent border-0 flex items-center justify-center p-1 rounded-full hover:bg-slate-100 transition-colors mr-1" onclick="closeMobileChat()">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                    </button>
                     <div class="avatar-wrapper">
                         <img id="header-avatar" src="" class="avatar-img shadow-sm" onerror="this.src='/img/default-avatar.png'">
                         <div class="status-dot"></div>
@@ -577,6 +580,9 @@
 
         // 3. Chọn cuộc hội thoại
         async function selectChat(chatId, name, avatar, isOnline = true) {
+            currentChatId = chatId;
+            document.querySelector('.chat-wrapper').classList.add('chat-active');
+
             if (activeChatId === chatId) return;
             
             // Clear typing state for previous chat if any
@@ -640,8 +646,6 @@
                 cleanAvatar = '/img/default-avatar.png';
             }
             document.getElementById('header-avatar').src = cleanAvatar;
-
-            loadChats(); // Update active class
 
             try {
                 const res = await fetch(`/Chat/GetHistory?roomId=${chatId}`);

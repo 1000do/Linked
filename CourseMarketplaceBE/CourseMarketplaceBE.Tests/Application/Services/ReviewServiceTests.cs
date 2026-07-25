@@ -29,6 +29,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ISystemConfigRepository _systemConfigRepositoryMock;
         private readonly IAiModelRepository _aiModelRepositoryMock;
         private readonly Microsoft.Extensions.Logging.ILogger<ReviewService> _loggerMock;
+        private readonly IReviewModerationRecordRepository _moderationRecordRepoMock;
         private readonly ReviewService _sut;
 
         public ReviewServiceTests()
@@ -45,6 +46,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _systemConfigRepositoryMock = Substitute.For<ISystemConfigRepository>();
             _aiModelRepositoryMock = Substitute.For<IAiModelRepository>();
             _loggerMock = Substitute.For<Microsoft.Extensions.Logging.ILogger<ReviewService>>();
+            _moderationRecordRepoMock = Substitute.For<IReviewModerationRecordRepository>();
 
             _sut = new ReviewService(
                 _reviewRepoMock,
@@ -53,7 +55,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _reportServiceMock,
                 _lockoutRepoMock,
                 _taskQueueMock,
-                _loggerMock
+                _loggerMock,
+                _moderationRecordRepoMock
             );
         }
 
