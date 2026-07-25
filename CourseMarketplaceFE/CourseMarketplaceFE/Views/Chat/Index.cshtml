@@ -225,7 +225,7 @@
                 if (activeChatId === 'support_ticket') {
                     isWaitingForSupportStaff = false;
                     await loadChats();
-                    selectChat(data.chatId || data.ChatId, 'Support Team', '/img/default-avatar.png', true);
+                    selectChat(data.chatId || data.ChatId, 'Support Team', '/img/default-avatar.png', true, true);
                 } else {
                     await loadChats();
                 }
@@ -426,7 +426,7 @@
                 if (res.ok) {
                     const data = await res.json();
                     await loadChats();
-                    selectChat(data.chatId, senderName, senderAvatar, true);
+                    selectChat(data.chatId, senderName, senderAvatar, true, true);
                     loadPendingRequests(); // Refresh the list to remove the accepted ticket
                 } else {
                     const error = await res.json();
@@ -469,6 +469,23 @@
         }
 
         async function contactStaff() {
+            // 0. Kiểm tra xem đã có cuộc hội thoại hỗ trợ đang hoạt động (contextType === 'system') trong danh sách chat chưa
+            if (allChats && allChats.length > 0) {
+                const supportChats = allChats.filter(c => (c.contextType || c.ContextType) === 'system');
+                if (supportChats && supportChats.length > 0) {
+                    // Ưu tiên cuộc hội thoại có tin nhắn gần nhất
+                    supportChats.sort((a, b) => new Date(b.lastMessageAt || b.LastMessageAt || 0) - new Date(a.lastMessageAt || a.LastMessageAt || 0));
+                    const latestSupport = supportChats[0];
+                    selectChat(
+                        latestSupport.chatId || latestSupport.ChatId,
+                        latestSupport.partnerName || latestSupport.PartnerName || 'Support Team',
+                        latestSupport.partnerAvatar || latestSupport.PartnerAvatar || '/img/default-avatar.png',
+                        latestSupport.isOnline !== undefined ? latestSupport.isOnline : (latestSupport.IsOnline !== undefined ? latestSupport.IsOnline : true)
+                    );
+                    return;
+                }
+            }
+
             // 1. Kiểm tra xem có ticket nào đang chờ không
             try {
                 const pendingRes = await fetch("/Chat/GetPendingRequests");
@@ -576,8 +593,8 @@
         }
 
         // 3. Chọn cuộc hội thoại
-        async function selectChat(chatId, name, avatar, isOnline = true) {
-            if (activeChatId === chatId) return;
+        async function selectChat(chatId, name, avatar, isOnline = true, forceReload = false) {
+            if (!forceReload && activeChatId === chatId) return;
             
             // Clear typing state for previous chat if any
             if (activeChatId && typeof chatPageTypingTimeout !== 'undefined') {
@@ -665,6 +682,10 @@
 
         function appendMessage(m) {
             console.log('appendMessage received:', m);
+            const msgId = m.messageId || m.MessageId;
+            if (msgId && document.getElementById(`msg-${msgId}`)) {
+                return; // Tránh hiển thị trùng lặp tin nhắn nếu đã tồn tại
+            }
             const list = document.getElementById('message-list');
             const sid = senderIdOf(m);
             const isMe = sid === chatMyAccountId && chatMyAccountId > 0;
