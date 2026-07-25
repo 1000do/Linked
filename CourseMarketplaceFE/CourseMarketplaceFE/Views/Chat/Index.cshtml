@@ -552,6 +552,14 @@
             document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
             scrollToBottom();
         }
+
+        function closeMobileChat() {
+            document.querySelector('.chat-wrapper').classList.remove('chat-active');
+            activeChatId = null;
+            document.getElementById('chat-content').style.display = 'none';
+            document.getElementById('empty-state').style.display = 'block';
+            document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+        }
         // ------------------------------ //
 
         function handleSearchInput() {

@@ -29,7 +29,7 @@
 </style>
 <nav class="fixed top-0 w-full z-50 bg-[#f0fcfb]/40 border-b border-primary/10 glass-nav">
     <div class="flex items-center px-8 py-2 w-full">
-        <div class="flex items-center gap-4 lg:gap-6 flex-1">
+        <div class="flex items-center gap-4 lg:gap-6 shrink-0">
             <button onclick="toggleMainSidebar()" class="lg:hidden p-2 -ml-2 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined">menu</span>
             </button>
@@ -66,7 +66,7 @@
         <div id="mainSidebarOverlay" class="fixed top-0 left-0 w-screen h-[100dvh] bg-slate-900/40 backdrop-blur-sm z-[90] hidden lg:hidden transition-opacity opacity-0 duration-300" onclick="toggleMainSidebar()"></div>
 
         <!-- RIGHT SIDEBAR / DESKTOP NAV -->
-        <aside id="mainMobileSidebar" class="fixed top-0 left-0 h-[100dvh] w-[280px] bg-white z-[100] transform -translate-x-full transition-transform duration-300 lg:static lg:transform-none lg:w-auto lg:h-auto lg:bg-transparent lg:z-auto flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-2 ml-auto shrink-0 p-6 lg:p-0 overflow-y-auto lg:overflow-visible shadow-2xl lg:shadow-none">
+        <aside id="mainMobileSidebar" class="fixed top-0 left-0 h-[100dvh] w-[280px] bg-white z-[100] transform -translate-x-full transition-transform duration-300 lg:static lg:transform-none lg:flex-1 lg:h-auto lg:bg-transparent lg:z-auto flex flex-col lg:flex-row lg:items-center gap-6 lg:gap-2 lg:ml-6 shrink-0 p-6 lg:p-0 overflow-y-auto lg:overflow-visible shadow-2xl lg:shadow-none">
             
             <div class="flex items-center justify-between lg:hidden mb-2 border-b border-slate-100 pb-4">
                 <span class="text-xl font-headline font-extrabold tracking-tight text-primary">Menu</span>
@@ -114,7 +114,7 @@
                 </div>
             }
 
-            <div class="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-2 w-full lg:w-auto mt-4 lg:mt-0">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-2 w-full lg:w-auto mt-4 lg:mt-0 lg:ml-auto">
             @{
                 var accessTokenExists = !string.IsNullOrEmpty(Context.Request.Cookies["AccessToken"]);
                 var userName = Context.Request.Cookies["UserName"];
@@ -168,7 +168,7 @@
 
                     @if (!userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) && !userRole.Equals("staff", StringComparison.OrdinalIgnoreCase))
                     {
-                        <div class="flex flex-row items-center justify-between lg:justify-start gap-2 w-full lg:w-auto">
+                        <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-start gap-2 w-full lg:w-auto">
                             @* 🛒 SHOPPING CART mini-dropdown *@
                             <div class="relative flex-1 lg:flex-none" id="cart-dropdown">
                                 <button onclick="toggleCart()"
@@ -303,6 +303,10 @@
     }
 
     function toggleCart() {
+        if (window.innerWidth < 1024) {
+            window.location.href = '/Cart';
+            return;
+        }
         const box = document.getElementById('cart-box');
         const isHidden = box.classList.contains('hidden');
         closeAllDropdowns();
@@ -313,6 +317,10 @@
     }
 
     function toggleNoti() {
+        if (window.innerWidth < 1024) {
+            window.location.href = '/Notification';
+            return;
+        }
         const box = document.getElementById('noti-box');
         const isHidden = box.classList.contains('hidden');
         closeAllDropdowns();
