@@ -12,6 +12,30 @@ public class MappingProfile : Profile
     {
         CreateMap<Notification, NotificationResponseDto>();
 
+        // Review Moderation Records Mapping
+        CreateMap<CourseReviewModerationRecord, ReviewModerationRecordDto>()
+            .ForMember(dest => dest.ReviewId, opt => opt.MapFrom(src => src.CourseReviewId))
+            .ForMember(dest => dest.Type, opt => opt.MapFrom(src => "course"))
+            .ForMember(dest => dest.OriginalComment, opt => opt.MapFrom(src => src.IsUpdate ? src.CourseReview.Comment : null))
+            .ForMember(dest => dest.OriginalRating, opt => opt.MapFrom(src => src.IsUpdate ? (decimal?)src.CourseReview.Rating : null))
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.CourseReview.Enrollment.UserId))
+            .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.CourseReview.Enrollment.User.UserNavigation.Username ?? src.CourseReview.Enrollment.User.FullName))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.CourseReview.Enrollment.User.UserNavigation.Email))
+            .ForMember(dest => dest.CourseTitle, opt => opt.MapFrom(src => src.CourseReview.Enrollment.Course.Title))
+            .ForMember(dest => dest.LessonTitle, opt => opt.Ignore());
+
+        CreateMap<LessonReviewModerationRecord, ReviewModerationRecordDto>()
+            .ForMember(dest => dest.ReviewId, opt => opt.MapFrom(src => src.LessonReviewId))
+            .ForMember(dest => dest.Type, opt => opt.MapFrom(src => "lesson"))
+            .ForMember(dest => dest.OriginalComment, opt => opt.MapFrom(src => src.IsUpdate ? src.LessonReview.Comment : null))
+            .ForMember(dest => dest.OriginalRating, opt => opt.MapFrom(src => src.IsUpdate ? (decimal?)src.LessonReview.Rating : null))
+            .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.LessonReview.Enrollment.UserId))
+            .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.LessonReview.Enrollment.User.UserNavigation.Username ?? src.LessonReview.Enrollment.User.FullName))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.LessonReview.Enrollment.User.UserNavigation.Email))
+            .ForMember(dest => dest.CourseTitle, opt => opt.MapFrom(src => src.LessonReview.Enrollment.Course.Title))
+            .ForMember(dest => dest.LessonTitle, opt => opt.MapFrom(src => src.LessonReview.Lesson != null ? src.LessonReview.Lesson.Title : null));
+
+
         // Reports Mapping
         CreateMap<CourseReport, MyCourseReportResponse>()
             .ForMember(dest => dest.ReportId, opt => opt.MapFrom(src => src.CourseReportId))

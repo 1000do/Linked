@@ -44,7 +44,7 @@ public class WishlistController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to add to wishlist" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -67,7 +67,7 @@ public class WishlistController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to remove from wishlist" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -90,7 +90,7 @@ public class WishlistController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to toggle wishlist" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 

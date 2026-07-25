@@ -1,0 +1,418 @@
+@model CourseMarketplaceFE.Models.ReviewModerationListViewModel
+@using CourseMarketplaceFE.Models
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Review Moderation Queue";
+    ViewData["PageHeader"] = "Review Moderation Queue";
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="space-y-6 max-w-7xl mx-auto">
+    <!-- Stats Overview -->
+    <div id="stats-container" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-amber-600">hourglass_empty</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Pending Review</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@(ViewBag.PendingCount ?? 0)</h3>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Approved</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@(ViewBag.ApprovedCount ?? 0)</h3>
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+            <div class="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-rose-600">cancel</span>
+            </div>
+            <div>
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rejected</p>
+                <h3 class="text-2xl font-display font-extrabold text-slate-900">@(ViewBag.RejectedCount ?? 0)</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs and Filters -->
+    <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+        
+        <!-- Tab Navigation -->
+        <div class="flex items-center gap-8 border-b border-slate-100 px-6 pt-4">
+            <button type="button" id="tab-course" onclick="switchTab('course')" class="relative pb-4 font-semibold text-sm text-indigo-600 transition-colors">
+                Course Review
+                <div id="tab-course-indicator" class="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-t-full"></div>
+            </button>
+            <button type="button" id="tab-lesson" onclick="switchTab('lesson')" class="relative pb-4 font-semibold text-sm text-slate-500 hover:text-slate-800 transition-colors">
+                Lesson Review
+                <div id="tab-lesson-indicator" class="absolute bottom-0 left-0 w-full h-0.5 bg-transparent rounded-t-full"></div>
+            </button>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="p-6 bg-slate-50/50">
+            <form id="filterForm" onsubmit="loadData(event)" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                
+                <input type="hidden" name="type" id="currentTab" value="course" />
+                <input type="hidden" name="page" id="currentPage" value="1" />
+
+                <!-- Search -->
+                <div class="xl:col-span-1">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Search</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-slate-400 text-sm group-focus-within:text-indigo-500 transition-colors">search</span>
+                        </div>
+                        <input type="text" name="search" id="filterSearch"
+                               class="w-full bg-white border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent block pl-9 p-2 transition-all outline-none"
+                               placeholder="User, email, content...">
+                    </div>
+                </div>
+
+                <!-- Moderation Status -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</label>
+                    <div class="relative">
+                        <select name="statusFilter" id="filterStatus" onchange="loadData()" class="w-full appearance-none bg-white border border-slate-200 text-slate-700 p-2 pl-3 pr-8 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                            <span class="material-symbols-outlined text-[18px]">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Type -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Type</label>
+                    <div class="relative">
+                        <select name="requestType" id="filterType" onchange="loadData()" class="w-full appearance-none bg-white border border-slate-200 text-slate-700 p-2 pl-3 pr-8 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer">
+                            <option value="both">Both (New & Edit)</option>
+                            <option value="false">New Review Only</option>
+                            <option value="true">Update Edit Only</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                            <span class="material-symbols-outlined text-[18px]">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Threat Level -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Threat Level</label>
+                    <div class="relative">
+                        <select name="aiStatus" id="filterAi" onchange="loadData()" class="w-full appearance-none bg-white border border-slate-200 text-slate-700 p-2 pl-3 pr-8 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Clean</option>
+                            <option value="manual_audit">Moderate</option>
+                            <option value="flagged">Severe</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                            <span class="material-symbols-outlined text-[18px]">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sort -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Sort</label>
+                    <div class="relative">
+                        <select name="sortBy" id="filterSort" onchange="loadData()" class="w-full appearance-none bg-white border border-slate-200 text-slate-700 p-2 pl-3 pr-8 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer">
+                            <option value="priority_desc">Highest Priority</option>
+                            <option value="priority_asc">Lowest Priority</option>
+                            <option value="updated_at_desc">Newest</option>
+                            <option value="updated_at_asc">Oldest</option>
+                            <option value="threat_desc">Highest Threat</option>
+                            <option value="threat_asc">Lowest Threat</option>
+                            <option value="temp_rating_desc">Highest Rating</option>
+                            <option value="temp_rating_asc">Lowest Rating</option>
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                            <span class="material-symbols-outlined text-[18px]">expand_more</span>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Dynamic Content Container -->
+        <div id="table-container" class="min-h-[300px] relative">
+            <div id="table-loading" class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center hidden">
+                <span class="material-symbols-outlined animate-spin text-indigo-600 text-3xl">progress_activity</span>
+            </div>
+            <div id="table-content">
+                <!-- Partial View gets loaded here -->
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Detailed Info Modal (Centered) -->
+<div id="detailsModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div id="detailsBackdrop" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300" onclick="closeDetailsModal()"></div>
+    
+    <!-- Centered Panel -->
+    <div class="relative w-full max-w-2xl max-h-[90vh] bg-white shadow-2xl rounded-2xl flex flex-col transform transition-all scale-95 opacity-0 duration-300" id="detailsPanel">
+        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl shrink-0">
+            <h3 class="text-lg font-bold text-slate-900">Review Record Details</h3>
+            <button type="button" onclick="closeDetailsModal()" class="text-slate-400 hover:text-slate-600 transition-colors p-1 bg-white rounded-full border border-slate-200 hover:bg-slate-50 flex items-center justify-center">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto flex-1 space-y-6 custom-scrollbar" id="detailsContent">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let searchTimeout;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Move modal to body to ensure it covers the whole screen regardless of parent stacking contexts
+            const detailsModal = document.getElementById('detailsModal');
+            if (detailsModal) {
+                document.body.appendChild(detailsModal);
+            }
+
+            loadData();
+
+            const searchInput = document.getElementById('filterSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', () => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        document.getElementById('currentPage').value = 1;
+                        loadData();
+                    }, 500);
+                });
+            }
+        });
+
+        function switchTab(type) {
+            document.getElementById('currentTab').value = type;
+            document.getElementById('currentPage').value = 1;
+
+            if (type === 'course') {
+                document.getElementById('tab-course').classList.add('text-indigo-600');
+                document.getElementById('tab-course').classList.remove('text-slate-500');
+                document.getElementById('tab-course-indicator').classList.add('bg-indigo-600');
+                document.getElementById('tab-course-indicator').classList.remove('bg-transparent');
+
+                document.getElementById('tab-lesson').classList.remove('text-indigo-600');
+                document.getElementById('tab-lesson').classList.add('text-slate-500');
+                document.getElementById('tab-lesson-indicator').classList.remove('bg-indigo-600');
+                document.getElementById('tab-lesson-indicator').classList.add('bg-transparent');
+            } else {
+                document.getElementById('tab-lesson').classList.add('text-indigo-600');
+                document.getElementById('tab-lesson').classList.remove('text-slate-500');
+                document.getElementById('tab-lesson-indicator').classList.add('bg-indigo-600');
+                document.getElementById('tab-lesson-indicator').classList.remove('bg-transparent');
+
+                document.getElementById('tab-course').classList.remove('text-indigo-600');
+                document.getElementById('tab-course').classList.add('text-slate-500');
+                document.getElementById('tab-course-indicator').classList.remove('bg-indigo-600');
+                document.getElementById('tab-course-indicator').classList.add('bg-transparent');
+            }
+
+            loadData();
+        }
+
+        function changePage(page) {
+            document.getElementById('currentPage').value = page;
+            loadData();
+        }
+
+        async function loadData(e = null) {
+            if (e) e.preventDefault();
+
+            const type = document.getElementById('currentTab').value;
+            const search = document.getElementById('filterSearch').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const requestType = document.getElementById('filterType').value;
+            const aiStatus = document.getElementById('filterAi').value;
+            const sortBy = document.getElementById('filterSort').value;
+            const page = document.getElementById('currentPage').value;
+
+            document.getElementById('table-loading').classList.remove('hidden');
+
+            try {
+                const endpoint = type === 'course' ? '/AdminModeration/GetCourseReviewsPartial' : '/AdminModeration/GetLessonReviewsPartial';
+                const qs = `?search=${encodeURIComponent(search)}&statusFilter=${statusFilter}&requestType=${requestType}&aiStatus=${aiStatus}&sortBy=${sortBy}&page=${page}`;
+                
+                const response = await fetch(endpoint + qs);
+                const html = await response.text();
+                
+                document.getElementById('table-content').innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                document.getElementById('table-content').innerHTML = '<p class="text-rose-500 p-6">Failed to load data.</p>';
+            } finally {
+                document.getElementById('table-loading').classList.add('hidden');
+            }
+        }
+
+        // Details Modal logic
+        function openDetailsModal(record) {
+            const modal = document.getElementById('detailsModal');
+            const panel = document.getElementById('detailsPanel');
+            const content = document.getElementById('detailsContent');
+
+            let html = `
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-1">Author</h4>
+                    <p class="text-sm font-semibold text-slate-800">${record.Username}</p>
+                    <p class="text-sm text-slate-600">${record.Email}</p>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-1">Request Type</h4>
+                    <p class="text-sm font-semibold ${record.IsUpdate ? 'text-indigo-600' : 'text-emerald-600'}">
+                        ${record.IsUpdate ? 'Update Edit' : 'New Review'}
+                    </p>
+                </div>
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-1">Target</h4>
+                    <p class="text-sm text-slate-800"><span class="font-semibold">Course:</span> ${record.CourseTitle}</p>
+                    ${record.LessonTitle ? `<p class="text-sm text-slate-800"><span class="font-semibold">Lesson:</span> ${record.LessonTitle}</p>` : ''}
+                </div>
+            `;
+
+            if (record.IsUpdate) {
+                html += `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Original Version</h4>
+                        <div class="flex items-center gap-1 text-slate-400 mb-2">
+                            ${Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-[14px] ${i < record.OriginalRating ? 'fill-current' : 'text-slate-200'}">star</span>`).join('')}
+                        </div>
+                        <p class="text-sm text-slate-600 whitespace-pre-wrap">${record.OriginalComment}</p>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50">
+                    <h4 class="text-xs font-bold text-indigo-500 uppercase mb-2">${record.IsUpdate ? 'Proposed Version' : 'Submitted Version'}</h4>
+                    <div class="flex items-center gap-1 text-amber-500 mb-2">
+                        ${Array(5).fill(0).map((_, i) => `<span class="material-symbols-outlined text-[14px] ${i < record.TempRating ? 'fill-current' : 'text-slate-300'}">star</span>`).join('')}
+                    </div>
+                    <p class="text-sm text-slate-800 whitespace-pre-wrap">${record.TempComment}</p>
+                </div>
+                
+                <div class="border-t border-slate-100 pt-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">AI Moderation Status</h4>
+                    <span class="inline-flex px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700 mb-2">${record.AiModerationStatus?.toUpperCase()}</span>
+                    <p class="text-sm text-slate-600">${record.AiModerationNote}</p>
+                </div>
+
+                <div class="border-t border-slate-100 pt-6">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Admin Moderation Status</h4>
+                    <span class="inline-flex px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700 mb-2">${record.ModerationStatus?.toUpperCase()}</span>
+                    <p class="text-sm text-slate-600">${record.ModerationNote || 'N/A'}</p>
+                </div>
+            `;
+
+            content.innerHTML = html;
+
+            modal.classList.remove('hidden');
+            const backdrop = document.getElementById('detailsBackdrop');
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                panel.classList.remove('scale-95', 'opacity-0');
+                panel.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeDetailsModal() {
+            const modal = document.getElementById('detailsModal');
+            const panel = document.getElementById('detailsPanel');
+            const backdrop = document.getElementById('detailsBackdrop');
+            
+            backdrop.classList.add('opacity-0');
+            panel.classList.remove('scale-100', 'opacity-100');
+            panel.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // SweetAlert Resolve logic
+        async function confirmResolve(recordId, type, action) {
+            const isApprove = action === 'approve';
+            
+            const { value: note, isConfirmed } = await Swal.fire({
+                title: isApprove ? 'Approve Review' : 'Reject Review',
+                text: isApprove 
+                    ? "Approving this will update the review in the course and notify the author."
+                    : "Rejecting this will remove the review (or reject the edit) and notify the author.",
+                icon: isApprove ? 'success' : 'error',
+                input: 'textarea',
+                inputLabel: 'Moderation Note (Sent to user)',
+                inputPlaceholder: 'Explain the reason for approval or rejection...',
+                inputValue: isApprove ? 'Review approved as it adheres to community guidelines.' : '',
+                inputValidator: (value) => {
+                    if (!value.trim()) {
+                        return 'You need to write a moderation note!';
+                    }
+                },
+                showCancelButton: true,
+                confirmButtonColor: isApprove ? '#10b981' : '#e11d48',
+                confirmButtonText: isApprove ? 'Approve Review' : 'Reject Review',
+                cancelButtonText: 'Cancel',
+                customClass: {
+                    popup: 'rounded-2xl',
+                    confirmButton: 'rounded-xl',
+                    cancelButton: 'rounded-xl',
+                    input: 'rounded-xl text-sm'
+                }
+            });
+
+            if (isConfirmed) {
+                try {
+                    const endpoint = action === 'approve' ? '/AdminModeration/ApproveReview' : '/AdminModeration/RejectReview';
+                    const payload = { recordId: recordId, type: type, moderationNote: note };
+
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'The review has been resolved.',
+                            icon: 'success',
+                            confirmButtonColor: '#10b981'
+                        }).then(() => {
+                            closeDetailsModal();
+                            loadData(); // Reload to update stats and list
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Action failed', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'Request failed', 'error');
+                }
+            }
+        }
+    </script>
+}

@@ -1313,8 +1313,19 @@
                                 // Make entire toast clickable
                                 toast.style.cursor = 'pointer';
                                 toast.addEventListener('click', (e) => {
-                                    if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') {
-                                        const targetUrl = noti.linkAction || '/Notification';
+                                    if (e.target.tagName === 'BUTTON') return;
+                                    e.preventDefault();
+                                    
+                                    const targetUrl = noti.linkAction || '/Notification';
+                                    try {
+                                        const urlObj = new URL(targetUrl, window.location.origin);
+                                        if (urlObj.pathname.toLowerCase() === window.location.pathname.toLowerCase()) {
+                                            window.location.href = targetUrl;
+                                            window.location.reload();
+                                        } else {
+                                            window.location.href = targetUrl;
+                                        }
+                                    } catch (err) {
                                         window.location.href = targetUrl;
                                     }
                                 });
