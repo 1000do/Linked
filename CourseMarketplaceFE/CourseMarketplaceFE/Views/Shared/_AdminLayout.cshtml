@@ -106,7 +106,7 @@
 <body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden antialiased selection:bg-primary/20 selection:text-primary">
 
     <!-- SIDEBAR -->
-    <aside class="w-[260px] flex flex-col bg-white shrink-0 z-[60] relative border-r border-slate-100 shadow-[2px_0_16px_rgba(0,0,0,0.02)]">
+    <aside id="adminSidebar" class="w-[260px] flex flex-col bg-white shrink-0 z-[70] fixed inset-y-0 left-0 -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 border-r border-slate-100 shadow-[2px_0_16px_rgba(0,0,0,0.02)]">
         <div class="h-16 flex items-center px-7 border-b border-slate-100">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100 shrink-0">
@@ -136,6 +136,10 @@
             <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">school</span> 
                 Course Moderation
+            </a>
+            <a href="/AdminModeration/Reviews" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+                <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">comment</span> 
+                Review Moderation
             </a>
             <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">flag</span> 
@@ -202,11 +206,17 @@
     </div>
     </aside>
 
+    <!-- MOBILE OVERLAY -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden lg:hidden transition-opacity opacity-0 duration-300" onclick="toggleSidebar()"></div>
+
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col overflow-hidden bg-[#f8fafc]">
         <!-- HEADER -->
-        <header class="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white shrink-0 shadow-sm relative z-[60]">
+        <header class="h-16 border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 bg-white shrink-0 shadow-sm relative z-[50]">
             <div class="flex items-center gap-4">
+                <button type="button" onclick="toggleSidebar()" class="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
                 <h2 class="font-display font-bold text-lg text-slate-900 tracking-tight">@ViewData["PageHeader"]</h2>
             </div>
             
@@ -237,6 +247,27 @@
     </main>
 
     <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                // Open sidebar
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+            } else {
+                // Close sidebar
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                }, 300);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const currentPath = window.location.pathname.toLowerCase();
             document.querySelectorAll('.nav-item').forEach(link => {
@@ -349,8 +380,18 @@
                                 // Make entire toast clickable
                                 toast.style.cursor = 'pointer';
                                 toast.addEventListener('click', (e) => {
-                                    if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') {
-                                        const targetUrl = noti.linkAction || '/Notification/Admin';
+                                    if (e.target.tagName === 'BUTTON') return;
+                                    e.preventDefault();
+                                    const targetUrl = noti.linkAction || '/Notification/Admin';
+                                    try {
+                                        const urlObj = new URL(targetUrl, window.location.origin);
+                                        if (urlObj.pathname.toLowerCase() === window.location.pathname.toLowerCase()) {
+                                            window.location.href = targetUrl;
+                                            window.location.reload();
+                                        } else {
+                                            window.location.href = targetUrl;
+                                        }
+                                    } catch (err) {
                                         window.location.href = targetUrl;
                                     }
                                 });

@@ -62,6 +62,24 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .Select(mc => mc.MaterialId)
                 .ToListAsync();
 
+        public async Task<bool> IsLessonCompletedAsync(int enrollmentId, int lessonId)
+        {
+            var materialIds = await _context.LearningMaterials
+                .Where(m => m.LessonId == lessonId)
+                .Select(m => m.MaterialId)
+                .ToListAsync();
+
+            if (materialIds.Count == 0) return false;
+
+            var completedCount = await _context.MaterialCompletions
+                .Where(mc => mc.EnrollmentId == enrollmentId && materialIds.Contains(mc.MaterialId))
+                .Select(mc => mc.MaterialId)
+                .Distinct()
+                .CountAsync();
+
+            return completedCount >= materialIds.Count;
+        }
+
         public async Task<List<int>> GetEnrolledUserIdsAsync(int courseId)
         {
             return await _context.Enrollments

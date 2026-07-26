@@ -46,7 +46,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(new { status = 400, message = "Failed to process instructor approval" });
+                return BadRequest(new { status = 400, message = ex.Message });
             }
         }
     }

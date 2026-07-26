@@ -45,7 +45,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to create lesson"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -69,7 +69,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to add material"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -93,7 +93,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update lesson title"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -117,7 +117,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to update material details"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -141,7 +141,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to remove material"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -165,7 +165,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to delete lesson"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -229,7 +229,7 @@ public class LessonController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<object>.ErrorResponse($"Failed to restore material"));
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {

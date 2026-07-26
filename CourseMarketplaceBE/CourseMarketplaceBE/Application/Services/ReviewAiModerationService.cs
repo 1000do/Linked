@@ -23,6 +23,7 @@ public class ReviewAiModerationService : IReviewAiModerationService
     private readonly ILogger<ReviewAiModerationService> _logger;
     private readonly ICourseRepository _courseRepo;
     private readonly ILessonRepository _lessonRepo;
+    private readonly IReviewModerationRecordRepository _moderationRecordRepo;
 
     public ReviewAiModerationService(
         IReviewService reviewService,
@@ -35,7 +36,8 @@ public class ReviewAiModerationService : IReviewAiModerationService
         IAiModerationLogService aiModerationLogService,
         ILogger<ReviewAiModerationService> logger,
         ICourseRepository courseRepo,
-        ILessonRepository lessonRepo)
+        ILessonRepository lessonRepo,
+        IReviewModerationRecordRepository moderationRecordRepo)
     {
         _reviewService = reviewService;
         _enrollmentRepo = enrollmentRepo;
@@ -48,6 +50,7 @@ public class ReviewAiModerationService : IReviewAiModerationService
         _logger = logger;
         _courseRepo = courseRepo;
         _lessonRepo = lessonRepo;
+        _moderationRecordRepo = moderationRecordRepo;
     }
 
     public async Task<ReviewAiModerationResponse> HandleReviewAiModerationAsync(TempReviewDto tempDto)
@@ -90,7 +93,7 @@ public class ReviewAiModerationService : IReviewAiModerationService
             var response = await _aiModerationService.ModerateReviewAsync(request);
             var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
             Console.WriteLine($"AI Moderation result for review comment:\n{System.Text.Json.JsonSerializer.Serialize(response, options)}");
-            await ResolveAiModerationResultAsync(tempDto, response.ModerationStatus);
+            await ResolveAiModerationResultAsync(tempDto, response.ModerationStatus, response.Reason);
 
             await _aiModerationLogService.SaveReviewModerationLogAsync(new LogReviewAiModerationCommand 
             { 
@@ -154,108 +157,34 @@ public class ReviewAiModerationService : IReviewAiModerationService
 
     private async Task ResolveAiModerationResultAsync(TempReviewDto tempDto, string moderationStatus, string? notificationContent = null)
     {
-        bool isApproved = moderationStatus.Equals(ModerationStatus.Approved.ToValue(), StringComparison.OrdinalIgnoreCase);
+        string aiNote = notificationContent ?? $"AI Moderation result: {moderationStatus}\nReview Comment: {tempDto.ReviewComment}";
 
-        if (!tempDto.IsUpdate) // New review
+        if (tempDto.LessonId.HasValue && tempDto.LessonId.Value > 0)
         {
-            await ProcessNewReviewModerationAsync(tempDto, moderationStatus, isApproved, notificationContent);
-        }
-        else // Updating existing review
-        {
-            await ProcessUpdateReviewModerationAsync(tempDto, moderationStatus, isApproved, notificationContent);
-        }
-    }
-
-    private async Task ProcessNewReviewModerationAsync(TempReviewDto tempDto, string moderationStatus, bool isApproved, string? notificationContent)
-    {
-        if (isApproved || moderationStatus.Equals(ModerationStatus.ManualAudit.ToValue(), StringComparison.OrdinalIgnoreCase))
-        {
-            if (isApproved)
+            var record = await _moderationRecordRepo.GetLessonReviewModerationRecordByIdAsync(tempDto.RecordId);
+            if (record != null)
             {
-                await _reviewService.UpdateReviewStatusInDatabaseAsync(tempDto.ReviewId, tempDto.LessonId.HasValue, ReviewStatus.Ok.ToValue());
-                await NotifyAuthorAsync(tempDto, true, tempDto.ReviewId);
-                await NotifyManagersAsync("Review Moderation Result", $"A new review was approved (Course ID: {tempDto.CourseId}).", null);
-            }
-            else
-            {
-                // Manual Audit: remains Pending
-                string content = notificationContent ?? $"A new review requires manual audit (Course ID: {tempDto.CourseId}).";
-                await NotifyManagersAsync("Review Moderation Required", content, $"/AdminModeration/Reviews");
-            }
-        }
-        else // Flagged/Rejected
-        {
-            await _reviewService.UpdateReviewStatusInDatabaseAsync(tempDto.ReviewId, tempDto.LessonId.HasValue, ReviewStatus.Removed.ToValue(), true);
-            await NotifyAuthorAsync(tempDto, false, null);
-            await NotifyManagersAsync("Review Moderation Result", $"A review was flagged/rejected (Course ID: {tempDto.CourseId}).", null);
-        }
-    }
-
-    private async Task ProcessUpdateReviewModerationAsync(TempReviewDto tempDto, string moderationStatus, bool isApproved, string? notificationContent)
-    {
-        if (isApproved || moderationStatus.Equals(ModerationStatus.ManualAudit.ToValue(), StringComparison.OrdinalIgnoreCase))
-        {
-            if (isApproved)
-            {
-                await _reviewService.UpdateReviewInDatabaseAsync(tempDto, ReviewStatus.Ok.ToValue());
-                await NotifyAuthorAsync(tempDto, true, tempDto.ReviewId);
-                await NotifyManagersAsync("Review Moderation Result", $"A review update was approved (Course ID: {tempDto.CourseId}).", null);
-            }
-            else
-            {
-                // Manual Audit: remains Pending
-                string content = notificationContent ?? $"An updated review requires manual audit (Review ID: {tempDto.ReviewId}).";
-                await NotifyManagersAsync("Review Moderation Required", content, $"/AdminModeration/Reviews");
-            }
-        }
-        else // Flagged/Rejected update
-        {
-            // Restore status to Ok, ignore the new comment/rating
-            await _reviewService.UpdateReviewStatusInDatabaseAsync(tempDto.ReviewId, tempDto.LessonId.HasValue, ReviewStatus.Ok.ToValue());
-            await NotifyAuthorAsync(tempDto, false, tempDto.ReviewId);
-            await NotifyManagersAsync("Review Moderation Result", $"A review update was flagged/rejected (Course ID: {tempDto.CourseId}).", null);
-        }
-    }
-
-    private async Task NotifyAuthorAsync(TempReviewDto tempDto, bool isApproved, int? reviewId)
-    {
-        string message;
-        string? linkAction = null;
-
-        if (isApproved)
-        {
-            message = "Your review has been approved and is now visible.";
-            if (reviewId.HasValue)
-            {
-                linkAction = tempDto.LessonId.HasValue 
-                    ? $"/Course/Learn/{tempDto.CourseId}#review-card-{reviewId}" 
-                    : $"/Course/Details/{tempDto.CourseId}#review-card-{reviewId}";
+                record.AiModerationStatus = moderationStatus.ToLower();
+                record.AiModerationNote = aiNote;
+                record.UpdatedAt = DateTime.Now;
+                await _moderationRecordRepo.UpdateLessonReviewModerationRecordAsync(record);
             }
         }
         else
         {
-            var course = await _courseRepo.GetByIdAsync(tempDto.CourseId);
-            string courseTitle = course?.Title ?? "Unknown Course";
-            
-            string contextInfo = $"Course: {courseTitle}";
-            if (tempDto.LessonId.HasValue && tempDto.LessonId.Value > 0)
+            var record = await _moderationRecordRepo.GetCourseReviewModerationRecordByIdAsync(tempDto.RecordId);
+            if (record != null)
             {
-                var lesson = await _lessonRepo.GetByIdAsync(tempDto.LessonId.Value);
-                if (lesson != null)
-                {
-                    contextInfo += $", Lesson: {lesson.Title}";
-                }
+                record.AiModerationStatus = moderationStatus.ToLower();
+                record.AiModerationNote = aiNote;
+                record.UpdatedAt = DateTime.Now;
+                await _moderationRecordRepo.UpdateCourseReviewModerationRecordAsync(record);
             }
-
-            message = $"Your review was flagged for inappropriate content and has been rejected.\n\n{contextInfo}\nReview Comment: \"{tempDto.ReviewComment}\"";
         }
 
-        await _notificationService.SendNotificationAsync(
-            tempDto.AuthorId,
-            isApproved ? "Review Approved" : "Review Rejected",
-            message,
-            linkAction
-        );
+        await _moderationRecordRepo.SaveChangesAsync();
+
+        await NotifyManagersAsync("Review AI Moderation Result", aiNote, $"/AdminModeration/Reviews");
     }
 
     private async Task NotifyManagersAsync(string title, string content, string? linkAction)

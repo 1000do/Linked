@@ -75,7 +75,6 @@
                         @if((double)Model.RatingAverage - Math.Floor((double)Model.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[18px] fill-1">star_half</span> }
                     </div>
                 </div>
-                <a href="#reviews" class="text-[#cec0fc] underline hover:text-white" id="header-rating-count">(@Model.TotalReviews ratings)</a>
                 <span class="text-slate-300">@Model.TotalStudents students</span>
             </div>
             
@@ -87,10 +86,6 @@
                 <div class="flex items-center gap-1">
                     <span class="material-symbols-outlined text-[18px]">new_releases</span>
                     <span>Last updated @(Model.CreatedAt?.ToString("MM/yyyy") ?? "04/2026")</span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <span class="material-symbols-outlined text-[18px]">language</span>
-                    <span>English</span>
                 </div>
             </div>
         </div>
@@ -400,34 +395,33 @@
         <div class="mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Instructor</h2>
             <div class="flex flex-col gap-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <a href="/Instructor/Profile/@Model.InstructorId">
-                                <h3 class="text-[#a435f0] font-bold text-lg underline hover:text-[#8710d8] cursor-pointer">@Model.InstructorName</h3>
-                            </a>
-                            <p class="text-slate-500 text-sm">@(string.IsNullOrEmpty(Model.InstructorProfessionalTitle) ? "Instructor" : Model.InstructorProfessionalTitle)</p>
-                        </div>
-                        @if (!Model.IsOwner && !isManager)
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-slate-900 font-extrabold text-xl">@Model.InstructorName</h3>
+                        @if (!string.IsNullOrWhiteSpace(Model.InstructorProfessionalTitle))
                         {
-                            <button onclick="startChatWithInstructor(@Model.InstructorId)" 
-                                    class="flex items-center gap-2 px-5 py-2 rounded-xl border-2 border-[#a435f0]/10 text-[#a435f0] text-sm font-bold hover:bg-[#a435f0] hover:text-white hover:border-[#a435f0] transition-all duration-300 group shadow-sm">
-                                <span class="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">chat_bubble</span>
-                                Message Instructor
-                            </button>
+                            <p class="text-slate-500 text-sm mt-0.5">@Model.InstructorProfessionalTitle</p>
                         }
                     </div>
+                    @if (!Model.IsOwner && !isManager)
+                    {
+                        <button onclick="startChatWithInstructor(@Model.InstructorId)" 
+                                class="flex items-center gap-2 px-5 py-2 rounded-xl border-2 border-[#a435f0]/10 text-[#a435f0] text-sm font-bold hover:bg-[#a435f0] hover:text-white hover:border-[#a435f0] transition-all duration-300 group shadow-sm">
+                            <span class="material-symbols-outlined text-[20px] group-hover:rotate-12 transition-transform">chat_bubble</span>
+                            Message Instructor
+                        </button>
+                    }
+                </div>
                 <div class="flex gap-4 items-start">
                     @await Html.PartialAsync("_UserAvatar", new { 
                         Url = Model.InstructorAvatarUrl, 
                         Role = "instructor", 
                         Name = Model.InstructorName, 
-                        Size = "xl",
-                        ShowFrame = true,
-                        FrameUrl = ""
+                        Size = "xl"
                     })
                     <div class="space-y-2 text-sm text-slate-700">
                         <div class="flex items-center gap-3">
-                            <span class="material-symbols-outlined text-[18px] fill-1">star</span>
+                            <span class="material-symbols-outlined text-[18px] fill-1 text-amber-500">star</span>
                             <span class="font-bold">@Model.RatingAverage.ToString("F1") Instructor Rating</span>
                         </div>
                         <div class="flex items-center gap-3">
@@ -442,7 +436,15 @@
                             <span class="material-symbols-outlined text-[18px]">play_circle</span>
                             <span class="font-bold">@Model.InstructorCoursesCount Courses</span>
                         </div>
-                        @* Đã chuyển lên sidebar *@
+                        
+                        <!-- View Instructor Profile Button -->
+                        <div class="pt-2">
+                            <a href="/Instructor/Profile/@Model.InstructorId" 
+                               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-[#a435f0]/15 text-[#a435f0] text-sm font-bold hover:bg-[#a435f0] hover:text-white hover:border-[#a435f0] transition-all duration-300 group shadow-sm">
+                                <span class="material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform">person</span>
+                                View Instructor Profile
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="text-sm text-slate-700 mt-2 leading-relaxed prose max-w-none">
@@ -594,8 +596,10 @@
                 </svg>
                 <div style="box-sizing:content-box; border-radius:50%; position:absolute; width:80px; height:80px; border:4px solid rgba(165,220,134,.2); left:-4px; top:-4px; z-index:2;"></div>
             </div>
-                </div>
-            </div>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">${title}</h2>
+            <p class="text-sm text-slate-600 mb-6">${text}</p>
+            <button id="btn-${popupId}" class="bg-[#7066e0] text-white px-8 py-2.5 rounded-lg font-bold hover:bg-[#5f56c6] transition-colors focus:outline-none focus:ring-4 focus:ring-[#7066e0]/30 shadow-md">OK</button>
+        </div>
         `;
         document.body.appendChild(popup);
 
@@ -822,8 +826,6 @@
                 // Header update
                 const headerAvg = document.getElementById('header-rating-avg');
                 if (headerAvg) headerAvg.textContent = avgVal.toFixed(1);
-                const headerCount = document.getElementById('header-rating-count');
-                if (headerCount) headerCount.textContent = `(${totalVal} ratings)`;
 
                 // Stars
                 const roundedAvg = Math.round(avgVal);

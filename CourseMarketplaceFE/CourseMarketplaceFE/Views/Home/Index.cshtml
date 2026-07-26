@@ -140,7 +140,7 @@
                         {
                             var course = featuredCourses[i];
                             var rank = i + 1;
-                            <div class="w-[320px] flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2 transition-all duration-500 ease-out-expo group cursor-pointer" 
+                            <div class="w-[320px] flex flex-col justify-between h-[380px] bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-2 transition-all duration-500 ease-out-expo group cursor-pointer" 
                                  onclick="location.href='/Course/Details/@course.CourseId'">
                                 <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
                                     <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "/img/default-course.png" : course.CourseThumbnailUrl)" 
@@ -175,23 +175,25 @@
 
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent group-hover:opacity-0 transition-opacity"></div>
                                 </div>
-                                <div class="p-6 flex flex-col flex-grow">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <span class="text-[9px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/5 rounded">Featured</span>
-                                        <div class="flex items-center gap-0.5 text-amber-400">
-                                            <span class="material-symbols-outlined text-[14px] fill-current">star</span>
-                                            <span class="text-xs font-bold text-slate-700">@course.RatingAverage.ToString("F1")</span>
+                                <div class="p-5 flex flex-col flex-1 justify-between">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-[9px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/5 rounded">Featured</span>
+                                            <div class="flex items-center gap-0.5 text-amber-400">
+                                                <span class="material-symbols-outlined text-[14px] fill-current">star</span>
+                                                <span class="text-xs font-bold text-slate-700">@course.RatingAverage.ToString("F1")</span>
+                                            </div>
                                         </div>
+                                        <h3 class="text-sm font-bold text-slate-900 line-clamp-2 leading-snug min-h-[2.5rem] h-[2.5rem] group-hover:text-primary transition-colors flex items-center">
+                                            @course.Title
+                                        </h3>
                                     </div>
-                                    <h3 class="text-sm font-bold text-slate-900 line-clamp-2 leading-snug mb-4 group-hover:text-primary transition-colors">
-                                        @course.Title
-                                    </h3>
-                                    <div class="mt-auto flex items-center justify-between border-t border-slate-50 pt-4">
-                                        <span class="text-xs text-slate-500 truncate max-w-[120px]">@course.InstructorName</span>
+                                    <div class="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between">
+                                        <span class="text-xs text-slate-500 truncate max-w-[130px]">@course.InstructorName</span>
                                         <div class="text-base font-black text-slate-900">
                                             @if (course.Price == 0)
                                             {
-                                                <span class="text-emerald-600 uppercase text-xs">Free</span>
+                                                <span class="text-emerald-600 uppercase text-xs font-bold">Free</span>
                                             }
                                             else
                                             {
@@ -225,7 +227,7 @@
             }
             @foreach (var course in recentCourses)
             {
-                <div class="flex flex-col h-full bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
+                <div class="flex flex-col justify-between bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-2xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all duration-300 ease-out-expo group cursor-pointer" 
                      onclick="location.href='/Course/Details/@course.CourseId'">
                     <div class="relative w-full aspect-[16/9] overflow-hidden bg-slate-100 shrink-0">
                         <img src="@(string.IsNullOrEmpty(course.CourseThumbnailUrl) ? "/img/default-course.png" : course.CourseThumbnailUrl)" 
@@ -244,23 +246,25 @@
                             </button>
                         }
                     </div>
-                    <div class="p-6 flex flex-col flex-grow">
-                        <h3 class="text-lg font-bold text-slate-900 line-clamp-2 leading-snug mb-2 group-hover:text-primary transition-colors">
-                            @course.Title
-                        </h3>
-                        <div class="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                            <span class="material-symbols-outlined text-[18px]">person</span>
-                            <span class="truncate">@course.InstructorName</span>
-                        </div>
-                        <div class="flex items-center gap-1.5 mb-6">
-                            <span class="text-sm font-bold text-slate-800">@course.RatingAverage.ToString("F1")</span>
-                            <div class="flex text-amber-400">
-                                @for(int i=0; i<Math.Floor((double)course.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
-                                @if((double)course.RatingAverage - Math.Floor((double)course.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
+                    <div class="p-5 flex flex-col flex-1 justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900 line-clamp-2 leading-snug min-h-[2.75rem] h-[2.75rem] mb-2 group-hover:text-primary transition-colors flex items-center">
+                                @course.Title
+                            </h3>
+                            <div class="flex items-center gap-2 text-sm text-slate-500 mb-3">
+                                <span class="material-symbols-outlined text-[18px]">person</span>
+                                <span class="truncate">@course.InstructorName</span>
                             </div>
-                            <span class="text-xs text-slate-400 font-medium">(@course.TotalStudents)</span>
+                            <div class="flex items-center gap-1.5 mb-4">
+                                <span class="text-sm font-bold text-slate-800">@course.RatingAverage.ToString("F1")</span>
+                                <div class="flex text-amber-400">
+                                    @for(int i=0; i<Math.Floor((double)course.RatingAverage); i++) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star</span> }
+                                    @if((double)course.RatingAverage - Math.Floor((double)course.RatingAverage) >= 0.5) { <span class="material-symbols-outlined text-[16px]" style='font-variation-settings:"FILL" 1;'>star_half</span> }
+                                </div>
+                                <span class="text-xs text-slate-400 font-medium">(@course.TotalStudents)</span>
+                            </div>
                         </div>
-                        <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <div class="pt-4 border-t border-slate-100 flex items-center justify-between">
                             <div class="text-xl font-extrabold text-slate-900 tracking-tight">
                                 @if (course.Price == 0)
                                 {

@@ -18,15 +18,18 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         private readonly ICourseModerationService _courseModerationService;
         private readonly IUserReportModerationService _userReportModerationService;
         private readonly IReportModerationService _reportService;
+        private readonly IReviewModerationService _reviewModerationService;
 
         public AdminModerationController(
             ICourseModerationService courseModerationService,
             IUserReportModerationService userReportModerationService,
-            IReportModerationService reportService)
+            IReportModerationService reportService,
+            IReviewModerationService reviewModerationService)
         {
             _courseModerationService = courseModerationService;
             _userReportModerationService = userReportModerationService;
             _reportService = reportService;
+            _reviewModerationService = reviewModerationService;
         }
 
         private int? GetUserId()
@@ -289,6 +292,65 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             catch (InvalidOperationException ex)
             {
                 return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+        }
+
+        // ── Review Moderation (UC-119) ──────────────────────────────────────────
+
+        [HttpGet("reviews/stats")]
+        public async Task<IActionResult> GetReviewModerationStats()
+        {
+            var stats = await _reviewModerationService.GetModerationStatsAsync();
+            return Ok(ApiResponse<object>.SuccessResponse(stats));
+        }
+
+        [HttpGet("reviews/course")]
+        public async Task<IActionResult> GetCourseReviewModerationRecords([FromQuery] PagedReviewModerationRequest request)
+        {
+            var result = await _reviewModerationService.GetCourseReviewModerationRecordsAsync(request);
+            return Ok(result);
+        }
+
+        [HttpGet("reviews/lesson")]
+        public async Task<IActionResult> GetLessonReviewModerationRecords([FromQuery] PagedReviewModerationRequest request)
+        {
+            var result = await _reviewModerationService.GetLessonReviewModerationRecordsAsync(request);
+            return Ok(result);
+        }
+
+        [HttpPost("reviews/approve")]
+        public async Task<IActionResult> ApproveReview([FromBody] ApproveRejectReviewRequest request)
+        {
+            try
+            {
+                await _reviewModerationService.ApproveReviewAsync(request);
+                return Ok(ApiResponse<string>.SuccessResponse("Review approved successfully."));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+        }
+
+        [HttpPost("reviews/reject")]
+        public async Task<IActionResult> RejectReview([FromBody] ApproveRejectReviewRequest request)
+        {
+            try
+            {
+                await _reviewModerationService.RejectReviewAsync(request);
+                return Ok(ApiResponse<string>.SuccessResponse("Review rejected successfully."));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ApiResponse<string>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<string>.ErrorResponse(ex.Message));
             }
         }
     }

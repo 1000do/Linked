@@ -115,7 +115,7 @@ public class AdminAccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to create staff account" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -152,7 +152,7 @@ public class AdminAccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to update staff account" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -181,7 +181,7 @@ public class AdminAccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to toggle ban" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -211,7 +211,7 @@ public class AdminAccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to flag account" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -241,7 +241,7 @@ public class AdminAccountController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to unflag account" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {

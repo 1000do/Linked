@@ -112,8 +112,11 @@
 
 <body class="bg-slate-50 font-body text-on-surface antialiased flex h-screen overflow-hidden">
 
+    <!-- MOBILE OVERLAY -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden md:hidden transition-opacity opacity-0 duration-300" onclick="toggleSidebar()"></div>
+
     <!-- SIDEBAR -->
-    <aside class="w-[260px] bg-white border-r border-slate-100 flex-shrink-0 flex-col hidden md:flex z-[60] shadow-[2px_0_16px_rgba(0,0,0,0.02)] relative">
+    <aside id="instructorSidebar" class="w-[260px] bg-white border-r border-slate-100 flex-shrink-0 flex-col flex z-[70] fixed inset-y-0 left-0 -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:z-auto shadow-[2px_0_16px_rgba(0,0,0,0.02)]">
         <a href="/InstructorCourse" class="h-16 flex items-center px-7 border-b border-slate-100 transition-colors">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 bg-teal-50 rounded-xl flex items-center justify-center border border-teal-100 shrink-0">
@@ -269,7 +272,20 @@
     <!-- MAIN WRAPPER -->
     <div class="flex-1 flex flex-col h-full overflow-hidden">
         
-
+        <!-- MOBILE HEADER -->
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:hidden shrink-0 shadow-sm relative z-[50]">
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="toggleSidebar()" class="p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-50 transition-colors">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-teal-50 rounded-lg flex items-center justify-center border border-teal-100 shrink-0">
+                        <span class="material-symbols-outlined text-teal-600 text-[16px]">co_present</span>
+                    </div>
+                    <span class="font-display font-extrabold text-slate-800 tracking-tight leading-none">Linked<span class="text-teal-600">Learn</span></span>
+                </div>
+            </div>
+        </header>
 
         <!-- MAIN CONTENT AREA -->
         <main role="main" class="flex-1 overflow-y-auto bg-slate-50 page-transition-enter">
@@ -283,6 +299,23 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('instructorSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                // Open
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
         function toggleNoti() {
             const box = document.getElementById('noti-box');
             box?.classList.toggle('hidden');
@@ -365,8 +398,18 @@
                         // Make entire toast clickable
                         toast.style.cursor = 'pointer';
                         toast.addEventListener('click', (e) => {
-                            if (e.target.tagName !== 'A' && e.target.tagName !== 'BUTTON') {
-                                const targetUrl = noti.linkAction || '/Instructor/Notifications';
+                            if (e.target.tagName === 'BUTTON') return;
+                            e.preventDefault();
+                            const targetUrl = noti.linkAction || '/Instructor/Notifications';
+                            try {
+                                const urlObj = new URL(targetUrl, window.location.origin);
+                                if (urlObj.pathname.toLowerCase() === window.location.pathname.toLowerCase()) {
+                                    window.location.href = targetUrl;
+                                    window.location.reload();
+                                } else {
+                                    window.location.href = targetUrl;
+                                }
+                            } catch (err) {
                                 window.location.href = targetUrl;
                             }
                         });

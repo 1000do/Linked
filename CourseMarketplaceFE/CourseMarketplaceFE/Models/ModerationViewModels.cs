@@ -39,4 +39,37 @@ namespace CourseMarketplaceFE.Models
         public string? Status { get; set; }
         public DateTime? CreatedAt { get; set; }
     }
+
+    public class ReviewModerationRecordViewModel
+    {
+        public int RecordId { get; set; }
+        public int ReviewId { get; set; }
+        public string Type { get; set; } = null!; // "course" or "lesson"
+        public bool IsUpdate { get; set; }
+        public string TempComment { get; set; } = null!;
+        public decimal TempRating { get; set; }
+        public string? OriginalComment { get; set; }
+        public decimal? OriginalRating { get; set; }
+        public string AiModerationStatus { get; set; } = null!;
+        public string AiModerationNote { get; set; } = null!;
+        public string ModerationStatus { get; set; } = null!;
+        public string ModerationNote { get; set; } = null!;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        
+        public int UserId { get; set; }
+        public string Username { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        
+        public string CourseTitle { get; set; } = null!;
+        public string? LessonTitle { get; set; }
+    }
+
+    public class ReviewModerationListViewModel
+    {
+        public PagedResult<ReviewModerationRecordViewModel> Records { get; set; } = new PagedResult<ReviewModerationRecordViewModel> { Items = new System.Collections.Generic.List<ReviewModerationRecordViewModel>(), TotalCount = 0, Page = 1, PageSize = 10 };
+        public string Search { get; set; } = string.Empty;
+        public string StatusFilter { get; set; } = "all";
+        public string SortBy { get; set; } = "priority_desc";
+    }
 }

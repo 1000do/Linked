@@ -43,6 +43,17 @@
             width: 100% !important;
         }
     }
+
+    .sticky-filter-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+    .sticky-filter-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sticky-filter-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 10px;
+    }
 </style>
 
 <div class="bg-surface min-h-screen py-10">
@@ -98,11 +109,11 @@
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row gap-8 items-start fade-in-up" style="animation-delay: 0.1s;">
+        <div class="flex flex-col lg:flex-row gap-8 fade-in-up" style="animation-delay: 0.1s;">
             
             <!-- Sidebar / Advanced Filters -->
             <div class="w-full lg:w-1/4 shrink-0">
-                <form method="get" action="/Course" id="filter-form" class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm sticky top-24">
+                <form method="get" action="/Course" id="filter-form" class="bg-white p-6 rounded-3xl border border-slate-200/60 shadow-sm sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto sticky-filter-scroll">
                     <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
                         <h3 class="font-headline font-bold text-base text-slate-800 flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary text-[20px]">filter_list</span>
