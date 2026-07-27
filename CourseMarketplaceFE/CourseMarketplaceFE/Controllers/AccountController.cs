@@ -340,6 +340,37 @@ namespace CourseMarketplaceFE.Controllers
             return View(model);
         }
 
+        [HttpPost]
+        [Authorize(Roles = "user,instructor")]
+        public async Task<IActionResult> UploadAvatarAjax(IFormFile avatarFile)
+        {
+            if (!Request.Cookies.ContainsKey("AccessToken")) return Unauthorized(new { success = false, message = "Not authenticated" });
+
+            if (avatarFile == null || avatarFile.Length == 0)
+                return BadRequest(new { success = false, message = "No file uploaded" });
+
+            using var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(avatarFile.OpenReadStream());
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(avatarFile.ContentType);
+            content.Add(fileContent, "avatarFile", avatarFile.FileName);
+
+            var response = await _api.PutAsync("Profile/update-avatar", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
+                string newAvatarUrl = result.GetProperty("avatarUrl").GetString() ?? "";
+
+                // Đồng bộ lại cookie display
+                var cookieOptions = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
+                Response.Cookies.Append("AvatarUrl", newAvatarUrl, cookieOptions);
+
+                return Json(new { success = true, avatarUrl = newAvatarUrl });
+            }
+
+            return BadRequest(new { success = false, message = "Failed to upload avatar" });
+        }
+
         [HttpGet]
         [Authorize(Roles = "user,instructor")]
         public IActionResult ChangePassword()
