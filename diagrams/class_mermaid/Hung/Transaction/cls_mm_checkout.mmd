@@ -13,9 +13,11 @@ class CartControllerFE["CartController"] {
 
 class CheckoutViewModel {
     <<view model>>
-    + Cart : CartSummaryResponse
-    + Email : string
     + PublishableKey : string
+    + ClientSecret : string
+    + PaymentIntentId : string
+    + Email : string
+    + Cart : CartSummaryResponse
 }
 
 class CartSummaryResponse {
@@ -62,6 +64,7 @@ class OrderInfo {
     + UserId : int
     + OrderDate : DateTime
     + OrderStatus : string
+    + PaymentMethod : string
 }
 
 class OrderItem {
@@ -70,14 +73,27 @@ class OrderItem {
     + OrderId : int
     + CourseId : int
     + PurchasePrice : decimal
+    + CouponUsed : bool
+    + OriginalPrice : decimal
+    + CouponCode : string
+    + CouponType : string
+    + DiscountAmount : decimal
 }
 
 class Transaction {
     <<entity>>
     + TransactionId : int
+    + OrderItemId : int
     + AccountFrom : int
     + AccountTo : int
     + Amount : decimal
+    + TransferRate : decimal
+    + StripeSessionId : string
+    + StripePaymentintentId : string
+    + Currency : string
+    + TransactionsStatus : string
+    + TransactionType : string
+    + TransactionCreatedAt : DateTime
 }
 
 %% ==================== BACKEND - SERVICE INTERFACES ====================
@@ -124,8 +140,8 @@ class CheckoutRepository {
 
 class StripePaymentService {
     <<service>>
-    + CreatePaymentIntentAsync(...) Task~Tuple~
-    + GetPaymentIntentMetadataAsync(...) Task~Dictionary~
+    + CreatePaymentIntentAsync(totalAmount: decimal, currency: string, metadata: Dictionary) Task~Tuple~
+    + GetPaymentIntentMetadataAsync(paymentIntentId: string) Task~Dictionary~
 }
 
 class AppDbContext {
@@ -137,8 +153,10 @@ class AppDbContext {
 
 %% ==================== RELATIONSHIPS ====================
 
-%% === AGGREGATION ===
+%% === AGGREGATION / COMPOSITION ===
 CheckoutViewModel o-- CartSummaryResponse
+OrderInfo *-- OrderItem
+OrderItem *-- Transaction
 
 %% === UNIDIRECTIONAL ASSOCIATION (solid arrow) ===
 CheckoutControllerBE --> ICheckoutService

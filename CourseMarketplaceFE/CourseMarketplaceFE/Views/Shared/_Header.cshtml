@@ -45,7 +45,8 @@
                 var mUserName = Context.Request.Cookies["UserName"];
                 var mAvatarUrl = Context.Request.Cookies["AvatarUrl"];
                 var mUserRole = Context.Request.Cookies["UserRole"] ?? "User";
-                <a asp-controller="Account" asp-action="Profile" class="hover:scale-105 transition-all">
+                var mProfileHref = (mUserRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || mUserRole.Equals("staff", StringComparison.OrdinalIgnoreCase)) ? "/AdminProfile" : "/Account/Profile";
+                <a href="@mProfileHref" class="hover:scale-105 transition-all">
                     @await Html.PartialAsync("_UserAvatar", new { Url = mAvatarUrl, Role = mUserRole, Name = mUserName, Size = "sm" })
                 </a>
                 <form id="global-logout-form-mobile" asp-controller="Account" asp-action="Logout" method="post" class="m-0">
@@ -248,8 +249,11 @@
                     
                     <div class="lg:hidden h-px w-full bg-slate-100 my-2"></div>
 
+                    @{
+                        var profileHref = isStaffOrAdmin ? "/AdminProfile" : "/Account/Profile";
+                    }
                     <div class="hidden lg:flex items-center justify-between lg:justify-end gap-3 w-full lg:w-auto px-2 lg:px-0 mt-2 lg:mt-0">
-                        <a asp-controller="Account" asp-action="Profile" class="hover:scale-105 transition-all order-1 lg:order-2">
+                        <a href="@profileHref" class="hover:scale-105 transition-all order-1 lg:order-2" title="Profile">
                             @await Html.PartialAsync("_UserAvatar", new { 
                                 Url = avatarUrl, 
                                 Role = userRole, 
@@ -266,18 +270,6 @@
                             </form>
                         </div>
                     </div>
-
-                    @{
-                        var profileHref = isStaffOrAdmin ? "/AdminProfile" : "/Account/Profile";
-                    }
-                    <a href="@profileHref" class="hover:scale-105 transition-all" title="Profile">
-                        @await Html.PartialAsync("_UserAvatar", new { 
-                            Url = avatarUrl, 
-                            Role = userRole, 
-                            Name = userName, 
-                            Size = "md"
-                        })
-                    </a>
                 </div>
             }
             </div>
