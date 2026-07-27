@@ -48,7 +48,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to apply" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -92,7 +92,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to approve application" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -125,7 +125,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to setup payout" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Stripe.StripeException ex)
         {
@@ -180,7 +180,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to verify stripe onboarding" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -254,7 +254,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to set stripe country" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
     }
 
@@ -397,7 +397,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to reset stripe account" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {
@@ -425,7 +425,7 @@ public class InstructorController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { status = 400, message = "Failed to get stripe login link" });
+            return BadRequest(new { status = 400, message = ex.Message });
         }
         catch (Exception ex)
         {

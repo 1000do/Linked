@@ -14,6 +14,7 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         Task<bool> IsMaterialCompletedAsync(int enrollmentId, int materialId);
         Task<int> GetCompletedMaterialCountAsync(int enrollmentId);
         Task<List<int>> GetCompletedMaterialIdsAsync(int enrollmentId);
+        Task<bool> IsLessonCompletedAsync(int enrollmentId, int lessonId);
         Task<List<int>> GetEnrolledUserIdsAsync(int courseId);
 
         Task AddEnrollmentAsync(Enrollment enrollment);

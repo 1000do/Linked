@@ -20,7 +20,7 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
-        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy, int page = 1, int pageSize = 10)
+        public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy, int page = 1, int pageSize = 6)
         {
             ViewBag.Search = search;
             ViewBag.Category = category;
@@ -323,6 +323,87 @@ namespace CourseMarketplaceFE.Controllers
             var payload = new { reportId, status, resolutionNote = note };
             var response = await _apiClient.PostJsonAsync("/api/admin/moderation/reports/resolve", payload);
             return Json(new { success = response.IsSuccessStatusCode });
+        }
+
+        // ── Review Moderation ──────────────────────────────────────────
+
+        public async Task<IActionResult> Reviews()
+        {
+            var statsUrl = "/api/admin/moderation/reviews/stats";
+            var statsRes = await _apiClient.GetAsync(statsUrl);
+            if (statsRes.IsSuccessStatusCode)
+            {
+                var statsContent = await statsRes.Content.ReadAsStringAsync();
+                var json = JsonDocument.Parse(statsContent);
+                var data = json.RootElement.GetProperty("data");
+                ViewBag.PendingCount = data.GetProperty("totalPending").GetInt32();
+                ViewBag.ApprovedCount = data.GetProperty("totalApproved").GetInt32();
+                ViewBag.RejectedCount = data.GetProperty("totalRejected").GetInt32();
+            }
+            else 
+            {
+                ViewBag.PendingCount = 0;
+                ViewBag.ApprovedCount = 0;
+                ViewBag.RejectedCount = 0;
+            }
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetCourseReviewsPartial(string? search, string? statusFilter, string? requestType, string? aiStatus, string? sortBy, int page = 1, int pageSize = 10)
+        {
+            var url = $"/api/admin/moderation/reviews/course?search={search}&moderationStatus={statusFilter ?? "all"}&requestType={requestType ?? "both"}&aiModerationStatus={aiStatus ?? "all"}&sortBy={sortBy ?? "priority_desc"}&page={page}&pageSize={pageSize}";
+            var response = await _apiClient.GetAsync(url);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var pagedResult = JsonSerializer.Deserialize<PagedResult<ReviewModerationRecordViewModel>>(content, _jsonOptions);
+                return PartialView("_CourseReviewsPartial", pagedResult ?? new PagedResult<ReviewModerationRecordViewModel>());
+            }
+            
+            return PartialView("_CourseReviewsPartial", new PagedResult<ReviewModerationRecordViewModel>());
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetLessonReviewsPartial(string? search, string? statusFilter, string? requestType, string? aiStatus, string? sortBy, int page = 1, int pageSize = 10)
+        {
+            var url = $"/api/admin/moderation/reviews/lesson?search={search}&moderationStatus={statusFilter ?? "all"}&requestType={requestType ?? "both"}&aiModerationStatus={aiStatus ?? "all"}&sortBy={sortBy ?? "priority_desc"}&page={page}&pageSize={pageSize}";
+            var response = await _apiClient.GetAsync(url);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var pagedResult = JsonSerializer.Deserialize<PagedResult<ReviewModerationRecordViewModel>>(content, _jsonOptions);
+                return PartialView("_LessonReviewsPartial", pagedResult ?? new PagedResult<ReviewModerationRecordViewModel>());
+            }
+            
+            return PartialView("_LessonReviewsPartial", new PagedResult<ReviewModerationRecordViewModel>());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ApproveReview([FromBody] System.Text.Json.JsonElement body)
+        {
+            var response = await _apiClient.PostJsonAsync("/api/admin/moderation/reviews/approve", body);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+            var content = await response.Content.ReadAsStringAsync();
+            return Json(new { success = false, message = content });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RejectReview([FromBody] System.Text.Json.JsonElement body)
+        {
+            var response = await _apiClient.PostJsonAsync("/api/admin/moderation/reviews/reject", body);
+            if (response.IsSuccessStatusCode)
+            {
+                return Json(new { success = true });
+            }
+            var content = await response.Content.ReadAsStringAsync();
+            return Json(new { success = false, message = content });
         }
     }
 }

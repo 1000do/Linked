@@ -657,9 +657,36 @@ public class InstructorController : Controller
     {
         try
         {
-            var response = await _api.GetAsync($"instructor/profile/{id}");
-            if (!response.IsSuccessStatusCode)
+            int targetId = id;
+            if (targetId <= 0)
+            {
+                // Nếu không truyền ID, kiểm tra xem người dùng hiện tại có phải giảng viên không
+                var dashResp = await _api.GetAsync("instructor/dashboard");
+                if (dashResp.IsSuccessStatusCode)
+                {
+                    var dashJson = await dashResp.Content.ReadAsStringAsync();
+                    using var dashDoc = JsonDocument.Parse(dashJson);
+                    if (dashDoc.RootElement.TryGetProperty("data", out var dashData) &&
+                        dashData.TryGetProperty("instructorId", out var idEl) &&
+                        idEl.TryGetInt32(out var parsedId) && parsedId > 0)
+                    {
+                        targetId = parsedId;
+                    }
+                }
+            }
+
+            if (targetId <= 0)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy hồ sơ giảng viên.";
                 return RedirectToAction("Index", "Home");
+            }
+
+            var response = await _api.GetAsync($"instructor/profile/{targetId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["ErrorMessage"] = "Hồ sơ giảng viên không tồn tại hoặc chưa được duyệt.";
+                return RedirectToAction("Index", "Home");
+            }
 
             var json = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<ApiResponse<InstructorPublicProfileViewModel>>(json, new JsonSerializerOptions
@@ -668,12 +695,16 @@ public class InstructorController : Controller
             });
 
             if (result == null || result.Data == null)
+            {
+                TempData["ErrorMessage"] = "Không thể tải dữ liệu hồ sơ giảng viên.";
                 return RedirectToAction("Index", "Home");
+            }
 
             return View(result.Data);
         }
         catch
         {
+            TempData["ErrorMessage"] = "Có lỗi xảy ra khi xem hồ sơ giảng viên.";
             return RedirectToAction("Index", "Home");
         }
     }

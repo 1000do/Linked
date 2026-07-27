@@ -26,9 +26,9 @@ public class ReviewController : ControllerBase
         return int.TryParse(str, out int id) ? id : null;
     }
 
-    // â”€â”€ GET danh sÃ¡ch reviews â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── GET danh sách reviews ──────────────────────────────────────────
 
-    /// <summary>Láº¥y danh sÃ¡ch reviews cá»§a khÃ³a há»c (public). Há»— trá»£ starFilter server-side.</summary>
+    /// <summary>Lấy danh sách reviews của khóa học (public). Hỗ trợ starFilter server-side.</summary>
     [HttpGet("course/{courseId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetCourseReviews(
@@ -41,7 +41,7 @@ public class ReviewController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved course reviews successfully."));
     }
 
-    /// <summary>Láº¥y danh sÃ¡ch reviews cá»§a lesson (public)</summary>
+    /// <summary>Lấy danh sách reviews của lesson (public)</summary>
     [HttpGet("lesson/{lessonId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetLessonReviews(
@@ -53,9 +53,9 @@ public class ReviewController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(result, "Retrieved lesson reviews successfully."));
     }
 
-    // â”€â”€ GET thá»‘ng kÃª sao â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── GET thống kê sao ──────────────────────────────────────────
 
-    /// <summary>Thá»‘ng kÃª phÃ¢n bá»• sao cá»§a course (public)</summary>
+    /// <summary>Thống kê phân bổ sao của course (public)</summary>
     [HttpGet("stats/{courseId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetReviewStats(int courseId)
@@ -64,7 +64,7 @@ public class ReviewController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(stats));
     }
 
-    /// <summary>Thá»‘ng kÃª phÃ¢n bá»• sao cá»§a lesson (public)</summary>
+    /// <summary>Thống kê phân bổ sao của lesson (public)</summary>
     [HttpGet("lesson-stats/{lessonId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetLessonReviewStats(int lessonId)
@@ -73,7 +73,7 @@ public class ReviewController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(stats));
     }
 
-    /// <summary>Tráº£ vá» avg rating cho táº¥t cáº£ lesson cá»§a 1 course â€” dÃ¹ng Ä‘á»ƒ render sidebar Learn.</summary>
+    /// <summary>Trả về avg rating cho tất cả lesson của 1 course — dùng để render sidebar Learn.</summary>
     [HttpGet("lesson-ratings/{courseId}")]
     [AllowAnonymous]
     public async Task<IActionResult> GetLessonRatings(int courseId)
@@ -82,9 +82,9 @@ public class ReviewController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(data));
     }
 
-    // â”€â”€ GET eligibility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── GET eligibility ──────────────────────────────────────────
 
-    /// <summary>Kiá»ƒm tra tráº¡ng thÃ¡i enrollment + quyá»n review cá»§a user</summary>
+    /// <summary>Kiểm tra trạng thái enrollment + quyền review của user</summary>
     [HttpGet("eligibility/{courseId}")]
     [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetReviewEligibility(int courseId)
@@ -96,15 +96,15 @@ public class ReviewController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(status));
     }
 
-    // â”€â”€ POST submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── POST submit ──────────────────────────────────────────
 
     /// <summary>
-    /// Gá»­i review má»›i â€” luÃ´n táº¡o record má»›i (nhiá»u comment Ä‘Æ°á»£c phÃ©p).
-    /// source=detail â†’ yÃªu cáº§u hoÃ n thÃ nh khÃ³a há»c
-    /// source=learn  â†’ yÃªu cáº§u Ä‘Ã£ há»c Ã­t nháº¥t 1 bÃ i
+    /// Gửi review mới — luôn tạo record mới (nhiều comment được phép).
+    /// source=detail → yêu cầu hoàn thành khóa học
+    /// source=learn  → yêu cầu đã học ít nhất 1 bài
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> SubmitReview(
         [FromBody] ReviewRequest request,
         [FromQuery] string source = "learn")
@@ -124,7 +124,7 @@ public class ReviewController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(ApiResponse<string>.ErrorResponse($"Failed to submit review"));
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (Exception ex)
         {
@@ -132,11 +132,11 @@ public class ReviewController : ControllerBase
         }
     }
 
-    // â”€â”€ PUT edit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── PUT edit ──────────────────────────────────────────
 
-    /// <summary>Chá»‰nh sá»­a review (chá»‰ chá»§ review Ä‘Æ°á»£c phÃ©p)</summary>
+    /// <summary>Chỉnh sửa review (chỉ chủ review được phép)</summary>
     [HttpPut("{reviewId}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> UpdateReview(int reviewId, [FromBody] UpdateReviewRequest request)
     {
         var userId = GetUserId();
@@ -163,11 +163,11 @@ public class ReviewController : ControllerBase
         }
     }
 
-    // â”€â”€ DELETE soft-delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── DELETE soft-delete ──────────────────────────────────────────
 
-    /// <summary>XÃ³a má»m review (chá»‰ chá»§ review Ä‘Æ°á»£c phÃ©p). type = course | lesson</summary>
+    /// <summary>Xóa mềm review (chỉ chủ review được phép). type = course | lesson</summary>
     [HttpDelete("{reviewId}")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> DeleteReview(int reviewId, [FromQuery] string type = "course")
     {
         var userId = GetUserId();
@@ -196,11 +196,11 @@ public class ReviewController : ControllerBase
         }
     }
 
-    // â”€â”€ POST report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── POST report ──────────────────────────────────────────
 
-    /// <summary>BÃ¡o cÃ¡o review vi pháº¡m</summary>
+    /// <summary>Báo cáo review vi phạm</summary>
     [HttpPost("report")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> Report([FromBody] ReportRequest request)
     {
         var userId = GetUserId();

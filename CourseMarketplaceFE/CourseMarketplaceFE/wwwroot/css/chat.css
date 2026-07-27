@@ -50,12 +50,23 @@ main {
 
 @media (max-width: 768px) {
     .chat-sidebar {
-        position: absolute;
-        left: 0; top: 0; bottom: 0;
-        transform: translateX(-100%);
-        box-shadow: 20px 0 50px rgba(0,0,0,0.05);
+        position: relative;
+        width: 100%;
+        transform: none;
+        box-shadow: none;
     }
-    .chat-sidebar.active { transform: translateX(0); }
+    
+    .chat-main-area {
+        display: none !important;
+    }
+    
+    .chat-wrapper.chat-active .chat-sidebar {
+        display: none !important;
+    }
+    
+    .chat-wrapper.chat-active .chat-main-area {
+        display: flex !important;
+    }
 }
 
 .sidebar-header {
