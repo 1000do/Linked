@@ -599,7 +599,9 @@
             // Clear typing state for previous chat if any
             if (activeChatId && typeof chatPageTypingTimeout !== 'undefined') {
                 try {
-                    chatPageConnection.invoke("Typing", activeChatId, false);
+                    if (activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                        chatPageConnection.invoke("Typing", activeChatId, false);
+                    }
                     clearTimeout(chatPageTypingTimeout);
                 } catch(e) {}
             }
@@ -633,7 +635,9 @@
             // Join SignalR group to receive typing and read events for newly created chats
             if (chatPageConnection && chatPageConnection.state === signalR.HubConnectionState.Connected) {
                 try {
-                    await chatPageConnection.invoke("JoinChat", chatId);
+                    if (chatId !== 'support_ticket' && !isNaN(chatId)) {
+                        await chatPageConnection.invoke("JoinChat", chatId);
+                    }
                 } catch (e) { console.error("JoinChat error:", e); }
             }
 
@@ -670,7 +674,9 @@
                 scrollToBottom();
 
                 // Broadcast read receipt
-                chatPageConnection.invoke("MarkAsRead", chatId);
+                if (chatId !== 'support_ticket' && !isNaN(chatId)) {
+                    chatPageConnection.invoke("MarkAsRead", chatId);
+                }
                 
                 // Refresh local chat list and global sidebar unread badge
                 await loadChats();
@@ -1014,6 +1020,26 @@
             });
 
             if (confirmResult.isConfirmed) {
+                if (activeChatId === 'support_ticket' || isNaN(activeChatId)) {
+                    document.getElementById('message-list').innerHTML = "";
+                    activeChatId = null;
+                    isWaitingForSupportStaff = false;
+                    document.getElementById('chat-content').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+                    
+                    Swal.fire({
+                        title: 'Cleared!',
+                        text: 'The chat history was successfully cleared.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                    return;
+                }
+
                 try {
                     const res = await fetch(`/Chat/ClearHistory?chatId=${activeChatId}`, {
                         method: 'DELETE'
@@ -1062,12 +1088,14 @@
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
 
-            if (!activeChatId) return;
+            if (!activeChatId || activeChatId === 'support_ticket' || isNaN(activeChatId)) return;
             chatPageConnection.invoke("Typing", activeChatId, true);
             
             clearTimeout(chatPageTypingTimeout);
             chatPageTypingTimeout = setTimeout(() => {
-                chatPageConnection.invoke("Typing", activeChatId, false);
+                if (activeChatId && activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                    chatPageConnection.invoke("Typing", activeChatId, false);
+                }
             }, 3000);
         });
 
