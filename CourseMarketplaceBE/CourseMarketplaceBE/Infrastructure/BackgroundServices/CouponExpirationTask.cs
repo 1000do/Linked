@@ -54,7 +54,7 @@ namespace CourseMarketplaceBE.Infrastructure.BackgroundServices
             var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
 
             var now = DateTime.UtcNow;
-            
+
             // Lấy danh sách các coupon đã hết hạn nhưng vẫn đang active, kèm theo khóa học liên quan
             var expiredCoupons = await couponRepo.GetExpiredActiveCouponsWithCoursesAsync(now);
 
@@ -84,7 +84,7 @@ namespace CourseMarketplaceBE.Infrastructure.BackgroundServices
                 {
                     var title = "Coupon Expired";
                     var content = $"The discount code {coupon.CouponCode} attached to your course has expired. Please review your course pricing.";
-                    var linkAction = "/instructor/courses"; // Điều hướng giảng viên về trang khóa học của họ
+                    var linkAction = "/InstructorCourse"; // Điều hướng giảng viên về trang khóa học của họ
 
                     await notificationService.SendNotificationAsync(instructorId, title, content, linkAction);
                 }
