@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
@@ -21,7 +21,7 @@ public class QuizAttemptController : ControllerBase
     }
 
     [HttpGet("quiz/{quizId}")]
-    [Authorize(Roles = "user,admin,staff")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetQuizForStudent(int quizId)
     {
         try
@@ -44,7 +44,7 @@ public class QuizAttemptController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> SubmitAttempt([FromBody] QuizAttemptSubmitRequest request)
     {
         try
@@ -67,7 +67,7 @@ public class QuizAttemptController : ControllerBase
     }
 
     [HttpGet("quiz/{quizId}/history")]
-    [Authorize(Roles = "user")]
+    [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> GetMyQuizHistory(int quizId, [FromQuery] PagedRequestDto request)
     {
         try

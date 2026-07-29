@@ -48,6 +48,7 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     .ThenInclude(u => u!.UserNavigation)
                 .Include(i => i.Courses)
                     .ThenInclude(c => c.Enrollments)
+                        .ThenInclude(e => e.CourseReviews)
                 .FirstOrDefaultAsync(i => i.InstructorId == instructorId);
 
         // ── Write ─────────────────────────────────────────────────────────────

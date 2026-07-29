@@ -239,6 +239,8 @@ public class Program
         builder.Services.AddScoped<ICourseAiUsageLogRepository, CourseAiUsageLogRepository>();
         builder.Services.AddScoped<ICourseReviewModerationLogRepository, CourseReviewModerationLogRepository>();
         builder.Services.AddScoped<ILessonReviewModerationLogRepository, LessonReviewModerationLogRepository>();
+        builder.Services.AddScoped<IReviewModerationRecordRepository, ReviewModerationRecordRepository>();
+        builder.Services.AddScoped<CourseMarketplaceBE.Application.IServices.IReviewModerationService, CourseMarketplaceBE.Application.Services.ReviewModerationService>();
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
         builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer, Ganss.Xss.HtmlSanitizer>();
         builder.Services.AddScoped<IHtmlTextManipulationService, HtmlTextManipulationService>();

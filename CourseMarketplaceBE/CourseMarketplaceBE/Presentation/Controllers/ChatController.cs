@@ -118,7 +118,7 @@ public class ChatController : ControllerBase
         }
         catch (System.InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to create chat" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -134,7 +134,7 @@ public class ChatController : ControllerBase
         }
         catch (System.InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to submit report" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -155,7 +155,7 @@ public class ChatController : ControllerBase
         }
         catch (System.InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to grant admin access" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -171,7 +171,7 @@ public class ChatController : ControllerBase
         }
         catch (System.InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to clear chat history" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -187,7 +187,7 @@ public class ChatController : ControllerBase
         }
         catch (System.InvalidOperationException ex)
         {
-            return BadRequest(new { message = "Failed to mark chat as read" });
+            return BadRequest(new { message = ex.Message });
         }
     }
 

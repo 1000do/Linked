@@ -1,0 +1,35 @@
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5;">
+    
+    <h4>3.14.1 Checkout</h4>
+    
+    <p>The purpose of this workflow is to allow an authenticated user or instructor to securely complete the payment process for courses in their shopping cart through the Stripe payment gateway and gain instant course enrollment.</p>
+    
+    <p><b style="color: black;">Execution steps:</b></p>
+    
+    <p><b>Step 1:</b> The authenticated user or instructor accesses the Secure Checkout page by clicking the <b>Checkout</b> button from the shopping cart page.</p>
+    
+    <p><b>Step 2:</b> The authenticated user or instructor reviews their order summary and read-only contact details:</p>
+    <ul>
+        <li><b>Order Summary:</b> Read-only. Displays the list of selected course items (including course thumbnail, title, instructor name, and individual price), the subtotal, applied coupon discount amount, and the final total amount payable.</li>
+        <li><b>LinkedLearn Guarantee:</b> Read-only. Displays the platform trust badge confirming lifetime access, free updates, and a 14-day money-back guarantee.</li>
+        <li><b>Contact Information:</b> Read-only. Displays the authenticated user's registered account email address where payment receipts and enrollment notices will be delivered.</li>
+    </ul>
+    
+    <p><b>Step 3:</b> The authenticated user or instructor inputs their payment card information under the <b>Payment Information</b> section:</p>
+    <ul>
+        <li><b>Card Number:</b> Required. The primary payment card number entered directly into the secure 256-bit SSL encrypted Stripe Elements field.</li>
+        <li><b>Expiry Date:</b> Required. The card expiration date in MM/YY format entered into the secure Stripe Elements field.</li>
+        <li><b>CVC:</b> Required. The 3-digit or 4-digit card security code entered into the secure Stripe Elements field.</li>
+        <li><b>Cardholder Name:</b> Required. The full legal name of the cardholder as printed on the payment card.</li>
+        <li><b>Country or Region:</b> Required. The billing country or region associated with the payment card selected from the dropdown list (e.g., Vietnam, United States, United Kingdom).</li>
+    </ul>
+    
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Secure Checkout page here, highlighting the Order Summary, Payment Information form fields, and Pay Securely button in red)</i>
+    </p>
+    
+    <p style="text-align: center;"><i>Figure 1. Checkout operation</i></p>
+    
+    <p><b>Step 4:</b> The authenticated user or instructor clicks the <b>Pay Securely $[Total Amount]</b> button to authorize the transaction and finalize course enrollment.</p>
+    
+</div>

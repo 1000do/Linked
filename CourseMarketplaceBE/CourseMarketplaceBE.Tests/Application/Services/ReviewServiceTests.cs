@@ -29,6 +29,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ISystemConfigRepository _systemConfigRepositoryMock;
         private readonly IAiModelRepository _aiModelRepositoryMock;
         private readonly Microsoft.Extensions.Logging.ILogger<ReviewService> _loggerMock;
+        private readonly IReviewModerationRecordRepository _moderationRecordRepoMock;
         private readonly ReviewService _sut;
 
         public ReviewServiceTests()
@@ -45,6 +46,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _systemConfigRepositoryMock = Substitute.For<ISystemConfigRepository>();
             _aiModelRepositoryMock = Substitute.For<IAiModelRepository>();
             _loggerMock = Substitute.For<Microsoft.Extensions.Logging.ILogger<ReviewService>>();
+            _moderationRecordRepoMock = Substitute.For<IReviewModerationRecordRepository>();
 
             _sut = new ReviewService(
                 _reviewRepoMock,
@@ -53,7 +55,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _reportServiceMock,
                 _lockoutRepoMock,
                 _taskQueueMock,
-                _loggerMock
+                _loggerMock,
+                _moderationRecordRepoMock
             );
         }
 
@@ -305,13 +308,32 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10, IsCompleted = true });
+            _enrollmentRepoMock.IsLessonCompletedAsync(10, lessonId).Returns(true);
             _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId, Title = "Course", InstructorId = 99 });
 
             await _sut.SubmitReviewAsync(userId, request, false);
 
             await _enrollmentRepoMock.Received(1).GetCompletedMaterialCountAsync(10);
             await _reviewRepoMock.Received(1).AddLessonReviewAsync(Arg.Is<LessonReview>(r => r.Rating == 4 && r.LessonId == lessonId));
-            await _notifMock.Received(1).SendNotificationAsync(99, "New Review", Arg.Any<string>(), $"/Course/Learn/{courseId}#review-card-0");
+        }
+
+        [Fact]
+        public async Task SubmitReviewAsync_NotOwner_LessonIncomplete_ThrowsInvalidOperationException()
+        {
+            int userId = 1;
+            int courseId = 2;
+            int lessonId = 3;
+            var request = new ReviewRequest { CourseId = courseId, LessonId = lessonId, Rating = 4, Comment = "Good lesson" };
+            
+            _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
+            _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10, IsCompleted = true });
+            _enrollmentRepoMock.IsLessonCompletedAsync(10, lessonId).Returns(false);
+
+            Func<Task> act = async () => await _sut.SubmitReviewAsync(userId, request, false);
+
+            await act.Should().ThrowAsync<InvalidOperationException>()
+                .WithMessage("You need to complete all materials in this lesson before writing a review.");
         }
 
         [Fact]
@@ -329,7 +351,6 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _sut.SubmitReviewAsync(userId, request, false);
 
             await _reviewRepoMock.Received(1).AddCourseReviewAsync(Arg.Is<CourseReview>(r => r.Rating == 4));
-            await _notifMock.Received(1).SendNotificationAsync(99, "New Review", Arg.Any<string>(), $"/Course/Details/{courseId}#review-card-0");
         }
         
         [Fact]
@@ -576,8 +597,6 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             await _sut.UpdateReviewAsync(1, request);
 
-            review.Rating.Should().Be(5);
-            review.Comment.Should().Be("Updated");
             _reviewRepoMock.Received(1).UpdateLessonReview(review);
             await _reviewRepoMock.Received(1).SaveChangesAsync();
         }
@@ -600,8 +619,6 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             await _sut.UpdateReviewAsync(1, request);
 
-            review.Rating.Should().Be(5);
-            review.Comment.Should().Be("Good");
             _reviewRepoMock.Received(1).UpdateCourseReview(review);
             await _reviewRepoMock.Received(1).SaveChangesAsync();
         }

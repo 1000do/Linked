@@ -327,6 +327,7 @@ namespace CourseMarketplaceBE.Application.DTOs
 
     public class TempReviewDto
     {
+        public int RecordId { get; set; }
         public int ReviewId { get; set; }
         public int AuthorId { get; set; }
         public int CourseId { get; set; }

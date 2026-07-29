@@ -209,6 +209,8 @@ public class CourseQueryService : ICourseQueryService
             response = _mapper.Map<CourseDetailResponse>(course);
             
             response.InstructorStudentsCount = instructorStats?.TotalStudentsCount ?? 0;
+            response.InstructorReviewCount = course.InstructorId.HasValue ? await _instructorRepository.CountInstructorReviewsAsync(course.InstructorId.Value) : 0;
+            response.InstructorCoursesCount = course.InstructorId.HasValue ? await _instructorRepository.CountActiveCoursesAsync(course.InstructorId.Value) : 0;
             response.TotalStudents = courseStats?.TotalStudents ?? 0;
             response.TotalReviews = courseStats?.TotalReviews ?? 0;
             response.RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0);

@@ -23,6 +23,7 @@ public class ReviewService : IReviewService
     private readonly ILockoutRepository _lockoutRepo;
     private readonly IBackgroundTaskQueue _taskQueue;
     private readonly ILogger<ReviewService> _logger;
+    private readonly IReviewModerationRecordRepository _moderationRecordRepo;
 
     public ReviewService(
         IReviewRepository reviewRepo,
@@ -31,7 +32,8 @@ public class ReviewService : IReviewService
         IReportSubmissionService reportService,
         ILockoutRepository lockoutRepo,
         IBackgroundTaskQueue taskQueue,
-        ILogger<ReviewService> logger)
+        ILogger<ReviewService> logger,
+        IReviewModerationRecordRepository moderationRecordRepo)
     {
         _reviewRepo = reviewRepo;
         _enrollmentRepo = enrollmentRepo;
@@ -40,6 +42,7 @@ public class ReviewService : IReviewService
         _lockoutRepo = lockoutRepo;
         _taskQueue = taskQueue;
         _logger = logger;
+        _moderationRecordRepo = moderationRecordRepo;
     }
 
 
@@ -330,6 +333,13 @@ public class ReviewService : IReviewService
             var existingReview = await _reviewRepo.GetLessonReviewByEnrollmentAsync(enrollment.EnrollmentId, request.LessonId.Value);
             if (existingReview != null)
                 throw new BadRequestException("You have already reviewed this lesson.");
+
+            if (!isOwner)
+            {
+                bool isLessonCompleted = await _enrollmentRepo.IsLessonCompletedAsync(enrollment.EnrollmentId, request.LessonId.Value);
+                if (!isLessonCompleted)
+                    throw new InvalidOperationException("You need to complete all materials in this lesson before writing a review.");
+            }
         }
 
         if (request.Rating < 1 || request.Rating > 5)
@@ -351,6 +361,45 @@ public class ReviewService : IReviewService
         // Persist review to database immediately with Pending status
         int reviewId = await CreateReviewInDatabaseAsync(tempReview, enrollment.EnrollmentId, ReviewStatus.Pending.ToValue());
         tempReview.ReviewId = reviewId;
+
+        if (tempReview.LessonId.HasValue && tempReview.LessonId.Value > 0)
+        {
+            var moderationRecord = new LessonReviewModerationRecord
+            {
+                LessonReviewId = reviewId,
+                IsUpdate = false,
+                TempComment = request.Comment,
+                TempRating = (decimal)request.Rating,
+                AiModerationStatus = "pending",
+                AiModerationNote = "Waiting for AI Moderation",
+                ModerationStatus = "pending",
+                ModerationNote = "Waiting for Admin Moderation",
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+            await _moderationRecordRepo.AddLessonReviewModerationRecordAsync(moderationRecord);
+            await _moderationRecordRepo.SaveChangesAsync();
+            tempReview.RecordId = moderationRecord.RecordId;
+        }
+        else
+        {
+            var moderationRecord = new CourseReviewModerationRecord
+            {
+                CourseReviewId = reviewId,
+                IsUpdate = false,
+                TempComment = request.Comment,
+                TempRating = (decimal)request.Rating,
+                AiModerationStatus = "pending",
+                AiModerationNote = "Waiting for AI Moderation",
+                ModerationStatus = "pending",
+                ModerationNote = "Waiting for Admin Moderation",
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+            await _moderationRecordRepo.AddCourseReviewModerationRecordAsync(moderationRecord);
+            await _moderationRecordRepo.SaveChangesAsync();
+            tempReview.RecordId = moderationRecord.RecordId;
+        }
 
         // Queue the moderation process in the background
         await _taskQueue.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(async (aiModService, token) =>
@@ -398,6 +447,23 @@ public class ReviewService : IReviewService
             tempReview.LessonId = review.LessonId;
             
             await UpdateReviewStatusInDatabaseAsync(request.ReviewId, true, ReviewStatus.Pending.ToValue());
+
+            var moderationRecord = new LessonReviewModerationRecord
+            {
+                LessonReviewId = request.ReviewId,
+                IsUpdate = true,
+                TempComment = request.Comment,
+                TempRating = (decimal)request.Rating,
+                AiModerationStatus = "pending",
+                AiModerationNote = "Waiting for AI Moderation",
+                ModerationStatus = "pending",
+                ModerationNote = "Waiting for Admin Moderation",
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+            await _moderationRecordRepo.AddLessonReviewModerationRecordAsync(moderationRecord);
+            await _moderationRecordRepo.SaveChangesAsync();
+            tempReview.RecordId = moderationRecord.RecordId;
         }
         else
         {
@@ -411,6 +477,23 @@ public class ReviewService : IReviewService
             tempReview.CourseId = review.Enrollment?.CourseId ?? 0;
             
             await UpdateReviewStatusInDatabaseAsync(request.ReviewId, false, ReviewStatus.Pending.ToValue());
+
+            var moderationRecord = new CourseReviewModerationRecord
+            {
+                CourseReviewId = request.ReviewId,
+                IsUpdate = true,
+                TempComment = request.Comment,
+                TempRating = (decimal)request.Rating,
+                AiModerationStatus = "pending",
+                AiModerationNote = "Waiting for AI Moderation",
+                ModerationStatus = "pending",
+                ModerationNote = "Waiting for Admin Moderation",
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+            await _moderationRecordRepo.AddCourseReviewModerationRecordAsync(moderationRecord);
+            await _moderationRecordRepo.SaveChangesAsync();
+            tempReview.RecordId = moderationRecord.RecordId;
         }
 
         // Queue the moderation process in the background

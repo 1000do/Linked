@@ -48,6 +48,8 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<OrderItem> OrderItems { get; set; }
     public virtual DbSet<CourseReview> CourseReviews { get; set; }
     public virtual DbSet<LessonReview> LessonReviews { get; set; }
+    public virtual DbSet<CourseReviewModerationRecord> CourseReviewModerationRecords { get; set; }
+    public virtual DbSet<LessonReviewModerationRecord> LessonReviewModerationRecords { get; set; }
     public virtual DbSet<Quiz> Quizzes { get; set; } = null!;
     public virtual DbSet<QuizQuestion> QuizQuestions { get; set; } = null!;
     public virtual DbSet<CourseQuiz> CourseQuizzes { get; set; } = null!;
@@ -1638,6 +1640,52 @@ public partial class AppDbContext : DbContext
                   .HasForeignKey(d => d.CourseId)
                   .OnDelete(DeleteBehavior.Cascade)
                   .HasConstraintName("course_field_moderation_feedbacks_course_id_fkey");
+        });
+
+        modelBuilder.Entity<CourseReviewModerationRecord>(entity =>
+        {
+            entity.HasKey(e => e.RecordId).HasName("course_review_moderation_records_pkey");
+            entity.ToTable("course_review_moderation_records");
+
+            entity.Property(e => e.RecordId).HasColumnName("record_id");
+            entity.Property(e => e.CourseReviewId).HasColumnName("course_review_id");
+            entity.Property(e => e.IsUpdate).HasColumnName("is_update");
+            entity.Property(e => e.TempComment).HasColumnName("temp_comment");
+            entity.Property(e => e.TempRating).HasPrecision(3, 2).HasColumnName("temp_rating");
+            entity.Property(e => e.AiModerationStatus).HasMaxLength(50).HasColumnName("ai_moderation_status");
+            entity.Property(e => e.AiModerationNote).HasColumnName("ai_moderation_note");
+            entity.Property(e => e.ModerationStatus).HasMaxLength(50).HasColumnName("moderation_status");
+            entity.Property(e => e.ModerationNote).HasColumnName("moderation_note");
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone").HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnType("timestamp without time zone").HasColumnName("updated_at");
+
+            entity.HasOne(d => d.CourseReview).WithMany()
+                  .HasForeignKey(d => d.CourseReviewId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("course_review_moderation_records_course_review_id_fkey");
+        });
+
+        modelBuilder.Entity<LessonReviewModerationRecord>(entity =>
+        {
+            entity.HasKey(e => e.RecordId).HasName("lesson_review_moderation_records_pkey");
+            entity.ToTable("lesson_review_moderation_records");
+
+            entity.Property(e => e.RecordId).HasColumnName("record_id");
+            entity.Property(e => e.LessonReviewId).HasColumnName("lesson_review_id");
+            entity.Property(e => e.IsUpdate).HasColumnName("is_update");
+            entity.Property(e => e.TempComment).HasColumnName("temp_comment");
+            entity.Property(e => e.TempRating).HasPrecision(3, 2).HasColumnName("temp_rating");
+            entity.Property(e => e.AiModerationStatus).HasMaxLength(50).HasColumnName("ai_moderation_status");
+            entity.Property(e => e.AiModerationNote).HasColumnName("ai_moderation_note");
+            entity.Property(e => e.ModerationStatus).HasMaxLength(50).HasColumnName("moderation_status");
+            entity.Property(e => e.ModerationNote).HasColumnName("moderation_note");
+            entity.Property(e => e.CreatedAt).HasColumnType("timestamp without time zone").HasColumnName("created_at");
+            entity.Property(e => e.UpdatedAt).HasColumnType("timestamp without time zone").HasColumnName("updated_at");
+
+            entity.HasOne(d => d.LessonReview).WithMany()
+                  .HasForeignKey(d => d.LessonReviewId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("lesson_review_moderation_records_lesson_review_id_fkey");
         });
 
         OnModelCreatingPartial(modelBuilder);
