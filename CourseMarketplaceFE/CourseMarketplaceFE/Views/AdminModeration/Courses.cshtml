@@ -352,7 +352,7 @@
 </div>
 
 <!-- Reject Modal -->
-<div id="reject-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6 backdrop-blur-sm">
+<div id="reject-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-6 backdrop-blur-sm">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
         <!-- Header -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
@@ -501,6 +501,9 @@
         rejectCourseId = id;
         rejectRowCounter = 0;
         const modal = document.getElementById('reject-modal');
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
         const loading = document.getElementById('reject-loading');
         const container = document.getElementById('reject-items-container');
         const addBtn = document.getElementById('add-reject-item-btn');
@@ -669,6 +672,9 @@
         const rows = document.querySelectorAll('.reject-row');
         const items = [];
         let valid = true;
+        const keysSeen = new Set();
+        let hasDuplicate = false;
+        let duplicateName = '';
 
         rows.forEach(row => {
             const select = row.querySelector('.reject-target');
@@ -681,6 +687,17 @@
             }
 
             const selectedOption = select.options[select.selectedIndex];
+            const lId = selectedOption.dataset.lessonId || '';
+            const mId = selectedOption.dataset.materialId || '';
+            const uniqueKey = `${target}_${lId}_${mId}`;
+
+            if (keysSeen.has(uniqueKey)) {
+                hasDuplicate = true;
+                duplicateName = selectedOption.text.replace(/^@@(file|lesson|course)[\:\s]*/i, '') || target;
+            } else {
+                keysSeen.add(uniqueKey);
+            }
+
             const item = {
                 target,
                 reason,
@@ -694,6 +711,11 @@
 
         if (!valid || items.length === 0) {
             Swal.fire('Information Missing', 'Please select a specific element and type a reason for each rejection row.', 'warning');
+            return;
+        }
+
+        if (hasDuplicate) {
+            Swal.fire('Duplicate Element Selected', `The element "${duplicateName}" is selected more than once. Please remove duplicate rows or combine their reasons.`, 'warning');
             return;
         }
 
@@ -870,6 +892,11 @@
 
     // Wire up filter controls
     document.addEventListener("DOMContentLoaded", () => {
+        const rejectModal = document.getElementById('reject-modal');
+        if (rejectModal && rejectModal.parentElement !== document.body) {
+            document.body.appendChild(rejectModal);
+        }
+
         const searchInput = document.getElementById("search-input");
         const categorySelect = document.getElementById("category-select");
         const statusSelect = document.getElementById("status-select");
