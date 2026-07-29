@@ -1,11 +1,11 @@
-using CourseMarketplaceFE.Models;
-using CourseMarketplaceFE.Helpers;
-using LinkedLearn.Models.UserVM;
-using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
-using System.Net.Http.Headers;
+using CourseMarketplaceFE.Helpers;
+using CourseMarketplaceFE.Models;
+using LinkedLearn.Models.UserVM;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CourseMarketplaceFE.Controllers
 {
@@ -185,7 +185,7 @@ namespace CourseMarketplaceFE.Controllers
             ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Incorrect username/email or password.");
             return View(model);
         }
-        
+
         [HttpPost]
         [Authorize(Roles = "user,instructor,staff,admin")]
         [ValidateAntiForgeryToken]
@@ -203,6 +203,8 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
 
+            TempData.Clear();
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -219,6 +221,8 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
+
+            TempData.Clear();
 
             return RedirectToAction("Login");
         }
@@ -355,7 +359,7 @@ namespace CourseMarketplaceFE.Controllers
             content.Add(fileContent, "avatarFile", avatarFile.FileName);
 
             var response = await _api.PutAsync("Profile/update-avatar", content);
-            
+
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
@@ -381,20 +385,19 @@ namespace CourseMarketplaceFE.Controllers
 
         [HttpPost]
         [Authorize(Roles = "user,instructor")]
-        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
         {
             if (!Request.Cookies.ContainsKey("AccessToken")) return RedirectToAction("Login");
 
-            if (newPassword != confirmNewPassword)
+            if (!ModelState.IsValid)
             {
-                ViewBag.ErrorMessage = "Password confirmation does not match.";
-                return View();
+                return View(model);
             }
 
             var response = await _api.PostJsonAsync("Profile/change-password", new
             {
-                CurrentPassword = currentPassword,
-                NewPassword = newPassword
+                CurrentPassword = model.CurrentPassword,
+                NewPassword = model.NewPassword
             });
 
             if (response.IsSuccessStatusCode)
@@ -415,7 +418,7 @@ namespace CourseMarketplaceFE.Controllers
 
             var errorJson = await response.Content.ReadAsStringAsync();
             ViewBag.ErrorMessage = ParseErrorMessage(errorJson, "Error changing password.");
-            return View();
+            return View(model);
         }
 
         // ─── Helpers ──────────────────────────────────────────────────────
@@ -596,7 +599,7 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Append("IsVerified", "true", cookieOptions);
 
                 TempData["SuccessMessage"] = "Email verification successful!";
-                
+
                 if (!string.IsNullOrEmpty(returnUrl))
                 {
                     return RedirectToAction("Login", new { returnUrl = returnUrl });
@@ -618,25 +621,33 @@ namespace CourseMarketplaceFE.Controllers
             if (TempData["ResetEmail"] == null || TempData["Otp"] == null)
                 return RedirectToAction("Login");
 
-            ViewBag.Email = TempData["ResetEmail"];
-            ViewBag.Otp = TempData["Otp"];
+            var model = new ResetPasswordViewModel
+            {
+                Email = TempData["ResetEmail"]?.ToString() ?? "",
+                Otp = TempData["Otp"]?.ToString() ?? ""
+            };
 
             TempData.Keep("ResetEmail");
             TempData.Keep("Otp");
 
-            return View();
+            return View(model);
         }
 
         [HttpPost]
-        public async Task<IActionResult> ResetPassword(string email, string otp, string newPassword)
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
             var client = _httpClientFactory.CreateClient("BackendApi");
 
             var res = await client.PostAsJsonAsync("Auth/reset-password", new
             {
-                Email = email,
-                Otp = otp,
-                NewPassword = newPassword
+                Email = model.Email,
+                Otp = model.Otp,
+                NewPassword = model.NewPassword
             });
 
             if (res.IsSuccessStatusCode)
@@ -648,10 +659,7 @@ namespace CourseMarketplaceFE.Controllers
             // ❗ FIX QUAN TRỌNG
             ViewBag.ErrorMessage = "Incorrect or expired OTP";
 
-            ViewBag.Email = email;
-            ViewBag.Otp = otp;
-
-            return View();
+            return View(model);
         }
 
         [HttpGet]

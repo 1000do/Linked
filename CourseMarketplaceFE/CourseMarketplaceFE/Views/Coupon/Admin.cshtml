@@ -289,7 +289,7 @@
                     </td>
                     <td class="px-6 py-4 align-middle text-center">
                         ${(() => {
-                            if (!x.isActive) {
+                            if (!x.isActive || (x.usageLimit != null && (x.usedCount || 0) >= x.usageLimit)) {
                                 return `<span class="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-slate-500 bg-slate-100 px-2.5 py-1 rounded border border-slate-200"><span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Stopped</span>`;
                             }
                             
@@ -306,9 +306,11 @@
                             <button type="button" onclick="edit(${x.couponId})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-lg transition-all" title="Edit">
                                 <span class="material-symbols-outlined text-[18px]">edit</span>
                             </button>
+                            ${(!x.isActive || (x.usageLimit != null && (x.usedCount || 0) >= x.usageLimit)) ? '' : `
                             <button type="button" onclick="del(${x.couponId})" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100 rounded-lg transition-all" title="Delete">
                                 <span class="material-symbols-outlined text-[18px]">delete</span>
                             </button>
+                            `}
                         </div>
                     </td>
                 </tr>
@@ -318,7 +320,7 @@
         async function del(id) {
             Swal.fire({
                 title: 'Delete this Coupon?',
-                text: "This transaction is permanent and cannot be rolled back!",
+                text: "This will instantly disable the coupon. Users will no longer be able to apply it.",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',
@@ -331,7 +333,7 @@
                         const res = await fetch(`${API}/${id}`, { method: "DELETE", headers: { 'Authorization': `Bearer ${TOKEN}` } });
                         if (res.ok) {
                             await loadData();
-                            Swal.fire({ title: 'Deleted!', text: 'The promo coupon has been successfully deleted.', icon: 'success', timer: 1500, showConfirmButton: false });
+                            Swal.fire({ title: 'Deleted!', text: 'The promo coupon has been successfully disabled.', icon: 'success', timer: 1500, showConfirmButton: false });
                         } else {
                             Swal.fire('Error', 'Unable to process coupon deletion.', 'error');
                         }
