@@ -89,6 +89,21 @@ public class UserProfileService : IUserProfileService
             : (false, "An error occurred while changing password.");
     }
 
+    public async Task<string?> UpdateAvatarAsync(int userId, IFormFile avatarFile)
+    {
+        var user = await _userRepo.GetUserByIdAsync(userId);
+        if (user == null || user.UserNavigation == null) return null;
+
+        string? avatarUrl = await TryUploadAvatarAsync(userId, avatarFile);
+        if (avatarUrl == null) return null;
+
+        user.UserNavigation.AvatarUrl = avatarUrl;
+        user.UserNavigation.AccountUpdatedAt = DateTime.Now;
+
+        await _userRepo.UpdateAccountAsync(user.UserNavigation);
+        return avatarUrl;
+    }
+
     // ─── PRIVATE HELPERS ──────────────────────────────────────────────────────
 
     private static UserProfileResponse MapToUserProfileResponse(User user)

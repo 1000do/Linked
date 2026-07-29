@@ -130,4 +130,12 @@ public class CouponRepository : ICouponRepository
             .OrderBy(cp => cp.MinOrderValue)
             .ToListAsync();
     }
+
+    public async Task<List<Coupon>> GetExpiredActiveCouponsWithCoursesAsync(DateTime now)
+    {
+        return await _context.Coupons
+            .Include(cp => cp.Courses)
+            .Where(cp => cp.IsActive == true && cp.EndDate.HasValue && cp.EndDate < now)
+            .ToListAsync();
+    }
 }
