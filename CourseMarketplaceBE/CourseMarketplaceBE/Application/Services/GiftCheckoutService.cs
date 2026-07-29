@@ -316,11 +316,20 @@ public class GiftCheckoutService : IGiftCheckoutService
 
     private async Task ProcessGiftFulfillmentAsync(int userId, int orderItemId, Course course, Dictionary<string, string> metadata)
     {
+        var gift = await CreateGiftRecordAsync(userId, orderItemId, metadata);
+        var senderName = await GetSenderDisplayNameAsync(userId);
+        var claimLink = GetClaimGiftUrl(gift.RedemptionToken, metadata);
+
+        await SendGiftNotificationEmailAsync(gift, senderName, course.Title, claimLink);
+        await SendGiftInAppNotificationAsync(gift.RecipientEmail, senderName, course.Title, claimLink);
+    }
+
+    private async Task<Gift> CreateGiftRecordAsync(int userId, int orderItemId, Dictionary<string, string> metadata)
+    {
         string recipientEmail = metadata.TryGetValue("recipientEmail", out var re) ? re : "";
         string recipientName = metadata.TryGetValue("recipientName", out var rn) ? rn : null;
         string giftMessage = metadata.TryGetValue("giftMessage", out var gm) ? gm : null;
         string cardTheme = metadata.TryGetValue("cardTheme", out var theme) ? theme : "classic";
-        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : (_configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208");
 
         var token = Guid.NewGuid().ToString("N");
 
@@ -342,16 +351,44 @@ public class GiftCheckoutService : IGiftCheckoutService
         await _giftRepo.AddAsync(gift);
         await _giftRepo.SaveChangesAsync();
 
-        var claimLink = $"{feBaseUrl}/Gift/Claim?token={token}";
+        return gift;
+    }
+
+    private async Task<string> GetSenderDisplayNameAsync(int userId)
+    {
         var senderName = "A Friend";
         var senderAccount = await _userRepo.GetAccountByIdAsync(userId);
         if (senderAccount != null)
         {
             senderName = senderAccount.User?.FullName ?? senderAccount.Username ?? senderAccount.Email ?? "A Friend";
         }
+        return senderName;
+    }
 
+    private string GetClaimGiftUrl(string redemptionToken, Dictionary<string, string> metadata)
+    {
+        string feBaseUrl = metadata.TryGetValue("feBaseUrl", out var fbUrl) ? fbUrl : (_configuration.GetValue<string>("FrontendBaseUrl") ?? "http://localhost:5208");
+        return $"{feBaseUrl}/Gift/Claim?token={redemptionToken}";
+    }
+
+    private async Task SendGiftNotificationEmailAsync(Gift gift, string senderName, string courseTitle, string claimLink)
+    {
         var subject = $"🎁 You received a gift course from {senderName}!";
-        var body = $@"
+        var body = BuildGiftEmailHtmlBody(gift.RecipientName, senderName, courseTitle, gift.GiftMessage, claimLink);
+
+        try
+        {
+            await _emailService.SendEmailAsync(gift.RecipientEmail, subject, body);
+        }
+        catch (Exception emailEx)
+        {
+            _logger.LogError(emailEx, $"Failed to send gift email to {gift.RecipientEmail}");
+        }
+    }
+
+    private string BuildGiftEmailHtmlBody(string? recipientName, string senderName, string courseTitle, string? giftMessage, string claimLink)
+    {
+        return $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;'>
                 <div style='background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 30px; text-align: center; color: white;'>
                     <h1 style='margin: 0; font-size: 24px;'>A Special Gift For You!</h1>
@@ -361,7 +398,7 @@ public class GiftCheckoutService : IGiftCheckoutService
                     <p>Great news! <strong>{senderName}</strong> has sent you a course gift card on LinkedLearn:</p>
                     <div style='background-color: #f8fafc; border-left: 4px solid #059669; padding: 15px; margin: 20px 0; border-radius: 4px;'>
                         <p style='margin: 0; font-weight: bold;'>Course:</p>
-                        <p style='margin: 5px 0 15px 0; font-size: 18px; color: #0f172a;'>{course.Title}</p>
+                        <p style='margin: 5px 0 15px 0; font-size: 18px; color: #0f172a;'>{courseTitle}</p>
                         {(string.IsNullOrWhiteSpace(giftMessage) ? "" : $@"
                         <p style='margin: 0; font-weight: bold;'>Personal Message:</p>
                         <p style='margin: 5px 0 0 0; font-style: italic; color: #475569;'>""{giftMessage}""</p>")}
@@ -376,23 +413,17 @@ public class GiftCheckoutService : IGiftCheckoutService
                     <p style='margin: 0;'>LinkedLearn Course Marketplace</p>
                 </div>
             </div>";
+    }
 
-        try
-        {
-            await _emailService.SendEmailAsync(recipientEmail, subject, body);
-        }
-        catch (Exception emailEx)
-        {
-            _logger.LogError(emailEx, $"Failed to send gift email to {recipientEmail}");
-        }
-
+    private async Task SendGiftInAppNotificationAsync(string recipientEmail, string senderName, string courseTitle, string claimLink)
+    {
         try
         {
             var recipientAccount = await _userRepo.GetAccountByEmailAsync(recipientEmail);
             if (recipientAccount != null)
             {
                 var notiTitle = $"🎁 You received a gift course from {senderName}!";
-                var notiContent = $"{senderName} has sent you the course '{course.Title}'. Click here to claim your gift card.";
+                var notiContent = $"{senderName} has sent you the course '{courseTitle}'. Click here to claim your gift card.";
                 await _notificationService.SendNotificationAsync(
                     recipientAccount.AccountId,
                     notiTitle,
