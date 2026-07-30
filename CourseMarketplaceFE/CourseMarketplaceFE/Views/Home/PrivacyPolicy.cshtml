@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Privacy Policy - LinkedLearn";
+}
+
+<section class="py-16 md:py-24 bg-slate-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-6">Privacy Policy</h1>
+        <p class="text-slate-500 mb-12">Last updated: @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+        
+        <div class="prose prose-slate lg:prose-lg max-w-none text-slate-700 space-y-8">
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Information We Collect</h2>
+                <p>When you register and use LinkedLearn, we collect the following types of information:</p>
+                <ul class="list-disc list-inside mt-2 space-y-2">
+                    <li><strong>Account Information:</strong> Your email address, username, full name, phone number, and profile picture.</li>
+                    <li><strong>Learning Data:</strong> Your enrolled courses, learning progress, quiz attempts, and scores.</li>
+                    <li><strong>Financial Information:</strong> Transaction history, course purchases, and refund requests. Payment processing is handled by Stripe; we do not store full credit card details. Instructors provide payout details to Stripe Connect.</li>
+                    <li><strong>Communication Data:</strong> Chat history and support messages sent within the platform.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">2. How We Use Your Information</h2>
+                <p>We use the information we collect to:</p>
+                <ul class="list-disc list-inside mt-2 space-y-2">
+                    <li>Provide, maintain, and improve the platform services.</li>
+                    <li>Process transactions and send related information, including confirmations and receipts.</li>
+                    <li>Manage your account and send technical notices, updates, and security alerts.</li>
+                    <li>Enable real-time communication through our chat system.</li>
+                    <li>Automatically moderate content (reviews, chats) using AI models to ensure a safe community.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">3. Data Security</h2>
+                <p>We prioritize the security of your personal data. We implement appropriate technical and organizational measures to protect it. Our system uses secure session management, and sensitive data is encrypted in transit and at rest using modern standards like HTTPS and secure database storage.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">4. Third-Party Services</h2>
+                <p>We may share your information with third-party service providers such as Stripe (for payments and payouts), media storage providers, and email services (for sending verification codes and notifications) strictly for the purpose of providing our services.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">5. Your Rights</h2>
+                <p>You have the right to access, update, or delete your personal information at any time through your Account Management page. If you wish to completely remove your account, please contact support.</p>
+            </section>
+        </div>
+    </div>
+</section>

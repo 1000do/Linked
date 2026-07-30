@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Tracking earnings and Stripe payouts - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Tracking earnings and Stripe payouts</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Earnings Dashboard</h2>
+                    <p>As an instructor, you can monitor your financial performance in real-time through the <strong>Revenue & Payouts</strong> dashboard.</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Financial Stats:</strong> View high-level metrics and use the period filter dropdowns to analyze specific months and years.</li>
+                        <li><strong>Learner Purchases:</strong> The default tab lists every transaction for your courses, including net earnings for each sale. You can view detailed receipts with full price breakdowns here.</li>
+                        <li><strong>Course Revenues:</strong> This tab aggregates your sales data, showing Sales Quantity, Monthly Revenue, Yearly Revenue, and Lifetime Revenue per course.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Stripe Payouts</h2>
+                    <p>To receive payments, you must have an approved instructor account with a linked Stripe Connect profile.</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Payout History:</strong> Switch to the Payouts tab to view a log of all transfers made to your linked bank account, including their status (Pending, Succeeded, or Failed).</li>
+                        <li><strong>Manual Sync:</strong> While payouts are scheduled automatically by the platform, you can click the <strong>Sync from Stripe</strong> button to instantly fetch the latest payout statuses directly from Stripe.</li>
+                        <li><strong>Refunds:</strong> If a learner successfully refunds your course, the corresponding payout deduction will appear in your ledger as a negative entry marked "Refunded".</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

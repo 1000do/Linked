@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Managing lessons and curriculum - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Managing lessons and curriculum</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Structuring Your Course</h2>
+                    <p>The Course Editor allows you to intuitively build your curriculum using Lessons and Learning Materials (videos, documents, quizzes).</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><strong>Add a Lesson:</strong> Inside the Course Editor, click the <strong>Add Lesson</strong> button, provide a unique title, and save.</li>
+                        <li><strong>Add Materials:</strong> Expand a lesson and select a material type to upload. Wait for the upload and processing to complete.</li>
+                        <li><strong>Edit Details:</strong> Open a material's detail panel to modify its title or description, then click <strong>Save Details</strong>.</li>
+                    </ol>
+                    <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 mt-4 rounded-r-lg">
+                        <p class="text-emerald-800 text-sm m-0"><strong>Note:</strong> Any curriculum modifications made to a currently "Published" course will immediately revert its status back to "Draft", requiring a re-submission for review.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Removing and Restoring Content</h2>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Removing items:</strong> Click the trash icon next to any lesson or material to delete it.</li>
+                        <li><strong>Trash Bin:</strong> Removed items are not permanently deleted immediately. You can access the <strong>Trash Bin</strong> from your Instructor Dashboard to view soft-deleted materials.</li>
+                        <li><strong>Restoring:</strong> Inside the Trash Bin, you can select removed materials and restore them back to active status.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
