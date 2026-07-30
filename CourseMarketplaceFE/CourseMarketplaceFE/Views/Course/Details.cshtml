@@ -62,7 +62,7 @@
                 <span>/</span>
                 <a href="#" class="hover:text-white transition-colors">@(Model.CategoryName ?? "Category")</a>
             </nav>
-            <h1 class="font-headline text-4xl font-extrabold mb-4 leading-tight">@Model.Title</h1>
+            <h1 id="course_title" class="font-headline text-4xl font-extrabold mb-4 leading-tight">@Model.Title</h1>
             <div class="text-lg text-slate-300 mb-6 prose max-w-none line-clamp-2">
                 @Html.Raw(Model.Description)
             </div>
@@ -92,7 +92,8 @@
         
         <!-- Sticky Sidebar Card -->
         <div class="relative">
-            <div class="lg:absolute top-0 right-0 w-full bg-white text-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 z-20">
+            <div id="course_thumbnail" class="lg:absolute top-0 right-0 w-full bg-white text-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 z-20">
+                <!-- <div id="course_thumbnail" class="aspect-video relative group cursor-pointer" onclick="openPreviewModal()"> -->
                 <div class="aspect-video relative group cursor-pointer" onclick="openPreviewModal()">
                     @{
                         var thumbUrl = string.IsNullOrEmpty(Model.CourseThumbnailUrl) 
@@ -235,7 +236,7 @@
 <div class="max-w-7xl mx-auto px-8 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
     <div class="lg:col-span-2">
         <!-- What you'll learn -->
-        <div class="border border-slate-200 p-6 rounded mb-12">
+        <div id="course_what_you_will_learn" class="border border-slate-200 p-6 rounded mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-6">What you'll learn</h2>
             <div class="prose max-w-none text-sm text-slate-700">
                 @if (!string.IsNullOrEmpty(Model.WhatYouWillLearn) && Model.WhatYouWillLearn != "<p><br></p>")
@@ -270,7 +271,7 @@
                     var lessonSeconds = lesson.LearningMaterials.Sum(m => m.MaterialMetadata?.Duration ?? 0);
                     string lessonDurationDisplay = FormatDuration(lessonSeconds);
 
-                    <div class="border-b border-slate-200 last:border-0">
+                    <div id="lesson_@lesson.LessonId" class="border-b border-slate-200 last:border-0">
                         <button class="w-full px-6 py-4 flex items-center justify-between bg-slate-50/50 hover:bg-slate-50 transition-colors text-left" onclick="this.nextElementSibling.classList.toggle('hidden')">
                             <div class="flex items-center gap-3">
                                 <span class="material-symbols-outlined text-slate-500 text-[20px]">expand_more</span>
@@ -369,7 +370,7 @@
         </div>
 
         <!-- Requirements -->
-        <div class="mb-12">
+        <div id="course_requirements" class="mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Requirements</h2>
             <div class="prose max-w-none text-sm text-slate-700">
                 @if (!string.IsNullOrEmpty(Model.Requirements) && Model.Requirements != "<p><br></p>")
@@ -384,7 +385,7 @@
         </div>
 
         <!-- Description -->
-        <div class="mb-12">
+        <div id="course_description" class="mb-12">
             <h2 class="text-2xl font-bold text-slate-900 mb-4">Description</h2>
             <div class="text-slate-700 text-sm leading-relaxed prose max-w-none">
                 @Html.Raw(Model.Description)
@@ -1503,4 +1504,33 @@
             Swal.fire('Error', 'Chat server connection error.', 'error');
         }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.location.hash) {
+            const targetId = window.location.hash.substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                setTimeout(() => {
+                    if (targetId.startsWith('lesson_')) {
+                        const btn = targetEl.querySelector('button');
+                        const content = targetEl.querySelector('div.hidden');
+                        if (btn && content) {
+                            btn.click();
+                        }
+                    }
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    const classes = ['ring-8', 'ring-red-500'];
+                    if(targetId !== 'course_title'){
+                        classes.push('bg-red-100');
+                    }
+                    targetEl.classList.add(...classes, 'transition-all', 'duration-1000');
+                    
+                    setTimeout(() => {
+                        targetEl.classList.remove(...classes);
+                    }, 3000);
+                }, 500);
+            }
+        }
+    });
 </script>

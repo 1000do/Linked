@@ -13,4 +13,5 @@ public interface ICourseCommandService
     Task DeleteCourseAsync(int courseId, int instructorId);
     Task<CourseAIIntegrationResult> IntegrateAItoCourseAsync(CourseAIIntegrationCommand command);
     Task UpdateCourseStatusAndFeedbackAsync(int courseId, string? status, string? feedback, AiThreatLevel? threatLevel = null);
+    Task UpdateCourseThreatLevelAsync(int courseId, AiThreatLevel threatLevel);
 }

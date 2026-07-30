@@ -854,6 +854,7 @@ CREATE TABLE course_ai_feedbacks (
     course_id INT NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
     field_name VARCHAR(100) NOT NULL,
     feedback_text TEXT NOT NULL,
+    moderation_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -862,6 +863,7 @@ CREATE TABLE lesson_ai_feedbacks (
     lesson_id INT NOT NULL REFERENCES lessons(lesson_id) ON DELETE CASCADE,
     field_name VARCHAR(100) NOT NULL,
     feedback_text TEXT NOT NULL,
+    moderation_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -870,6 +872,7 @@ CREATE TABLE learning_material_ai_feedbacks (
     material_id INT NOT NULL REFERENCES learning_materials(material_id) ON DELETE CASCADE,
     field_name VARCHAR(100) NOT NULL,
     feedback_text TEXT NOT NULL,
+    moderation_status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

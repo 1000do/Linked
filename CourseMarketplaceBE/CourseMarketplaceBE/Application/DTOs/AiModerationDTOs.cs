@@ -163,6 +163,8 @@ namespace CourseMarketplaceBE.Application.DTOs
         public List<string> FlaggedFields { get; set; } = [];
         [JsonPropertyName("manual_audit_fields")]
         public List<string> ManualAuditFields { get; set; } = [];
+        [JsonPropertyName("approved_fields")]
+        public List<string> ApprovedFields { get; set; } = [];
         [JsonPropertyName("details")]
         public Dictionary<string, object>? Details { get; set; }
         [JsonPropertyName("latency_ms")]
@@ -409,5 +411,8 @@ namespace CourseMarketplaceBE.Application.DTOs
 
         [JsonPropertyName("details")] 
         public Dictionary<string, object>? Details { get; set; }
+
+        [JsonPropertyName("timestamp")] 
+        public DateTime Timestamp { get; set; }
     }
 }

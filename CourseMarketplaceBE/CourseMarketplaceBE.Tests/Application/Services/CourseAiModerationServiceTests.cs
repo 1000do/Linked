@@ -44,6 +44,9 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IBackgroundTaskQueue _taskQueueMock;
         private readonly IUserRepository _userRepoMock;
         private readonly INotificationService _notificationServiceMock;
+        private readonly IAiFeedbackRepository _aiFeedbackRepositoryMock;
+        private readonly IMaterialRepository _materialRepositoryMock;
+        private readonly ILessonRepository _lessonRepositoryMock;
         
         private readonly CourseAiModerationService _sut;
 
@@ -67,6 +70,9 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _taskQueueMock = Substitute.For<IBackgroundTaskQueue>();
             _userRepoMock = Substitute.For<IUserRepository>();
             _notificationServiceMock = Substitute.For<INotificationService>();
+            _aiFeedbackRepositoryMock = Substitute.For<IAiFeedbackRepository>();
+            _materialRepositoryMock = Substitute.For<IMaterialRepository>();
+            _lessonRepositoryMock = Substitute.For<ILessonRepository>();
 
             _sut = new CourseAiModerationService(
                 _aiModerationServiceMock,
@@ -86,7 +92,10 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _embeddingServiceMock,
                 _taskQueueMock,
                 _userRepoMock,
-                _notificationServiceMock
+                _notificationServiceMock,
+                _aiFeedbackRepositoryMock,
+                _materialRepositoryMock,
+                _lessonRepositoryMock
             );
         }
 
