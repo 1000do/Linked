@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Tài liệu Hướng dẫn Sử dụng Hệ thống</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            color: black;
+            line-height: 1.5;
+            margin: 40px;
+        }
+        h3 {
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: black;
+            margin-top: 40px;
+        }
+        h4 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+        h5 {
+            font-size: 12pt;
+            font-weight: normal;
+            font-style: italic;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5;">
+
+    <h3>3.4 KIỂM DUYỆT KHÓA HỌC (COURSE MODERATION)</h3>
+
+    <h4>3.4.1 Xem danh sách kiểm duyệt khóa học (View Course Moderation List)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin hiển thị tất cả các khóa học do giảng viên gửi lên đang chờ xem xét kiểm duyệt.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Staff or Admin truy cập trang Course Moderation List bằng một trong hai phương thức sau:</p>
+    <ul>
+        <li><b>Option 1.1 (Thanh điều hướng Sidebar):</b> Nhấp vào mục menu <b>Course Moderation</b> trên thanh sidebar bên trái của Admin Dashboard.</li>
+        <li><b>Option 1.2 (Thông báo kiểm duyệt AI thời gian thực):</b> Nhấp vào liên kết <b>View Detail</b> trên khung thông báo mini popup AI (<i>"Manual Review Required"</i>) xuất hiện tự động theo thời gian thực ở góc trên bên phải của bất kỳ trang giao diện Dashboard nào khi có khóa học mới gửi duyệt và được AI tự động đánh giá rủi ro nội dung.</li>
+    </ul>
+
+    <p><b>Step 2:</b> The Staff or Admin kiểm tra hàng đợi kiểm duyệt khóa học:</p>
+    <ul>
+        <li><b>Course Thumbnail & Title:</b> Xem ảnh bìa, tiêu đề khóa học và danh mục.</li>
+        <li><b>Instructor Information:</b> Tên và địa chỉ email của giảng viên tác giả khóa học.</li>
+        <li><b>Submission Date:</b> Dấu thời gian khi khóa học được gửi đi kiểm duyệt.</li>
+        <li><b>AI Moderation Score:</b> Điểm tuân thủ an toàn tự động từ AI và các chỉ số cảnh báo nội dung.</li>
+        <li><b>Moderation Status:</b> Huy hiệu trạng thái chỉ rõ Pending Review, Approved, Rejected, hoặc Flagged.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Moderation Queue page here, highlighting the pending course list grid in red)</i>
+    </p>
+
+    <h5>Figure 11. View Course Moderation List operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin nhấp vào liên kết <b>Course Title</b> hoặc nút icon <b>View Details</b> trên hàng bản ghi để mở trang chi tiết kiểm duyệt.</p>
+
+    <h4>3.4.2 Tìm kiếm khóa học (Search Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin tìm kiếm hàng đợi kiểm duyệt khóa học theo tiêu đề, từ khóa hoặc tên giảng viên theo thời gian thực (real-time).</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Moderation List, Staff hoặc Admin xác định thanh công cụ tìm kiếm.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin nhập từ khóa tìm kiếm vào ô <b>Search Input</b>.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Search Moderation bar here, highlighting the search input field and live filtered results in red)</i>
+    </p>
+
+    <h5>Figure 12. Search Courses operation</h5>
+
+    <p><b>Step 3:</b> Hệ thống tự động lọc và hiển thị danh sách các bản ghi kiểm duyệt phù hợp theo thời gian thực.</p>
+
+    <h4>3.4.3 Sắp xếp khóa học (Sort Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin sắp xếp các khóa học trong danh sách kiểm duyệt theo ngày gửi hoặc mức độ rủi ro.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Moderation List, Staff hoặc Admin xác định khu vực sắp xếp trên đầu danh sách.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin nhấp vào menu thả xuống <b>Sort By</b> và chọn tiêu chí sắp xếp:</p>
+    <ul>
+        <li><b>Submission Date (Oldest First):</b> Ưu tiên các khóa học chờ duyệt gửi từ trước.</li>
+        <li><b>Submission Date (Newest First):</b> Hiển thị các khóa học vừa được gửi gần đây nhất.</li>
+        <li><b>Risk Score (Highest First):</b> Sắp xếp theo điểm số rủi ro vi phạm từ AI giảm dần.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Sort Dropdown menu here, highlighting the selected sorting option in red)</i>
+    </p>
+
+    <h5>Figure 13. Sort Courses operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin nhấp vào tùy chọn đã chọn để sắp xếp lại danh sách.</p>
+
+    <h4>3.4.4 Lọc khóa học (Filter Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin lọc các khóa học theo danh mục hoặc trạng thái kiểm duyệt (Pending Review, Approved, Rejected, Flagged).</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Moderation List, Staff hoặc Admin xác định các menu thả xuống bộ lọc.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin nhấp vào menu thả xuống <b>Status Filter Dropdown</b> hoặc <b>Category Dropdown</b> để xem các tùy chọn lọc:</p>
+    <ul>
+        <li><b>Status Filter Dropdown:</b> Chọn Pending Review, Approved, Rejected, hoặc Flagged.</li>
+        <li><b>Category Dropdown:</b> Chọn một danh mục khóa học cụ thể để thu hẹp kết quả.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Filter Controls panel here, highlighting the selected filter option in red)</i>
+    </p>
+
+    <h5>Figure 14. Filter Courses operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin nhấp vào tùy chọn lọc đã chọn để cập nhật danh sách khóa học.</p>
+
+    <h4>3.4.5 Phê duyệt khóa học (Approve Course Submission)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin phê duyệt một khóa học đã gửi, đánh dấu khóa học là Đã xuất bản và hiển thị công khai trên thị trường.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Moderation Details, Staff hoặc Admin nhấp vào nút <b>Approve Course</b> để mở Modal xác nhận.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin nhập thông tin:</p>
+    <ul>
+        <li><b>Approval Note:</b> Tùy chọn. Lời nhắn phản hồi hoặc chúc mừng gửi đến giảng viên khi xuất bản.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Approve Course modal here, highlighting the Approval Note field and Confirm button in red)</i>
+    </p>
+
+    <h5>Figure 15. Approve Course Submission operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin nhấp vào nút <b>Confirm Approval</b> để chính thức xuất bản khóa học.</p>
+
+    <h4>3.4.6 Từ chối khóa học (Reject Course Submission)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin từ chối một khóa học đã gửi bằng cách đánh dấu các phần tử vi phạm cụ thể và cung cấp phản hồi chi tiết cho giảng viên.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Moderation Details, Staff hoặc Admin nhấp vào nút <b>Reject Course</b> để mở Modal Reject Course.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin cấu hình một hoặc nhiều thẻ mục từ chối (Rejection Item Cards):</p>
+    <ul>
+        <li><b>Violating Element:</b> Bắt buộc. Nhập <code>@</code> vào ô tìm kiếm menu thả xuống để chọn phần tử vi phạm cụ thể thuộc khóa học, bài học hoặc tệp tài liệu (ví dụ: <code>@course.title</code>, <code>@course.description</code>, <code>@course.thumbnail</code>, <code>@course.what_you_will_learn</code>, <code>@course.requirements</code>, <code>@lesson: [Tên bài học]</code>, hoặc <code>@file: [Tên tài liệu]</code>).</li>
+        <li><b>Rejection Reason:</b> Bắt buộc. Nhập đoạn văn bản phản hồi chi tiết giải thích lý do phần tử được chọn vi phạm chính sách hoặc tiêu chuẩn chất lượng.</li>
+        <li><b>Add Rejection Item:</b> Tùy chọn. Nhấp vào nút <b>Add Rejection Item</b> để thêm các thẻ đánh dấu vi phạm khác, hoặc nhấp vào nút icon thùng rác để xóa bớt thẻ mục.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Reject Course modal here, highlighting the Violating Element dropdown, Rejection Reason text area, Add Rejection Item button, and Submit Rejection button in red)</i>
+    </p>
+
+    <h5>Figure 16. Reject Course Submission operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin nhấp vào nút <b>Submit Rejection</b> để gửi phản hồi chi tiết và trả bản thảo khóa học về cho giảng viên.</p>
+
+    <h4>3.4.7 Báo vi phạm nội dung khóa học (Flag Course for Content Violation)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Staff, Admin báo cáo vi phạm nội dung hoặc chính sách cho một khóa học, ẩn khóa học khỏi hiển thị công khai.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Moderation Details, Staff hoặc Admin nhấp vào nút <b>Flag Violation</b> để mở Modal vi phạm nội dung.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin nhập thông tin:</p>
+    <ul>
+        <li><b>Violation Category:</b> Bắt buộc. Chọn Copyright Infringement, Inappropriate Content, Spam, hoặc Fraud.</li>
+        <li><b>Violation Evidence & Notes:</b> Bắt buộc. Mô tả chi tiết bằng chứng hỗ trợ việc báo vi phạm và gỡ bỏ khóa học.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Flag Content Violation modal here, highlighting violation category and notes in red)</i>
+    </p>
+
+    <h5>Figure 17. Flag Course for Content Violation operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin nhấp vào nút <b>Submit Flag & Takedown</b> để gỡ bỏ khóa học khỏi hệ thống.</p>
+
+    <br><hr><br>
+
+    <h3>3.10 KHÓA HỌC (COURSE)</h3>
+
+    <h4>3.10.1 Xem danh sách khóa học (View Course List)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User, Instructor hiển thị danh sách các khóa học đã xuất bản được phân trang trên thị trường.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Guest, User, hoặc Instructor truy cập Trang chủ (Home page) và mở trang danh sách khóa học bằng 1 trong 2 tùy chọn sau:</p>
+    <ul>
+        <li><b>Option 1 (Qua danh mục Explore Topics):</b> Rê chuột hoặc nhấp vào menu thả xuống <b>Explore Topics</b> trên thanh điều hướng Top bar và chọn một danh mục cụ thể (ví dụ: Design, Software Development, Business) để xem các khóa học thuộc danh mục đó.</li>
+        <li><b>Option 2 (Qua nút View All trên Trang chủ):</b> Nhấp vào nút <b>View All →</b> nằm ở góc trên bên phải của các mục hiển thị khóa học (ví dụ: New Releases) trên trang chủ để xem toàn bộ danh sách khóa học.</li>
+    </ul>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor kiểm tra các thẻ khóa học:</p>
+    <ul>
+        <li><b>Course Card Content:</b> Xem ảnh bìa, tiêu đề khóa học, danh mục, tên giảng viên, điểm đánh giá trung bình và giá bán.</li>
+        <li><b>Wishlist Toggle:</b> Nhấp vào nút icon trái tim để thêm hoặc xóa khóa học khỏi danh sách yêu thích cá nhân.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Explore Courses catalog page here, highlighting the course list grid in red)</i>
+    </p>
+
+    <h5>Figure 63. View Course List operation</h5>
+
+    <p><b>Step 3:</b> The Guest, User, or Instructor nhấp vào một <b>Course Card</b> để xem thông tin chi tiết.</p>
+
+    <h4>3.10.2 Lọc khóa học (Filter Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User, Instructor lọc các khóa học theo danh mục, khoảng giá hoặc mức đánh giá tối thiểu.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Explore Courses, Guest, User, hoặc Instructor mở bảng bộ lọc bên thanh sidebar.</p>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor chọn các tùy chọn lọc:</p>
+    <ul>
+        <li><b>Category Selection:</b> Chọn một danh mục cụ thể (ví dụ: Development, Design, Business).</li>
+        <li><b>Price Range Filter:</b> Chọn Free, Paid, hoặc All Courses.</li>
+        <li><b>Minimum Rating Threshold:</b> Chọn số sao trung bình tối thiểu (ví dụ: 4.0 stars & up).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Filter Sidebar here, highlighting category and price options in red)</i>
+    </p>
+
+    <h5>Figure 64. Filter Courses operation</h5>
+
+    <p><b>Step 3:</b> The Guest, User, or Instructor nhấp vào nút <b>Apply Filters</b> để cập nhật danh mục khóa học.</p>
+
+    <h4>3.10.3 Sắp xếp khóa học (Sort Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User, Instructor sắp xếp danh sách khóa học theo mới nhất, giá (thấp đến cao / cao đến thấp) hoặc đánh giá.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Explore Courses, Guest, User, hoặc Instructor xác định menu sắp xếp góc trên.</p>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor nhấp vào menu thả xuống <b>Sort By</b> và chọn tiêu chí sắp xếp:</p>
+    <ul>
+        <li><b>Most Popular:</b> Sắp xếp giảm dần theo số lượng học viên đăng ký.</li>
+        <li><b>Highest Rated:</b> Sắp xếp giảm dần theo điểm đánh giá sao trung bình.</li>
+        <li><b>Newest:</b> Sắp xếp giảm dần theo ngày xuất bản khóa học.</li>
+        <li><b>Price: Low to High:</b> Sắp xếp tăng dần theo giá khóa học.</li>
+        <li><b>Price: High to Low:</b> Sắp xếp giảm dần theo giá khóa học.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Sort Dropdown menu here, highlighting the selected sorting criteria in red)</i>
+    </p>
+
+    <h5>Figure 65. Sort Courses operation</h5>
+
+    <p><b>Step 3:</b> The Guest, User, or Instructor nhấp vào tùy chọn đã chọn để sắp xếp lại danh sách khóa học.</p>
+
+    <h4>3.10.4 Xem chi tiết khóa học (View Course Detail)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User, Instructor, Staff, Admin hiển thị nội dung chi tiết của khóa học bao gồm các chương, bài học, tiểu sử giảng viên, đánh giá và giá bán.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Explore Courses, người dùng nhấp vào một <b>Course Card</b> để mở trang Course Detail.</p>
+
+    <p><b>Step 2:</b> Người dùng xem các phần chi tiết của khóa học:</p>
+    <ul>
+        <li><b>Course Overview:</b> Đọc mô tả khóa học, kết quả đạt được sau khóa học, yêu cầu đầu vào và đối tượng mục tiêu.</li>
+        <li><b>Curriculum Syllabus:</b> Mở rộng các chương để xem trước tiêu đề bài học và thời lượng video.</li>
+        <li><b>Instructor Profile:</b> Xem tiểu sử giảng viên, tổng số khóa học đã xuất bản và điểm đánh giá trung bình.</li>
+        <li><b>Student Reviews:</b> Xem các đánh giá cá nhân, bình luận phản hồi và biểu đồ phân bố điểm sao.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Detail page here, highlighting the syllabus and instructor bio in red)</i>
+    </p>
+
+    <h5>Figure 66. View Course Detail operation</h5>
+
+    <p><b>Step 3:</b> Người dùng nhấp vào nút <b>Enroll Now</b> hoặc <b>Add to Cart</b> để tiếp tục.</p>
+
+    <h4>3.10.5 Tìm kiếm khóa học (Search Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User, Instructor tìm kiếm khóa học dựa trên tiêu đề, mô tả hoặc từ khóa theo thời gian thực (real-time).</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Explore Courses hoặc thanh điều hướng Header, Guest, User, hoặc Instructor xác định thanh tìm kiếm chính.</p>
+
+    <p><b>Step 2:</b> Guest, User, hoặc Instructor nhập từ khóa vào ô <b>Search Input</b>.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Search Input bar here, highlighting the search term field and live filtered results in red)</i>
+    </p>
+
+    <h5>Figure 67. Search Courses operation</h5>
+
+    <p><b>Step 3:</b> Hệ thống tự động lọc và hiển thị danh sách các khóa học phù hợp theo thời gian thực ngay khi người dùng gõ từ khóa.</p>
+
+    <h4>3.10.6 Vào học khóa học (Go To Learning)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User, Instructor mở trình phát khóa học để xem các bài giảng video, đọc bài viết văn bản và xem tài liệu bài học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> User hoặc Instructor truy cập trang chi tiết khóa học (Course Detail page) đã đăng ký và nhấp vào nút <b>Go to learning</b> trên khung thông tin bên phải để mở trang Course Player.</p>
+
+    <p><b>Step 2:</b> Người dùng tương tác với giao diện trình phát khóa học:</p>
+    <ul>
+        <li><b>Syllabus Navigation Sidebar:</b> Nhấp vào tiêu đề bài học ở danh sách bên trái để chuyển đổi bài học đang xem.</li>
+        <li><b>Media Content Player:</b> Xem video bài giảng, đọc bài viết văn bản hoặc tải về các tệp đính kèm.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Learning Player here, highlighting the syllabus sidebar and main video container in red)</i>
+    </p>
+
+    <h5>Figure 68. Go To Learning operation</h5>
+
+    <p><b>Step 3:</b> Người dùng hoàn thành toàn bộ nội dung của bài học hiện tại (xem hết video bài giảng hoặc đọc hết tài liệu) để hệ thống tự động mở khóa và cho phép tiến đến bài học tiếp theo.</p>
+
+    <h4>3.10.7 Xem tiến độ học tập (View Learning Progress)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User, Instructor theo dõi phần trăm hoàn thành của khóa học và danh sách các bài học đã hoàn thành.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Player, User hoặc Instructor mở bảng theo dõi tiến độ học tập.</p>
+
+    <p><b>Step 2:</b> The User or Instructor xem các chỉ số tiến độ:</p>
+    <ul>
+        <li><b>Overall Progress Bar:</b> Hiển thị phần trăm hoàn thành tổng thể (ví dụ: 75% completed).</li>
+        <li><b>Lesson Checkmark Icons:</b> Dấu tích xanh bên cạnh các bài học đã hoàn thành trong bảng đề cương.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Learning Progress bar here, highlighting percentage completion in red)</i>
+    </p>
+
+    <h5>Figure 69. View Learning Progress operation</h5>
+
+    <p><b>Step 3:</b> The User or Instructor nhấp vào bảng tiến độ để xem thống kê chi tiết các bài học đã qua.</p>
+
+    <h4>3.10.8 Xem danh sách khóa học đã mua (View Purchased Course List)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User, Instructor hiển thị tất cả các khóa học đã đăng ký hoặc mua thành công.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> User hoặc Instructor nhấp vào menu <b>User Profile</b> trên thanh điều hướng góc trên để mở menu thả xuống của tài khoản.</p>
+
+    <p><b>Step 2:</b> User hoặc Instructor chọn mục <b>My Courses</b> để mở trang My Purchased Courses.</p>
+
+    <p><b>Step 3:</b> Người dùng xem các thẻ khóa học đã đăng ký:</p>
+    <ul>
+        <li><b>Enrolled Course Card:</b> Xem ảnh bìa, tiêu đề khóa học, tên giảng viên và thanh tiến độ học tập hiện tại.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the My Purchased Courses page here, highlighting enrolled course cards in red)</i>
+    </p>
+
+    <h5>Figure 70. View purchased course list operation</h5>
+
+    <h4>3.10.9 Đăng ký khóa học (Enroll Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User, Instructor đăng ký vào một khóa học ngay tại trang chi tiết khóa học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Detail, người dùng nhấp vào nút <b>Enroll Now</b> để đăng ký vào khóa học.</p>
+
+    <p><b>Step 2:</b> Sau khi đăng ký thành công, Modal popup <b>Enrolled Successfully!</b> xuất hiện hiển thị hai tùy chọn chuyển hướng:</p>
+    <ul>
+        <li><b>Go to Course:</b> Nhấp để chuyển trực tiếp sang giao diện học tập Course Player.</li>
+        <li><b>Continue Browsing:</b> Nhấp để đóng Modal và tiếp tục ở lại trang Course Detail.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Detail page and Enrolled Successfully modal here, highlighting the Enroll Now button, success popup modal, and updated Go to learning button in red)</i>
+    </p>
+
+    <h5>Figure 71. Enroll courses operation</h5>
+
+    <p><b>Step 3:</b> Sau khi đã đăng ký thành công, nút <b>Enroll Now</b> sẽ tự động được thay thế bằng nút <b>Go to learning</b> tại trang Course Detail, cho phép người dùng truy cập bài học bất cứ lúc nào.</p>
+
+    <h4>3.10.10 Tạo khóa học (Create Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor soạn thảo thông tin cơ bản cho một khóa học mới bao gồm tiêu đề, giá bán, mô tả, ảnh bìa và kết quả học tập mục tiêu.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Instructor truy cập giao diện Instructor Studio dashboard và nhấp vào nút <b>Create New Course</b> để mở trình tạo khóa học 4 bước (Create Course Wizard).</p>
+
+    <p><b>Step 2:</b> The Instructor điền các thông tin trong biểu mẫu trình tạo khóa học 4 bước:</p>
+    <ul>
+        <li><b>Step 1 (Core Identity):</b> Nhập <b>Course Title</b> (bắt buộc, từ 5–100 ký tự) và chọn <b>Category & Subcategory</b> (bắt buộc).</li>
+        <li><b>Step 2 (Description & Curriculum):</b> Nhập <b>Course Description</b> (bắt buộc, định dạng rich text), <b>What You Will Learn</b> (bắt buộc, tối thiểu 20 ký tự), và <b>Requirements</b> (bắt buộc, tối thiểu 20 ký tự).</li>
+        <li><b>Step 3 (Course Thumbnail):</b> Kéo thả hoặc duyệt chọn để tải lên tệp hình ảnh ảnh bìa <b>Cover Thumbnail</b> (bắt buộc).</li>
+        <li><b>Step 4 (Access & Pricing):</b> Nhập giá bán khóa học <b>Price ($USD)</b> (bắt buộc, nhập 0 cho khóa học miễn phí), bật/tắt cần gạt <b>Apply Coupon</b>, và tùy chọn nhấp <b>Select System Voucher</b> để đính kèm mã giảm giá của hệ thống.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Create Course wizard here, highlighting title, category, description, thumbnail upload, and price fields in red)</i>
+    </p>
+
+    <h5>Figure 72. Create Courses operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Create Course</b> để lưu bản ghi khóa học bản thảo vào cơ sở dữ liệu với trạng thái "Draft" và chuyển hướng sang trang Course Editor.</p>
+
+    <h4>3.10.11 Chỉnh sửa khóa học (Edit Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor cập nhật nội dung, cài đặt và cấu trúc chương trình của khóa học hiện có với cơ chế tự động lưu theo thời gian thực.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Instructor Studio dashboard, người dùng nhấp vào nút icon <b>Edit Course</b> trên thẻ khóa học để mở trang giao diện Course Editor.</p>
+
+    <p><b>Step 2:</b> The Instructor chỉnh sửa các thông tin chi tiết của khóa học trong biểu mẫu trình biên soạn:</p>
+    <ul>
+        <li><b>Thông tin trang tổng quan khóa học:</b> Chỉnh sửa <b>Course Title</b>, chọn <b>Category & Subcategory</b>, nhập <b>Price ($USD)</b>, cập nhật <b>Cover Thumbnail</b>, hoặc chỉnh sửa nội dung văn bản rich text cho <b>Course Description</b>, <b>What You Will Learn</b>, và <b>Requirements</b>.</li>
+        <li><b>Cơ chế tự động lưu thời gian thực (Auto-Save):</b> Ngay khi có thay đổi trên các ô nhập liệu, hệ thống tự động đếm ngược 1.5 giây (debounce 1.5s) để kiểm tra hợp lệ, gửi yêu cầu lưu về máy chủ backend, cập nhật bộ nhớ tạm cache, và hiển thị trạng thái <i>"Saved!"</i> thời gian thực mà không cần nhấn nút thủ công.</li>
+        <li><b>Cập nhật thành phần con:</b> Tùy chọn chỉnh sửa thông tin chi tiết bài học video hoặc tài liệu đính kèm và nhấp vào nút <b>Save Changes</b> tương ứng để xác nhận thủ công tức thì.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Editor page here, highlighting modified form fields, the 1.5s auto-save status indicator, and the Save Changes button in red)</i>
+    </p>
+
+    <h5>Figure 73. Edit Courses operation</h5>
+
+    <p><b>Step 3:</b> Hệ thống xác nhận lưu thành công với biểu tượng trạng thái màu xanh (<i>"Saved!"</i>), đảm bảo tất cả dữ liệu chỉnh sửa và dấu băm định danh khóa học được cập nhật chính xác vào cơ sở dữ liệu.</p>
+
+    <h4>3.10.12 Xuất bản khóa học (Publish Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor gửi khóa học cho quản trị viên nền tảng phê duyệt và phát hành công khai.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Editor, Instructor nhấp vào nút <b>Submit for Review</b> để mở Modal xác nhận gửi kiểm duyệt.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại các hướng dẫn và điều khoản cam kết trong Modal.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Submit for Review modal here, highlighting the Submit button in red)</i>
+    </p>
+
+    <h5>Figure 74. Publish Courses operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Confirm Submission</b> để chính thức gửi khóa học đi kiểm duyệt.</p>
+
+    <h4>3.10.13 Thêm bài học (Add Lessons)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor tạo các bài học video hoặc văn bản mới trong phần cấu trúc chương trình học của khóa học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Editor dưới thẻ Curriculum, người dùng nhấp vào nút <b>Add Lesson</b> để mở Modal popup Add New Lesson.</p>
+
+    <p><b>Step 2:</b> The Instructor nhập thông tin bài học trong Modal:</p>
+    <ul>
+        <li><b>Lesson Title:</b> Bắt buộc. Nhập tiêu đề mô tả cho bài học mới (ví dụ: <i>"1.1 Introduction to the Course"</i>).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Editor curriculum section and Add New Lesson modal dialog here, highlighting the Add Lesson button, Lesson Title input, and Create Lesson button in red)</i>
+    </p>
+
+    <h5>Figure 75. Add Lessons operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Create Lesson</b> để tạo bài học mới, thêm vào danh sách khung chương trình học, và tự động chuyển trạng thái khóa học về "Draft" nếu trước đó khóa học đang ở trạng thái "Published".</p>
+
+    <h4>3.10.14 Xóa bài học (Remove Lessons)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xóa bài học và tất cả tài liệu đính kèm khỏi đề cương khóa học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Editor dưới thẻ Curriculum, người dùng nhấp vào nút icon thùng rác <b>Delete Lesson</b> trên thẻ bài học ở danh sách bên trái để mở Modal popup Remove Lesson.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại cảnh báo xóa trong Modal (<i>"Are you sure you want to delete this lesson and all its materials? This cannot be undone."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Remove Lesson confirmation modal here, highlighting the Delete button in red)</i>
+    </p>
+
+    <h5>Figure 76. Remove Lessons operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Delete</b> để xóa bài học cùng toàn bộ tài liệu đính kèm khỏi khung chương trình học.</p>
+
+    <h4>3.10.15 Thêm tài liệu học tập (Add Learning Materials)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor tải lên các tệp tài liệu bổ trợ (PDF, slides, mã nguồn ZIP) đi kèm bài học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Editor dưới thẻ Resources & Files, người dùng nhấp vào nút <b>Choose File</b> dưới mục Resource File để tải lên tệp tài liệu.</p>
+
+    <p><b>Step 2:</b> The Instructor nhập thông tin chi tiết tài liệu:</p>
+    <ul>
+        <li><b>Resource File:</b> Bắt buộc. Chọn tệp tài liệu (PDF, DOC, ZIP, PNG, v.v.) để tải lên Cloudinary.</li>
+        <li><b>Resource Title:</b> Tùy chọn. Nhập tiêu đề hiển thị cho tài liệu.</li>
+        <li><b>Resource Description:</b> Tùy chọn. Nhập văn bản mô tả định dạng rich text cho tài liệu.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Resources & Files form here, highlighting Choose File button and Resource Title input in red)</i>
+    </p>
+
+    <h5>Figure 77. Add Learning Materials operation</h5>
+
+    <p><b>Step 3:</b> Sau khi quá trình tải tệp hoàn tất, hệ thống tự động đính kèm tài liệu vào bài học đang chọn và hiển thị trong danh sách Uploaded Resources.</p>
+
+    <h4>3.10.16 Chỉnh sửa tài liệu học tập (Edit Learning Materials)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor cập nhật tiêu đề, mô tả hoặc tệp thay thế của tài liệu học tập đã đính kèm.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Editor dưới thẻ Resources & Files, người dùng nhấp vào nút icon <b>Edit Resource</b> trên thẻ tài liệu để tải thông tin lên biểu mẫu.</p>
+
+    <p><b>Step 2:</b> The Instructor cập nhật thông tin tài liệu trong biểu mẫu:</p>
+    <ul>
+        <li><b>Resource Title:</b> Chỉnh sửa tiêu đề hiển thị cho tài liệu.</li>
+        <li><b>Resource Description:</b> Cập nhật đoạn văn bản mô tả rich text.</li>
+        <li><b>Resource File:</b> Tùy chọn tải lên tệp tài liệu mới để thay thế.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Edit Resource form here, highlighting modified fields and Save Changes button in red)</i>
+    </p>
+
+    <h5>Figure 78. Edit Learning Materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Save Changes</b> để cập nhật thông tin tài liệu.</p>
+
+    <h4>3.10.17 Xóa tài liệu học tập (Remove Learning Materials)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xóa tạm thời (soft-delete) tài liệu đính kèm khỏi bài học và chuyển vào thùng rác.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Editor dưới thẻ Resources & Files, người dùng nhấp vào nút icon <b>Remove</b> trên thẻ tài liệu để mở Modal popup Remove this file.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại thông báo gỡ tệp trong Modal (<i>"The file will be marked as removed. You can re-upload it later."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Remove file confirmation modal here, highlighting the Remove button in red)</i>
+    </p>
+
+    <h5>Figure 79. Remove Learning Materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Remove</b> để xóa tạm thời tài liệu và chuyển vào Trash Bin.</p>
+
+    <h4>3.10.18 Xem danh sách khóa học của giảng viên (View Instructor's Course List)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor hiển thị danh sách các khóa học do mình sáng tạo trên giao diện Instructor Studio dashboard.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Instructor truy cập giao diện Instructor Studio dashboard (hoặc nhấp mục menu <b>My Courses</b>) để mở trang danh sách khóa học.</p>
+
+    <p><b>Step 2:</b> The Instructor kiểm tra các chỉ số tổng quan và bản ghi khóa học:</p>
+    <ul>
+        <li><b>Chỉ số & Bộ lọc:</b> Xem <b>Total Enrollment</b>, <b>Average Rating</b>, và <b>Active Courses</b>, lọc theo trạng thái (<i>All Status, Draft, Pending Review, Published, Rejected, Removed, Archived, Permanently Locked</i>), và chuyển đổi chế độ xem List/Grid.</li>
+        <li><b>Thông tin thẻ khóa học:</b> Xem <b>Course Thumbnail & Title</b>, <b>Updated Date</b>, <b>Total Students</b>, <b>Star Rating</b>, và <b>Status Badge</b>.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Instructor Studio Dashboard course list page here, highlighting course table grid and status badges in red)</i>
+    </p>
+
+    <h5>Figure 80. View Instructor's Course List operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút icon <b>Edit Course</b> trên thẻ khóa học để quản lý nội dung và cài đặt.</p>
+
+    <h4>3.10.19 Xóa khóa học (Remove Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xóa/gỡ một khóa học khỏi danh sách khóa học đang hoạt động.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Instructor Studio dashboard course list, Instructor nhấp vào nút icon thùng rác <b>Delete Course</b> trên thẻ khóa học để mở Modal popup Delete Course.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại cảnh báo xóa khóa học trong Modal (<i>"Are you sure you want to delete '[Tên khóa học]'? This action cannot be undone."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete Course modal dialog here, highlighting the Delete button in red)</i>
+    </p>
+
+    <h5>Figure 81. Remove Courses operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Delete</b> để xóa khóa học.</p>
+
+    <h4>3.10.20 Ẩn khóa học (Hide Courses)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor tạm thời ẩn khóa học đã xuất bản khỏi hiển thị công khai trên thị trường.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Instructor Studio dashboard course list, Instructor xác định vị trí khóa học đang xuất bản.</p>
+
+    <p><b>Step 2:</b> The Instructor nhấp vào nút icon <b>Hide course</b> (hoặc nút icon <b>Unhide course</b> đối với khóa học đang ẩn) trên dòng thẻ khóa học.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the course action buttons here, highlighting the Hide course archive icon button in red)</i>
+    </p>
+
+    <h5>Figure 82. Hide courses operation</h5>
+
+    <p><b>Step 3:</b> Hệ thống cập nhật ngay lập tức trạng thái khóa học thành <b>Archived</b> (hoặc <b>Published</b> nếu bỏ ẩn), tạm thời ẩn khỏi tìm kiếm trên thị trường.</p>
+
+    <h4>3.10.21 Xem danh sách tài liệu học tập đã xóa (View List of Removed Learning Materials)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor hiển thị danh sách các tài liệu học tập đã xóa tạm thời trong thùng rác.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Instructor truy cập giao diện Instructor Studio dashboard và nhấp vào nút <b>Trash</b> để mở trang Trash Bin.</p>
+
+    <p><b>Step 2:</b> The Instructor kiểm tra các tài liệu trong thùng rác:</p>
+    <ul>
+        <li><b>Chi tiết tài liệu:</b> Xem tiêu đề tài liệu, biểu tượng định dạng (Video/Document), và ID Cloudinary.</li>
+        <li><b>Bài học gốc:</b> Xem tiêu đề bài học gốc và khóa học chứa tài liệu trước đó.</li>
+        <li><b>Dấu thời gian & Thời hạn xóa:</b> Xem ngày xóa và số ngày còn lại trước khi hệ thống xóa vĩnh viễn (giới hạn 30 ngày).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Trash Bin page here, highlighting deleted material rows in red)</i>
+    </p>
+
+    <h5>Figure 83. View list of removed learning materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Restore</b> hoặc nút <b>Delete Forever</b> trên dòng tài liệu mục tiêu.</p>
+
+    <h4>3.10.22 Khôi phục tài liệu học tập (Restore Learning Materials)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor khôi phục các tài liệu học tập đã xóa từ thùng rác quay trở lại bài học hoạt động.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Trash Bin, Instructor nhấp vào nút <b>Restore</b> bên cạnh dòng tài liệu để mở Modal popup Restore material?.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại thông báo xác nhận khôi phục trong Modal (<i>"Are you sure you want to restore '[Tên tài liệu]' back to its original lesson?"</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Restore material modal dialog here, highlighting the Yes, restore button in red)</i>
+    </p>
+
+    <h5>Figure 84. Restore learning materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Yes, restore</b> để kích hoạt lại tài liệu và khôi phục về bài học ban đầu.</p>
+
+    <h4>3.10.23 Xóa vĩnh viễn tài liệu học tập (Permanently Delete Learning Materials)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xóa vĩnh viễn các tệp tài liệu khỏi máy chủ lưu trữ và cơ sở dữ liệu.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Trash Bin, Instructor nhấp vào nút <b>Delete Forever</b> bên cạnh dòng tài liệu để mở Modal cảnh báo Delete forever?.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại thông báo cảnh báo xóa vĩnh viễn trong Modal (<i>"You are about to permanently delete '[Tên tài liệu]' from Cloudinary and the database. This action cannot be undone!"</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete forever modal dialog here, highlighting the Yes, delete forever button in red)</i>
+    </p>
+
+    <h5>Figure 85. Permanently delete learning materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Yes, delete forever</b> để xóa vĩnh viễn tệp tài liệu khỏi bộ nhớ Cloudinary và cơ sở dữ liệu.</p>
+
+    <br><hr><br>
+
+    <h3>3.12 TÀI KHOẢN (ACCOUNT)</h3>
+
+    <h4>3.12.1 Xem hồ sơ giảng viên (View Instructor Profile)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User hoặc Instructor hiển thị trang hồ sơ công khai của một giảng viên đã được phê duyệt, bao gồm tiểu sử, danh hiệu chuyên môn, các chỉ số thống kê trên nền tảng, liên kết mạng xã hội và danh mục các khóa học do giảng viên đó giảng dạy.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Guest, User, or Instructor truy cập trang Course Details (hoặc nhấp liên kết hồ sơ giảng viên trên thẻ khóa học) và nhấp vào liên kết <b>Instructor Name</b> hoặc ảnh đại diện <b>Instructor Avatar</b> để mở trang Instructor Public Profile.</p>
+
+    <p><b>Step 2:</b> Người dùng kiểm tra các thông tin chi tiết trên hồ sơ giảng viên:</p>
+    <ul>
+        <li><b>Thông tin đại diện & Chuyên môn:</b> Xem ảnh đại diện, huy hiệu đã xác minh (<i>Verified Instructor</i> / <i>Top Instructor</i>), <b>Full Name</b>, <b>Professional Title</b>, cùng các liên kết mạng xã hội (<b>LinkedIn</b>, <b>YouTube</b>, <b>Facebook</b>).</li>
+        <li><b>Chỉ số thống kê:</b> Kiểm tra tổng số học viên đăng ký (<b>Students</b>), tổng số lượt đánh giá (<b>Reviews</b>), và điểm sao trung bình (<b>Rating</b>).</li>
+        <li><b>Giới thiệu về giảng viên (About the Instructor):</b> Đọc đoạn văn bản mô tả định dạng rich text giới thiệu bản thân và kinh nghiệm chuyên môn của giảng viên.</li>
+        <li><b>Danh mục khóa học giảng dạy (Teaching Courses):</b> Duyệt danh sách bảng lưới tất cả các khóa học công khai do giảng viên này giảng dạy dưới mục <b>Teaching Courses</b>, bao gồm ảnh bìa, giá bán, điểm đánh giá sao, số học viên và các nút phân trang.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Instructor Public Profile page here, highlighting the instructor bio card, statistics bar, and teaching course grid in red)</i>
+    </p>
+
+    <h5>Figure 96. View Instructor Profile operation</h5>
+
+    <p><b>Step 3:</b> Người dùng nhấp vào một thẻ khóa học <b>Authored Course Card</b> để chuyển hướng trực tiếp sang trang chi tiết khóa học (Course Details).</p>
+
+    <br><hr><br>
+
+    <h3>3.17 ĐÁNH GIÁ KHÓA HỌC (COURSE REVIEW)</h3>
+
+    <h4>3.17.1 Xem danh sách đánh giá (View Review List)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Guest, User hoặc Instructor xem số liệu thống kê đánh giá khóa học, biểu đồ phân bố sao và các phản hồi nhận xét từ học viên bao gồm 2 loại review: đánh giá tổng quan toàn bộ khóa học (General review) và đánh giá chi tiết từng bài học (Lesson review).</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Guest, User, or Instructor truy cập trang Course Details và cuộn xuống mục <b>Student feedback</b> và <b>Student Reviews</b>.</p>
+
+    <p><b>Step 2:</b> Người dùng kiểm tra các thông tin chi tiết đánh giá:</p>
+    <ul>
+        <li><b>Tổng quan điểm số (Rating Summary):</b> Xem điểm số sao trung bình tổng thể, thanh biểu tượng sao và tổng số lượt đánh giá (<b>Course Rating</b>).</li>
+        <li><b>Biểu đồ phân bố sao (Rating Distribution):</b> Kiểm tra các thanh tiến trình hiển thị tỷ lệ phần trăm đánh giá từ 5 sao xuống 1 sao.</li>
+        <li><b>Bộ lọc đánh giá (Filter by):</b> Lọc danh sách đánh giá bằng cách chọn mức sao từ menu thả xuống <b>Filter by</b> (<i>All Ratings, 5 stars, 4 stars, 3 stars, 2 stars, 1 star</i>).</li>
+        <li><b>Phân loại 2 dạng Review & Huy hiệu ngữ cảnh:</b> Kiểm tra các huy hiệu phạm vi đánh giá hiển thị trên từng thẻ nhận xét:
+            <ul>
+                <li><b>Review cả khóa học (General review):</b> Hiển thị bằng huy hiệu màu tím <b>General review</b> đại diện cho các đánh giá tổng thể toàn bộ khóa học.</li>
+                <li><b>Review từng lesson bên trong (Lesson review):</b> Hiển thị bằng huy hiệu màu xám kèm biểu tượng cuốn sách và tên bài học (<b>[Tên bài học]</b>) đại diện cho các nhận xét được gửi cho một bài học cụ thể trong khóa học.</li>
+            </ul>
+        </li>
+        <li><b>Thẻ nhận xét của học viên (Student Review Cards):</b> Xem ảnh đại diện, họ tên người nhận xét, huy hiệu giảng viên (nếu có), điểm số sao, ngày viết nhận xét, nhãn đã chỉnh sửa (<i>(edited)</i>), và nội dung bình luận.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Student feedback and Student Reviews section here, highlighting rating distribution chart and both General review and Lesson review cards in red)</i>
+    </p>
+
+    <h5>Figure 126. View review list operation</h5>
+
+    <p><b>Step 3:</b> Học viên đã đăng ký và hoàn thành 100% tiến độ khóa học có thể nhìn thấy khung <b>Write your review</b> để viết nhận xét.</p>
+
+    <h4>3.17.2 Thêm đánh giá cá nhân (Add Personal Reviews)</h4>
+
+    <p>Mục đích của quy trình này là cho phép học viên đã đăng ký và hoàn thành 100% khóa học gửi đánh giá sao và viết bình luận nhận xét cho khóa học đó.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Details dưới mục Student feedback, học viên đã hoàn thành 100% khóa học tìm đến khung biểu mẫu <b>Write your review</b> (học viên chưa hoàn thành 100% sẽ nhìn thấy thông báo yêu cầu hoàn thành đủ 100% các bài học trước khi mở tính năng đánh giá).</p>
+
+    <p><b>Step 2:</b> The User nhập thông tin đánh giá vào biểu mẫu:</p>
+    <ul>
+        <li><b>Star Rating:</b> Bắt buộc. Nhấp vào các biểu tượng ngôi sao để chọn từ 1 đến 5 sao.</li>
+        <li><b>Review Feedback:</b> Bắt buộc. Nhập đoạn văn bản nhận xét mô tả trải nghiệm học tập vào khung bình luận (<i>"How has this course helped you?"</i>).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Write your review form here, highlighting star rating icons and Submit Review button in red)</i>
+    </p>
+
+    <h5>Figure 127. Add personal reviews operation</h5>
+
+    <p><b>Step 3:</b> The User nhấp vào nút <b>Submit Review</b> để gửi đánh giá xuất bản.</p>
+
+    <h4>3.17.3 Xóa đánh giá cá nhân (Delete Personal Reviews)</h4>
+
+    <p>Mục đích của quy trình này là cho phép học viên xóa nhận xét đánh giá khóa học mà mình đã gửi trước đó.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Course Details dưới danh sách Student Reviews, User tìm đến thẻ nhận xét của chính mình và nhấp vào nút <b>Delete</b>.</p>
+
+    <p><b>Step 2:</b> The User xem lại thông báo cảnh báo xóa trong Modal popup <b>Delete this review?</b> (<i>"This action cannot be undone."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete this review confirmation modal dialog here, highlighting the Yes, delete it button in red)</i>
+    </p>
+
+    <h5>Figure 128. Delete personal reviews operation</h5>
+
+    <p><b>Step 3:</b> The User nhấp vào nút <b>Yes, delete it</b> để xóa nhận xét.</p>
+
+    <br><hr><br>
+
+    <h3>3.20 BÀI KIỂM TRA TRẮC NGHIỆM (QUIZ)</h3>
+
+    <h4>3.20.1 Bắt đầu làm bài kiểm tra (Start Quiz Attempt)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User hoặc Instructor bắt đầu một lượt làm bài kiểm tra trắc nghiệm có tính giờ cho một học phần trong khóa học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The User truy cập một học phần Quiz bên trong Course Player (hoặc điều hướng đến trang Take Quiz) để mở màn hình tổng quan bài kiểm tra.</p>
+
+    <p><b>Step 2:</b> The User xem lại các thông tin chi tiết tổng quan:</p>
+    <ul>
+        <li><b>Các thẻ thống kê tổng quan (Overview Cards):</b> Tổng số lượng câu hỏi (<b>Questions</b>), ngưỡng điểm đạt phần trăm (<b>Passing Score</b>), và thời gian giới hạn (<b>Time Limit</b> tính bằng phút hoặc Unlimited).</li>
+        <li><b>Lịch sử làm bài (Your Attempt History):</b> Xem các bản ghi lần làm bài trước đó hiển thị Mã lượt làm (Attempt ID), ngày hoàn thành, tỷ lệ phần trăm điểm số, huy hiệu trạng thái Pass/Fail, và nút <b>View Details</b>.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Quiz overview screen here, highlighting overview stats cards and Start Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 143. Start Quiz Attempt operation</h5>
+
+    <p><b>Step 3:</b> The User nhấp vào nút <b>Start Quiz</b> để bắt đầu phiên làm bài kiểm tra tương tác.</p>
+
+    <h4>3.20.2 Nộp bài kiểm tra (Submit Quiz Attempt)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User hoặc Instructor hoàn thành và nộp bài kiểm tra để hệ thống chấm điểm tự động và xuất báo cáo kết quả.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang không gian làm bài Quiz đang hoạt động, User xem đề bài các câu hỏi và đồng hồ đếm ngược thời gian.</p>
+
+    <p><b>Step 2:</b> The User nhập/chọn đáp án cho các câu hỏi:</p>
+    <ul>
+        <li><b>Single Choice Radio:</b> Nhấp chọn một ô tròn radio cho câu hỏi chọn 1 đáp án.</li>
+        <li><b>Multiple Choice Checkbox:</b> Nhấp chọn một hoặc nhiều ô vuông checkbox cho câu hỏi chọn nhiều đáp án.</li>
+        <li><b>True / False:</b> Nhấp chọn True hoặc False cho câu hỏi đúng/sai.</li>
+        <li><b>Question Navigation Grid:</b> Nhấp vào số thứ tự câu hỏi hoặc các mũi tên chuyển tiếp để di chuyển trực tiếp giữa các câu hỏi.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the active Quiz Attempt workspace here, highlighting answer options and Submit Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 144. Submit Quiz Attempt operation</h5>
+
+    <p><b>Step 3:</b> The User nhấp vào nút <b>Submit Quiz</b> (và xác nhận nộp bài trong popup hộp thoại) để gửi bài cho hệ thống chấm điểm.</p>
+
+    <h4>3.20.3 Xem chi tiết lượt làm bài (View Attempt Detail)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User hoặc Instructor xem chi tiết điểm số, bảng phân tích câu hỏi và lời giải thích đáp án của một lượt làm bài kiểm tra đã hoàn thành.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại màn hình tổng quan Quiz hoặc bảng Lịch sử làm bài, User nhấp vào nút <b>View Details</b> trên một bản ghi lượt làm bài để mở trang chi tiết kết quả.</p>
+
+    <p><b>Step 2:</b> Người dùng kiểm tra các chi tiết kết quả:</p>
+    <ul>
+        <li><b>Tóm tắt điểm số & Trạng thái:</b> Tỷ lệ phần trăm điểm đạt được, số câu trả lời đúng, tổng thời gian làm bài, và huy hiệu trạng thái <b>Passed</b> hoặc <b>Failed</b>.</li>
+        <li><b>Danh sách xem lại câu hỏi (Question Review List):</b> Bảng phân tích chi tiết từng câu hỏi hiển thị đáp án học viên đã chọn, chỉ số đáp án đúng, và ghi chú giải thích lời giải.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Attempt Detail breakdown page here, highlighting score badge and question review cards in red)</i>
+    </p>
+
+    <h5>Figure 145. View Attempt Detail operation</h5>
+
+    <p><b>Step 3:</b> Người dùng nhấp vào nút <b>Retake Quiz</b> để bắt đầu một lượt làm bài kiểm tra mới.</p>
+
+    <h4>3.20.4 Xem lịch sử làm bài kiểm tra (View Quiz History)</h4>
+
+    <p>Mục đích của quy trình này là cho phép User hoặc Instructor xem bảng nhật ký tất cả các lượt làm bài kiểm tra trước đây của một bài Quiz.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The User truy cập trang tổng quan Quiz bên trong Course Player (hoặc điều hướng đến trang Attempts History) để xem bảng nhật ký lịch sử làm bài.</p>
+
+    <p><b>Step 2:</b> The User kiểm tra bảng lịch sử làm bài:</p>
+    <ul>
+        <li><b>Mã lượt làm bài (Attempt Identifier):</b> Mã định danh Attempt ID và số lượt.</li>
+        <li><b>Ngày nộp bài (Submission Date):</b> Dấu thời gian ngày giờ khi nộp bài hoàn thành.</li>
+        <li><b>Điểm số & Kết quả (Score & Result):</b> Điểm phần trăm và huy hiệu kết quả <b>Passed</b> / <b>Failed</b>.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Your Attempt History section here, highlighting attempt record rows in red)</i>
+    </p>
+
+    <h5>Figure 146. View Quiz History operation</h5>
+
+    <p><b>Step 3:</b> The User nhấp vào nút <b>View Details</b> trên một dòng bản ghi để xem chi tiết câu trả lời.</p>
+
+    <h4>3.20.5 Gán bài kiểm tra vào khóa học (Assign Quiz To Course)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor gán một bài kiểm tra đã tạo vào một chương mục trong giáo trình khóa học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Trình chỉnh sửa giáo trình (Course Curriculum Editor), Instructor nhấp vào nút <b>Add Assessment</b> dưới một chương mục tiêu để mở Modal gán bài kiểm tra.</p>
+
+    <p><b>Step 2:</b> The Instructor chọn các cấu hình:</p>
+    <ul>
+        <li><b>Select Quiz:</b> Bắt buộc. Chọn một bài kiểm tra hiện có từ danh sách thả xuống.</li>
+        <li><b>Passing Score Threshold:</b> Bắt buộc. Nhập mức điểm phần trăm yêu cầu để đạt bài học.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Assign Quiz modal here, highlighting quiz select dropdown and Attach Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 147. Assign Quiz To Course operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Attach Quiz</b> để gắn bài kiểm tra vào chương học.</p>
+
+    <h4>3.20.6 Xem ngân hàng câu hỏi (View Question Bank)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor duyệt và quản lý kho lưu trữ câu hỏi tập trung được phân loại theo khóa học và bài học.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Instructor truy cập Instructor Dashboard và nhấp vào mục menu <b>Question Bank</b> trên thanh điều hướng bên trái để mở trang Question Bank.</p>
+
+    <p><b>Step 2:</b> The Instructor kiểm tra không gian làm việc Ngân hàng câu hỏi:</p>
+    <ul>
+        <li><b>Chọn khóa học & Bài học:</b> Chọn thư mục khóa học hoặc bài học để xem danh sách câu hỏi tương ứng.</li>
+        <li><b>Bảng danh sách câu hỏi:</b> Kiểm tra đoạn văn bản đề bài, huy hiệu loại câu hỏi (<i>Single Choice, Multiple Choice, True/False</i>), số lượng đáp án và các nút thao tác.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Question Bank page here, highlighting course selection grid and question items in red)</i>
+    </p>
+
+    <h5>Figure 148. View Question Bank operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Add Question</b> để soạn thảo một câu hỏi mới.</p>
+
+    <h4>3.20.7 Xem danh sách câu hỏi của khóa học (View Course Questions)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xem và quản lý danh sách câu hỏi được lọc riêng cho một khóa học cụ thể.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Question Bank (hoặc Quiz Editor), Instructor chọn một khóa học mục tiêu để mở giao diện danh sách câu hỏi của khóa học đó.</p>
+
+    <p><b>Step 2:</b> The Instructor kiểm tra các thông tin câu hỏi:</p>
+    <ul>
+        <li><b>Thứ tự & Bài học (Question Sequence & Lesson):</b> Vị trí thứ tự và bài học liên kết.</li>
+        <li><b>Đề bài & Loại câu hỏi (Question Prompt & Type):</b> Đoạn văn bản đề bài và huy hiệu loại câu hỏi.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Questions in Course view here, highlighting question list items in red)</i>
+    </p>
+
+    <h5>Figure 149. View Course Questions operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút icon cây bút <b>Edit</b> trên một dòng câu hỏi để chỉnh sửa chi tiết.</p>
+
+    <h4>3.20.8 Tạo câu hỏi mới (Create Question)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor thêm một câu hỏi mới vào Ngân hàng câu hỏi.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Question Bank dưới bài học mục tiêu, Instructor nhấp vào nút <b>Add Question</b> để mở Modal biểu mẫu thêm câu hỏi.</p>
+
+    <p><b>Step 2:</b> The Instructor nhập thông tin câu hỏi vào biểu mẫu:</p>
+    <ul>
+        <li><b>Question Type:</b> Chọn <i>Single Choice, Multiple Choice,</i> hoặc <i>True/False</i>.</li>
+        <li><b>Question Text:</b> Bắt buộc. Nhập văn bản nội dung câu hỏi.</li>
+        <li><b>Explanation (Note):</b> Tùy chọn. Nhập ghi chú giải thích hiển thị cho học viên sau khi hoàn thành.</li>
+        <li><b>Options:</b> Nhấp <b>Add Option</b> để nhập văn bản các đáp án và tích chọn ô đáp án đúng.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Add Question modal dialog here, highlighting question text, options container, and Save button in red)</i>
+    </p>
+
+    <h5>Figure 150. Create Question operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Save</b> để lưu câu hỏi vào ngân hàng.</p>
+
+    <h4>3.20.9 Chỉnh sửa câu hỏi (Edit Question)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor thay đổi đề bài, các lựa chọn đáp án, đáp án đúng hoặc lời giải thích của một câu hỏi hiện có.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Question Bank, Instructor nhấp vào nút icon cây bút <b>Edit</b> trên một dòng câu hỏi để mở Modal chỉnh sửa câu hỏi.</p>
+
+    <p><b>Step 2:</b> The Instructor cập nhật thông tin câu hỏi:</p>
+    <ul>
+        <li><b>Đề bài & Loại câu hỏi:</b> Chỉnh sửa văn bản câu hỏi hoặc menu loại câu hỏi.</li>
+        <li><b>Đáp án & Ô chọn đúng:</b> Cập nhật nội dung đáp án, thêm/xóa tùy chọn, hoặc thay đổi ô tích chọn đáp án đúng.</li>
+        <li><b>Lời giải thích (Explanation):</b> Cập nhật đoạn văn bản giải thích.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Edit Question modal dialog here, highlighting updated fields and Save button in red)</i>
+    </p>
+
+    <h5>Figure 151. Edit Question operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Save</b> để lưu các thay đổi của câu hỏi.</p>
+
+    <h4>3.20.10 Xóa câu hỏi (Delete Question)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xóa một câu hỏi khỏi Ngân hàng câu hỏi.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Question Bank, Instructor nhấp vào nút icon thùng rác <b>Delete</b> trên một dòng câu hỏi để mở Modal xác nhận xóa.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại thông báo cảnh báo xóa trong Modal (<i>"Are you sure you want to delete this question?"</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete question confirmation modal dialog here, highlighting the Yes, delete it button in red)</i>
+    </p>
+
+    <h5>Figure 152. Delete Question operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Yes, delete it</b> để xóa câu hỏi.</p>
+
+    <h4>3.20.11 Xem danh sách bài kiểm tra (View Quiz List)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor xem và quản lý tất cả các bài kiểm tra đã tạo trên hệ thống.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> The Instructor truy cập Instructor Dashboard và nhấp vào mục menu <b>Quiz Management</b> trên thanh điều hướng bên trái để mở trang Quiz Management.</p>
+
+    <p><b>Step 2:</b> The Instructor kiểm tra các dòng bản ghi bài kiểm tra trong bảng:</p>
+    <ul>
+        <li><b>Tên & Mô tả (Quiz Title & Description):</b> Tiêu đề bài kiểm tra và mô tả tóm tắt.</li>
+        <li><b>Khóa học (Course):</b> Huy hiệu khóa học liên kết.</li>
+        <li><b>Số câu hỏi & Thiết lập (Questions & Settings):</b> Tổng số câu hỏi, thời gian làm bài (<i>ví dụ: 15 mins</i> hoặc <i>No limit</i>), và điểm đạt phần trăm.</li>
+        <li><b>Trạng thái kích hoạt & Ngày tạo:</b> Cần gạt bật/tắt kích hoạt và ngày tháng khởi tạo.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Quiz Management page here, highlighting quiz rows and Create New Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 153. View Quiz List operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Create New Quiz</b> để tạo một bài kiểm tra mới.</p>
+
+    <h4>3.20.12 Tạo bài kiểm tra (Create Quiz)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor cấu hình tạo một bài kiểm tra đánh giá mới.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Quiz Management, Instructor nhấp vào nút <b>Create New Quiz</b> để mở Modal biểu mẫu tạo bài kiểm tra mới.</p>
+
+    <p><b>Step 2:</b> The Instructor nhập thông tin bài kiểm tra vào biểu mẫu:</p>
+    <ul>
+        <li><b>Course:</b> Bắt buộc. Chọn khóa học từ danh sách thả xuống.</li>
+        <li><b>Quiz Title:</b> Bắt buộc. Nhập tiêu đề bài kiểm tra.</li>
+        <li><b>Description:</b> Tùy chọn hướng dẫn dành cho học viên.</li>
+        <li><b>Time Limit (Minutes):</b> Thời gian làm bài tính bằng phút (hoặc để trống nếu không giới hạn).</li>
+        <li><b>Passing Score (%):</b> Bắt buộc. Nhập tỷ lệ phần trăm điểm yêu cầu để đạt.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Create New Quiz modal dialog here, highlighting course select, title field, and Create Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 154. Create Quiz operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Create Quiz</b> để tạo bài kiểm tra mới.</p>
+
+    <h4>3.20.13 Xóa bài kiểm tra (Delete Quiz)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor loại bỏ một bài kiểm tra hiện có khỏi hệ thống.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Quiz Management, Instructor nhấp vào nút icon thùng rác <b>Delete</b> trên dòng bài kiểm tra để mở Modal xác nhận xóa.</p>
+
+    <p><b>Step 2:</b> The Instructor xem lại thông báo cảnh báo xóa bài kiểm tra trong Modal.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete Quiz confirmation modal dialog here, highlighting the Yes, delete it button in red)</i>
+    </p>
+
+    <h5>Figure 155. Delete Quiz operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Yes, delete it</b> để xóa bài kiểm tra.</p>
+
+    <h4>3.20.14 Chỉnh sửa cấu hình bài kiểm tra (Edit Quiz Settings)</h4>
+
+    <p>Mục đích của quy trình này là cho phép Instructor chỉnh sửa cài đặt, số lượng câu hỏi và tỷ lệ phân bố câu hỏi theo bài học cho một bài kiểm tra.</p>
+
+    <p><b style="color: black;">Các bước thực hiện:</b></p>
+
+    <p><b>Step 1:</b> Tại trang Quiz Management, Instructor nhấp vào nút icon cây bút <b>Edit</b> trên dòng bài kiểm tra để mở trang Quiz Editor.</p>
+
+    <p><b>Step 2:</b> The Instructor điều chỉnh các cài đặt bài kiểm tra:</p>
+    <ul>
+        <li><b>Quiz Title & Description:</b> Cập nhật tiêu đề và mô tả tóm tắt.</li>
+        <li><b>Total Questions:</b> Cập nhật tổng số câu hỏi (kèm nút <b>Shuffle</b> để xáo trộn câu hỏi).</li>
+        <li><b>Time Limit (mins) & Passing Score (%):</b> Điều chỉnh thời lượng và tỷ lệ điểm đạt.</li>
+        <li><b>Lesson Question Distributions:</b> Chỉ định số lượng câu hỏi rút ra từ từng bài học cụ thể.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Quiz Editor page here, highlighting settings card, lesson distribution, and Save Quiz Settings button in red)</i>
+    </p>
+
+    <h5>Figure 156. Edit Quiz Settings operation</h5>
+
+    <p><b>Step 3:</b> The Instructor nhấp vào nút <b>Save Quiz Settings</b> để lưu cấu hình cập nhật.</p>
+
+</div>
+
+</body>
+</html>

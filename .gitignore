@@ -43,3 +43,7 @@ scratch/
 **/TestHTMLReports
 **/rp5_extracted
 /CourseMarketplaceBE/CourseMarketplaceBE_Tests/CoverageReport/summary.html
+
+# User Guides
+docs/Tài_user_guide.md
+docs/Tài_user_guide_vi.md
