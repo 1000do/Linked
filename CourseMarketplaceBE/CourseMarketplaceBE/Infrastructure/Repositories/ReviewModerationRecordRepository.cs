@@ -1,14 +1,14 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
-using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Exceptions;
+using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CourseMarketplaceBE.Infrastructure.Repositories;
 
@@ -117,7 +117,7 @@ public class ReviewModerationRecordRepository : IReviewModerationRecordRepositor
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var s = request.Search;
-            query = query.Where(r => 
+            query = query.Where(r =>
                 EF.Functions.ILike(r.TempComment, $"%{s}%") ||
                 (r.CourseReview.Comment != null && EF.Functions.ILike(r.CourseReview.Comment, $"%{s}%")) ||
                 (r.CourseReview.Enrollment.User.UserNavigation.Username != null && EF.Functions.ILike(r.CourseReview.Enrollment.User.UserNavigation.Username, $"%{s}%")) ||
@@ -191,7 +191,7 @@ public class ReviewModerationRecordRepository : IReviewModerationRecordRepositor
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var s = request.Search;
-            query = query.Where(r => 
+            query = query.Where(r =>
                 EF.Functions.ILike(r.TempComment, $"%{s}%") ||
                 (r.LessonReview.Comment != null && EF.Functions.ILike(r.LessonReview.Comment, $"%{s}%")) ||
                 (r.LessonReview.Enrollment.User.UserNavigation.Username != null && EF.Functions.ILike(r.LessonReview.Enrollment.User.UserNavigation.Username, $"%{s}%")) ||

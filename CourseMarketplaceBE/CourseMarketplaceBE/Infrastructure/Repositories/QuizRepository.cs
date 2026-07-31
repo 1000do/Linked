@@ -182,6 +182,18 @@ public class QuizRepository : IQuizRepository
                     .ThenInclude(q => q!.QuizOptions)
             .FirstOrDefaultAsync(a => a.AttemptId == attemptId);
     }
+
+    public async Task<QuizAttempt?> GetLatestUnsubmittedAttemptAsync(int quizId, int userId)
+    {
+        return await _context.QuizAttempts
+            .Include(a => a.QuizAttemptAnswers)
+            .Include(a => a.QuizAttemptQuestions)
+                .ThenInclude(aq => aq.Question)
+                    .ThenInclude(q => q!.QuizOptions)
+            .Where(a => a.QuizId == quizId && a.UserId == userId && a.SubmittedAt == null)
+            .OrderByDescending(a => a.StartedAt)
+            .FirstOrDefaultAsync();
+    }
     public async Task<(List<QuizAttempt> Items, int TotalCount)> GetAttemptsByQuizAndUserAsync(int quizId, int userId, int page, int pageSize)
     {
         var query = _context.QuizAttempts
