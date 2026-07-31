@@ -262,6 +262,7 @@ public class Program
         // 🔥 Background Tasks
         builder.Services.AddHostedService<PayoutScheduleTask>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CloudinaryCleanupService>();
+        builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CouponExpirationTask>();
         
         builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.QueuedHostedService>();

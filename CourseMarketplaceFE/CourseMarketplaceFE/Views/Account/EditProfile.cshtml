@@ -56,7 +56,7 @@
                         @* Form Fields *@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div class="space-y-3">
-                                <label class="text-sm font-black text-slate-700 ml-1">First & Middle Name</label>
+                                <label class="text-sm font-black text-slate-700 ml-1">First & Middle Name <span class="text-red-500">*</span></label>
                                 <div class="group relative">
                                     <input asp-for="FirstName" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="First and middle name..." />
                                 </div>
@@ -64,7 +64,7 @@
                             </div>
 
                             <div class="space-y-3">
-                                <label class="text-sm font-black text-slate-700 ml-1">Last Name</label>
+                                <label class="text-sm font-black text-slate-700 ml-1">Last Name <span class="text-red-500">*</span></label>
                                 <div class="group relative">
                                     <input asp-for="LastName" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" placeholder="Last name..." />
                                 </div>
@@ -79,7 +79,7 @@
                             </div>
 
                             <div class="space-y-3">
-                                <label class="text-sm font-black text-slate-700 ml-1">Email Address</label>
+                                <label class="text-sm font-black text-slate-700 ml-1">Email Address <span class="text-red-500">*</span></label>
                                 <div class="relative group" title="@(Model.AuthProvider == "google" ? "Google Account emails cannot be changed." : "")">
                                     @if (Model.AuthProvider == "google")
                                     {
@@ -96,7 +96,7 @@
                             </div>
 
                             <div class="space-y-3">
-                                <label class="text-sm font-black text-slate-700 ml-1">Phone Number</label>
+                                <label class="text-sm font-black text-slate-700 ml-1">Phone Number <span class="text-red-500">*</span></label>
                                 <div class="relative group">
                                     <span class="absolute left-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">call</span>
                                     <input asp-for="PhoneNumber" id="PhoneInput" type="tel" maxlength="11"
@@ -107,7 +107,7 @@
                             </div>
 
                             <div class="space-y-3">
-                                <label class="text-sm font-black text-slate-700 ml-1">Date of Birth</label>
+                                <label class="text-sm font-black text-slate-700 ml-1">Date of Birth <span class="text-red-500">*</span></label>
                                 <div class="relative group">
                                     <span class="absolute left-6 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">calendar_today</span>
                                     <input asp-for="DateOfBirth" type="date" class="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl pl-14 pr-6 py-4 focus:bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none font-medium text-slate-800" />
@@ -218,7 +218,7 @@
         }
 
         // 1. Kiểm tra ảnh
-        function previewImage(event) {
+        async function previewImage(event) {
             const file = event.target.files[0];
             const maxFileSize = 2 * 1024 * 1024;
 
@@ -233,11 +233,58 @@
                     event.target.value = "";
                     return;
                 }
+
+                // Hiển thị preview ngay lập tức
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('previewImg').src = e.target.result;
                 }
                 reader.readAsDataURL(file);
+
+                // Gửi AJAX lên server
+                const formData = new FormData();
+                formData.append("avatarFile", file);
+
+                // Hiển thị loading (tuỳ chọn thêm overlay loading nếu muốn)
+                Swal.fire({
+                    title: 'Uploading...',
+                    text: 'Please wait while we update your avatar.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                try {
+                    const response = await fetch('/Account/UploadAvatarAjax', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Avatar updated successfully.',
+                            icon: 'success',
+                            confirmButtonColor: '#006a62',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        // Cập nhật lại ảnh phòng trường hợp server trả URL khác (ví dụ qua cloudinary)
+                        document.getElementById('previewImg').src = result.avatarUrl;
+                    } else {
+                        throw new Error(result.message || 'Failed to upload avatar.');
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        title: 'Upload Failed!',
+                        text: error.message,
+                        icon: 'error',
+                        confirmButtonColor: '#006a62'
+                    });
+                }
             }
         }
 

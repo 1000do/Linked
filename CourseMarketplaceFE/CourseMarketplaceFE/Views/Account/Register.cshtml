@@ -10,22 +10,7 @@
             <h2 class="text-3xl font-headline font-extrabold text-on-surface mb-2">Create Account</h2>
             <p class="text-slate-500 text-sm">Join LinkedLearn today and start learning.</p>
 
-            @if (!ViewData.ModelState.IsValid)
-            {
-                var errors = ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-                if (errors.Any())
-                {
-                    <div class="mt-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-medium flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-300">
-                        @foreach (var err in errors)
-                        {
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-base">error</span>
-                                <span>@err</span>
-                            </div>
-                        }
-                    </div>
-                }
-            }
+
         </div>
 
         <form asp-controller="Account" asp-action="Register" asp-route-giftToken="@ViewBag.GiftToken" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" class="space-y-4">

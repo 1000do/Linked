@@ -230,6 +230,18 @@ public class ChatController : ControllerBase
 
             var chatId = await _chatService.AcceptSupportRequestAsync(accountId, ticketId);
             
+            // Get the initial support message that was just saved and broadcast it via SignalR
+            var history = await _chatService.GetChatHistoryAsync(chatId, accountId);
+            var initialMsg = history?.LastOrDefault();
+            if (initialMsg != null)
+            {
+                var participantIds = await _chatService.GetParticipantIdsAsync(chatId);
+                foreach (var pId in participantIds)
+                {
+                    await _hubContext.Clients.Group($"User_{pId}").SendAsync("ReceiveMessage", initialMsg);
+                }
+            }
+
             if (ticket != null)
             {
                 // Notify the sender that their request was accepted

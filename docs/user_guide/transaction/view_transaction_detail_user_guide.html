@@ -1,0 +1,28 @@
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5;">
+    
+    <h4>3.16.6 View Transaction Detail</h4>
+    
+    <p>The purpose of this workflow is to allow the authenticated user to view the full electronic invoice, payment receipt breakdown, and refund status notes for a specific transaction.</p>
+    
+    <p><b style="color: black;">Execution steps:</b></p>
+    
+    <p><b>Step 1:</b> The authenticated user accesses the Purchase History page and clicks the <b>View Details</b> arrow icon link next to a transaction record.</p>
+    
+    <p><b>Step 2:</b> The system displays the Electronic Invoice page. The authenticated user reviews the transaction receipt and financial breakdown:</p>
+    <ul>
+        <li><b>Refund Status Banner:</b> Read-only. Displays conditional notification banners if the transaction is under review (showing the user's submitted refund reason), refunded (showing the approved status, revoked course access notice, user reason, and Admin response note), or rejected (showing the rejection notice, original reason, and Admin response note).</li>
+        <li><b>Invoice Header:</b> Read-only. Displays the electronic invoice title, payment status badge (Success, Failed, Pending, Refund Pending, or Refunded), unique transaction ID number (e.g., #12345), and the exact date and timestamp of payment.</li>
+        <li><b>Customer Details:</b> Read-only. Displays the buyer's full name and registered email address associated with the account.</li>
+        <li><b>Payment Method:</b> Read-only. Displays the online payment gateway used to process the transaction (e.g., Paid via Stripe - Secure Online Payment).</li>
+        <li><b>Course Details:</b> Read-only. Displays the course thumbnail image, course description title, instructor name, and line-item total price (displayed as a negative value with a minus sign if the transaction was refunded).</li>
+        <li><b>Total Summary:</b> Read-only. Displays the detailed financial calculation including <b>Subtotal</b> (original course price), <b>Discount</b> (applied coupon code badge and discount amount deducted if a promotional code was used), and the final <b>Total</b> gross amount paid.</li>
+        <li><b>Back to history Link:</b> Optional. A navigation link at the top of the page that allows the user to return to the main Purchase History transaction list.</li>
+    </ul>
+    
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Electronic Invoice page here, highlighting the refund status banner, course details, and financial summary breakdown in red)</i>
+    </p>
+    
+    <p style="text-align: center;"><i>Figure 1. View Transaction Detail operation</i></p>
+    
+</div>
