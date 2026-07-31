@@ -1,0 +1,47 @@
+@{
+    ViewData["Title"] = "Updating your profile and password - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Updating your profile and password</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">How to Update Personal Info</h2>
+                    <p>Keep your account details up to date by following these steps:</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Navigate to your <strong>Profile</strong> page from the main menu.</li>
+                        <li>Click on <strong>Edit Profile</strong>.</li>
+                        <li>Modify your personal information (e.g., Full Name, Email, Username) or upload a new avatar image. <em>Note: If you logged in with Google, you cannot modify your email address.</em></li>
+                        <li>Click the <strong>Save Changes</strong> button.</li>
+                        <li>Your changes will be saved securely, and you will see a success message upon completion.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">How to Change Your Password</h2>
+                    <p>To update your account password for added security:</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Go to the <strong>Change Password</strong> page from your account settings.</li>
+                        <li>Enter your <strong>Current Password</strong>.</li>
+                        <li>Enter a <strong>New Password</strong> and type it again in the <strong>Confirm Password</strong> field to ensure they match.</li>
+                        <li>Click the <strong>Change Password</strong> button.</li>
+                        <li>You will be automatically logged out and must log in again with your new password.</li>
+                    </ol>
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4 rounded-r-lg">
+                        <p class="text-blue-800 text-sm m-0"><strong>Note:</strong> Users authenticated via Google OAuth cannot change passwords since their authentication is handled externally by Google.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

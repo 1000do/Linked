@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Teach with Us - LinkedLearn";
+    var userRole = Context.Request.Cookies["UserRole"] ?? "User";
+    var ctaLink = userRole.Equals("instructor", StringComparison.OrdinalIgnoreCase) 
+        ? "/Instructor/ApplicationStatus" 
+        : "/Instructor/Apply";
+}
+
+<section class="relative py-20 lg:py-32 bg-slate-50 border-b border-slate-200 overflow-hidden">
+    <div class="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-16">
+        <div class="flex-1 max-w-2xl text-center lg:text-left">
+            <h1 class="text-4xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.1] mb-6">
+                Come teach <br />
+                <span class="text-emerald-600">with us.</span>
+            </h1>
+            <p class="text-lg lg:text-xl text-slate-600 leading-relaxed mb-8">
+                Become an instructor and change lives — including your own. Reach a global audience of eager learners, earn a steady income, and build your personal brand.
+            </p>
+            <a href="@ctaLink" class="inline-flex items-center justify-center px-8 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 hover:scale-105 active:scale-95 shadow-sm transition-all duration-300">
+                Get Started
+            </a>
+        </div>
+        <div class="flex-1 w-full relative hidden lg:block">
+            <div class="relative w-full max-w-md mx-auto aspect-square flex items-center justify-center">
+                <div class="absolute inset-0 bg-emerald-600/10 rounded-full animate-pulse blur-3xl"></div>
+                <img src="https://images.unsplash.com/photo-1544717302-de2939b7ef71?q=80&w=1000&auto=format&fit=crop" 
+                     class="relative z-10 w-full h-full object-cover rounded-2xl shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500" 
+                     alt="Instructor teaching" />
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-extrabold text-slate-900 text-center mb-16 tracking-tight">So many reasons to start</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+            <div>
+                <div class="w-16 h-16 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-3xl">school</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Inspire learners</h3>
+                <p class="text-slate-600">Teach what you know and help learners explore their interests, gain new skills, and advance their careers.</p>
+            </div>
+            <div>
+                <div class="w-16 h-16 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-3xl">payments</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Earn money</h3>
+                <p class="text-slate-600">Monetize your expertise. We handle the transactions, you get paid directly to your bank account via Stripe Connect.</p>
+            </div>
+            <div>
+                <div class="w-16 h-16 mx-auto bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-3xl">group</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-3">Build your community</h3>
+                <p class="text-slate-600">Build your professional network. Connect with students through Q&A and messages, and establish your authority.</p>
+            </div>
+        </div>
+    </div>
+</section>

@@ -283,7 +283,7 @@
                                 }
                                 bool isPending = string.Equals(lesson.LessonStatus, "pending", StringComparison.OrdinalIgnoreCase) || string.Equals(material.LearningStatus, "pending", StringComparison.OrdinalIgnoreCase);
 
-                                <div class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
+                                <div id="material_@material.MaterialId" class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
                                       onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType', @material.MaterialId, @lesson.LessonId, @isPending.ToString().ToLower())">
                                     <div class="px-4 py-4 flex gap-3">
                                         <div class="flex flex-col items-center pt-1 shrink-0">
@@ -1476,6 +1476,31 @@
             });
             notiConn.start().catch(err => console.error("Noti Hub Error", err));
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (window.location.hash) {
+                const targetId = window.location.hash.substring(1);
+                const targetEl = document.getElementById(targetId);
+                if (targetEl && targetId.startsWith('material_')) {
+                    setTimeout(() => {
+                        const itemsContainer = targetEl.closest('.lesson-items');
+                        if (itemsContainer && itemsContainer.classList.contains('hidden')) {
+                            const btn = itemsContainer.previousElementSibling;
+                            if (btn) btn.click();
+                        }
+                        
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetEl.click();
+                        
+                        const classes = ['ring-4', 'ring-red-500', 'bg-red-100']
+                        targetEl.classList.add(...classes, 'transition-all', 'duration-1000');
+                        setTimeout(() => {
+                            targetEl.classList.remove(...classes);
+                        }, 3000);
+                    }, 500);
+                }
+            }
+        });
     </script>
 </body>
 </html>

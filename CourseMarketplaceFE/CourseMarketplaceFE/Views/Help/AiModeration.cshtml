@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "AI Moderation system - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">AI Moderation system</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <p>LinkedLearn utilizes advanced AI moderation services to maintain a high-quality, safe, and spam-free learning environment. This system works automatically in the background during critical actions like course publishing.</p>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">How AI Moderation Works</h2>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Automated Scanning:</strong> When an instructor submits a course for review, the AI service automatically scans the course metadata, curriculum, and textual content.</li>
+                        <li><strong>Confidence Thresholds:</strong> The AI evaluates content against strict confidence thresholds for spam and toxicity (e.g., identifying inappropriate language or promotional spam).</li>
+                        <li><strong>Actionable Insights:</strong> If content exceeds the acceptable threshold, the AI logs this activity, which provides our manual moderation team with critical context when reviewing a course or resolving a user report.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 mt-6 rounded-r-lg">
+                    <h3 class="text-emerald-900 font-bold mb-2">Transparency & Accuracy</h3>
+                    <p class="text-emerald-800 text-sm m-0">While the AI moderation system pre-screens content to keep the platform safe, all final decisions regarding course removals or account penalties are handled manually by our dedicated Staff and Admin teams to ensure fairness.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

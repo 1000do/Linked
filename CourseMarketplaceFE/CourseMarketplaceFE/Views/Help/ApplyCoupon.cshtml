@@ -1,0 +1,41 @@
+@{
+    ViewData["Title"] = "Applying discount coupons - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Applying discount coupons</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">How to Apply a Coupon</h2>
+                    <p>Save on your purchases by applying valid promotional coupons during checkout.</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Navigate to your <strong>Cart</strong> page with items added.</li>
+                        <li>Enter a valid coupon code in the designated input field.</li>
+                        <li>Click the <strong>Apply</strong> button.</li>
+                        <li>The system will validate the coupon, deduct the discount from your subtotal, and display a success message along with your new Payable Total.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Troubleshooting & Removal</h2>
+                    <p>If you encounter issues or wish to change your coupon:</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Invalid Coupons:</strong> Entering an expired or ineligible coupon will result in a warning message, and no discount will be applied.</li>
+                        <li><strong>Automatic Removal:</strong> If an active coupon becomes expired or reaches its usage limit while still in your cart, it will automatically be removed upon page reload.</li>
+                        <li><strong>Manual Cancellation:</strong> Click the <strong>Remove Coupon</strong> button on the Cart page to cancel an active coupon and revert to the original prices.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

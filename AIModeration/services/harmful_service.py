@@ -48,7 +48,7 @@ class HarmfulService(BaseService):
         start_time = time.time()
         stage_logs = []
 
-        flagged_fields, manual_audit_fields, aggregate_scores, overall_details = await self._evaluate_fields(
+        flagged_fields, manual_audit_fields, approved_fields, aggregate_scores, overall_details = await self._evaluate_fields(
             self._generate_text_fields(course), spam_threshold, toxic_threshold
         )
 
@@ -73,6 +73,7 @@ class HarmfulService(BaseService):
             confidence_score=confidence_score,
             flagged_content=flagged_fields if len(flagged_fields) > 0 else None,
             manual_audit_content=manual_audit_fields if len(manual_audit_fields) > 0 else None,
+            approved_content=approved_fields if len(approved_fields) > 0 else None,
             details=overall_details,
             latency_ms=latency_ms,
             model_id=model_id
@@ -94,9 +95,10 @@ class HarmfulService(BaseService):
 
     async def _evaluate_fields(
         self, fields_iterator, spam_threshold: float, toxic_threshold: float
-    ) -> Tuple[List[str], List[str], List[float], Dict[str, Any]]:
+    ) -> Tuple[List[str], List[str], List[str], List[float], Dict[str, Any]]:
         flagged_fields = []
         manual_audit_fields = []
+        approved_fields = []
         flagged_scores = []
         manual_audit_scores = []
         approved_scores = []
@@ -116,6 +118,7 @@ class HarmfulService(BaseService):
                 if score is not None:
                     manual_audit_scores.append(score)
             elif res_action == ModerationStatus.APPROVED.value:
+                approved_fields.append(f_name)
                 if score is not None:
                     approved_scores.append(score)
 
@@ -126,7 +129,7 @@ class HarmfulService(BaseService):
         else:
             aggregate_scores = approved_scores
 
-        return flagged_fields, manual_audit_fields, aggregate_scores, details_map
+        return flagged_fields, manual_audit_fields, approved_fields, aggregate_scores, details_map
 
     async def _classify_field_text(
         self, field_name: str, val: Optional[str], spam_threshold: float, toxic_threshold: float
@@ -197,7 +200,7 @@ class HarmfulService(BaseService):
             stage_logs.append(self._handle_empty_media_candidates(step, start_time, model_id))
             return ModerationStatus.SKIPPED.value, 1.0, [], [], stage_logs
 
-        flagged_fields, manual_audit_fields, aggregate_scores, overall_details = await self._evaluate_media_candidates(
+        flagged_fields, manual_audit_fields, approved_fields, aggregate_scores, overall_details = await self._evaluate_media_candidates(
             candidates, spam_threshold, toxic_threshold
         )
 
@@ -222,6 +225,7 @@ class HarmfulService(BaseService):
             confidence_score=confidence_score,
             flagged_content=flagged_fields if len(flagged_fields) > 0 else None,
             manual_audit_content=manual_audit_fields if len(manual_audit_fields) > 0 else None,
+            approved_content=approved_fields if len(approved_fields) > 0 else None,
             details=overall_details,
             latency_ms=latency_ms,
             model_id=model_id
@@ -231,9 +235,10 @@ class HarmfulService(BaseService):
 
     async def _evaluate_media_candidates(
         self, candidates: Dict[str, Any], spam_threshold: float, toxic_threshold: float
-    ) -> Tuple[List[str], List[str], List[float], Dict[str, Any]]:
+    ) -> Tuple[List[str], List[str], List[str], List[float], Dict[str, Any]]:
         flagged_fields = []
         manual_audit_fields = []
+        approved_fields = []
         flagged_scores = []
         manual_audit_scores = []
         approved_scores = []
@@ -254,6 +259,7 @@ class HarmfulService(BaseService):
                 if final_conf is not None:
                     manual_audit_scores.append(final_conf)
             elif res_action == ModerationStatus.APPROVED.value:
+                approved_fields.append(alias)
                 if final_conf is not None:
                     approved_scores.append(final_conf)
 
@@ -264,7 +270,7 @@ class HarmfulService(BaseService):
         else:
             aggregate_scores = approved_scores
 
-        return flagged_fields, manual_audit_fields, aggregate_scores, overall_details
+        return flagged_fields, manual_audit_fields, approved_fields, aggregate_scores, overall_details
 
     def _handle_empty_media_candidates(self, step: int, start_time: float, model_id: int) -> StageLog:
         latency_ms = (time.time() - start_time) * 1000

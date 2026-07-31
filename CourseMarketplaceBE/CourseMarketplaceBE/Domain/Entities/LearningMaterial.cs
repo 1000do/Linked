@@ -35,6 +35,8 @@ public partial class LearningMaterial
     public virtual ICollection<MediaEmbedding> MediaEmbeddings { get; set; } = new List<MediaEmbedding>();
 
     public virtual ICollection<MaterialCompletion> MaterialCompletions { get; set; } = new List<MaterialCompletion>();
+
+    public virtual ICollection<LearningMaterialAiFeedback> LearningMaterialAiFeedbacks { get; set; } = new List<LearningMaterialAiFeedback>();
 }
 
 public class MaterialMetadata

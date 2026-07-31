@@ -131,7 +131,8 @@ public class AiModerationLogService : IAiModerationLogService
             ModerationStatus = cmd.Response.ModerationStatus,
             ConfidenceScore = cmd.Response.ConfidenceScore,
             Reason = cmd.Response.Reason,
-            Details = cmd.Response.Details
+            Details = cmd.Response.Details,
+            Timestamp = cmd.Response.Timestamp
         }) : null;
 
         if (cmd.Review.LessonId.HasValue && cmd.Review.LessonId.Value > 0)
