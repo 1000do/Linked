@@ -26,6 +26,39 @@ namespace LinkedLearn.Models.UserVM
         public string ConfirmPassword { get; set; } = null!;
     }
 
+    public class ResetPasswordViewModel
+    {
+        [Required]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        public string Otp { get; set; } = null!;
+
+        [Required(ErrorMessage = "Please enter your new password")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [RegularExpression(@"^(?=.*[^a-zA-Z0-9]).+$", ErrorMessage = "Password must contain at least 1 special character")]
+        public string NewPassword { get; set; } = null!;
+
+        [Required(ErrorMessage = "Please confirm your new password")]
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = null!;
+    }
+
+    public class ChangePasswordViewModel
+    {
+        [Required(ErrorMessage = "Please enter your current password")]
+        public string CurrentPassword { get; set; } = null!;
+
+        [Required(ErrorMessage = "Please enter your new password")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        [RegularExpression(@"^(?=.*[^a-zA-Z0-9]).+$", ErrorMessage = "Password must contain at least 1 special character")]
+        public string NewPassword { get; set; } = null!;
+
+        [Required(ErrorMessage = "Please confirm your new password")]
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+        public string ConfirmNewPassword { get; set; } = null!;
+    }
+
     public class LoginViewModel
     {
         [Required(ErrorMessage = "Please enter your Username or Email")]

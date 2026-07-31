@@ -428,7 +428,7 @@ public class ChatService : IChatService
         }
 
         if (!canCreate)
-            throw new UnauthorizedAccessException("You do not have permission to initiate this conversation.");
+            throw new UnauthorizedAccessException("You must complete the course to begin this conversation.");
     }
 
     private async Task<int?> TryGetExistingPrivateChatAsync(int senderId, int targetAccountId, string? contextType, int? contextId)

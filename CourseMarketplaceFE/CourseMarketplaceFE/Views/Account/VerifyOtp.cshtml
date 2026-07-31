@@ -85,39 +85,56 @@
 </main>
 
 <script>
-    let time = 120; // 2 phút
-
+    const hasError = @(ViewBag.ErrorMessage != null ? "true" : "false");
+    let expireTime = sessionStorage.getItem("otpExpireTime");
+    
+    // Nếu chưa có thời gian lưu, hoặc đây là lần tải trang đầu tiên (không có lỗi), thì reset timer
+    if (!expireTime || !hasError) {
+        expireTime = Date.now() + 120 * 1000;
+        sessionStorage.setItem("otpExpireTime", expireTime);
+    }
+    
     const countdownEl = document.getElementById("countdown");
     const resendBtn = document.getElementById("resendBtn");
 
     const timer = setInterval(() => {
-        const minutes = Math.floor(time / 60);
-        const seconds = time % 60;
+        const now = Date.now();
+        const timeLeft = Math.floor((expireTime - now) / 1000);
 
-        countdownEl.textContent =
-            String(minutes).padStart(2, '0') + ":" +
-            String(seconds).padStart(2, '0');
-
-        time--;
-
-        if (time < 0) {
+        if (timeLeft <= 0) {
             clearInterval(timer);
-
             countdownEl.textContent = "Expired";
-
             resendBtn.disabled = false;
             resendBtn.classList.remove("opacity-50", "cursor-not-allowed");
+        } else {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            countdownEl.textContent =
+                String(minutes).padStart(2, '0') + ":" +
+                String(seconds).padStart(2, '0');
         }
     }, 1000);
 
     // RESEND OTP
     resendBtn.addEventListener("click", async () => {
         const email = "@email";
+        const isVerifyFlow = @(TempData.Peek("IsVerifyFlow") != null ? "true" : "false");
+        
+        sessionStorage.removeItem("otpExpireTime");
 
-        await fetch(`/Account/ForgotPassword?email=${email}`, {
-            method: "POST"
-        });
-
-        location.reload();
+        if (isVerifyFlow) {
+            const giftToken = '@(TempData.Peek("GiftToken"))';
+            const returnUrl = '@(TempData.Peek("ReturnUrl"))';
+            let url = `/Account/SendRegisterOtp?email=${encodeURIComponent(email)}`;
+            if (giftToken) url += `&giftToken=${encodeURIComponent(giftToken)}`;
+            if (returnUrl) url += `&returnUrl=${encodeURIComponent(returnUrl)}`;
+            
+            window.location.href = url;
+        } else {
+            await fetch(`/Account/ForgotPassword?email=${encodeURIComponent(email)}`, {
+                method: "POST"
+            });
+            location.reload();
+        }
     });
 </script>

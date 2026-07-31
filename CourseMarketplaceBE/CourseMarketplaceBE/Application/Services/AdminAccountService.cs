@@ -400,7 +400,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             try
             {
-                await _notificationService.SendNotificationAsync(accountId, notiTitle, notiContent, "/profile");
+                await _notificationService.SendNotificationAsync(accountId, notiTitle, notiContent, "/Account/Profile");
             }
             catch (Exception notiEx)
             {
@@ -416,7 +416,7 @@ namespace CourseMarketplaceBE.Application.Services
             
             try
             {
-                await _notificationService.SendNotificationAsync(accountId, notiTitle, notiContent, "/profile");
+                await _notificationService.SendNotificationAsync(accountId, notiTitle, notiContent, "/Account/Profile");
             }
             catch (Exception notiEx)
             {
