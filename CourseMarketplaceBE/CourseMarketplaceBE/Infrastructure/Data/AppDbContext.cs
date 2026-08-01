@@ -36,6 +36,9 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<Coupon> Coupons { get; set; }
     public virtual DbSet<Course> Courses { get; set; }
     public virtual DbSet<CourseFieldModerationFeedback> CourseFieldModerationFeedbacks { get; set; }
+    public virtual DbSet<CourseAiFeedback> CourseAiFeedbacks { get; set; }
+    public virtual DbSet<LessonAiFeedback> LessonAiFeedbacks { get; set; }
+    public virtual DbSet<LearningMaterialAiFeedback> LearningMaterialAiFeedbacks { get; set; }
     public virtual DbSet<Enrollment> Enrollments { get; set; }
     public virtual DbSet<Instructor> Instructors { get; set; }
     public virtual DbSet<InstructorPayout> InstructorPayouts { get; set; }
@@ -1640,6 +1643,69 @@ public partial class AppDbContext : DbContext
                   .HasForeignKey(d => d.CourseId)
                   .OnDelete(DeleteBehavior.Cascade)
                   .HasConstraintName("course_field_moderation_feedbacks_course_id_fkey");
+        });
+
+        modelBuilder.Entity<CourseAiFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("course_ai_feedbacks_pkey");
+            entity.ToTable("course_ai_feedbacks");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.CourseId).HasColumnName("course_id");
+            entity.Property(e => e.FieldName).HasMaxLength(100).HasColumnName("field_name");
+            entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.ModerationStatus).HasMaxLength(50).HasDefaultValueSql("'PENDING'::character varying").HasColumnName("moderation_status");
+            entity.Property(e => e.DateAdded)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("date_added");
+
+            entity.HasOne(d => d.Course).WithMany(p => p.CourseAiFeedbacks)
+                  .HasForeignKey(d => d.CourseId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("course_ai_feedbacks_course_id_fkey");
+        });
+
+        modelBuilder.Entity<LessonAiFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("lesson_ai_feedbacks_pkey");
+            entity.ToTable("lesson_ai_feedbacks");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.LessonId).HasColumnName("lesson_id");
+            entity.Property(e => e.FieldName).HasMaxLength(100).HasColumnName("field_name");
+            entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.ModerationStatus).HasMaxLength(50).HasDefaultValueSql("'PENDING'::character varying").HasColumnName("moderation_status");
+            entity.Property(e => e.DateAdded)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("date_added");
+
+            entity.HasOne(d => d.Lesson).WithMany(p => p.LessonAiFeedbacks)
+                  .HasForeignKey(d => d.LessonId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("lesson_ai_feedbacks_lesson_id_fkey");
+        });
+
+        modelBuilder.Entity<LearningMaterialAiFeedback>(entity =>
+        {
+            entity.HasKey(e => e.FeedbackId).HasName("learning_material_ai_feedbacks_pkey");
+            entity.ToTable("learning_material_ai_feedbacks");
+
+            entity.Property(e => e.FeedbackId).HasColumnName("feedback_id");
+            entity.Property(e => e.MaterialId).HasColumnName("material_id");
+            entity.Property(e => e.FieldName).HasMaxLength(100).HasColumnName("field_name");
+            entity.Property(e => e.FeedbackText).HasColumnName("feedback_text");
+            entity.Property(e => e.ModerationStatus).HasMaxLength(50).HasDefaultValueSql("'PENDING'::character varying").HasColumnName("moderation_status");
+            entity.Property(e => e.DateAdded)
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                  .HasColumnType("timestamp without time zone")
+                  .HasColumnName("date_added");
+
+            entity.HasOne(d => d.Material).WithMany(p => p.LearningMaterialAiFeedbacks)
+                  .HasForeignKey(d => d.MaterialId)
+                  .OnDelete(DeleteBehavior.Cascade)
+                  .HasConstraintName("learning_material_ai_feedbacks_material_id_fkey");
         });
 
         modelBuilder.Entity<CourseReviewModerationRecord>(entity =>

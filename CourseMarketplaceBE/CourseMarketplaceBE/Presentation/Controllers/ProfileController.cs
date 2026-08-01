@@ -73,6 +73,33 @@ public class ProfileController : ControllerBase
         }
     }
 
+    [HttpPut("update-avatar")]
+    [Consumes("multipart/form-data")]
+    [AllowAnonymous]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
+    public async Task<IActionResult> UpdateAvatar(IFormFile avatarFile)
+    {
+        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdStr, out int userId))
+            return Unauthorized(new { status = 401, message = "Invalid login session." });
+
+        if (avatarFile == null || avatarFile.Length == 0)
+            return BadRequest(new { status = 400, message = "No file uploaded." });
+
+        try
+        {
+            var avatarUrl = await _profileService.UpdateAvatarAsync(userId, avatarFile);
+            if (avatarUrl != null)
+                return Ok(new { status = 200, message = "Avatar updated successfully!", avatarUrl });
+
+            return BadRequest(new { status = 400, message = "Avatar update failed." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { status = 500, message = $"An unexpected error occurred: {ex.Message}" });
+        }
+    }
+
     [HttpPost("change-password")]
     [AllowAnonymous] // Override default Authorize if any
     [CustomAuthorize(requireAuth: true, "user", "instructor")]

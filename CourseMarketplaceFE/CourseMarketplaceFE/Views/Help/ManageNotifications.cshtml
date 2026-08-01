@@ -1,0 +1,51 @@
+@{
+    ViewData["Title"] = "Managing notifications - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Managing notifications</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <p>LinkedLearn keeps you informed about important events, such as course announcements, review responses, and system alerts, through the Notifications system.</p>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Viewing and Filtering</h2>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Notification Center:</strong> Access the notifications page to view a paginated list of all your alerts.</li>
+                        <li><strong>Filtering:</strong> Use the dropdown to filter your view to show only 'Unread' notifications.</li>
+                        <li><strong>Searching:</strong> Enter keywords in the search box to find specific notifications by title or content.</li>
+                        <li><strong>Sorting:</strong> Change the sort order (e.g., Oldest First) using the sort dropdown.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Interacting with Notifications</h2>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li><strong>View Details:</strong> Click on a notification row to open a modal with the full message content. If the notification is unread, opening it will automatically mark it as read.</li>
+                        <li><strong>Action Links:</strong> Many notifications include a button inside the detail modal that will navigate you directly to the relevant page (e.g., a specific course or chat).</li>
+                        <li><strong>Mark as Read:</strong> You can click the check circle icon next to an unread notification to mark it as read without opening it.</li>
+                        <li><strong>Mark All as Read:</strong> Click the <strong>Mark All as Read</strong> button at the top of the list to instantly clear all your unread badges.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Deleting Notifications</h2>
+                    <p>To keep your notification list tidy, you can soft-delete alerts you no longer need:</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Click the <strong>Delete (trash)</strong> icon next to a notification.</li>
+                        <li>Confirm the deletion in the popup dialog.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

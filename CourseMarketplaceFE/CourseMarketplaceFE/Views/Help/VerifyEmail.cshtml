@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Verifying your email - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Verifying your email</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-6">
+                <p>Verifying your email address is crucial for securing your account and utilizing features like password resets.</p>
+                
+                <h2 class="text-2xl font-bold text-slate-900 mt-8 mb-4">Verification Steps</h2>
+                <ol class="list-decimal list-inside space-y-4">
+                    <li><strong>Check your inbox:</strong> After registering or requesting a verification code (such as during a password reset), check the inbox of your registered email address.</li>
+                    <li><strong>Locate the OTP:</strong> Look for an email from LinkedLearn containing a One-Time Password (OTP).</li>
+                    <li><strong>Enter the OTP:</strong> On the Verification page on our platform, enter the OTP provided in the email.</li>
+                    <li><strong>Submit:</strong> Click the "Verify" button. If the code is correct and not expired, your email will be marked as verified or your password reset process will continue.</li>
+                </ol>
+
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mt-8 rounded-r-lg">
+                    <p class="text-blue-800 text-sm m-0"><strong>Note:</strong> If you logged in using Google, your email is automatically verified via Google's authentication system.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

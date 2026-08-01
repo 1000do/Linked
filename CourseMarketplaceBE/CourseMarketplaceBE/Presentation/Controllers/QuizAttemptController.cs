@@ -86,7 +86,7 @@ public class QuizAttemptController : ControllerBase
     }
 
     [HttpGet("{attemptId}/details")]
-    [Authorize(Roles = "user,admin,staff")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> GetAttemptDetail(int attemptId)
     {
         try

@@ -1,0 +1,37 @@
+@{
+    ViewData["Title"] = "Terms of Service - LinkedLearn";
+}
+
+<section class="py-16 md:py-24 bg-slate-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-6">Terms of Service</h1>
+        <p class="text-slate-500 mb-12">Last updated: @DateTime.Now.ToString("MMMM dd, yyyy")</p>
+        
+        <div class="prose prose-slate lg:prose-lg max-w-none text-slate-700 space-y-8">
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">1. Purchasing and Enrollment</h2>
+                <p>When you enroll in a course, whether it's free or paid, you are getting a license from the instructor to view it via the LinkedLearn platform. You may not transfer or resell courses in any way. Paid courses require immediate checkout using our integrated payment gateway (Stripe).</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">2. Payments and Pricing</h2>
+                <p>Prices for courses are determined by instructors or the platform. By providing a payment method, you authorize Stripe to charge the course fees to that method. All payments are processed securely, and receipts will be recorded in your Transaction History.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">3. Refunds</h2>
+                <p>If the course you purchased is not what you were expecting, you can request within 30 days of your purchase for LinkedLearn to apply a refund to your account. We reserve the right to decline your refund request if you have consumed a significant portion of the course or have previously violated our policies.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">4. Instructor Revenue and Payouts</h2>
+                <p>Instructors earn a percentage of the revenue from course sales, determined by the platform's set transfer rate. Payouts are made directly to the instructor's linked Stripe Connect account according to the platform's payout schedule (weekly or monthly). Instructors can track their earnings and withdrawal history in their dashboard.</p>
+            </section>
+
+            <section>
+                <h2 class="text-2xl font-bold text-slate-900 mb-4">5. Platform Rights</h2>
+                <p>LinkedLearn reserves the right to remove any course or user account that violates our policies, including copyright infringement or posting offensive content. We utilize both automated AI models and human moderators to enforce these standards.</p>
+            </section>
+        </div>
+    </div>
+</section>

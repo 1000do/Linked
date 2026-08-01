@@ -217,8 +217,8 @@ public class AuthService : IAuthService
 
     private string ResolveFullName(Account account, string role, string? fallbackName)
     {
-        if (role == "manager")
-            return account.Manager?.DisplayName ?? "Manager";
+        if (account.Manager != null)
+            return account.Manager.DisplayName ?? "Manager";
             
         return account.User?.FullName ?? fallbackName ?? "User";
     }

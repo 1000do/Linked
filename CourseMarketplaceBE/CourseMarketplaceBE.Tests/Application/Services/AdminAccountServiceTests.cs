@@ -712,7 +712,7 @@ public class AdminAccountServiceTests
         result.Success.Should().BeTrue();
         result.CurrentFlags.Should().Be(1);
         account.AccountStatus.Should().Be(AccountStatus.Flagged1.ToValue());
-        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Flagged Warning", Arg.Is<string>(s => s.Contains("No reason specified")), "/profile");
+        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Flagged Warning", Arg.Is<string>(s => s.Contains("No reason specified")), "/Account/Profile");
         await _mockUserRepo.Received(1).SaveChangesAsync();
     }
 
@@ -733,7 +733,7 @@ public class AdminAccountServiceTests
         result.Success.Should().BeTrue();
         result.CurrentFlags.Should().Be(2);
         account.AccountStatus.Should().Be(AccountStatus.Flagged2.ToValue());
-        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Flagged Warning", Arg.Is<string>(s => s.Contains("Violation")), "/profile");
+        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Flagged Warning", Arg.Is<string>(s => s.Contains("Violation")), "/Account/Profile");
         await _mockUserRepo.Received(1).SaveChangesAsync();
     }
 
@@ -756,7 +756,7 @@ public class AdminAccountServiceTests
         account.AccountStatus.Should().Be(AccountStatus.Banned.ToValue());
         await _mockLockoutRepo.Received(1).AddAsync(Arg.Is<Lockout>(l => l.AccountId == id));
         await _mockClientProxy.Received(1).SendCoreAsync("AccountLockedOut", Arg.Any<object[]>(), Arg.Any<CancellationToken>());
-        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Banned Notification", Arg.Any<string>(), "/profile");
+        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Banned Notification", Arg.Any<string>(), "/Account/Profile");
         await _mockUserRepo.Received(1).SaveChangesAsync();
     }
 
@@ -831,7 +831,7 @@ public class AdminAccountServiceTests
         result.Success.Should().BeTrue();
         result.CurrentFlags.Should().Be(1);
         account.AccountStatus.Should().Be(AccountStatus.Flagged1.ToValue());
-        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Unflagged", Arg.Is<string>(s => s.Contains("No reason specified")), "/profile");
+        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Unflagged", Arg.Is<string>(s => s.Contains("No reason specified")), "/Account/Profile");
         await _mockUserRepo.Received(1).SaveChangesAsync();
     }
 
@@ -854,7 +854,7 @@ public class AdminAccountServiceTests
         account.AccountStatus.Should().Be(AccountStatus.Flagged2.ToValue());
         await _mockLockoutRepo.Received(1).RemoveAccountLockoutsAsync(id);
         await _mockClientProxy.Received(1).SendCoreAsync("AccountUnlocked", Arg.Any<object[]>(), Arg.Any<CancellationToken>());
-        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Unflagged", Arg.Is<string>(s => s.Contains("Appealed")), "/profile");
+        await _mockNotificationService.Received(1).SendNotificationAsync(id, "Account Unflagged", Arg.Is<string>(s => s.Contains("Appealed")), "/Account/Profile");
         await _mockUserRepo.Received(1).SaveChangesAsync();
     }
 
