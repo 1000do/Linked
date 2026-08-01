@@ -156,7 +156,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.CourseReview != null ? (src.CourseReview.Comment ?? "") : ""))
             .ForMember(dest => dest.LatencyMs, opt => opt.MapFrom(src => (int)(src.LatencyMs ?? 0)))
             .ForMember(dest => dest.LogCreatedAt, opt => opt.MapFrom(src => src.LogCreatedAt ?? DateTime.UtcNow))
-            .AfterMap((src, dest) => MapResultStatus(src.ErrorMessage, src.OutputJson, dest));
+            .AfterMap((src, dest) => MapReviewResultStatus(src.ErrorMessage, src.OutputJson, dest));
 
         CreateMap<LessonReviewModerationLog, ReviewModerationLogAdminDto>()
             .ForMember(dest => dest.ModelId, opt => opt.MapFrom(src => src.ModelId ?? 0))
@@ -165,7 +165,34 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Comment, opt => opt.MapFrom(src => src.LessonReview != null ? (src.LessonReview.Comment ?? "") : ""))
             .ForMember(dest => dest.LatencyMs, opt => opt.MapFrom(src => (int)(src.LatencyMs ?? 0)))
             .ForMember(dest => dest.LogCreatedAt, opt => opt.MapFrom(src => src.LogCreatedAt ?? DateTime.UtcNow))
-            .AfterMap((src, dest) => MapResultStatus(src.ErrorMessage, src.OutputJson, dest));
+            .AfterMap((src, dest) => MapReviewResultStatus(src.ErrorMessage, src.OutputJson, dest));
+    }
+
+    private static void MapReviewResultStatus(string? errorMessage, string? outputJson, ReviewModerationLogAdminDto dest)
+    {
+        dest.ResultStatus = string.IsNullOrEmpty(errorMessage) ? "Processed" : "ERROR";
+
+        if (dest.ResultStatus == "ERROR") return;
+
+        dest.ResultStatus = "Pass";
+        if (!string.IsNullOrEmpty(outputJson))
+        {
+            try {
+                using var doc = System.Text.Json.JsonDocument.Parse(outputJson);
+                if (doc.RootElement.TryGetProperty("ModerationStatus", out var resProp) ||
+                    doc.RootElement.TryGetProperty("moderationStatus", out resProp) ||
+                    doc.RootElement.TryGetProperty("moderation_status", out resProp))
+                {
+                    var rawResult = resProp.GetString()?.ToUpperInvariant();
+                    if (rawResult == StageLogResult.Flagged.ToValue()) dest.ResultStatus = "Flagged";
+                    else if (rawResult == StageLogResult.MatchFound.ToValue()) dest.ResultStatus = "Match Found";
+                    else if (rawResult == StageLogResult.ManualAudit.ToValue()) dest.ResultStatus = "Manual Audit";
+                    else if (rawResult == StageLogResult.NoMatch.ToValue()) dest.ResultStatus = "No Match";
+                    else if (rawResult == StageLogResult.Approved.ToValue()) dest.ResultStatus = "Approved";
+                    else dest.ResultStatus = "Pass";
+                }
+            } catch { }
+        }
     }
 
     private static void MapResultStatus(string? errorMessage, string? outputJson, BaseAiLogAdminDto dest)

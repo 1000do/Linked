@@ -15,6 +15,7 @@ using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
 using Microsoft.Extensions.Logging;
 using CourseMarketplaceBE.Domain.Enums;
+using CourseMarketplaceBE.Domain.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -563,6 +564,30 @@ public class CourseCommandService : ICourseCommandService
     {
         if (string.IsNullOrEmpty(input)) return string.Empty;
         return System.Text.RegularExpressions.Regex.Replace(input, "<.*?>", string.Empty).Trim();
+    }
+
+    public async Task UpdateCourseThreatLevelAsync(int courseId, AiThreatLevel threatLevel)
+    {
+        var course = await _courseRepository.GetByIdAsync(courseId);
+        if (course == null) throw new KeyNotFoundException($"Course with ID {courseId} not found.");
+
+        course.ThreatLevel = threatLevel;
+        course.UpdatedAt = DateTime.UtcNow;
+        _courseRepository.Update(course);
+        await SaveCourseChangesAsync();
+        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+    }
+
+    private async Task SaveCourseChangesAsync()
+    {
+        try
+        {
+            await _courseRepository.SaveChangesAsync();
+        }
+        catch (CourseException ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
     }
 }
 

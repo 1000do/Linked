@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Publishing a course - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Publishing a course</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">The Publishing Process</h2>
+                    <p>Once you have finished building your course in the Course Editor, you must submit it for review before it becomes publicly visible.</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Navigate to the <strong>Course Editor</strong> for your draft course.</li>
+                        <li>Ensure all required fields (Title, Description, Category, Pricing, Thumbnail) are complete.</li>
+                        <li>Ensure your curriculum has at least one lesson containing active video content.</li>
+                        <li>Click the <strong>Submit for Review</strong> button.</li>
+                        <li>Your course status will update to "Pending Review" and it will be queued for moderation.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Content Moderation & Approval</h2>
+                    <p>All submitted courses undergo a comprehensive review process to ensure quality and compliance:</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>AI Pre-screening:</strong> An automated background AI service scans your course metadata and curriculum for inappropriate content.</li>
+                        <li><strong>Manual Audit:</strong> An administrator will review your course structure, pricing, and video content.</li>
+                        <li><strong>Modifications Locked:</strong> While your course is "Pending Review", the editor is locked to read-only mode and you cannot make curriculum changes.</li>
+                        <li><strong>Outcome:</strong> You will be notified once an administrator approves or rejects your submission. If approved, your course status automatically becomes "Published".</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

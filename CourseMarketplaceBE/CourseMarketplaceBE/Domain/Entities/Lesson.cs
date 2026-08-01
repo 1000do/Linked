@@ -30,5 +30,7 @@ public partial class Lesson
 
     public virtual ICollection<LessonReview> LessonReviews { get; set; } = new List<LessonReview>();
 
+    public virtual ICollection<LessonAiFeedback> LessonAiFeedbacks { get; set; } = new List<LessonAiFeedback>();
+
     public bool IsRemoved { get; set; }
 }

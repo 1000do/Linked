@@ -242,6 +242,7 @@ public class Program
         builder.Services.AddScoped<IReviewModerationRecordRepository, ReviewModerationRecordRepository>();
         builder.Services.AddScoped<CourseMarketplaceBE.Application.IServices.IReviewModerationService, CourseMarketplaceBE.Application.Services.ReviewModerationService>();
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
+        builder.Services.AddScoped<IAiFeedbackRepository, AiFeedbackRepository>();
         builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer, Ganss.Xss.HtmlSanitizer>();
         builder.Services.AddScoped<IHtmlTextManipulationService, HtmlTextManipulationService>();
 

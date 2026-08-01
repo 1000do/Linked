@@ -1,0 +1,53 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+' skinparam packageStyle rectangle
+
+package "AI Moderation" {
+    folder "api" {
+        folder "routes"
+    }
+
+    folder "config" {
+    }
+
+    folder "core" {
+    }
+
+    folder "handlers" {
+    }
+
+    folder "models" {
+    }
+
+    folder "providers" {
+    }
+
+    folder "repositories" {
+    }
+
+    folder "services" {
+        folder "text_extraction" {
+            folder "extractors"
+        }
+    }
+}
+
+api ..> handlers : import
+api ..> core : import
+
+handlers ..> services : import
+handlers ..> providers : import
+handlers ..> config : import
+handlers ..> core : import
+
+services ..> config : import
+services ..> repositories : import
+services ..> providers : import
+services ..> core : import
+
+repositories ..> config : import
+repositories ..> core : import
+
+providers ..> config : import
+@enduml

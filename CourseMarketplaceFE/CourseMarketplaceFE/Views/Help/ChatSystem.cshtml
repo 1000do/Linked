@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Direct messaging system - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Direct messaging system</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <p>The Chat page allows real-time communication between users and instructors. You can send messages, share files, and keep track of your conversations.</p>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Navigating the Chat Interface</h2>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li><strong>Chat List:</strong> The sidebar displays your active conversations, showing the partner's name, their online status, a snippet of the last message, and any unread message badges.</li>
+                        <li><strong>Search:</strong> Use the search box in the sidebar to quickly filter your chat list by a partner's name.</li>
+                        <li><strong>Notifications:</strong> When you receive a new message while navigating the site, an 'unread-preview-bubble' will appear. Clicking it takes you directly to the conversation.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Sending Messages & Files</h2>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Click on a conversation in the sidebar to open the chat room.</li>
+                        <li>Type your message in the input area and press Enter or click the <strong>Send</strong> button.</li>
+                        <li>To attach a file (up to 10MB), click the <strong>Attach File</strong> icon, select your file, and click send. You can preview or remove attachments before sending.</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Managing History</h2>
+                    <p>If you want to clear your local view of a conversation:</p>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Open the conversation you wish to delete.</li>
+                        <li>Click the <strong>Delete</strong> icon in the chat header.</li>
+                        <li>Confirm the deletion. This will clear the chat history from your view, but the history remains intact for the other participant.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -11,14 +11,14 @@ obj/
 # Cache files
 *.cache
 
-
 # Secret management
 secrets.json
 *.usersecrets
 .env
 *.env
+**/.env
 **/.env.*
-.env.example
+# .env.example
 
 # Node / Frontend
 node_modules/
@@ -34,7 +34,6 @@ ai_models/
 **/*.pyc
 **/__pycache__
 
-
 scratch/
 /private_ngoc
 
@@ -46,4 +45,4 @@ scratch/
 
 # User Guides
 docs/Tài_user_guide.md
-docs/Tài_user_guide_vi.md
+docs/Tài_user_guide_vi.md
