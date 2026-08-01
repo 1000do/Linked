@@ -132,7 +132,7 @@ public class CourseCommandService : ICourseCommandService
             CourseThumbnailUrl = thumbnailUrl,
             WhatYouWillLearn = _htmlTextManipulationService.SanitizeHtml(request.WhatYouWillLearn),
             Requirements = _htmlTextManipulationService.SanitizeHtml(request.Requirements),
-            CourseStatus = CourseStatus.Pending.ToValue(),
+            CourseStatus = CourseStatus.Draft.ToValue(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

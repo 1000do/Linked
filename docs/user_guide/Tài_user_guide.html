@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>User Manual Specifications</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            color: black;
+            line-height: 1.5;
+            margin: 40px;
+        }
+        h3 {
+            font-size: 16pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: black;
+            margin-top: 40px;
+        }
+        h4 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 30px;
+        }
+        h5 {
+            font-size: 12pt;
+            font-weight: normal;
+            font-style: italic;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: black; line-height: 1.5;">
+
+    <h3>3.4 Course Moderation</h3>
+
+    <h4>3.4.1 View Course Moderation List</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to display all courses submitted by instructors that are pending moderation review.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Staff or Admin accesses the Course Moderation List page using one of the following entry methods:</p>
+    <ul>
+        <li><b>Option 1.1 (Sidebar Navigation):</b> Click the <b>Course Moderation</b> menu item on the left sidebar of the Admin Dashboard.</li>
+        <li><b>Option 1.2 (Real-time AI Moderation Notification):</b> Click the <b>View Detail</b> link on the real-time AI moderation notification banner (<i>"Manual Review Required"</i>) that automatically pops up in the top-right corner of any Admin/Staff Dashboard page whenever a course is submitted and evaluated by the AI moderation engine.</li>
+    </ul>
+
+    <p><b>Step 2:</b> The Staff or Admin inspects the course moderation queue:</p>
+    <ul>
+        <li><b>Course Thumbnail & Title:</b> View course thumbnail image, title, and category.</li>
+        <li><b>Instructor Information:</b> Name and email address of the instructor who authored the course.</li>
+        <li><b>Submission Date:</b> Date and time timestamp when the course was submitted for review.</li>
+        <li><b>AI Moderation Score:</b> Automated AI safety compliance score and flagged content indicators.</li>
+        <li><b>Moderation Status:</b> Status badge indicating Pending Review, Approved, Rejected, or Flagged.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Moderation Queue page here, highlighting the pending course list grid in red)</i>
+    </p>
+
+    <h5>Figure 11. View Course Moderation List operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin clicks on the <b>Course Title</b> link or the <b>View Details</b> icon button on a course submission entry to open its moderation details.</p>
+
+    <h4>3.4.2 Search Courses</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to search the course moderation queue by title, keywords, or instructor name in real-time.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Moderation List page, the Staff or Admin locates the search control bar.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin enters search keywords into the <b>Search Input</b> field.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Search Moderation bar here, highlighting the search input field and live filtered results in red)</i>
+    </p>
+
+    <h5>Figure 12. Search Courses operation</h5>
+
+    <p><b>Step 3:</b> The system automatically filters and displays matching course moderation entries in real-time.</p>
+
+    <h4>3.4.3 Sort Courses</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to sort courses in the moderation list by submission date or risk level.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Moderation List page, the Staff or Admin locates the sorting header control.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin clicks the <b>Sort By</b> dropdown menu and selects a sorting criteria:</p>
+    <ul>
+        <li><b>Submission Date (Oldest First):</b> Prioritize older pending course submissions.</li>
+        <li><b>Submission Date (Newest First):</b> Display the most recently submitted courses first.</li>
+        <li><b>Risk Score (Highest First):</b> Sort by AI violation risk score descending.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Sort Dropdown menu here, highlighting the selected sorting option in red)</i>
+    </p>
+
+    <h5>Figure 13. Sort Courses operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin clicks the selected option to reorder the course queue.</p>
+
+    <h4>3.4.4 Filter Courses</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to filter courses by categories or moderation status (Pending, Approved, Rejected, Flagged).</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Moderation List page, the Staff or Admin locates the filter dropdown controls.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin clicks the <b>Status Filter Dropdown</b> or <b>Category Dropdown</b> to view available filter options:</p>
+    <ul>
+        <li><b>Status Filter Dropdown:</b> Select Pending Review, Approved, Rejected, or Flagged.</li>
+        <li><b>Category Dropdown:</b> Choose a specific course category to narrow down results.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Filter Controls panel here, highlighting the selected filter option in red)</i>
+    </p>
+
+    <h5>Figure 14. Filter Courses operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin clicks the selected filter option to update the course list.</p>
+
+    <h4>3.4.5 Approve Course Submission</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to approve a submitted course, marking it as published and visible on the marketplace.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Moderation Details page, the Staff or Admin clicks the <b>Approve Course</b> button to open the confirmation modal.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin inputs information:</p>
+    <ul>
+        <li><b>Approval Note:</b> Optional. Feedback or congratulatory message for the instructor.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Approve Course modal here, highlighting the Approval Note field and Confirm button in red)</i>
+    </p>
+
+    <h5>Figure 15. Approve Course Submission operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin clicks the <b>Confirm Approval</b> button to publish the course.</p>
+
+    <h4>3.4.6 Reject Course Submission</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to reject a submitted course by tagging specific violating elements and providing constructive feedback for the instructor.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Moderation Details page, the Staff or Admin clicks the <b>Reject Course</b> button to open the Reject Course modal.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin configures one or more rejection item cards:</p>
+    <ul>
+        <li><b>Violating Element:</b> Required. Type <code>@</code> in the search input dropdown to select a specific course element, lesson, or file asset (e.g., <code>@course.title</code>, <code>@course.description</code>, <code>@course.thumbnail</code>, <code>@course.what_you_will_learn</code>, <code>@course.requirements</code>, <code>@lesson: [Lesson Title]</code>, or <code>@file: [Material Title]</code>).</li>
+        <li><b>Rejection Reason:</b> Required. Enter detailed constructive feedback explaining why the selected element violates policy or quality guidelines.</li>
+        <li><b>Add Rejection Item:</b> Optional. Click the <b>Add Rejection Item</b> button to add additional element tagging cards, or click the trash icon button to remove an item.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Reject Course modal here, highlighting the Violating Element dropdown, Rejection Reason text area, Add Rejection Item button, and Submit Rejection button in red)</i>
+    </p>
+
+    <h5>Figure 16. Reject Course Submission operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin clicks the <b>Submit Rejection</b> button to return the course draft with detailed feedback to the instructor.</p>
+
+    <h4>3.4.7 Flag Course for Content Violation</h4>
+
+    <p>The purpose of this workflow is to allow Staff, Admin to flag a course for content or policy violations, hiding it from public display.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Moderation Details page, the Staff or Admin clicks the <b>Flag Violation</b> button to open the content violation modal.</p>
+
+    <p><b>Step 2:</b> The Staff or Admin inputs information:</p>
+    <ul>
+        <li><b>Violation Category:</b> Required. Select Copyright Infringement, Inappropriate Content, Spam, or Fraud.</li>
+        <li><b>Violation Evidence & Notes:</b> Required. Detailed description of evidence supporting the content flag and takedown.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Flag Content Violation modal here, highlighting violation category and notes in red)</i>
+    </p>
+
+    <h5>Figure 17. Flag Course for Content Violation operation</h5>
+
+    <p><b>Step 3:</b> The Staff or Admin clicks the <b>Submit Flag & Takedown</b> button to hide the course.</p>
+
+    <br><hr><br>
+
+    <h3>3.10 Course</h3>
+
+    <h4>3.10.1 View Course List</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, Instructor to display a paginated list of published courses on the marketplace.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Guest, User, or Instructor accesses the Home page and opens the Course List page using one of two options:</p>
+    <ul>
+        <li><b>Option 1 (Via Navigation Dropdown):</b> Hover over or click the <b>Explore Topics</b> dropdown menu on the top navigation bar and select a specific category (e.g., Design, Software Development, Business) to view courses under that category.</li>
+        <li><b>Option 2 (Via "View All" Section Button):</b> Click the <b>View All →</b> button located on the top-right corner of any course showcase section (e.g., New Releases) on the Home page to view all published courses.</li>
+    </ul>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor inspects course cards:</p>
+    <ul>
+        <li><b>Course Card Content:</b> View course thumbnail, title, category, instructor name, average rating score, and price.</li>
+        <li><b>Wishlist Toggle:</b> Click the heart icon button to toggle course wishlist status (authenticated users).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Explore Courses catalog page here, highlighting the course list grid in red)</i>
+    </p>
+
+    <h5>Figure 63. View Course List operation</h5>
+
+    <p><b>Step 3:</b> The Guest, User, or Instructor clicks on a <b>Course Card</b> to view detailed information.</p>
+
+    <h4>3.10.2 Filter Courses</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, Instructor to filter courses by categories, price ranges, or minimum ratings.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Explore Courses page, the Guest, User, or Instructor opens the filter sidebar panel.</p>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor selects filter options:</p>
+    <ul>
+        <li><b>Category Selection:</b> Select a specific category (e.g., Development, Design, Business).</li>
+        <li><b>Price Range Filter:</b> Select Free, Paid, or All Courses.</li>
+        <li><b>Minimum Rating Threshold:</b> Select minimum average rating (e.g., 4.0 stars & up).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Filter Sidebar here, highlighting category and price options in red)</i>
+    </p>
+
+    <h5>Figure 64. Filter Courses operation</h5>
+
+    <p><b>Step 3:</b> The Guest, User, or Instructor clicks the <b>Apply Filters</b> button to update the course catalog.</p>
+
+    <h4>3.10.3 Sort Courses</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, Instructor to sort the course lists by newest, price (lowest/highest), or ratings.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Explore Courses page, the Guest, User, or Instructor locates the header sorting dropdown.</p>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor clicks the <b>Sort By</b> dropdown menu and selects a sorting criteria:</p>
+    <ul>
+        <li><b>Most Popular:</b> Sort descending by student enrollment count.</li>
+        <li><b>Highest Rated:</b> Sort descending by average student rating score.</li>
+        <li><b>Newest:</b> Sort descending by course publication date.</li>
+        <li><b>Price: Low to High:</b> Sort ascending by course price.</li>
+        <li><b>Price: High to Low:</b> Sort descending by course price.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Sort Dropdown menu here, highlighting the selected sorting criteria in red)</i>
+    </p>
+
+    <h5>Figure 65. Sort Courses operation</h5>
+
+    <p><b>Step 3:</b> The Guest, User, or Instructor clicks the selected option to reorder the course list.</p>
+
+    <h4>3.10.4 View Course Detail</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, Instructor, Staff, Admin to display the detailed content of a course including chapters, lessons, instructor biography, ratings, and pricing.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Explore Courses page, the user clicks on a <b>Course Card</b> to open the Course Detail page.</p>
+
+    <p><b>Step 2:</b> The user reviews course detail sections:</p>
+    <ul>
+        <li><b>Course Overview:</b> Read course description, learning outcomes, requirements, and target audience.</li>
+        <li><b>Curriculum Syllabus:</b> Expand chapters to preview lesson topics and video lecture durations.</li>
+        <li><b>Instructor Profile:</b> Inspect instructor bio, total courses published, and average rating.</li>
+        <li><b>Student Reviews:</b> Browse individual ratings, feedback comments, and star score distributions.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Detail page here, highlighting the syllabus and instructor bio in red)</i>
+    </p>
+
+    <h5>Figure 66. View Course Detail operation</h5>
+
+    <p><b>Step 3:</b> The user clicks the <b>Enroll Now</b> or <b>Add to Cart</b> button to proceed.</p>
+
+    <h4>3.10.5 Search Courses</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, Instructor to search for courses based on titles, descriptions, or keywords in real-time.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Explore Courses page or top navigation header, the Guest, User, or Instructor locates the main search bar.</p>
+
+    <p><b>Step 2:</b> The Guest, User, or Instructor enters keywords into the <b>Search Input</b> field.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Search Input bar here, highlighting the search term field and live filtered results in red)</i>
+    </p>
+
+    <h5>Figure 67. Search Courses operation</h5>
+
+    <p><b>Step 3:</b> The system automatically filters and displays matching course results in real-time as the user types.</p>
+
+    <h4>3.10.6 Go To Learning</h4>
+
+    <p>The purpose of this workflow is to allow User, Instructor to open the course player to watch video lectures, read text content, and view course slides.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The User or Instructor accesses the Course Detail page of an enrolled course and clicks the <b>Go to learning</b> button on the right action card to open the Course Player page.</p>
+
+    <p><b>Step 2:</b> The user interacts with the learning player interface:</p>
+    <ul>
+        <li><b>Syllabus Navigation Sidebar:</b> Click lesson titles in the left syllabus tree to switch active lessons.</li>
+        <li><b>Media Content Player:</b> Watch video lectures, read article text, or download attachment files.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Learning Player here, highlighting the syllabus sidebar and main video container in red)</i>
+    </p>
+
+    <h5>Figure 68. Go To Learning operation</h5>
+
+    <p><b>Step 3:</b> The user must complete all required content of the current lesson (watch the full video lecture or read through the materials) before the system unlocks and allows proceeding to the next lesson.</p>
+
+    <h4>3.10.7 View Learning Progress</h4>
+
+    <p>The purpose of this workflow is to allow User, Instructor to track the completion percentage of a course and keep a list of marked/completed lessons.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Player page, the User or Instructor opens the progress tracking widget.</p>
+
+    <p><b>Step 2:</b> The User or Instructor views progress indicators:</p>
+    <ul>
+        <li><b>Overall Progress Bar:</b> Displays overall percentage completion (e.g. 75% completed).</li>
+        <li><b>Lesson Checkmark Icons:</b> Checkmarks next to completed lessons in the syllabus panel.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Learning Progress bar here, highlighting percentage completion in red)</i>
+    </p>
+
+    <h5>Figure 69. View Learning Progress operation</h5>
+
+    <p><b>Step 3:</b> The User or Instructor clicks on the progress widget to expand detailed completion statistics.</p>
+
+    <h4>3.10.8 View purchased course list</h4>
+
+    <p>The purpose of this workflow is to allow User, Instructor to display all courses successfully purchased or enrolled in by the user.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The User or Instructor clicks the <b>User Profile</b> menu on the top navigation bar to open the account dropdown menu.</p>
+
+    <p><b>Step 2:</b> The User or Instructor selects the <b>My Courses</b> option to open the My Purchased Courses page.</p>
+
+    <p><b>Step 3:</b> The user views enrolled course cards:</p>
+    <ul>
+        <li><b>Enrolled Course Card:</b> View thumbnail image, course title, instructor name, and current learning progress bar.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the My Purchased Courses page here, highlighting enrolled course cards in red)</i>
+    </p>
+
+    <h5>Figure 70. View purchased course list operation</h5>
+
+    <h4>3.10.9 Enroll courses</h4>
+
+    <p>The purpose of this workflow is to allow User, Instructor to enroll in a course from the course detail page.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Detail page, the User clicks the <b>Enroll Now</b> button to enroll in the course.</p>
+
+    <p><b>Step 2:</b> Upon successful enrollment, the <b>Enrolled Successfully!</b> popup modal appears displaying two navigation options:</p>
+    <ul>
+        <li><b>Go to Course:</b> Click to navigate directly to the Course Player learning interface.</li>
+        <li><b>Continue Browsing:</b> Click to close the modal and remain on the Course Detail page.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Detail page and Enrolled Successfully modal here, highlighting the Enroll Now button, success popup modal, and updated Go to learning button in red)</i>
+    </p>
+
+    <h5>Figure 71. Enroll courses operation</h5>
+
+    <p><b>Step 3:</b> Once enrolled, the <b>Enroll Now</b> button is automatically replaced by the <b>Go to learning</b> button on the Course Detail page, allowing the user to access the course content at any time.</p>
+
+    <h4>3.10.10 Create Courses</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to draft basic details for a new course, including title, pricing, description, thumbnail banner, and target learning outcomes.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Instructor accesses the Instructor Studio dashboard and clicks the <b>Create New Course</b> button to open the 4-step Create Course wizard.</p>
+
+    <p><b>Step 2:</b> The Instructor fills in the multi-step course creation wizard form:</p>
+    <ul>
+        <li><b>Step 1 (Core Identity):</b> Enter <b>Course Title</b> (required, 5–100 characters) and select <b>Category & Subcategory</b> (required).</li>
+        <li><b>Step 2 (Description & Curriculum):</b> Enter <b>Course Description</b> (required rich text), <b>What You Will Learn</b> (required, min 20 characters), and <b>Requirements</b> (required, min 20 characters).</li>
+        <li><b>Step 3 (Course Thumbnail):</b> Drag and drop or browse to upload a <b>Cover Thumbnail</b> banner image file (required).</li>
+        <li><b>Step 4 (Access & Pricing):</b> Set course <b>Price ($USD)</b> (required, enter 0 for free course), toggle the <b>Apply Coupon</b> switch, and optionally click <b>Select System Voucher</b> to attach a platform coupon.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Create Course wizard here, highlighting title, category, description, thumbnail upload, and price fields in red)</i>
+    </p>
+
+    <h5>Figure 72. Create Courses operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Create Course</b> button to save the draft course record in the database with status set to "Draft" and redirect to the Course Editor page.</p>
+
+    <h4>3.10.11 Edit Courses</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to update the content, settings, and curriculum structures of an existing course with real-time auto-saving.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Instructor Studio dashboard, the Instructor clicks the <b>Edit Course</b> button/icon on a course card to open the Course Editor page.</p>
+
+    <p><b>Step 2:</b> The Instructor modifies any course details in the editor form:</p>
+    <ul>
+        <li><b>Course Landing Page Details:</b> Edit <b>Course Title</b>, select <b>Category & Subcategory</b>, set <b>Price ($USD)</b>, update <b>Cover Thumbnail</b>, or edit rich text content for <b>Course Description</b>, <b>What You Will Learn</b>, and <b>Requirements</b>.</li>
+        <li><b>Real-time Auto-Save Engine:</b> Upon input modification, the system automatically triggers a 1.5-second debounce timer to validate inputs, send backend update requests, invalidate cache, and display a <i>"Saved!"</i> status indicator in real-time without requiring manual button clicks.</li>
+        <li><b>Sub-component Updates:</b> Optionally edit specific video lesson details or file resources and click the explicit <b>Save Changes</b> button for immediate manual confirmation.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Editor page here, highlighting modified form fields, the 1.5s auto-save status indicator, and the Save Changes button in red)</i>
+    </p>
+
+    <h5>Figure 73. Edit Courses operation</h5>
+
+    <p><b>Step 3:</b> The system confirms successful saving with a green status indicator (<i>"Saved!"</i>), ensuring all modified course data and fingerprint hashes are persisted in the database.</p>
+
+    <h4>3.10.12 Publish Courses</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to submit a course to the platform managers for approval and public release.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Editor page, the Instructor clicks the <b>Submit for Review</b> button to open the submission modal.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the submission guidelines and terms agreement modal.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Submit for Review modal here, highlighting the Submit button in red)</i>
+    </p>
+
+    <h5>Figure 74. Publish Courses operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Confirm Submission</b> button to send the course to moderation.</p>
+
+    <h4>3.10.13 Add Lessons</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to create new video or text lessons within the curriculum section of a course.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Editor page under the Curriculum tab, the Instructor clicks the <b>Add Lesson</b> button to open the Add New Lesson modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor inputs the lesson information:</p>
+    <ul>
+        <li><b>Lesson Title:</b> Required. Enter a descriptive title for the new lesson (e.g., <i>"1.1 Introduction to the Course"</i>).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Course Editor curriculum section and Add New Lesson modal dialog here, highlighting the Add Lesson button, Lesson Title input, and Create Lesson button in red)</i>
+    </p>
+
+    <h5>Figure 75. Add Lessons operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Create Lesson</b> button to create the new lesson, append it to the curriculum list, and automatically revert the course status to "Draft" if it was previously published.</p>
+
+    <h4>3.10.14 Remove Lessons</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to delete lessons and their associated materials from the course curriculum.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Editor page under the Curriculum tab, the Instructor clicks the <b>Delete Lesson</b> trash icon button on a target lesson item in the curriculum sidebar to open the Remove Lesson modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the deletion warning message in the modal (<i>"Are you sure you want to delete this lesson and all its materials? This cannot be undone."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Remove Lesson confirmation modal here, highlighting the Delete button in red)</i>
+    </p>
+
+    <h5>Figure 76. Remove Lessons operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Delete</b> button to remove the lesson and all attached materials from the curriculum.</p>
+
+    <h4>3.10.15 Add Learning Materials</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to upload supporting document assets (PDFs, slides, source code archives) to accompany lessons.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Editor page under the Resources & Files tab, the Instructor clicks the <b>Choose File</b> button under Resource File to upload a document asset.</p>
+
+    <p><b>Step 2:</b> The Instructor inputs the resource details:</p>
+    <ul>
+        <li><b>Resource File:</b> Required. Select a file asset (PDF, DOC, ZIP, PNG, etc.) to upload to Cloudinary.</li>
+        <li><b>Resource Title:</b> Optional. Enter a display title for the resource.</li>
+        <li><b>Resource Description:</b> Optional. Enter rich text description text for the resource.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Resources & Files form here, highlighting Choose File button and Resource Title input in red)</i>
+    </p>
+
+    <h5>Figure 77. Add Learning Materials operation</h5>
+
+    <p><b>Step 3:</b> Upon file upload completion, the system automatically attaches the document asset to the active lesson and displays it under the Uploaded Resources list.</p>
+
+    <h4>3.10.16 Edit Learning Materials</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to update the title, description, or replacement file of an attached learning resource.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Editor page under the Resources & Files tab, the Instructor clicks the <b>Edit Resource</b> button/icon on an uploaded material card to load its details into the form.</p>
+
+    <p><b>Step 2:</b> The Instructor updates the resource details in the form:</p>
+    <ul>
+        <li><b>Resource Title:</b> Modify the display title for the resource.</li>
+        <li><b>Resource Description:</b> Update rich text description text.</li>
+        <li><b>Resource File:</b> Optionally upload a replacement file asset.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Edit Resource form here, highlighting modified fields and Save Changes button in red)</i>
+    </p>
+
+    <h5>Figure 78. Edit Learning Materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Save Changes</b> button to update the resource details.</p>
+
+    <h4>3.10.17 Remove Learning Materials</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to soft-delete attached document files from lessons and move them to the trash bin.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Editor page under the Resources & Files tab, the Instructor clicks the <b>Remove</b> button/icon on a material card to open the Remove this file modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the removal notice in the modal (<i>"The file will be marked as removed. You can re-upload it later."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Remove file confirmation modal here, highlighting the Remove button in red)</i>
+    </p>
+
+    <h5>Figure 79. Remove Learning Materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Remove</b> button to soft-delete the material and move it to the Trash Bin.</p>
+
+    <h4>3.10.18 View Instructor's Course List</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to display a list of authored courses on the Instructor Studio dashboard.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Instructor accesses the Instructor Studio dashboard (or clicks the <b>My Courses</b> menu item) to open the Instructor's Course List page.</p>
+
+    <p><b>Step 2:</b> The Instructor inspects summary metrics and course card entries:</p>
+    <ul>
+        <li><b>Metrics & Filters:</b> View <b>Total Enrollment</b>, <b>Average Rating</b>, and <b>Active Courses</b>, filter by status (<i>All Status, Draft, Pending Review, Published, Rejected, Removed, Archived, Permanently Locked</i>), and toggle List/Grid view.</li>
+        <li><b>Course Card Details:</b> View <b>Course Thumbnail & Title</b>, <b>Updated Date</b>, <b>Total Students</b>, <b>Star Rating</b>, and <b>Status Badge</b>.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Instructor Studio Dashboard course list page here, highlighting course table grid and status badges in red)</i>
+    </p>
+
+    <h5>Figure 80. View Instructor's Course List operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Edit Course</b> button/icon on a course card to manage its curriculum and settings.</p>
+
+    <h4>3.10.19 Remove Courses</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to delete/remove a course from the active course list.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Instructor Studio dashboard course list, the Instructor clicks the <b>Delete Course</b> trash icon button on a course card to open the Delete Course modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the deletion warning message in the modal (<i>"Are you sure you want to delete '[Course Name]'? This action cannot be undone."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete Course modal dialog here, highlighting the Delete button in red)</i>
+    </p>
+
+    <h5>Figure 81. Remove Courses operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Delete</b> button to remove the course.</p>
+
+    <h4>3.10.20 Hide courses</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to temporarily hide a published course from public display on the marketplace.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Instructor Studio dashboard course list, the Instructor locates a published course row.</p>
+
+    <p><b>Step 2:</b> The Instructor clicks the <b>Hide course</b> archive icon button (or <b>Unhide course</b> unarchive icon button on an archived course) on the course card row.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the course action buttons here, highlighting the Hide course archive icon button in red)</i>
+    </p>
+
+    <h5>Figure 82. Hide courses operation</h5>
+
+    <p><b>Step 3:</b> The system immediately updates the course status to <b>Archived</b> (or <b>Published</b> if unhiding), temporarily hiding it from public marketplace discovery.</p>
+
+    <h4>3.10.21 View list of removed learning materials</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to display soft-deleted learning materials in the trash bin.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Instructor accesses the Instructor Studio dashboard and clicks the <b>Trash</b> button to open the Trash Bin page.</p>
+
+    <p><b>Step 2:</b> The Instructor inspects soft-deleted material entries:</p>
+    <ul>
+        <li><b>Material Details:</b> View material title, icon type (Video/Document), and Cloudinary ID.</li>
+        <li><b>Source Context:</b> View original lesson title and course title.</li>
+        <li><b>Deletion Timestamp & Expiration:</b> View deleted date and remaining days before permanent 30-day deletion.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Trash Bin page here, highlighting soft-deleted material rows in red)</i>
+    </p>
+
+    <h5>Figure 83. View list of removed learning materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Restore</b> button or <b>Delete Forever</b> button on a target material row.</p>
+
+    <h4>3.10.22 Restore learning materials</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to restore soft-deleted learning materials back to active lessons.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Trash Bin page, the Instructor clicks the <b>Restore</b> button next to a material entry to open the Restore material? modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the restoration confirmation notice in the modal (<i>"Are you sure you want to restore '[Material Title]' back to its original lesson?"</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Restore material modal dialog here, highlighting the Yes, restore button in red)</i>
+    </p>
+
+    <h5>Figure 84. Restore learning materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Yes, restore</b> button to reactivate the material and restore it back to its original lesson.</p>
+
+    <h4>3.10.23 Permanently delete learning materials</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to permanently erase soft-deleted material files from cloud storage and the database.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Trash Bin page, the Instructor clicks the <b>Delete Forever</b> button next to a material entry to open the Delete forever? warning modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the permanent deletion warning notice in the modal (<i>"You are about to permanently delete '[Material Title]' from Cloudinary and the database. This action cannot be undone!"</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete forever modal dialog here, highlighting the Yes, delete forever button in red)</i>
+    </p>
+
+    <h5>Figure 85. Permanently delete learning materials operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Yes, delete forever</b> button to permanently erase the file asset from Cloudinary storage and the database.</p>
+
+    <br><hr><br>
+
+    <h3>3.12 Account</h3>
+
+    <h4>3.12.1 View Instructor Profile</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, or Instructor to view the public profile page of an approved instructor, including their biography, credentials, platform statistics, social links, and catalog of teaching courses.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Guest, User, or Instructor accesses the Course Details page (or clicks an instructor profile link on a course card) and clicks the <b>Instructor Name</b> link or <b>Instructor Avatar</b> to open the Instructor Public Profile page.</p>
+
+    <p><b>Step 2:</b> The user inspects the instructor's public profile details:</p>
+    <ul>
+        <li><b>Header & Professional Credentials:</b> View the instructor's avatar image, verified badge, <b>Full Name</b>, <b>Professional Title</b>, and social media links (<b>LinkedIn</b>, <b>YouTube</b>, <b>Facebook</b>).</li>
+        <li><b>Instructor Statistics:</b> Inspect total enrolled <b>Students</b>, total <b>Reviews</b>, and average star <b>Rating</b> score.</li>
+        <li><b>About the Instructor:</b> Read the instructor's rich text biography and background introduction.</li>
+        <li><b>Teaching Courses Catalog:</b> Browse the grid of all public courses authored by this instructor under <b>Teaching Courses</b>, complete with course thumbnail, price tag, star rating, student count, and pagination controls.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Instructor Public Profile page here, highlighting the instructor bio card, statistics bar, and teaching course grid in red)</i>
+    </p>
+
+    <h5>Figure 96. View Instructor Profile operation</h5>
+
+    <p><b>Step 3:</b> The user clicks an <b>Authored Course Card</b> to navigate directly to the Course Details page of that course.</p>
+
+    <br><hr><br>
+
+    <h3>3.17 Course Review</h3>
+
+    <h4>3.17.1 View review list</h4>
+
+    <p>The purpose of this workflow is to allow Guest, User, or Instructor to view overall course rating statistics, rating distribution charts, and student review feedback comments categorized by overall course reviews and individual lesson reviews.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Guest, User, or Instructor accesses the Course Details page and scrolls down to the <b>Student feedback</b> and <b>Student Reviews</b> section.</p>
+
+    <p><b>Step 2:</b> The user inspects the rating overview and review list:</p>
+    <ul>
+        <li><b>Rating Summary:</b> View overall star rating average score, star rating icon bar, and total course rating count (<b>Course Rating</b>).</li>
+        <li><b>Rating Distribution:</b> Inspect percentage breakdown progress bars for 5-star to 1-star ratings.</li>
+        <li><b>Filter by Rating:</b> Filter reviews by selecting a star score option from the <b>Filter by</b> dropdown (<i>All Ratings, 5 stars, 4 stars, 3 stars, 2 stars, 1 star</i>).</li>
+        <li><b>Two Review Categories & Context Badges:</b> Inspect the review scope badges displayed on each review card in the list:
+            <ul>
+                <li><b>General Course Review (Review cả khóa):</b> Marked with a purple <b>General review</b> badge for overall course evaluations.</li>
+                <li><b>Individual Lesson Review (Review từng lesson):</b> Marked with a slate <b>[Lesson Title]</b> badge identifying feedback submitted for a specific lesson inside the course.</li>
+            </ul>
+        </li>
+        <li><b>Student Review Cards:</b> View reviewer avatar, full name, instructor badge (if applicable), star rating score, review date, edited label (<i>(edited)</i>), and comment feedback text.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Student feedback and Student Reviews section here, highlighting rating distribution chart and both General review and Lesson review cards in red)</i>
+    </p>
+
+    <h5>Figure 126. View review list operation</h5>
+
+    <p><b>Step 3:</b> Enrolled learners who have completed 100% of the course progress can view the <b>Write your review</b> section to compose a review.</p>
+
+    <h4>3.17.2 Add personal reviews</h4>
+
+    <p>The purpose of this workflow is to allow enrolled learners who have completed 100% of a course to submit a star rating and written review comment for that course.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Details page under Student feedback, an enrolled learner who has completed 100% of the course locates the <b>Write your review</b> form section (learners with less than 100% progress view an informational banner indicating required course completion).</p>
+
+    <p><b>Step 2:</b> The User inputs review details in the form:</p>
+    <ul>
+        <li><b>Star Rating:</b> Required. Click the star icons to select 1 to 5 stars.</li>
+        <li><b>Review Feedback:</b> Required. Enter text feedback describing the learner's experience in the comment box (<i>"How has this course helped you?"</i>).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Write your review form here, highlighting star rating icons and Submit Review button in red)</i>
+    </p>
+
+    <h5>Figure 127. Add personal reviews operation</h5>
+
+    <p><b>Step 3:</b> The User clicks the <b>Submit Review</b> button to submit the review for publishing.</p>
+
+    <h4>3.17.3 Delete personal reviews</h4>
+
+    <p>The purpose of this workflow is to allow learners to delete a course review they previously submitted.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Details page under the Student Reviews list, the User locates their own submitted review card and clicks the <b>Delete</b> button.</p>
+
+    <p><b>Step 2:</b> The User reviews the deletion warning notice in the <b>Delete this review?</b> confirmation modal dialog (<i>"This action cannot be undone."</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete this review confirmation modal dialog here, highlighting the Yes, delete it button in red)</i>
+    </p>
+
+    <h5>Figure 128. Delete personal reviews operation</h5>
+
+    <p><b>Step 3:</b> The User clicks the <b>Yes, delete it</b> button to remove the review.</p>
+
+    <br><hr><br>
+
+    <h3>3.20 Quiz</h3>
+
+    <h4>3.20.1 Start Quiz Attempt</h4>
+
+    <p>The purpose of this workflow is to allow User or Instructor to launch a timed multiple-choice quiz attempt for a course module.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The User accesses a Quiz module inside the Course Player (or navigates to the Take Quiz page) to open the Quiz overview screen.</p>
+
+    <p><b>Step 2:</b> The User reviews the quiz overview details:</p>
+    <ul>
+        <li><b>Overview Cards:</b> Total <b>Questions</b> count, <b>Passing Score</b> percentage threshold, and <b>Time Limit</b> (duration limit in minutes or Unlimited).</li>
+        <li><b>Your Attempt History:</b> View past attempt records displaying Attempt ID, completion date, score percentage, Pass/Fail status badge, and <b>View Details</b> button.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Quiz overview screen here, highlighting overview stats cards and Start Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 143. Start Quiz Attempt operation</h5>
+
+    <p><b>Step 3:</b> The User clicks the <b>Start Quiz</b> button to launch the interactive quiz player session.</p>
+
+    <h4>3.20.2 Submit Quiz Attempt</h4>
+
+    <p>The purpose of this workflow is to allow User or Instructor to complete and submit a quiz attempt for automated scoring and feedback generation.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the active Quiz Attempt workspace page, the User reviews question prompts and countdown timer.</p>
+
+    <p><b>Step 2:</b> The User inputs answers for questions:</p>
+    <ul>
+        <li><b>Single Choice Radio:</b> Select one radio option for single-choice questions.</li>
+        <li><b>Multiple Choice Checkbox:</b> Select one or more checkbox options for multiple-choice questions.</li>
+        <li><b>True / False:</b> Select True or False option for boolean questions.</li>
+        <li><b>Question Navigation Grid:</b> Click question index numbers or navigation arrows to move between questions.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the active Quiz Attempt workspace here, highlighting answer options and Submit Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 144. Submit Quiz Attempt operation</h5>
+
+    <p><b>Step 3:</b> The User clicks the <b>Submit Quiz</b> button (and confirms submission in the popup dialog) to submit responses for auto-grading.</p>
+
+    <h4>3.20.3 View Attempt Detail</h4>
+
+    <p>The purpose of this workflow is to allow User or Instructor to view detailed score results, question breakdowns, and answer feedback for a completed quiz attempt.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Quiz overview screen or Quiz History table, the User clicks the <b>View Details</b> button on a completed attempt record to open the Attempt Detail breakdown page.</p>
+
+    <p><b>Step 2:</b> The user inspects attempt breakdown details:</p>
+    <ul>
+        <li><b>Score & Status Summary:</b> Earned percentage score, correct answers count, total time spent, and visual <b>Passed</b> or <b>Failed</b> status badge.</li>
+        <li><b>Question Review List:</b> Detailed breakdown for each question displaying selected responses, correct answer indicators, and feedback explanation notes.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Attempt Detail breakdown page here, highlighting score badge and question review cards in red)</i>
+    </p>
+
+    <h5>Figure 145. View Attempt Detail operation</h5>
+
+    <p><b>Step 3:</b> The user clicks the <b>Retake Quiz</b> button to begin a new attempt.</p>
+
+    <h4>3.20.4 View Quiz History</h4>
+
+    <p>The purpose of this workflow is to allow User or Instructor to view the log table of all previous quiz attempts for a course quiz.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The User accesses the Quiz overview page inside the Course Player (or navigates to the Attempts History page) to view the attempt history log.</p>
+
+    <p><b>Step 2:</b> The User inspects the quiz attempt history table:</p>
+    <ul>
+        <li><b>Attempt Identifier:</b> Attempt ID and index.</li>
+        <li><b>Submission Date:</b> Timestamp when the attempt was submitted.</li>
+        <li><b>Score & Result:</b> Numerical percentage score and <b>Passed</b> / <b>Failed</b> outcome badge.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Your Attempt History section here, highlighting attempt record rows in red)</i>
+    </p>
+
+    <h5>Figure 146. View Quiz History operation</h5>
+
+    <p><b>Step 3:</b> The User clicks the <b>View Details</b> button on any attempt row to review its question responses.</p>
+
+    <h4>3.20.5 Assign Quiz To Course</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to attach an existing quiz assessment to a course chapter section in the curriculum.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Course Curriculum Editor page, the Instructor clicks the <b>Add Assessment</b> button under a chapter section to open the Assign Quiz modal.</p>
+
+    <p><b>Step 2:</b> The Instructor selects configuration options:</p>
+    <ul>
+        <li><b>Select Quiz:</b> Required. Choose an existing quiz from the dropdown list of created quizzes.</li>
+        <li><b>Passing Score Threshold:</b> Required. Specify required score percentage to pass.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Assign Quiz modal here, highlighting quiz select dropdown and Attach Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 147. Assign Quiz To Course operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Attach Quiz</b> button to link the quiz to the chapter module.</p>
+
+    <h4>3.20.6 View Question Bank</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to browse and manage the centralized repository of questions categorized by course and lesson.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Instructor accesses the Instructor Dashboard and clicks the <b>Question Bank</b> menu item on the left sidebar to open the Question Bank page.</p>
+
+    <p><b>Step 2:</b> The Instructor inspects the Question Bank workspace:</p>
+    <ul>
+        <li><b>Course & Lesson Selection:</b> Select a course or lesson folder to view its question repository.</li>
+        <li><b>Question List Table:</b> Inspect question prompt text, Question Type badge (<i>Single Choice, Multiple Choice, True/False</i>), option count, and action buttons.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Question Bank page here, highlighting course selection grid and question items in red)</i>
+    </p>
+
+    <h5>Figure 148. View Question Bank operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Add Question</b> button to compose a new question.</p>
+
+    <h4>3.20.7 View Course Questions</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to view and manage questions filtered for a specific course.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Question Bank page (or Quiz Editor), the Instructor selects a target course to view its assigned questions list.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews question details:</p>
+    <ul>
+        <li><b>Question Sequence & Lesson:</b> Order position and associated lesson.</li>
+        <li><b>Question Prompt & Type:</b> Prompt text and Question Type badge.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Questions in Course view here, highlighting question list items in red)</i>
+    </p>
+
+    <h5>Figure 149. View Course Questions operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Edit</b> pencil icon button on a question item to modify its details.</p>
+
+    <h4>3.20.8 Create Question</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to add a new question to the Question Bank.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Question Bank page under a target lesson, the Instructor clicks the <b>Add Question</b> button to open the Add Question modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor inputs question details in the form:</p>
+    <ul>
+        <li><b>Question Type:</b> Select <i>Single Choice, Multiple Choice,</i> or <i>True/False</i>.</li>
+        <li><b>Question Text:</b> Required. Enter question statement text.</li>
+        <li><b>Explanation (Note):</b> Optional. Enter post-attempt explanation note shown to learners.</li>
+        <li><b>Options:</b> Click <b>Add Option</b> to enter choice texts and check the correct answer checkbox(es).</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Add Question modal dialog here, highlighting question text, options container, and Save button in red)</i>
+    </p>
+
+    <h5>Figure 150. Create Question operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Save</b> button to store the question in the bank.</p>
+
+    <h4>3.20.9 Edit Question</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to modify the prompt statement, options, correct answers, or explanation of an existing question.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Question Bank page, the Instructor clicks the <b>Edit</b> pencil icon button on a question item to open the Edit Question modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor updates question details:</p>
+    <ul>
+        <li><b>Question Text & Type:</b> Modify prompt text or question type dropdown.</li>
+        <li><b>Options & Correct Answers:</b> Update choice texts, add/remove options, or update correct choice checkbox(es).</li>
+        <li><b>Explanation (Note):</b> Update feedback explanation text.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Edit Question modal dialog here, highlighting updated fields and Save button in red)</i>
+    </p>
+
+    <h5>Figure 151. Edit Question operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Save</b> button to save changes to the question.</p>
+
+    <h4>3.20.10 Delete Question</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to remove a question from the Question Bank.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Question Bank page, the Instructor clicks the <b>Delete</b> trash icon button on a question item to open the delete confirmation modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the deletion warning notice in the modal (<i>"Are you sure you want to delete this question?"</i>).</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete question confirmation modal dialog here, highlighting the Yes, delete it button in red)</i>
+    </p>
+
+    <h5>Figure 152. Delete Question operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Yes, delete it</b> button to delete the question.</p>
+
+    <h4>3.20.11 View Quiz List</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to view and manage all created quizzes in the system.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> The Instructor accesses the Instructor Dashboard and clicks the <b>Quiz Management</b> menu item on the left sidebar to open the Quiz Management page.</p>
+
+    <p><b>Step 2:</b> The Instructor inspects the quiz table entries:</p>
+    <ul>
+        <li><b>Quiz Title & Description:</b> Title and summary description.</li>
+        <li><b>Course:</b> Associated course badge.</li>
+        <li><b>Questions & Settings:</b> Total questions count, time limit (<i>e.g. 15 mins</i> or <i>No limit</i>), and passing score percentage.</li>
+        <li><b>Active Toggle & Created Date:</b> Activation toggle switch and creation date.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Quiz Management page here, highlighting quiz rows and Create New Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 153. View Quiz List operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Create New Quiz</b> button to define a new quiz.</p>
+
+    <h4>3.20.12 Create Quiz</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to create a new quiz assessment configuration.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Quiz Management page, the Instructor clicks the <b>Create New Quiz</b> button to open the Create New Quiz modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor inputs quiz details in the modal form:</p>
+    <ul>
+        <li><b>Course:</b> Required. Select course from dropdown list.</li>
+        <li><b>Quiz Title:</b> Required. Enter quiz title.</li>
+        <li><b>Description:</b> Optional instructions for learners.</li>
+        <li><b>Time Limit (Minutes):</b> Allocated time limit in minutes (or leave blank for no limit).</li>
+        <li><b>Passing Score (%):</b> Required passing percentage threshold.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Create New Quiz modal dialog here, highlighting course select, title field, and Create Quiz button in red)</i>
+    </p>
+
+    <h5>Figure 154. Create Quiz operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Create Quiz</b> button to create the new quiz.</p>
+
+    <h4>3.20.13 Delete Quiz</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to remove an existing quiz from the system.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Quiz Management page, the Instructor clicks the <b>Delete</b> trash icon button on a quiz row to open the delete confirmation modal dialog.</p>
+
+    <p><b>Step 2:</b> The Instructor reviews the quiz deletion warning notice in the modal.</p>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Delete Quiz confirmation modal dialog here, highlighting the Yes, delete it button in red)</i>
+    </p>
+
+    <h5>Figure 155. Delete Quiz operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Yes, delete it</b> button to remove the quiz.</p>
+
+    <h4>3.20.14 Edit Quiz Settings</h4>
+
+    <p>The purpose of this workflow is to allow Instructor to modify settings, question counts, and lesson question distributions for a quiz.</p>
+
+    <p><b style="color: black;">Execution steps:</b></p>
+
+    <p><b>Step 1:</b> At the Quiz Management page, the Instructor clicks the <b>Edit</b> pencil icon button on a quiz row to open the Quiz Editor page.</p>
+
+    <p><b>Step 2:</b> The Instructor modifies quiz configuration settings:</p>
+    <ul>
+        <li><b>Quiz Title & Description:</b> Update title and summary description.</li>
+        <li><b>Total Questions:</b> Update total question count (with optional <b>Shuffle</b> randomize button).</li>
+        <li><b>Time Limit (mins) & Passing Score (%):</b> Adjust time duration and passing score percentage.</li>
+        <li><b>Lesson Question Distributions:</b> Specify exact question distribution counts per lesson.</li>
+    </ul>
+
+    <p style="text-align: center;">
+        <i>(Insert a screenshot of the Quiz Editor page here, highlighting settings card, lesson distribution, and Save Quiz Settings button in red)</i>
+    </p>
+
+    <h5>Figure 156. Edit Quiz Settings operation</h5>
+
+    <p><b>Step 3:</b> The Instructor clicks the <b>Save Quiz Settings</b> button to save updated configurations.</p>
+
+</div>
+
+</body>
+</html>

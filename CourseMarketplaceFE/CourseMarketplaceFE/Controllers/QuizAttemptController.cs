@@ -62,7 +62,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/Preview/{quizId:int}")]
-    [Authorize(Roles = "user,admin,staff")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> Preview(int quizId)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))
@@ -129,18 +129,30 @@ public class QuizAttemptController : Controller
         {
             var resp = await _api.PostJsonAsync("quiz-attempts", payload);
             var content = await resp.Content.ReadAsStringAsync();
-            var doc = JsonDocument.Parse(content);
-            var root = doc.RootElement;
+            if (resp.IsSuccessStatusCode)
+            {
+                var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("data", out var dataEl))
+                {
+                    return Json(new { success = true, data = dataEl });
+                }
+            }
 
-            if (resp.IsSuccessStatusCode && root.TryGetProperty("data", out var dataEl))
+            string msg = "Submission failed.";
+            if (!string.IsNullOrWhiteSpace(content))
             {
-                return Json(new { success = true, data = dataEl });
+                try
+                {
+                    var doc = JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                    {
+                        msg = msgEl.GetString() ?? msg;
+                    }
+                }
+                catch { }
             }
-            else
-            {
-                var msg = root.TryGetProperty("message", out var msgEl) ? msgEl.GetString() : "Submission failed.";
-                return Json(new { success = false, message = msg });
-            }
+            return Json(new { success = false, message = msg });
         }
         catch (Exception ex)
         {
@@ -161,12 +173,14 @@ public class QuizAttemptController : Controller
         {
             var resp = await _api.GetAsync($"quiz-attempts/quiz/{quizId}/history?page={page}&pageSize={pageSize}");
             var content = await resp.Content.ReadAsStringAsync();
-            var doc = JsonDocument.Parse(content);
-            var root = doc.RootElement;
-
-            if (resp.IsSuccessStatusCode && root.TryGetProperty("data", out var dataEl))
+            if (resp.IsSuccessStatusCode)
             {
-                return Json(new { success = true, data = dataEl });
+                var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("data", out var dataEl))
+                {
+                    return Json(new { success = true, data = dataEl });
+                }
             }
             return Json(new { success = false, message = "Failed to load history." });
         }
@@ -189,18 +203,33 @@ public class QuizAttemptController : Controller
         {
             var resp = await _api.GetAsync($"quiz-attempts/{attemptId}/details");
             var content = await resp.Content.ReadAsStringAsync();
-            var doc = JsonDocument.Parse(content);
-            var root = doc.RootElement;
+            if (resp.IsSuccessStatusCode)
+            {
+                var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+                if (root.TryGetProperty("data", out var dataEl))
+                {
+                    return Json(new { success = true, data = dataEl });
+                }
+            }
 
-            if (resp.IsSuccessStatusCode && root.TryGetProperty("data", out var dataEl))
+            string errorMsg = "Failed to load details.";
+            if (!string.IsNullOrWhiteSpace(content))
             {
-                return Json(new { success = true, data = dataEl });
+                try
+                {
+                    var doc = JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                    {
+                        errorMsg = msgEl.GetString() ?? errorMsg;
+                    }
+                }
+                catch
+                {
+                    errorMsg = $"HTTP Status {(int)resp.StatusCode}: {content}";
+                }
             }
-            else
-            {
-                var msg = root.TryGetProperty("message", out var msgEl) ? msgEl.GetString() : "Failed to load details.";
-                return Json(new { success = false, message = msg });
-            }
+            return Json(new { success = false, message = errorMsg });
         }
         catch (Exception ex)
         {
@@ -209,7 +238,7 @@ public class QuizAttemptController : Controller
     }
 
     [HttpGet("QuizAttempt/Review/{attemptId:int}")]
-    [Authorize(Roles = "user,admin,staff")]
+    [Authorize(Roles = "user,instructor,admin,staff")]
     public async Task<IActionResult> Review(int attemptId)
     {
         if (!Request.Cookies.ContainsKey("AccessToken"))

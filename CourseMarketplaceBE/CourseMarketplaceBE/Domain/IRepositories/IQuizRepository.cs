@@ -29,6 +29,7 @@ public interface IQuizRepository
     // ── Attempt ───────────────────────────────────────────────────────────────
     Task<QuizAttempt> SaveAttemptAsync(QuizAttempt attempt);
     Task<QuizAttempt?> GetAttemptByIdAsync(int attemptId);
+    Task<QuizAttempt?> GetLatestUnsubmittedAttemptAsync(int quizId, int userId);
     Task<(List<QuizAttempt> Items, int TotalCount)> GetAttemptsByQuizAndUserAsync(int quizId, int userId, int page, int pageSize);
     Task<(List<QuizAttempt> Items, int TotalCount)> GetAttemptsByQuizAsync(int quizId, int page, int pageSize);
 }

@@ -1807,15 +1807,35 @@
         };
 
         window.removeQuizFromCourse = async function(cId, qId) {
-            if(!confirm("Remove this quiz from the course?")) return;
+            const resConfirm = await Swal.fire({
+                title: 'Remove Quiz?',
+                text: 'Are you sure you want to remove this quiz from the course?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Yes, remove it!',
+                cancelButtonText: 'Cancel'
+            });
+            if (!resConfirm.isConfirmed) return;
+
             try {
                 const res = await fetch(`/CourseQuiz/Remove?courseId=${cId}&quizId=${qId}`, { method: 'DELETE' });
                 if(res.ok) {
-                    window.location.reload();
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: 'Quiz removed from course!',
+                        showConfirmButton: false,
+                        timer: 2000
+                    }).then(() => {
+                        window.location.reload();
+                    });
                 } else {
-                    alert("Failed to remove quiz.");
+                    Swal.fire('Error', 'Failed to remove quiz.', 'error');
                 }
-            } catch(e) { alert("Network error"); }
+            } catch(e) { Swal.fire('Error', 'Network error occurred.', 'error'); }
         }
 
         window.toggleQuizVisibility = async function(cId, qId, checkbox) {
@@ -1829,11 +1849,11 @@
                 const result = await res.json();
                 if(!result.success) {
                     checkbox.checked = !checkbox.checked;
-                    alert(result.message || "Failed to toggle visibility. A student might be taking this quiz.");
+                    Swal.fire('Error', result.message || 'Failed to toggle visibility. A student might be taking this quiz.', 'error');
                 }
             } catch(e) { 
                 checkbox.checked = !checkbox.checked;
-                alert("Network error"); 
+                Swal.fire('Error', 'Network error occurred.', 'error'); 
             }
         }
 
@@ -3171,8 +3191,7 @@
                                 confirmButtonText: 'Got it',
                                 confirmButtonColor: '#006a62'
                             }).then(() => {
-                                updateCourseStatusBadge('pending');
-                                // location.reload();
+                                location.reload();
                             });
                         })
                         .catch(e => {
