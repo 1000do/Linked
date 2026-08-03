@@ -319,10 +319,10 @@
                 <div class="flex items-center gap-1.5">
                     @if (Model.Page > 1)
                     {
-                        <a href="@Url.Action("Courses", new { page = Model.Page - 1, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
-                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
+                        <button type="button" onclick="fetchCoursesPage(@(Model.Page - 1))"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">chevron_left</span>
-                        </a>
+                        </button>
                     }
 
                     @for (int p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
@@ -333,17 +333,17 @@
                         }
                         else
                         {
-                            <a href="@Url.Action("Courses", new { page = p, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
-                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-semibold text-xs">@p</a>
+                            <button type="button" onclick="fetchCoursesPage(@p)"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-semibold text-xs cursor-pointer">@p</button>
                         }
                     }
 
                     @if (Model.Page < Model.TotalPages)
                     {
-                        <a href="@Url.Action("Courses", new { page = Model.Page + 1, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
-                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold">
+                        <button type="button" onclick="fetchCoursesPage(@(Model.Page + 1))"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-                        </a>
+                        </button>
                     }
                 </div>
             </div>
@@ -394,9 +394,11 @@
     let rejectCourseData = null;
     let rejectRowCounter = 0;
     let debounceTimer;
+    let currentPage = 1;
 
     // AJAX fetching for courses
-    function triggerAjaxFetch() {
+    function triggerAjaxFetch(page = currentPage) {
+        currentPage = page;
         const searchVal = document.getElementById("search-input").value.trim();
         const categoryVal = document.getElementById("category-select").value;
         const statusVal = document.getElementById("status-select").value;
@@ -404,18 +406,28 @@
 
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            fetchCourses(searchVal, categoryVal, statusVal, sortByVal);
+            fetchCourses(searchVal, categoryVal, statusVal, sortByVal, page);
         }, 300);
     }
 
-    async function fetchCourses(search, category, status, sortBy) {
+    function fetchCoursesPage(page) {
+        currentPage = page;
+        const searchVal = document.getElementById("search-input").value.trim();
+        const categoryVal = document.getElementById("category-select").value;
+        const statusVal = document.getElementById("status-select").value;
+        const sortByVal = document.getElementById("sort-select").value;
+        fetchCourses(searchVal, categoryVal, statusVal, sortByVal, page);
+    }
+
+    async function fetchCourses(search, category, status, sortBy, page = 1) {
+        currentPage = page;
         const container = document.getElementById("moderation-table-container");
         if (container) {
             container.style.opacity = "0.5";
             container.style.transition = "opacity 0.15s ease-in-out";
         }
 
-        const url = `/AdminModeration/Courses?search=${encodeURIComponent(search)}&category=${category}&status=${status}&sortBy=${sortBy}`;
+        const url = `/AdminModeration/Courses?search=${encodeURIComponent(search)}&category=${category}&status=${status}&sortBy=${sortBy}&page=${page}`;
         try {
             const resp = await fetch(url);
             const htmlText = await resp.text();
@@ -452,7 +464,7 @@
         }
         
         // Refresh AJAX to sync list filters and stats badge
-        triggerAjaxFetch();
+        triggerAjaxFetch(currentPage);
     }
 
     async function approveCourse(id) {
@@ -814,7 +826,7 @@
         const result = await response.json();
         if (result.success) {
             Swal.fire('Success', 'The course has been unflagged.', 'success')
-                .then(() => location.reload());
+                .then(() => dimCourseRowInDOM(id));
         } else {
             Swal.fire('Error', 'An error occurred while unflagging this course.', 'error');
         }
@@ -913,7 +925,15 @@
             categorySelect.value = "0";
             statusSelect.value = "all";
             sortSelect.value = "oldest";
-            triggerAjaxFetch();
+            triggerAjaxFetch(1);
+        });
+
+        // SignalR Real-time moderation queue listeners
+        document.addEventListener("ReceiveNotificationEvent", () => {
+            triggerAjaxFetch(currentPage);
+        });
+        document.addEventListener("ModerationQueueUpdated", () => {
+            triggerAjaxFetch(currentPage);
         });
     });
     document.addEventListener("DOMContentLoaded", function () {

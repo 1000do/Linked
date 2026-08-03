@@ -7,6 +7,7 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
@@ -19,23 +20,39 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         private readonly IUserReportModerationService _userReportModerationService;
         private readonly IReportModerationService _reportService;
         private readonly IReviewModerationService _reviewModerationService;
+        private readonly IHubContext<CourseMarketplaceBE.Hubs.NotificationHub> _hubContext;
 
         public AdminModerationController(
             ICourseModerationService courseModerationService,
             IUserReportModerationService userReportModerationService,
             IReportModerationService reportService,
-            IReviewModerationService reviewModerationService)
+            IReviewModerationService reviewModerationService,
+            IHubContext<CourseMarketplaceBE.Hubs.NotificationHub> hubContext)
         {
             _courseModerationService = courseModerationService;
             _userReportModerationService = userReportModerationService;
             _reportService = reportService;
             _reviewModerationService = reviewModerationService;
+            _hubContext = hubContext;
         }
 
         private int? GetUserId()
         {
             var str = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return int.TryParse(str, out int id) ? id : null;
+        }
+
+        private async Task NotifyModerationQueueUpdateAsync()
+        {
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("ReceiveNotification");
+                await _hubContext.Clients.All.SendAsync("ModerationQueueUpdated");
+            }
+            catch
+            {
+                // Non-blocking catch for SignalR broadcast
+            }
         }
 
         // ── Course Approval Moderation (existing) ──────────────────────────
@@ -57,37 +74,60 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public async Task<IActionResult> ApproveCourse(int id, [FromBody] string? feedback)
         {
             var result = await _courseModerationService.ApproveCourseAsync(id, feedback);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await NotifyModerationQueueUpdateAsync();
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/reject/{id}")]
         public async Task<IActionResult> RejectCourse(int id, [FromBody] string reason)
         {
             var result = await _courseModerationService.RejectCourseAsync(id, reason);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await NotifyModerationQueueUpdateAsync();
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/reject-detailed")]
         public async Task<IActionResult> RejectCourseDetailed([FromBody] RejectCourseDetailedRequest request)
         {
             var result = await _courseModerationService.RejectCourseDetailedAsync(request);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await NotifyModerationQueueUpdateAsync();
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/flag/{id}")]
         public async Task<IActionResult> FlagCourse(int id, [FromBody] string reason)
         {
             var result = await _courseModerationService.FlagCourseAsync(id, reason);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await NotifyModerationQueueUpdateAsync();
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/unflag/{id}")]
         public async Task<IActionResult> UnflagCourse(int id)
         {
             var result = await _courseModerationService.UnflagCourseAsync(id);
-            return result 
-                ? Ok(ApiResponse<string>.SuccessResponse("Course unflagged successfully.")) 
-                : NotFound(ApiResponse<string>.ErrorResponse("Course not found or could not be unflagged."));
+            if (result)
+            {
+                await NotifyModerationQueueUpdateAsync();
+                return Ok(ApiResponse<string>.SuccessResponse("Course unflagged successfully."));
+            }
+            return NotFound(ApiResponse<string>.ErrorResponse("Course not found or could not be unflagged."));
         }
 
         // ── Legacy report endpoint (kept for backward compatibility) ────────
