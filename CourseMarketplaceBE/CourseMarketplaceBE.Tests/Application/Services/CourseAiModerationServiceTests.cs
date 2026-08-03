@@ -773,10 +773,11 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task ResolveCourseAIModerationResult_Standard_UpdatesStatusAndNotifiesManagers()
         {
             //Arrange 1
-            var result = new CourseModerationResult { CourseId = 1, ModerationStatus = ModerationStatus.Approved.ToValue(), StageLogs = new List<StageLog>() };
+            var result = new CourseModerationResult { CourseId = 1, ModerationStatus = ModerationStatus.Approved.ToValue(), StageLogs = null };
             
             //Arrange 2
-            _courseCommandServiceMock.UpdateCourseStatusAndFeedbackAsync(Arg.Any<int>(), Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+            _aiFeedbackRepositoryMock.SaveChangesAsync().Returns(1);
             _userRepoMock.GetAllManagerIdsAsync().Returns(new List<int> { 101 });
             _notificationServiceMock.SendBulkNotificationsAsync(Arg.Any<List<NotificationBulkDto>>()).Returns(true);
 
@@ -784,86 +785,583 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await InvokePrivateMethodAsync("ResolveCourseAIModerationResult", result);
 
             //Assert
-            await _courseCommandServiceMock.Received(1).UpdateCourseStatusAndFeedbackAsync(1, null, "AI moderation passed. Awaiting manual review.", AiThreatLevel.Approved);
-            await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<List<NotificationBulkDto>>(l => l.Count == 1 && l[0].Title == "Manual Review Required"));
+            await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(1, AiThreatLevel.Approved);
+            await _aiFeedbackRepositoryMock.Received(1).SaveChangesAsync();
+            await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<List<NotificationBulkDto>>(l => l.Count == 1 && l[0].Title == "AI Moderation Result" && l[0].Content.Contains("Course 1 requires manual review")));
         }
 
         [Fact]
-        public void EvaluateModerationFeedback_StatusRejectedWithMatchFoundLogs_ReturnsFlaggedThreatLevelAndReasons()
+        public async Task ResolveCourseAIModerationResult_WithStageLogs_CallsSubResolvers()
         {
             //Arrange 1
-            var log = new StageLog { Result = StageLogResult.MatchFound.ToValue(), FlaggedFields = new List<string> { "desc" }, Reason = "dup" };
-            var result = new CourseModerationResult { ModerationStatus = ModerationStatus.Rejected.ToValue(), StageLogs = new List<StageLog> { log } };
-
-            //Arrange 2
+            var result = new CourseModerationResult 
+            { 
+                CourseId = 1, 
+                ModerationStatus = ModerationStatus.Approved.ToValue(), 
+                StageLogs = new List<StageLog> 
+                { 
+                    new StageLog { Stage = 1, Result = StageLogResult.MatchFound.ToValue(), Details = new Dictionary<string, object> { { "candidate_material_id", 10 } } },
+                    new StageLog { Stage = 2, Result = StageLogResult.Flagged.ToValue(), FlaggedFields = new List<string> { "course_1.title" }, Details = new Dictionary<string, object> { { "course_1.title", new Dictionary<string, object> { { "prediction", "toxic" } } } } },
+                    new StageLog { Stage = 3, Result = StageLogResult.NoMatch.ToValue(), Details = new Dictionary<string, object>() }
+                } 
+            };
             
+            //Arrange 2
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+            _aiFeedbackRepositoryMock.SaveChangesAsync().Returns(1);
+            _userRepoMock.GetAllManagerIdsAsync().Returns(new List<int> { 101 });
+            _notificationServiceMock.SendBulkNotificationsAsync(Arg.Any<List<NotificationBulkDto>>()).Returns(true);
+
             //Act
-            var feedbackRes = InvokePrivateMethod<(AiThreatLevel ThreatLevel, string Feedback)>("EvaluateModerationFeedback", result);
+            await InvokePrivateMethodAsync("ResolveCourseAIModerationResult", result);
 
             //Assert
-            feedbackRes.ThreatLevel.Should().Be(AiThreatLevel.FlaggedOrRejected);
-            feedbackRes.Feedback.Should().Contain("[desc] dup");
+            _aiFeedbackRepositoryMock.Received(1).AddMaterialFeedback(Arg.Any<LearningMaterialAiFeedback>()); // One for stage 1
+            _aiFeedbackRepositoryMock.Received(1).AddCourseFeedback(Arg.Any<CourseAiFeedback>()); // One for stage 2
+            await _aiFeedbackRepositoryMock.Received(1).SaveChangesAsync();
+        }
+
+        // --- NEW TESTS FOR AI MODERATION RESOLUTION ---
+
+        [Fact]
+        public async Task ResolveThreatLevelAsync_StatusRejected_UpdatesToFlaggedOrRejected()
+        {
+            //Arrange 1
+            int courseId = 1;
+            string status = ModerationStatus.Rejected.ToValue();
+
+            //Arrange 2
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ResolveThreatLevelAsync", courseId, status);
+
+            //Assert
+            result.Should().BeTrue();
+            await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(courseId, AiThreatLevel.FlaggedOrRejected);
         }
 
         [Fact]
-        public void EvaluateModerationFeedback_StatusFlaggedWithNoLogs_ReturnsGenericFeedback()
+        public async Task ResolveThreatLevelAsync_StatusFlagged_UpdatesToFlaggedOrRejected()
         {
             //Arrange 1
-            var result = new CourseModerationResult { ModerationStatus = ModerationStatus.Flagged.ToValue(), StageLogs = new List<StageLog>() };
+            int courseId = 1;
+            string status = ModerationStatus.Flagged.ToValue();
 
             //Arrange 2
-            
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+
             //Act
-            var feedbackRes = InvokePrivateMethod<(AiThreatLevel ThreatLevel, string Feedback)>("EvaluateModerationFeedback", result);
+            var result = await InvokePrivateMethodAsync<bool>("ResolveThreatLevelAsync", courseId, status);
 
             //Assert
-            feedbackRes.ThreatLevel.Should().Be(AiThreatLevel.FlaggedOrRejected);
-            feedbackRes.Feedback.Should().Be("Course content violates the moderation policy according to AI.");
+            result.Should().BeTrue();
+            await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(courseId, AiThreatLevel.FlaggedOrRejected);
         }
 
         [Fact]
-        public void EvaluateModerationFeedback_StatusApproved_ReturnsApprovedThreatLevel()
+        public async Task ResolveThreatLevelAsync_StatusManualAudit_UpdatesToManualAudit()
         {
             //Arrange 1
-            var result = new CourseModerationResult { ModerationStatus = ModerationStatus.Approved.ToValue(), StageLogs = new List<StageLog>() };
+            int courseId = 1;
+            string status = ModerationStatus.ManualAudit.ToValue();
 
             //Arrange 2
-            
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+
             //Act
-            var feedbackRes = InvokePrivateMethod<(AiThreatLevel ThreatLevel, string Feedback)>("EvaluateModerationFeedback", result);
+            var result = await InvokePrivateMethodAsync<bool>("ResolveThreatLevelAsync", courseId, status);
 
             //Assert
-            feedbackRes.ThreatLevel.Should().Be(AiThreatLevel.Approved);
+            result.Should().BeTrue();
+            await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(courseId, AiThreatLevel.ManualAudit);
         }
 
         [Fact]
-        public void EvaluateModerationFeedback_StatusManualAudit_ReturnsManualAuditThreatLevel()
+        public async Task ResolveThreatLevelAsync_StatusApproved_UpdatesToApproved()
         {
             //Arrange 1
-            var result = new CourseModerationResult { ModerationStatus = ModerationStatus.ManualAudit.ToValue(), StageLogs = new List<StageLog>() };
+            int courseId = 1;
+            string status = ModerationStatus.Approved.ToValue();
 
             //Arrange 2
-            
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+
             //Act
-            var feedbackRes = InvokePrivateMethod<(AiThreatLevel ThreatLevel, string Feedback)>("EvaluateModerationFeedback", result);
+            var result = await InvokePrivateMethodAsync<bool>("ResolveThreatLevelAsync", courseId, status);
 
             //Assert
-            feedbackRes.ThreatLevel.Should().Be(AiThreatLevel.ManualAudit);
+            result.Should().BeTrue();
+            await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(courseId, AiThreatLevel.Approved);
         }
-        
+
         [Fact]
-        public void EvaluateModerationFeedback_StatusOther_ReturnsNoneThreatLevel()
+        public async Task ResolveThreatLevelAsync_UnknownStatus_UpdatesToNone()
         {
             //Arrange 1
-            var result = new CourseModerationResult { ModerationStatus = "unknown", StageLogs = new List<StageLog>() };
+            int courseId = 1;
+            string status = "Unknown";
 
             //Arrange 2
-            
+            _courseCommandServiceMock.UpdateCourseThreatLevelAsync(Arg.Any<int>(), Arg.Any<AiThreatLevel>()).Returns(Task.CompletedTask);
+
             //Act
-            var feedbackRes = InvokePrivateMethod<(AiThreatLevel ThreatLevel, string Feedback)>("EvaluateModerationFeedback", result);
+            var result = await InvokePrivateMethodAsync<bool>("ResolveThreatLevelAsync", courseId, status);
 
             //Assert
-            feedbackRes.ThreatLevel.Should().Be(AiThreatLevel.None);
+            result.Should().BeTrue();
+            await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(courseId, AiThreatLevel.None);
+        }
+
+        [Fact]
+        public async Task ResolveDeduplicationResultAsync_NullDetails_ReturnsFalse()
+        {
+            //Arrange 1
+            var stageLog = new StageLog { Details = null };
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ResolveDeduplicationResultAsync", stageLog);
+
+            //Assert
+            result.Should().BeFalse();
+            _aiFeedbackRepositoryMock.DidNotReceive().AddMaterialFeedback(Arg.Any<LearningMaterialAiFeedback>());
+        }
+
+        [Fact]
+        public async Task ResolveDeduplicationResultAsync_MissingCandidateMaterialId_ReturnsFalse()
+        {
+            //Arrange 1
+            var stageLog = new StageLog { Details = new Dictionary<string, object> { { "other", 1 } } };
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ResolveDeduplicationResultAsync", stageLog);
+
+            //Assert
+            result.Should().BeFalse();
+            _aiFeedbackRepositoryMock.DidNotReceive().AddMaterialFeedback(Arg.Any<LearningMaterialAiFeedback>());
+        }
+
+        [Fact]
+        public async Task ResolveDeduplicationResultAsync_ValidDuplication_PersistsFeedbackAndReturnsTrue()
+        {
+            //Arrange 1
+            var stageLog = new StageLog 
+            { 
+                Result = StageLogResult.MatchFound.ToValue(),
+                Details = new Dictionary<string, object> 
+                { 
+                    { "candidate_material_id", 10 },
+                    { "existing_material_id", 5 },
+                    { "similarity_score", 0.95f }
+                } 
+            };
+            var material = new LearningMaterial { Title = "Mat", LessonId = 1 };
+            var lesson = new Lesson { Title = "Les", CourseId = 1 };
+            var course = new Course { Title = "Cour" };
+
+            //Arrange 2
+            _materialRepositoryMock.GetByIdAsync(5).Returns(material);
+            _lessonRepositoryMock.GetByIdAsync(1).Returns(lesson);
+            _courseRepositoryMock.GetByIdAsync(1).Returns(course);
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ResolveDeduplicationResultAsync", stageLog);
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddMaterialFeedback(Arg.Is<LearningMaterialAiFeedback>(f => f.MaterialId == 10 && f.FeedbackText.Contains("Identical or highly similar content found") && f.FeedbackText.Contains("Mat")));
+        }
+
+        [Fact]
+        public async Task ResolveDeduplicationResultAsync_NoExistingMaterialId_PersistsFeedbackAndReturnsTrue()
+        {
+            //Arrange 1
+            var stageLog = new StageLog 
+            { 
+                Result = StageLogResult.NoMatch.ToValue(),
+                Details = new Dictionary<string, object> 
+                { 
+                    { "candidate_material_id", 10 },
+                    { "existing_material_id", null! }
+                } 
+            };
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ResolveDeduplicationResultAsync", stageLog);
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddMaterialFeedback(Arg.Is<LearningMaterialAiFeedback>(f => f.MaterialId == 10 && f.FeedbackText == "No duplicate content found."));
+        }
+
+        [Fact]
+        public async Task GetDeDuplicationFeedbackText_DuplicationNotFound_ReturnsNoDuplicateMessage()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<string>("GetDeDuplicationFeedbackText", false, 0.9f, 5);
+
+            //Assert
+            result.Should().Be("No duplicate content found.");
+            await _materialRepositoryMock.DidNotReceive().GetByIdAsync(Arg.Any<int>());
+        }
+
+        [Fact]
+        public async Task GetDeDuplicationFeedbackText_DuplicationFound_ReturnsDetailedMessage()
+        {
+            //Arrange 1
+            var material = new LearningMaterial { Title = "Mat", LessonId = 1 };
+            var lesson = new Lesson { Title = "Les", CourseId = 1 };
+            var course = new Course { Title = "Cour" };
+
+            //Arrange 2
+            _materialRepositoryMock.GetByIdAsync(5).Returns(material);
+            _lessonRepositoryMock.GetByIdAsync(1).Returns(lesson);
+            _courseRepositoryMock.GetByIdAsync(1).Returns(course);
+
+            //Act
+            var result = await InvokePrivateMethodAsync<string>("GetDeDuplicationFeedbackText", true, 0.9f, 5);
+
+            //Assert
+            result.Should().Contain("90%");
+            result.Should().Contain("Mat");
+            result.Should().Contain("Les");
+            result.Should().Contain("Cour");
+            await _materialRepositoryMock.Received(1).GetByIdAsync(5);
+            await _lessonRepositoryMock.Received(1).GetByIdAsync(1);
+            await _courseRepositoryMock.Received(1).GetByIdAsync(1);
+        }
+
+        [Fact]
+        public async Task ResolveClassificationResultAsync_ValidStageLog_ProcessesAllFields()
+        {
+            //Arrange 1
+            var stageLog = new StageLog 
+            { 
+                Step = 1,
+                FlaggedFields = new List<string> { "course_1" },
+                ManualAuditFields = new List<string>(),
+                ApprovedFields = new List<string>(),
+                Details = new Dictionary<string, object> 
+                {
+                    { "course_1", new { text = "bad", reason = "r", raw_label = "l" } }
+                }
+            };
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ResolveClassificationResultAsync", 1, stageLog);
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddCourseFeedback(Arg.Is<CourseAiFeedback>(f => f.CourseId == 1 && f.ModerationStatus == ModerationStatus.Flagged.ToValue()));
+        }
+
+        [Fact]
+        public async Task ProcessClassificationFieldsAsync_NullFields_ReturnsFalse()
+        {
+            //Arrange 1
+            var stageLog = new StageLog();
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ProcessClassificationFieldsAsync", stageLog, (List<string>)null!, 1, "Status");
+
+            //Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task ProcessClassificationFieldsAsync_ValidFieldsStep1_ProcessesAndReturnsTrue()
+        {
+            //Arrange 1
+            var stageLog = new StageLog 
+            { 
+                Step = 1,
+                Details = new Dictionary<string, object> 
+                {
+                    { "lesson_2", new { text = "t", reason = "r", raw_label = "l" } }
+                }
+            };
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ProcessClassificationFieldsAsync", stageLog, new List<string> { "lesson_2" }, 1, ModerationStatus.Rejected.ToValue());
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddLessonFeedback(Arg.Is<LessonAiFeedback>(f => f.LessonId == 2 && f.ModerationStatus == ModerationStatus.Rejected.ToValue() && f.FeedbackText.Contains("l") && f.FeedbackText.Contains("r") && f.FeedbackText.Contains("t")));
+        }
+
+        [Fact]
+        public async Task ProcessClassificationFieldsAsync_ValidFieldsStep2_ProcessesAndReturnsTrue()
+        {
+            //Arrange 1
+            var stageLog = new StageLog 
+            { 
+                Step = 2,
+                Details = new Dictionary<string, object> 
+                {
+                    { "material_3", new { classification = new { text = "t", reason = "r", raw_label = "l" } } }
+                }
+            };
+
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("ProcessClassificationFieldsAsync", stageLog, new List<string> { "material_3" }, 1, ModerationStatus.ManualAudit.ToValue());
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddMaterialFeedback(Arg.Is<LearningMaterialAiFeedback>(f => f.MaterialId == 3 && f.ModerationStatus == ModerationStatus.ManualAudit.ToValue() && f.FeedbackText.Contains("Manual audit") && f.FeedbackText.Contains("r") && f.FeedbackText.Contains("t")));
+        }
+
+        [Fact]
+        public void GetClassificationFeedbackText_StatusApproved_ReturnsSafeMessage()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<string>("GetClassificationFeedbackText", "t", "l", "r", ModerationStatus.Approved.ToValue());
+
+            //Assert
+            result.Should().Be("Content is safe.");
+        }
+
+        [Fact]
+        public void GetClassificationFeedbackText_StatusManualAudit_ReturnsAuditMessage()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<string>("GetClassificationFeedbackText", "t", "l", "r", ModerationStatus.ManualAudit.ToValue());
+
+            //Assert
+            result.Should().Contain("Manual audit suggested. Reason: r. Text snippet: 't'");
+        }
+
+        [Fact]
+        public void GetClassificationFeedbackText_StatusRejected_ReturnsFlaggedMessage()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<string>("GetClassificationFeedbackText", "t", "l", "r", ModerationStatus.Rejected.ToValue());
+
+            //Assert
+            result.Should().Contain("Content flagged as l. Reason: r. Text snippet: 't'");
+        }
+
+        [Fact]
+        public void GetIdFromFieldName_NullOrEmptyFieldName_ReturnsZero()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result1 = InvokePrivateMethod<int>("GetIdFromFieldName", (string)null!, 5);
+            var result2 = InvokePrivateMethod<int>("GetIdFromFieldName", "", 5);
+
+            //Assert
+            result1.Should().Be(0);
+            result2.Should().Be(0);
+        }
+
+        [Fact]
+        public void GetIdFromFieldName_StartsWithCourse_ReturnsCourseId()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<int>("GetIdFromFieldName", "course_desc", 5);
+
+            //Assert
+            result.Should().Be(5);
+        }
+
+        [Fact]
+        public void GetIdFromFieldName_ContainsEntityId_ReturnsParsedId()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<int>("GetIdFromFieldName", "lesson_10.title", 5);
+
+            //Assert
+            result.Should().Be(10);
+        }
+
+        [Fact]
+        public void GetIdFromFieldName_InvalidEntityId_ReturnsZero()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<int>("GetIdFromFieldName", "lesson_abc.title", 5);
+
+            //Assert
+            result.Should().Be(0);
+        }
+
+        [Fact]
+        public void GetNotificationContent_WithFlaggedAndManualFields_BuildsCompleteMessage()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<string>("GetNotificationContent", 1, "Status", new List<string> { "f1" }, new List<string> { "m1" });
+
+            //Assert
+            result.Should().Contain("Course 1 requires manual review");
+            result.Should().Contain("Severe Threats found in: f1");
+            result.Should().Contain("Moderate Threats found in: m1");
+        }
+
+        [Fact]
+        public void GetNotificationContent_NoFields_BuildsBasicMessage()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = InvokePrivateMethod<string>("GetNotificationContent", 1, "Status", (List<string>)null!, (List<string>)null!);
+
+            //Assert
+            result.Should().Contain("Course 1 requires manual review");
+            result.Should().NotContain("Severe Threats found in:");
+            result.Should().NotContain("Moderate Threats found in:");
+        }
+
+        [Fact]
+        public async Task PersistAiFeedbackAsync_IdLessThanOne_ReturnsFalse()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("PersistAiFeedbackAsync", "field", 0, "status", "text");
+
+            //Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task PersistAiFeedbackAsync_CourseField_AddsCourseFeedbackAndReturnsTrue()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("PersistAiFeedbackAsync", "course_field", 1, "status", "text");
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddCourseFeedback(Arg.Is<CourseAiFeedback>(f => f.CourseId == 1 && f.FieldName == "course_field" && f.ModerationStatus == "status" && f.FeedbackText == "text"));
+        }
+
+        [Fact]
+        public async Task PersistAiFeedbackAsync_LessonField_AddsLessonFeedbackAndReturnsTrue()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("PersistAiFeedbackAsync", "lesson_2", 2, "status", "text");
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddLessonFeedback(Arg.Is<LessonAiFeedback>(f => f.LessonId == 2 && f.FieldName == "lesson_2" && f.ModerationStatus == "status" && f.FeedbackText == "text"));
+        }
+
+        [Fact]
+        public async Task PersistAiFeedbackAsync_MaterialField_AddsMaterialFeedbackAndReturnsTrue()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("PersistAiFeedbackAsync", "material_3", 3, "status", "text");
+
+            //Assert
+            result.Should().BeTrue();
+            _aiFeedbackRepositoryMock.Received(1).AddMaterialFeedback(Arg.Is<LearningMaterialAiFeedback>(f => f.MaterialId == 3 && f.FieldName == "material_3" && f.ModerationStatus == "status" && f.FeedbackText == "text"));
+        }
+
+        [Fact]
+        public async Task PersistAiFeedbackAsync_UnknownField_ReturnsFalse()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+
+            //Act
+            var result = await InvokePrivateMethodAsync<bool>("PersistAiFeedbackAsync", "unknown", 1, "status", "text");
+
+            //Assert
+            result.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task SaveAiFeedbackChangesAsync_Success_CallsSaveChanges()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+            _aiFeedbackRepositoryMock.SaveChangesAsync().Returns(1);
+
+            //Act
+            await InvokePrivateMethodAsync("SaveAiFeedbackChangesAsync");
+
+            //Assert
+            await _aiFeedbackRepositoryMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task SaveAiFeedbackChangesAsync_ThrowsCourseException_ThrowsBadRequestException()
+        {
+            //Arrange 1
+            
+            //Arrange 2
+            _aiFeedbackRepositoryMock.SaveChangesAsync().Throws(new CourseException("error"));
+
+            //Act
+            Func<Task> act = async () => await InvokePrivateMethodAsync("SaveAiFeedbackChangesAsync");
+
+            //Assert
+            var ex = await act.Should().ThrowAsync<BadRequestException>();
+            ex.WithMessage("error");
         }
 
         [Fact]

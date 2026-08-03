@@ -54,6 +54,9 @@ Hầu hết các thông số đều để mặc định. Bạn chỉ cần lưu 
 - `HF_TOKEN`: Token truy cập HuggingFace để tải Model AI. Bạn cần tạo tài khoản [HuggingFace](https://huggingface.co/), vào Settings > Access Tokens để tạo 1 cái token.
 - `DEVICE`: Card đồ hoạ sử dụng. Nếu máy bạn không có card NVIDIA thì để `cpu`, nếu có NVIDIA để `cuda`, nếu dùng Macbook chip M thì để `mps`.
 - `AI_DEBUG`: Để `true` nếu muốn in log chi tiết ra terminal.
+- Các thông số mô hình (`SPAM_MODEL_PATH`, `TOXIC_MODEL_PATH`, `CLIP_MODEL_NAME`, `WHISPER_MODEL_NAME`, v.v.) và kích thước embedding (`MEDIA_EMBEDDING_DIM`, `TEXT_EMBEDDING_DIM`): Không nên thay đổi trừ khi bạn tự train model khác.
+- `REQUEST_TIMEOUT`: Thời gian chờ tối đa cho các request AI (mặc định `1800` giây).
+- `AI_PORT`: Cổng chạy service AI (mặc định `8000`).
 
 #
 
