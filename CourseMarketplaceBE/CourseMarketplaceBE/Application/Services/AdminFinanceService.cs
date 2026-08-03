@@ -947,7 +947,7 @@ namespace CourseMarketplaceBE.Application.Services
                     1, // Admin mặc định hoặc hệ thống
                     "New Refund Request",
                     $"A student has submitted a refund request for transaction #{transactionId}. Reason: {reason}",
-                    $"/AdminFinance/Refunds"
+                    $"/AdminFinance"
                 );
             }
             catch { }

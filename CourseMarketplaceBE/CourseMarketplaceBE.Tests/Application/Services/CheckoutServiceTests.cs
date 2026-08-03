@@ -32,6 +32,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IUserRepository _userRepoMock;
         private readonly IAdminFinanceService _adminFinanceServiceMock;
         private readonly IConfiguration _configurationMock;
+        private readonly IWishlistService _wishlistServiceMock;
         private readonly CheckoutService _sut;
 
         public CheckoutServiceTests()
@@ -47,6 +48,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _userRepoMock = Substitute.For<IUserRepository>();
             _adminFinanceServiceMock = Substitute.For<IAdminFinanceService>();
             _configurationMock = Substitute.For<IConfiguration>();
+            _wishlistServiceMock = Substitute.For<IWishlistService>();
 
             _sut = new CheckoutService(
                 _repoMock,
@@ -59,7 +61,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _courseRepoMock,
                 _couponRepoMock,
                 _userRepoMock,
-                _configurationMock
+                _configurationMock,
+                _wishlistServiceMock
             );
         }
 
