@@ -79,28 +79,14 @@ namespace CourseMarketplaceFE.Models
         public decimal Amount { get; set; }
         public string? Currency { get; set; }
         
-        private string? _refundReason;
-        public string? RefundReason
-        {
-            get => _refundReason ?? TransactionExt?.RefundReason;
-            set => _refundReason = value;
-        }
+        public string? RefundReason { get; set; }
+        public DateTime? RefundRequestedAt { get; set; }
 
-        private DateTime? _refundRequestedAt;
-        public DateTime? RefundRequestedAt
-        {
-            get => _refundRequestedAt ?? TransactionExt?.RefundRequestedAt;
-            set => _refundRequestedAt = value;
-        }
+        public DateTime? Date { get; set; }
+        public DateTime? TransactionCreatedAt => Date;
 
-        public DateTime? TransactionCreatedAt { get; set; }
-
-        public OrderItemDto? OrderItem { get; set; }
-        public AccountDto? AccountFromNavigation { get; set; }
-        public TransactionExtDto? TransactionExt { get; set; }
-
-        public string CourseTitle => OrderItem?.Course?.Title ?? "N/A";
-        public string BuyerName => AccountFromNavigation?.User?.FullName ?? "N/A";
+        public string CourseTitle { get; set; } = "N/A";
+        public string BuyerName { get; set; } = "N/A";
     }
 
     public class TransactionExtDto

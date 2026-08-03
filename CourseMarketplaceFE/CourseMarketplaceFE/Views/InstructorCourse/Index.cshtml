@@ -151,20 +151,7 @@
     </div>
 </div>
 
-<!-- Delete confirmation modal -->
-<div id="delete-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
-    <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span class="material-symbols-outlined text-red-600 text-[24px]">warning</span>
-        </div>
-        <h3 class="text-lg font-headline font-bold text-slate-900 text-center mb-2">Delete Course</h3>
-        <p class="text-sm text-slate-500 text-center mb-6">Are you sure you want to delete "<span id="delete-course-name"></span>"? This action cannot be undone.</p>
-        <div class="flex gap-3">
-            <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 transition-colors">Cancel</button>
-            <button id="confirm-delete-btn" class="flex-1 px-4 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors">Delete</button>
-        </div>
-    </div>
-</div>
+
 
 @section Scripts {
     <script>
@@ -501,8 +488,7 @@
         };
 
         // Delete modal
-        let deleteTargetId = null;
-        function confirmDelete(id, name, students) {
+        async function confirmDelete(id, name, students) {
             if (students > 0) {
                 Swal.fire({
                     title: 'Cannot Delete!',
@@ -512,31 +498,32 @@
                 });
                 return;
             }
-            deleteTargetId = id;
-            document.getElementById('delete-course-name').textContent = name;
-            document.getElementById('delete-modal').classList.remove('hidden');
-        }
-        function closeDeleteModal() {
-            document.getElementById('delete-modal').classList.add('hidden');
-            deleteTargetId = null;
-        }
-        document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
-            if (deleteTargetId) {
-                const btn = document.getElementById('confirm-delete-btn');
-                btn.disabled = true; btn.textContent = 'Deleting...';
+
+            const { isConfirmed } = await Swal.fire({
+                title: 'Delete Course',
+                text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Delete',
+                cancelButtonText: 'Cancel'
+            });
+
+            if (isConfirmed) {
                 try {
-                    const resp = await fetch('/InstructorCourse/Delete?id=' + deleteTargetId, { method: 'POST' });
+                    const resp = await fetch('/InstructorCourse/Delete?id=' + id, { method: 'POST' });
                     const result = await resp.json();
                     if (result.success) {
                         location.reload();
                     } else {
                         Swal.fire('Error', 'Delete failed: ' + (result.message || 'Unknown error'), 'error');
                     }
-                } catch(e) { Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); }
-                btn.disabled = false; btn.textContent = 'Delete';
-                closeDeleteModal();
+                } catch(e) {
+                    Swal.fire('Error', 'An error occurred: ' + e.message, 'error');
+                }
             }
-        });
+        }
 
         // Toggle Hide/Show
         async function toggleHide(id, newStatus) {
@@ -574,11 +561,6 @@
                 } catch(e) { Swal.fire('Error', 'An error occurred: ' + e.message, 'error'); }
             }
         }
-        
-        // Close modal on backdrop click
-        document.getElementById('delete-modal').addEventListener('click', (e) => {
-            if (e.target === e.currentTarget) closeDeleteModal();
-        });
 
         // Initial render
         document.addEventListener("DOMContentLoaded", () => {

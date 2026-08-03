@@ -262,6 +262,39 @@ public class QuizService : IQuizService
         if (!isEnrolled && quiz.InstructorId != userId)
             throw new UnauthorizedAccessException("You have not enrolled in the course containing this quiz.");
 
+        // Kiểm tra xem đã có lượt làm bài chưa nộp (unsubmitted) của user này cho quiz này hay chưa
+        var existingAttempt = await _quizRepo.GetLatestUnsubmittedAttemptAsync(quizId, userId);
+        if (existingAttempt != null)
+        {
+            var existingQuestions = existingAttempt.QuizAttemptQuestions
+                .OrderBy(aq => aq.OrderIndex)
+                .Select(aq => aq.Question)
+                .Where(q => q != null)
+                .ToList();
+
+            return new QuizForStudentResponse
+            {
+                QuizId = quiz.QuizId,
+                AttemptId = existingAttempt.AttemptId,
+                Title = quiz.Title,
+                Description = quiz.Description,
+                TimeLimitMinutes = quiz.TimeLimitMinutes,
+                PassingScore = quiz.PassingScore,
+                Questions = existingQuestions.Select(q => new QuizQuestionForStudentResponse
+                {
+                    QuestionId = q!.QuestionId,
+                    QuestionText = q.QuestionText,
+                    QuestionType = q.QuestionType,
+                    Options = q.QuizOptions.OrderBy(o => o.OrderIndex).Select(o => new QuizOptionForStudentResponse
+                    {
+                        OptionId = o.OptionId,
+                        OptionText = o.OptionText,
+                        OrderIndex = o.OrderIndex
+                    }).ToList()
+                }).ToList()
+            };
+        }
+
         // 1. Sinh câu hỏi từ QuestionBank
         var selectedQuestions = new List<QuizQuestion>();
         var rand = new Random();
@@ -394,7 +427,13 @@ public class QuizService : IQuizService
             throw new KeyNotFoundException("Attempt not found.");
 
         if (attempt.UserId != userId)
-            throw new UnauthorizedAccessException("You do not have permission to view this attempt.");
+        {
+            var quizCheck = await _quizRepo.GetByIdAsync(attempt.QuizId);
+            if (quizCheck == null || quizCheck.InstructorId != userId)
+            {
+                throw new UnauthorizedAccessException("You do not have permission to view this attempt.");
+            }
+        }
 
         var quiz = await _quizRepo.GetByIdAsync(attempt.QuizId);
         if (quiz == null)

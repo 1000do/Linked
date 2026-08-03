@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUSINESS WORKFLOWS – LINKEDLEARN PLATFORM</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,600,0,0" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Manrope', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        .font-display {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        /* Custom Scrollbar for Lanes */
+        .lane-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .lane-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .lane-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        .lane-scroll::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Diamond Condition Shape */
+        .rhombus-container {
+            width: 76px;
+            height: 76px;
+            position: relative;
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        .rhombus {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #fef08a, #fde047);
+            border: 2.5px solid #ca8a04;
+            transform: rotate(45deg);
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            box-shadow: 0 4px 12px rgba(202, 138, 4, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rhombus-text {
+            transform: rotate(-45deg);
+            font-weight: 900;
+            font-size: 11px;
+            color: #451a03;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        /* Connector Arrows */
+        .arrow-line {
+            height: 2.5px;
+            background-color: #64748b;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -4px;
+            border-width: 5px 0 5px 7px;
+            border-style: solid;
+            border-color: transparent transparent transparent #64748b;
+        }
+
+        .arrow-success {
+            background-color: #059669;
+        }
+
+        .arrow-success::after {
+            border-color: transparent transparent transparent #059669;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-6 text-slate-900 antialiased min-w-max">
+
+    <!-- MAIN CONTAINER (W-MAX DYNAMIC FULL EXTENSION - NO CUTOFFS OR RIGHT SHRUNK HEADERS) -->
+    <div class="w-max mx-auto bg-white rounded-2xl shadow-xl border-2 border-slate-300 p-6">
+
+        <!-- HEADER (SPANS 100% ACROSS BOTH WORKFLOW LANES AND RIGHT LEGEND SIDEBAR) -->
+        <header
+            class="mb-6 bg-slate-950 text-white p-5 rounded-xl flex items-center justify-between shadow-lg border border-slate-800 w-full">
+            <div>
+                <h1 class="text-2xl font-black font-display tracking-tight text-white flex items-center gap-3">
+                    <span class="material-symbols-outlined text-emerald-400 text-3xl">account_tree</span>
+                    BUSINESS WORKFLOWS – LINKEDLEARN PLATFORM
+                </h1>
+                <p class="text-xs text-slate-300 mt-1 font-semibold tracking-wide">Nationwide Online Learning & Course
+                    Marketplace Platform Architecture Specification</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span
+                    class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs px-3 py-1.5 rounded-lg font-extrabold">ASP.NET
+                    Core 8 & SignalR</span>
+                <span
+                    class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs px-3 py-1.5 rounded-lg font-extrabold">Stripe
+                    Connect & AI Service</span>
+            </div>
+        </header>
+
+        <!-- CONTENT GRID: LEFT WORKFLOWS (80%) + RIGHT LEGEND CLUSTERED AT TOP (20%) -->
+        <div class="flex items-start gap-6">
+
+            <!-- LEFT: 6 WORKFLOW LANES -->
+            <div class="flex-1 space-y-5">
+
+                <!-- 1. WORKFLOW 1: INSTRUCTOR ONBOARDING -->
+                <div class="border-2 border-blue-300 rounded-xl overflow-hidden bg-blue-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-blue-950 to-indigo-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                1</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-blue-100">ONBOARDING
+                                INSTRUCTOR</h2>
+                            <p class="text-[11px] text-blue-200 mt-1 font-medium leading-tight">(Instructor Registration
+                                & Activation)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-700 text-xl font-bold mb-0.5">person_add</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Guest Account Registration
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Enter Email & Password</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Enter Full Name</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Create User Account</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Guest</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">badge</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Submit Instructor Profile
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Enter Biography & Bio</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Upload Degrees & Certificates</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Select Teaching Expertise</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">inbox</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">System Profile Ingestion
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Save Pending Profile</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Create Approval Ticket</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Notify Staff Members</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 (INSPECTION STEP) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">admin_panel_settings</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Staff/Admin Profile Review
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Verify credentials & info</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Check expertise & background</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Evaluate approval criteria</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 5 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 5 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    5</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Yes" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Approve?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Yes" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Yes</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">No</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Additional Info /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Reject + Reason
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 6 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    6</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-700 text-xl font-bold mb-0.5">mark_email_read</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Activation & Notification
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Update Role to Instructor</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Send Realtime Notification</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Email Stripe Onboarding Link</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">account_balance</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Stripe Connect Onboarding
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Click Approval Notification</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Redirect to Stripe Onboarding</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Enter Bank Account Info</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. WORKFLOW 2: COURSE CREATION & MODERATION -->
+                <div class="border-2 border-emerald-300 rounded-xl overflow-hidden bg-emerald-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-emerald-950 to-teal-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                2</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-emerald-100">COURSE CREATION &
+                                APPROVAL</h2>
+                            <p class="text-[11px] text-emerald-200 mt-1 font-medium leading-tight">(AI & Staff
+                                Moderation Flow)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">dashboard_customize</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Switch to Instructor Mode
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Login as Instructor</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Open Instructor Dashboard</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Select Course Management</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">post_add</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Create Course Details
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Enter Title, Description, Price</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Select Category & Level</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Upload Thumbnail & Demo</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">video_library</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Add Lessons & Quizzes
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Create Course Sections</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Upload Videos & Reading Docs</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Compose Assessment Quizzes</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">smart_toy</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">System & AI Content Scan
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Ingest `PendingReview` Item</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Scan Banned Words & Content</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Assign `AI Risk Score`</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 (INSPECTION STEP - STAFF & ADMIN) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">fact_check</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Staff/Admin Content Review
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Review AI scan results</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Inspect video quality</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Evaluate lesson content</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 6 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 6 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    6</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Yes" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Approve?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Yes" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Yes</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">No</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Additional Info /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Reject + Reason
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-700 text-xl font-bold mb-0.5">published_with_changes</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Publish Course</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Change Status to `Published`</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Notify Course Instructor</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Display on Marketplace</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. WORKFLOW 3: COURSE DISCOVERY & WISHLIST -->
+                <div class="border-2 border-amber-300 rounded-xl overflow-hidden bg-amber-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-amber-950 to-orange-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-amber-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                3</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-amber-100">COURSE DISCOVERY
+                            </h2>
+                            <p class="text-[11px] text-amber-200 mt-1 font-medium leading-tight">(Search, Filter &
+                                Wishlist)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">login</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">User Access & Login
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Visit Platform Homepage</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Login to User Account</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Load Personalized Feed</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">search</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Search & Filter Courses
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Search by Keywords</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Filter Category & Price</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Sort by Latest / Trending</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">menu_book</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">View Course Details
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Inspect Reviews & Syllabus</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Watch Preview Demo Videos</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> View Total Enrolled Count</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">person_search</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">View Instructor Profile
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> View Bio & Credentials</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Browse Other Courses</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Read Student Feedback</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">favorite</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Add to Wishlist</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Click 💖 Add Wishlist</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> System Saves Item List</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Sync Across User Devices</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. WORKFLOW 4: CART, CHECKOUT, PAYOUT & REFUND -->
+                <div class="border-2 border-purple-300 rounded-xl overflow-hidden bg-purple-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-purple-950 to-indigo-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                4</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-purple-100">PAYMENT & REFUND
+                            </h2>
+                            <p class="text-[11px] text-purple-200 mt-1 font-medium leading-tight">(Checkout, Payout &
+                                Refund)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">shopping_cart</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Access Wishlist & Cart
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> View Saved Wishlist</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Add Courses to Cart</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Click Proceed Checkout</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">credit_card</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Stripe Checkout Payment
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Enter Coupon Discount Code</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Pay via Stripe Gateway</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Stripe Confirms Transaction</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">receipt_long</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Transaction & Payout
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Activate Course `Enrollment`</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Record `Transaction` Ledger</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Calculate Instructor `Payout`</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">history</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Submit Refund Request
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Open Purchase History</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Select Order (&lt; 14 Days)</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Submit Refund Reason</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 (INSPECTION STEP - ADMIN ONLY) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-rose-700 text-xl font-bold mb-0.5">find_in_page</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Admin Refund Assessment
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-rose-700 font-black">•</span>
+                                        Verify 14-day policy limit</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-rose-700 font-black">•</span>
+                                        Inspect course progress &lt; 20%</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-rose-700 font-black">•</span>
+                                        Evaluate refund reason</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 6 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 6 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    6</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Yes" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Approve?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Yes" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Yes</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">No</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Additional Info /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Reject + Reason
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">currency_exchange</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Refund & Revocation</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Invoke Stripe Refund API</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Revoke `Enrollment` Access</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Claw Back Instructor Payout</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. WORKFLOW 5: LEARNING, QUIZ & REPORT MODERATION -->
+                <div class="border-2 border-rose-300 rounded-xl overflow-hidden bg-rose-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-rose-950 to-red-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-rose-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                5</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-rose-100">LEARNING & REPORT
+                            </h2>
+                            <p class="text-[11px] text-rose-200 mt-1 font-medium leading-tight">(Learning, Quiz &
+                                Report)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">play_circle</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Lesson Learning</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Watch Video Lessons</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Read Course Materials</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Mark Progress Percentage</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">forum</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">SignalR Realtime Q&A Chat
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Open Lesson Chat Window</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Send Realtime Messages</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Instructor Instant Answer</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User & Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">quiz</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Take Quiz Assessment
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Select Assessment Quiz</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Answer Multiple-Choice Questions</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> View Results & Score</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">flag</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Review & Report Violation
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Write Review & Rating</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Or Click Report Violation</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Submit Violation Reason</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 (INSPECTION STEP - STAFF & ADMIN) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">gavel</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Staff/Admin Violation Audit
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Ingest report ticket</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Audit violation evidence</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Assess severity level</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 6 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 6 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    6</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Yes" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Approve?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Yes" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Yes</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">No</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Additional Info /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Reject + Reason
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">gavel</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Enforce Penalties</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-amber-700 font-black">•</span> Hide/Delete Course or Review</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-amber-700 font-black">•</span> Suspend/Warn Offending User</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-amber-700 font-black">•</span> Dispatch Notification Alert</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. WORKFLOW 6: BACK-OFFICE ADMIN & STAFF MANAGEMENT -->
+                <div class="border-2 border-blue-400 rounded-xl overflow-hidden bg-blue-50/20 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER (ALIGNED LEFT MATCHING WORKFLOWS 1-5) -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-blue-900 to-indigo-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                6</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-blue-100">SYSTEM ADMINISTRATION</h2>
+                            <p class="text-[11px] text-blue-200 mt-1 font-medium leading-tight">(Back-Office & Management)</p>
+                        </div>
+
+                        <!-- MODULE CARDS CONTAINER (100% UNIFORM HEIGHT h-[225px] Across ALL 7 CARDS) -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- MODULE CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">how_to_reg</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Instructor Management
+                                        & Approvals</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Applications Pending List</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Profile & Credential Verification</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Approve / Reject Applications</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">group</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Account Management &
+                                        RBAC</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        User Registration & Auth</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Roles, Security & Profiles</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Ban / Unban User Accounts</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                            <!-- MODULE CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">smart_toy</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">AI Service Management
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Configure AI Moderation</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        AI Risk Score Thresholds</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Automatic Content Scan</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                            <!-- MODULE CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">school</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Course Approval &
+                                        Moderation</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Pending Course Approval Queue</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Evaluation via AI Scan Results</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Manage Published Courses</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 5 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">forum</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Review & Chat Moderation
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Moderate Student Reviews</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Monitor SignalR Realtime Chat</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Chat Logs & Support History</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 6 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">flag</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Violation Reporting
+                                        Center</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Receive Violation Reports</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Review Accept / Reject Decisions</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Enforce Warnings & Penalties</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">query_stats</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Financial Reports &
+                                        Payouts</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Platform Gross Revenue Ledger</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Instructor Revenue Sharing</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Coupons & Refund Approvals</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: ALL 3 CARDS CLUSTERED TOGETHER AT THE VERY TOP RIGHT -->
+            <div class="w-72 flex flex-col justify-start shrink-0">
+
+                <div class="flex flex-col gap-3">
+
+                    <!-- CARD 1: CHÚ THÍCH KÝ HIỆU -->
+                    <div class="w-full bg-white border-2 border-slate-300 rounded-xl p-3.5 shadow-md">
+                        <h3
+                            class="font-black text-xs uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-2">
+                            <span
+                                class="material-symbols-outlined text-blue-700 text-base font-bold">legend_toggle</span>
+                            SYMBOL LEGEND
+                        </h3>
+                        <div class="space-y-2 text-xs font-semibold">
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="w-4 h-4 rounded-full bg-blue-950 text-white font-black text-[9px] flex items-center justify-center shrink-0">
+                                    1</div>
+                                <span class="text-slate-900 text-[11px]">Step Process Sequence</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="w-4 h-4 bg-white border border-slate-400 rounded shadow-xs shrink-0 flex items-center justify-center text-[10px] font-black text-blue-700">
+                                    •</div>
+                                <span class="text-slate-900 text-[11px]">Data Flow Details</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 bg-yellow-300 border-2 border-yellow-600 rotate-45 shrink-0"></div>
+                                <span class="text-slate-900 text-[11px]">Condition Node (Approve?)</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 bg-rose-50 border-2 border-dashed border-rose-500 rounded shrink-0">
+                                </div>
+                                <span class="text-slate-900 text-[11px]">Rejection / No Flow</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-5 h-0.5 bg-emerald-600 relative shrink-0">
+                                    <div
+                                        class="absolute right-0 -top-1 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-l-4 border-l-emerald-600">
+                                    </div>
+                                </div>
+                                <span class="text-slate-900 text-[11px]">Approval / Yes Flow</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 6 ACTORS HỆ THỐNG -->
+                    <div class="w-full bg-white border-2 border-slate-300 rounded-xl p-3.5 shadow-md">
+                        <h3
+                            class="font-black text-xs uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-700 text-base font-bold">group</span>
+                            6 SYSTEM ACTORS
+                        </h3>
+                        <div class="space-y-1.5 text-[11px] font-semibold">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                                <span class="font-black text-slate-900">Guest:</span> Unauthenticated Visitor
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-700"></span>
+                                <span class="font-black text-indigo-950">User:</span> Enrolled Student
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-teal-700"></span>
+                                <span class="font-black text-teal-950">Instructor:</span> Course Instructor
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-700"></span>
+                                <span class="font-black text-amber-950">Staff:</span> Moderation Staff
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-700"></span>
+                                <span class="font-black text-rose-950">Admin:</span> Super Administrator
+                            </div>
+                            <div class="flex items-center gap-2 pt-0.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-cyan-700"></span>
+                                <span class="font-black text-cyan-950">System:</span> Automated Engine
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: GHI CHÚ KỸ THUẬT -->
+                    <div class="w-full bg-blue-50 border-2 border-blue-300 rounded-xl p-3.5 shadow-md">
+                        <h3
+                            class="font-black text-xs uppercase tracking-wider text-blue-950 border-b border-blue-200 pb-1.5 mb-2 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-800 text-base font-bold">memory</span>
+                            TECHNICAL NOTES
+                        </h3>
+                        <p class="text-[11px] text-blue-950 leading-relaxed font-semibold">
+                            Realtime interactions supported by <b>SignalR WebSockets</b> (Chat & Notification), <b>Stripe Webhook API</b> (Payment & Payout), and <b>AI Moderation Service</b>.
+                        </p>
+                        <div
+                            class="mt-2 pt-1.5 border-t border-blue-200 flex items-center justify-between text-[10px] text-blue-900 font-black">
+                            <span>Realtime Architecture</span>
+                            <span class="material-symbols-outlined text-sm text-blue-700 font-bold">wifi</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>

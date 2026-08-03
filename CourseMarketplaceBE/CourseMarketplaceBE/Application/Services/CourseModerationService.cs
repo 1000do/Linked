@@ -260,6 +260,22 @@ namespace CourseMarketplaceBE.Application.Services
             var course = await _courseRepository.GetByIdAsync(request.CourseId);
             if (course == null) return false;
 
+            // Deduplicate items to prevent duplicate processing for the same target element
+            if (request.Items != null && request.Items.Count > 0)
+            {
+                var seenKeys = new HashSet<string>();
+                var uniqueItems = new List<RejectCourseItemDto>();
+                foreach (var item in request.Items)
+                {
+                    var key = $"{item.Target}_{item.LessonId}_{item.MaterialId}";
+                    if (seenKeys.Add(key))
+                    {
+                        uniqueItems.Add(item);
+                    }
+                }
+                request.Items = uniqueItems;
+            }
+
             var rejectedLessonIds = new HashSet<int>();
             var rejectedMaterialIds = new HashSet<int>();
 

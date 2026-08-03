@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUSINESS WORKFLOWS – HỆ THỐNG LINKEDLEARN</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,600,0,0" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Manrope', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        .font-display {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        /* Custom Scrollbar for Lanes */
+        .lane-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .lane-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .lane-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        .lane-scroll::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        /* Diamond Condition Shape */
+        .rhombus-container {
+            width: 76px;
+            height: 76px;
+            position: relative;
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+
+        .rhombus {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #fef08a, #fde047);
+            border: 2.5px solid #ca8a04;
+            transform: rotate(45deg);
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            box-shadow: 0 4px 12px rgba(202, 138, 4, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .rhombus-text {
+            transform: rotate(-45deg);
+            font-weight: 900;
+            font-size: 12px;
+            color: #451a03;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        /* Connector Arrows */
+        .arrow-line {
+            height: 2.5px;
+            background-color: #64748b;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .arrow-line::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -4px;
+            border-width: 5px 0 5px 7px;
+            border-style: solid;
+            border-color: transparent transparent transparent #64748b;
+        }
+
+        .arrow-success {
+            background-color: #059669;
+        }
+
+        .arrow-success::after {
+            border-color: transparent transparent transparent #059669;
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-6 text-slate-900 antialiased min-w-max">
+
+    <!-- MAIN CONTAINER (W-MAX DYNAMIC FULL EXTENSION - NO CUTOFFS OR RIGHT SHRUNK HEADERS) -->
+    <div class="w-max mx-auto bg-white rounded-2xl shadow-xl border-2 border-slate-300 p-6">
+
+        <!-- HEADER (SPANS 100% ACROSS BOTH WORKFLOW LANES AND RIGHT LEGEND SIDEBAR) -->
+        <header
+            class="mb-6 bg-slate-950 text-white p-5 rounded-xl flex items-center justify-between shadow-lg border border-slate-800 w-full">
+            <div>
+                <h1 class="text-2xl font-black font-display tracking-tight text-white flex items-center gap-3">
+                    <span class="material-symbols-outlined text-emerald-400 text-3xl">account_tree</span>
+                    BUSINESS WORKFLOWS – HỆ THỐNG LINKEDLEARN
+                </h1>
+                <p class="text-xs text-slate-300 mt-1 font-semibold tracking-wide">Nationwide Online Learning & Course
+                    Marketplace Platform Architecture Specification</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span
+                    class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs px-3 py-1.5 rounded-lg font-extrabold">ASP.NET
+                    Core 8 & SignalR</span>
+                <span
+                    class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 text-xs px-3 py-1.5 rounded-lg font-extrabold">Stripe
+                    Connect & AI Service</span>
+            </div>
+        </header>
+
+        <!-- CONTENT GRID: LEFT WORKFLOWS (80%) + RIGHT LEGEND CLUSTERED AT TOP (20%) -->
+        <div class="flex items-start gap-6">
+
+            <!-- LEFT: 6 WORKFLOW LANES -->
+            <div class="flex-1 space-y-5">
+
+                <!-- 1. WORKFLOW 1: INSTRUCTOR ONBOARDING -->
+                <div class="border-2 border-blue-300 rounded-xl overflow-hidden bg-blue-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-blue-950 to-indigo-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                1</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-blue-100">ONBOARDING
+                                INSTRUCTOR</h2>
+                            <p class="text-[11px] text-blue-200 mt-1 font-medium leading-tight">(Đăng ký & Kích hoạt
+                                Giảng viên)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-700 text-xl font-bold mb-0.5">person_add</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Guest đăng ký tài khoản
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Nhập Email, Mật khẩu</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Nhập Họ tên người dùng</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Tạo tài khoản User</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Guest</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">badge</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">User nộp hồ sơ
+                                        Instructor</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Nhập Bio, Tiều sử</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Upload Bằng cấp, Chứng chỉ</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Chọn Chuyên môn dạy</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">inbox</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">System tiếp nhận hồ sơ
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Lưu hồ sơ `Pending`</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Tạo ticket phê duyệt</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Thông báo đến Staff</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 (INSPECTION STEP) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">admin_panel_settings</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Staff/Admin kiểm tra hồ sơ
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Xác minh thông tin & bằng cấp</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Kiểm tra vị trí & lĩnh vực</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Đánh giá điều kiện duyệt</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 5 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 5 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    5</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Có" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Duyệt?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Có" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Có</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">Không</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Yêu cầu bổ sung /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Từ chối + lý do
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 6 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    6</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-700 text-xl font-bold mb-0.5">mark_email_read</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Kích hoạt & Thông báo
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Đổi role sang Instructor</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Gửi notification realtime</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Báo email link Stripe</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-blue-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">account_balance</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Đăng ký Stripe Connect
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Click notification duyệt</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Sang Stripe Onboarding</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Nhập tài khoản ngân hàng</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. WORKFLOW 2: COURSE CREATION & MODERATION -->
+                <div class="border-2 border-emerald-300 rounded-xl overflow-hidden bg-emerald-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-emerald-950 to-teal-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-emerald-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                2</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-emerald-100">TẠO KHÓA HỌC &
+                                DUYỆT</h2>
+                            <p class="text-[11px] text-emerald-200 mt-1 font-medium leading-tight">(AI & Staff
+                                Moderation Flow)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">dashboard_customize</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Chuyển Instructor Mode
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Đăng nhập Instructor</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Mở Instructor Dashboard</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Chọn Quản lý khóa học</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">post_add</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Tạo thông tin khóa học
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Nhập Tên, Mô tả, Giá</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Chọn Danh mục, Level</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Upload Thumbnail & Demo</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-teal-700 text-xl font-bold mb-0.5">video_library</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Thêm bài học & Quiz
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Tạo Chương (Sections)</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Tải Video & Bài đọc</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-teal-700 font-black">•</span>
+                                        Soạn bài kiểm tra Quiz</li>
+                                </ul>
+                                <div
+                                    class="bg-teal-100 text-teal-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-teal-300 mt-auto uppercase tracking-wider">
+                                    Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">smart_toy</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">System & AI quét bài
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Nhận đơn `PendingReview`</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Quét từ cấm & nội dung</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Gán `AI Risk Score`</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 (INSPECTION STEP - STAFF & ADMIN) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">fact_check</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Staff/Admin kiểm tra & đánh giá
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Review kết quả từ AI</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Kiểm tra chất lượng video</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Đánh giá nội dung bài học</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 6 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 6 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    6</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Có" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Duyệt?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Có" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Có</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">Không</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Yêu cầu bổ sung /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Từ chối + lý do
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-emerald-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-emerald-700 text-xl font-bold mb-0.5">published_with_changes</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Xuất bản khóa học</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Đổi trạng thái `Published`</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Báo notification cho thầy</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-emerald-700 font-black">•</span> Hiển thị lên Marketplace</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. WORKFLOW 3: COURSE DISCOVERY & WISHLIST -->
+                <div class="border-2 border-amber-300 rounded-xl overflow-hidden bg-amber-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-amber-950 to-orange-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-amber-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                3</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-amber-100">KHÁM PHÁ KHÓA HỌC
+                            </h2>
+                            <p class="text-[11px] text-amber-200 mt-1 font-medium leading-tight">(Search, Filter &
+                                Wishlist)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">login</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">User truy cập & Login
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Truy cập trang chủ</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Đăng nhập tài khoản User</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Tải gợi ý cá nhân hóa</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">search</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Tìm kiếm & Lọc khóa học
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Tìm theo Từ khóa</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Lọc theo Danh mục, Giá</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Sắp xếp Mới nhất / Hot</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">menu_book</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Xem chi tiết khóa học
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem Đánh giá & Bài học</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Coi Video học thử Demo</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem số học viên đã đăng ký</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">person_search</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Xem Instructor Profile
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem Bio & Bằng cấp thầy</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem danh sách khóa khác</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Đọc phản hồi của học viên</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-amber-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">favorite</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Thêm vào Wishlist</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Click 💖 Add Wishlist</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> System lưu danh sách</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Đồng bộ trên thiết bị</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. WORKFLOW 4: CART, CHECKOUT, PAYOUT & REFUND -->
+                <div class="border-2 border-purple-300 rounded-xl overflow-hidden bg-purple-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-purple-950 to-indigo-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-purple-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                4</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-purple-100">THANH TOÁN &
+                                REFUND</h2>
+                            <p class="text-[11px] text-purple-200 mt-1 font-medium leading-tight">(Checkout, Payout &
+                                Refund)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">shopping_cart</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Vào Wishlist & Cart
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem danh sách Wishlist</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Thêm khóa học vào Giỏ</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Bấm Checkout</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">credit_card</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Thanh toán Stripe</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Nhập mã giảm giá Coupon</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Thanh toán qua Stripe</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Stripe xác nhận giao dịch</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">receipt_long</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Transaction & Payout
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Kích hoạt `Enrollment`</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Ghi nhận `Transaction`</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Tính `Payout` cho Instructor</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">history</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Yêu cầu Refund</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Vào Lịch sử mua hàng</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Chọn đơn dưới 14 ngày</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Nhập lý do gửi Refund</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 (INSPECTION STEP - ADMIN ONLY) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-rose-700 text-xl font-bold mb-0.5">find_in_page</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Admin thẩm định Refund
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-rose-700 font-black">•</span>
+                                        Kiểm tra điều kiện 14 ngày</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-rose-700 font-black">•</span>
+                                        Thẩm định tiến độ học &lt; 20%</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-rose-700 font-black">•</span>
+                                        Đánh giá lý do yêu cầu</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 6 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 6 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    6</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Có" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Duyệt?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Có" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Có</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">Không</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Yêu cầu bổ sung /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Từ chối + lý do
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-purple-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-cyan-700 text-xl font-bold mb-0.5">currency_exchange</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Hoàn tiền & Thu hồi
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Gọi Stripe Refund API</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Hủy quyền `Enrollment`</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-cyan-700 font-black">•</span>
+                                        Thu hồi Payout thầy</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. WORKFLOW 5: LEARNING, QUIZ & REPORT MODERATION -->
+                <div class="border-2 border-rose-300 rounded-xl overflow-hidden bg-rose-50/30 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-rose-950 to-red-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-rose-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                5</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-rose-100">HỌC TẬP & REPORT
+                            </h2>
+                            <p class="text-[11px] text-rose-200 mt-1 font-medium leading-tight">(Learning, Quiz &
+                                Report)</p>
+                        </div>
+
+                        <!-- STEPS CONTAINER -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    1</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">play_circle</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Học tập bài giảng</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem Video bài giảng</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Đọc tài liệu bài học</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Đánh dấu tiến độ %</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    2</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">forum</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Chat SignalR hỏi bài
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Mở khung chat bài học</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Gửi tin nhắn realtime</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Instructor giải đáp tức thì</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User & Instructor</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    3</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">quiz</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Làm bài kiểm tra Quiz
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Chọn bài Quiz kiểm tra</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Trả lời các câu trắc nghiệm</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Xem kết quả & điểm số</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    4</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-indigo-700 text-xl font-bold mb-0.5">flag</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Review & Report vi phạm
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Viết Review & Đánh giá</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Hoặc bấm Báo cáo vi phạm</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-indigo-700 font-black">•</span> Gửi lý do Report</li>
+                                </ul>
+                                <div
+                                    class="bg-indigo-100 text-indigo-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-indigo-300 mt-auto uppercase tracking-wider">
+                                    User</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- CARD 5 (INSPECTION STEP - STAFF & ADMIN) -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    5</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">gavel</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Staff/Admin kiểm tra & xác minh
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Tiếp nhận ticket báo cáo</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Thẩm tra bằng chứng vi phạm</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-amber-700 font-black">•</span>
+                                        Đánh giá mức độ vi phạm</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <div class="arrow-line w-6"></div>
+
+                            <!-- DECISION STEP 6 -->
+                            <div class="h-[225px] flex flex-col justify-between items-center shrink-0 w-48 relative">
+                                <!-- Top Step Badge 6 -->
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center shadow border-2 border-white">
+                                    6</div>
+
+                                <!-- Middle Flow Row: Diamond Node + Green Arrow "Có" -->
+                                <div class="relative flex items-center justify-center">
+                                    <div class="rhombus-container">
+                                        <div class="rhombus">
+                                            <div class="rhombus-text">Duyệt?</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Green Output Arrow "Có" (Starts exactly at sharp vertex tip of diamond and extends to touch card on right) -->
+                                    <div class="absolute left-[80px] flex flex-col items-center shrink-0 w-[54px]">
+                                        <span class="text-xs font-black text-emerald-700 mb-0.5 leading-none">Có</span>
+                                        <div class="arrow-line arrow-success w-full"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Rejection Area: Prominent Red Arrow + High Contrast Red Box -->
+                                <div class="flex flex-col items-center w-full">
+                                    <div class="flex flex-col items-center text-rose-700 mb-0.5">
+                                        <span class="text-xs font-black leading-none">Không</span>
+                                        <span
+                                            class="material-symbols-outlined text-lg font-black leading-none mt-0.5">arrow_downward</span>
+                                    </div>
+                                    <div
+                                        class="w-44 bg-rose-50 border-2 border-dashed border-rose-400 rounded-xl p-1.5 text-center shadow-sm">
+                                        <div class="font-black text-rose-950 text-[11px] leading-tight">
+                                            📄 Yêu cầu bổ sung /
+                                        </div>
+                                        <div class="font-black text-rose-700 text-[11px] leading-tight mt-0.5">
+                                            ❗ Từ chối + lý do
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0 relative">
+                                <div
+                                    class="w-6 h-6 rounded-full bg-rose-950 text-white font-black text-xs flex items-center justify-center absolute -top-3 left-1/2 -translate-x-1/2 border-2 border-white shadow">
+                                    7</div>
+                                <div
+                                    class="mt-2 text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-amber-700 text-xl font-bold mb-0.5">gavel</span>
+                                    <div class="font-black text-xs text-slate-950 leading-snug">Áp dụng chế tài</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-amber-700 font-black">•</span> Ẩn/xóa khóa học/review</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-amber-700 font-black">•</span> Khóa/Cảnh cáo đối tượng</li>
+                                    <li class="flex items-start gap-1.5"><span
+                                            class="text-amber-700 font-black">•</span> Gửi notification thông báo</li>
+                                </ul>
+                                <div
+                                    class="bg-cyan-100 text-cyan-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-cyan-300 mt-auto uppercase tracking-wider">
+                                    System</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. WORKFLOW 6: BACK-OFFICE ADMIN & STAFF MANAGEMENT -->
+                <div class="border-2 border-blue-400 rounded-xl overflow-hidden bg-blue-50/20 shadow-sm">
+                    <div class="flex items-stretch">
+                        <!-- LANE HEADER (ALIGNED LEFT MATCHING WORKFLOWS 1-5) -->
+                        <div
+                            class="w-48 bg-gradient-to-br from-blue-900 to-indigo-950 text-white p-4 flex flex-col justify-center shrink-0">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-500 text-white font-black text-sm flex items-center justify-center mb-2 shadow-md">
+                                6</div>
+                            <h2 class="font-extrabold text-sm uppercase tracking-wider text-blue-100">QUẢN TRỊ HỆ THỐNG</h2>
+                            <p class="text-[11px] text-blue-200 mt-1 font-medium leading-tight">(Back-Office & Management)</p>
+                        </div>
+
+                        <!-- MODULE CARDS CONTAINER (100% UNIFORM HEIGHT h-[225px] Across ALL 7 CARDS) -->
+                        <div class="flex-1 p-4 flex items-center gap-3 overflow-x-auto lane-scroll">
+
+                            <!-- MODULE CARD 1 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">how_to_reg</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Quản lý Giảng viên &
+                                        Duyệt đơn</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Danh sách đơn xin làm Giảng viên</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Thông tin hồ sơ, bằng cấp</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Duyệt / Từ chối đơn đăng ký</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 2 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">group</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Quản lý Tài khoản &
+                                        Phân quyền</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Đăng ký / Đăng nhập</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Vai trò, bảo mật, hồ sơ</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Ban / Unban tài khoản</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                            <!-- MODULE CARD 3 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">smart_toy</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Quản lý Dịch vụ AI
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Cấu hình AI Moderation</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Ngưỡng AI Risk Score</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Quét tự động nội dung</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                            <!-- MODULE CARD 4 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">school</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Quản lý & Duyệt khóa
+                                        học</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Danh sách khóa học chờ duyệt</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Đánh giá theo kết quả AI</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Quản lý khóa Published</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 5 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">forum</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Quản lý Đánh giá & Chat
+                                    </div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Kiểm duyệt Review học viên</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Giám sát chat SignalR</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Lịch sử hội thoại & Hỗ trợ</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 6 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">flag</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Trung tâm Báo cáo vi
+                                        phạm</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Tiếp nhận Report vi phạm</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Kiểm duyệt Accept / Reject</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Thực thi án phạt & Cảnh cáo</li>
+                                </ul>
+                                <div
+                                    class="bg-slate-200 text-slate-900 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-slate-400 mt-auto uppercase tracking-wider">
+                                    Staff & Admin</div>
+                            </div>
+
+                            <!-- MODULE CARD 7 -->
+                            <div
+                                class="w-[216px] h-[225px] bg-white rounded-xl border-2 border-slate-300 p-3 shadow-md flex flex-col justify-between shrink-0">
+                                <div
+                                    class="text-center pb-2 border-b border-slate-200 h-14 flex flex-col justify-center items-center">
+                                    <span
+                                        class="material-symbols-outlined text-blue-800 text-xl font-bold mb-0.5">query_stats</span>
+                                    <div class="font-black text-xs text-slate-950 leading-tight">Báo cáo Tài chính &
+                                        Payout</div>
+                                </div>
+                                <ul class="text-xs text-slate-900 font-semibold space-y-1.5 my-2 leading-tight flex-1">
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Bảng doanh thu tổng toàn sàn</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Chia sẻ doanh thu Giảng viên</li>
+                                    <li class="flex items-start gap-1.5"><span class="text-blue-700 font-black">•</span>
+                                        Coupons & Duyệt Refund</li>
+                                </ul>
+                                <div
+                                    class="bg-rose-100 text-rose-950 text-[11px] font-black py-1 px-2.5 rounded-lg text-center border border-rose-300 mt-auto uppercase tracking-wider">
+                                    Administrator</div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: ALL 3 CARDS CLUSTERED TOGETHER AT THE VERY TOP RIGHT -->
+            <div class="w-72 flex flex-col justify-start shrink-0">
+
+                <div class="flex flex-col gap-3">
+
+                    <!-- CARD 1: CHÚ THÍCH KÝ HIỆU -->
+                    <div class="w-full bg-white border-2 border-slate-300 rounded-xl p-3.5 shadow-md">
+                        <h3
+                            class="font-black text-xs uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-2">
+                            <span
+                                class="material-symbols-outlined text-blue-700 text-base font-bold">legend_toggle</span>
+                            CHÚ THÍCH KÝ HIỆU
+                        </h3>
+                        <div class="space-y-2 text-xs font-semibold">
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="w-4 h-4 rounded-full bg-blue-950 text-white font-black text-[9px] flex items-center justify-center shrink-0">
+                                    1</div>
+                                <span class="text-slate-900 text-[11px]">Thứ tự bước xử lý</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div
+                                    class="w-4 h-4 bg-white border border-slate-400 rounded shadow-xs shrink-0 flex items-center justify-center text-[10px] font-black text-blue-700">
+                                    •</div>
+                                <span class="text-slate-900 text-[11px]">Chi tiết dòng dữ liệu</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 bg-yellow-300 border-2 border-yellow-600 rotate-45 shrink-0"></div>
+                                <span class="text-slate-900 text-[11px]">Khung điều kiện (Duyệt?)</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-4 h-4 bg-rose-50 border-2 border-dashed border-rose-500 rounded shrink-0">
+                                </div>
+                                <span class="text-slate-900 text-[11px]">Luồng Từ chối / Không</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-5 h-0.5 bg-emerald-600 relative shrink-0">
+                                    <div
+                                        class="absolute right-0 -top-1 w-0 h-0 border-t-4 border-t-transparent border-b-4 border-b-transparent border-l-4 border-l-emerald-600">
+                                    </div>
+                                </div>
+                                <span class="text-slate-900 text-[11px]">Luồng Chấp nhận / Có</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: 6 ACTORS HỆ THỐNG -->
+                    <div class="w-full bg-white border-2 border-slate-300 rounded-xl p-3.5 shadow-md">
+                        <h3
+                            class="font-black text-xs uppercase tracking-wider text-slate-950 border-b border-slate-200 pb-1.5 mb-2.5 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-700 text-base font-bold">group</span>
+                            6 ACTORS HỆ THỐNG
+                        </h3>
+                        <div class="space-y-1.5 text-[11px] font-semibold">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+                                <span class="font-black text-slate-900">Guest:</span> Khách vãng lai
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-700"></span>
+                                <span class="font-black text-indigo-950">User:</span> Học viên hệ thống
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-teal-700"></span>
+                                <span class="font-black text-teal-950">Instructor:</span> Giảng viên
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-700"></span>
+                                <span class="font-black text-amber-950">Staff:</span> Nhân viên kiểm duyệt
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-700"></span>
+                                <span class="font-black text-rose-950">Admin:</span> Quản trị viên tối cao
+                            </div>
+                            <div class="flex items-center gap-2 pt-0.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-cyan-700"></span>
+                                <span class="font-black text-cyan-950">System:</span> Hệ thống tự động
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: GHI CHÚ KỸ THUẬT -->
+                    <div class="w-full bg-blue-50 border-2 border-blue-300 rounded-xl p-3.5 shadow-md">
+                        <h3
+                            class="font-black text-xs uppercase tracking-wider text-blue-950 border-b border-blue-200 pb-1.5 mb-2 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-800 text-base font-bold">memory</span>
+                            GHI CHÚ KỸ THUẬT
+                        </h3>
+                        <p class="text-[11px] text-blue-950 leading-relaxed font-semibold">
+                            Các luồng tương tác thời gian thực được hỗ trợ bởi <b>SignalR WebSockets</b> (Chat &
+                            Notification), <b>Stripe Webhook API</b> (Thanh toán & Payout) và <b>AI Moderation
+                                Service</b>.
+                        </p>
+                        <div
+                            class="mt-2 pt-1.5 border-t border-blue-200 flex items-center justify-between text-[10px] text-blue-900 font-black">
+                            <span>Realtime Architecture</span>
+                            <span class="material-symbols-outlined text-sm text-blue-700 font-bold">wifi</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
