@@ -1,0 +1,162 @@
+<div style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000000; line-height: 1.5;">
+
+<p><b>Spam &amp; Toxic Text Classifier Technical Documentation</b></p>
+<p>This document provides a comprehensive technical overview of the dual-model spam and toxic text classification pipeline driving the automated content moderation services.</p>
+
+<p><b>1. Base Model Specifications</b></p>
+<ul>
+  <li><b>Provider</b>: Hugging Face / Google (DistilBERT architecture)</li>
+  <li><b>Base Model Name</b>: distilbert-base-multilingual-cased</li>
+  <li><b>Architecture</b>: 6-layer Transformer encoder, 768 hidden dimensions, 12 attention heads, ~134M parameters.</li>
+  <li><b>Rationale</b>: Chosen for its lightweight footprint (40% fewer parameters than BERT base while retaining 95% of performance), multilingual capabilities (English &amp; Vietnamese token support), and low inference latency suitable for CPU/GPU server deployments.</li>
+</ul>
+
+<p><b>2. Training Algorithms, Strategies &amp; Techniques</b></p>
+<p><b>Techniques &amp; Strategies:</b></p>
+<ul>
+  <li><b>Transfer Learning &amp; Fine-Tuning</b>:
+    <ul>
+      <li><i>What</i>: Replaced the default pre-training head with a 2-class sequence classification head (num_labels=2, dropout=0.3) for binary toxicity (SAFE vs TOXIC) and spam classification (SAFE vs SPAM).</li>
+      <li><i>Why</i>: Leverages pre-trained multilingual context representation while training downstream classifiers efficiently on specialized domains.</li>
+    </ul>
+  </li>
+  <li><b>Custom Class Weighting (WeightedTrainer with CrossEntropyLoss)</b>:
+    <ul>
+      <li><i>What</i>: Dynamically computes loss weights using Weight = total_samples / (num_classes * class_samples) and applies them to CrossEntropyLoss.</li>
+      <li><i>Why</i>: Solves severe class imbalance issues between safe content and toxic/spam samples, ensuring minority threat classes get proper loss gradients.</li>
+    </ul>
+  </li>
+  <li><b>Cosine Annealing Learning Rate Schedule with Warmup</b>:
+    <ul>
+      <li><i>What</i>: Linear warmup (warmup_steps=0.2) followed by Cosine Annealing decay with peak learning rate 1e-5 and weight_decay=0.01.</li>
+      <li><i>Why</i>: Solves gradient instability early in training and smooths convergence without trapping the model in sharp local minima.</li>
+    </ul>
+  </li>
+  <li><b>Mixed Precision Training (fp16=True)</b>:
+    <ul>
+      <li><i>What</i>: Utilizes 16-bit floating-point execution on CUDA GPUs.</li>
+      <li><i>Why</i>: Reduces GPU memory consumption by ~50% and doubles training/eval throughput without sacrificing model accuracy.</li>
+    </ul>
+  </li>
+  <li><b>Gradient Accumulation (gradient_accumulation_steps=2)</b>:
+    <ul>
+      <li><i>What</i>: Accumulates gradients over 2 micro-batches (per_device_train_batch_size=16) to achieve an effective batch size of 32.</li>
+      <li><i>Why</i>: Allows large effective batch sizes on VRAM-constrained hardware without triggering Out-Of-Memory (OOM) exceptions.</li>
+    </ul>
+  </li>
+  <li><b>Early Stopping &amp; Regularization</b>:
+    <ul>
+      <li><i>What</i>: EarlyStoppingCallback (patience=3), gradient clipping (max_grad_norm=1.0), and dropout (0.3).</li>
+      <li><i>Why</i>: Prevents overfitting on synthetic or domain-specific dataset patterns and selects the optimal checkpoint based on eval_f1_macro.</li>
+    </ul>
+  </li>
+</ul>
+
+<p><b>3. Dataset Specifications</b></p>
+<p><b>Toxicity Dataset:</b></p>
+<ul>
+  <li><b>Total Dataset Size</b>: 199,995 items (180,000 Train / 9,996 Validation / 9,999 Test)</li>
+  <li><b>Sources &amp; Distribution</b>:
+    <ul>
+      <li><b>Vietnamese Data (VOZ-HSD)</b>: Stratified across toxicity probability buckets (Safe &gt;0.995, Mild 0.5 - 0.7, Moderate 0.7 - 0.9, Severe max probability).</li>
+      <li><b>English Data (google/civil_comments)</b>: Stratified across toxicity score thresholds (Safe toxicity = 0, Mild 0.1 - 0.4, Average 0.4 - 0.7, Severe &gt;= 0.7).</li>
+    </ul>
+  </li>
+  <li><b>Label Mapping</b>: 0: SAFE, 1: TOXIC</li>
+</ul>
+
+<p><b>Spam Dataset:</b></p>
+<ul>
+  <li><b>Total Dataset Size</b>: 119,241 items (95,392 Train / 11,923 Validation / 11,926 Test)</li>
+  <li><b>Sources &amp; Distribution</b>:
+    <ul>
+      <li><b>Vietnamese Synthetic Data</b>: Generated using Faker('vi_VN') with templates including fake phishing URLs (bit.ly, vn-xac-thuc.com), realistic phone formats (09x, 03x), bank/amount placeholders, and natural ham templates.</li>
+      <li><b>English Data (mshenoda/spam-messages)</b>: Cleaned English ham/spam message dataset.</li>
+    </ul>
+  </li>
+  <li><b>Label Mapping</b>: 0: SAFE, 1: SPAM</li>
+</ul>
+
+<p><b>4. Model Evaluation &amp; Training Results</b></p>
+<p><b>Toxicity Model Results:</b></p>
+<ul>
+  <li><b>Training Duration</b>: 7 Epochs (Early stopped) | <b>Training Loss</b>: 0.4554</li>
+  <li><b>Validation Metrics</b>:
+    <ul>
+      <li><b>Loss</b>: 0.2334 | <b>Accuracy</b>: 90.80% | <b>Precision</b>: 95.01%</li>
+      <li><b>Recall</b>: 91.67% | <b>F1 Score</b>: 93.31% | <b>Macro F1</b>: 89.29% | <b>Weighted F1</b>: 90.90%</li>
+    </ul>
+  </li>
+  <li><b>Test Set Metrics</b>:
+    <ul>
+      <li><b>Loss</b>: 0.2369 | <b>Accuracy</b>: 91.06% | <b>Precision</b>: 94.76%</li>
+      <li><b>Recall</b>: 92.33% | <b>F1 Score</b>: 93.53% | <b>Macro F1</b>: 89.53% | <b>Weighted F1</b>: 91.13%</li>
+      <li><b>Per-Class Breakout</b>:
+        <ul>
+          <li>SAFE: Precision 0.83, Recall 0.88, F1 0.86 (Support: 3,000)</li>
+          <li>TOXIC: Precision 0.95, Recall 0.92, F1 0.94 (Support: 6,999)</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p><b>Spam Model Results:</b></p>
+<ul>
+  <li><b>Training Duration</b>: 10 Epochs | <b>Training Loss</b>: 0.1013</li>
+  <li><b>Validation Metrics</b>:
+    <ul>
+      <li><b>Loss</b>: 0.0570 | <b>Accuracy</b>: 99.15% | <b>Precision</b>: 99.11%</li>
+      <li><b>Recall</b>: 98.80% | <b>F1 Score</b>: 98.96% | <b>Macro F1</b>: 99.12% | <b>Weighted F1</b>: 99.15%</li>
+    </ul>
+  </li>
+  <li><b>Test Set Metrics</b>:
+    <ul>
+      <li><b>Loss</b>: 0.0582 | <b>Accuracy</b>: 99.07% | <b>Precision</b>: 99.13%</li>
+      <li><b>Recall</b>: 98.52% | <b>F1 Score</b>: 98.82% | <b>Macro F1</b>: 99.03% | <b>Weighted F1</b>: 99.07%</li>
+      <li><b>Per-Class Breakout</b>:
+        <ul>
+          <li>SAFE: Precision 0.99, Recall 0.99, F1 0.99 (Support: 7,195)</li>
+          <li>SPAM: Precision 0.99, Recall 0.99, F1 0.99 (Support: 4,731)</li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<p><b>5. Inference Algorithms, Strategies &amp; Techniques</b></p>
+<ul>
+  <li><b>Dual-Model Parallel Ensemble</b>:
+    <ul>
+      <li><i>What</i>: Evaluates incoming text simultaneously through both fine-tuned models (spam model and toxic model).</li>
+      <li><i>Why</i>: Separates toxicity detection from spam detection into dedicated domain models, yielding higher accuracy than multi-task heads.</li>
+    </ul>
+  </li>
+  <li><b>Robust Sliding Window Chunking (window_size=128, stride=64)</b>:
+    <ul>
+      <li><i>What</i>: Chunks long course descriptions/documents into overlapping 128-token windows with 64-token stride, preserving special tokens ([CLS], [SEP]).</li>
+      <li><i>Why</i>: Solves the transformer max token length truncation limitation. Ensures toxic or spam sentences hidden deep in long text are never clipped or missed.</li>
+    </ul>
+  </li>
+  <li><b>Dynamic Batched Inference (batch_size=16)</b>:
+    <ul>
+      <li><i>What</i>: Batches chunks from multiple extracted texts into tensor batches for vectorized GPU/CPU forward passes.</li>
+      <li><i>Why</i>: Reduces overall latency when processing full courses with dozens of extracted text fields and media transcripts.</li>
+    </ul>
+  </li>
+  <li><b>Hierarchical Priority Aggregation Logic</b>:
+    <ul>
+      <li><i>What</i>: Aggregates chunk-level predictions across 4 tier decisions:
+        <ol>
+          <li><b>High-Confidence Threat (&gt;= threshold)</b> -&gt; FLAGGED (Reason: <i>Severe Threat</i>)</li>
+          <li><b>Low-Confidence Threat (&lt; threshold but labelled non-safe)</b> -&gt; MANUAL_AUDIT (Reason: <i>Probable Threat</i>)</li>
+          <li><b>Low-Confidence Safe (&lt; threshold safe prediction)</b> -&gt; MANUAL_AUDIT (Reason: <i>Ambiguous Content</i>)</li>
+          <li><b>All Clear</b> -&gt; APPROVED (Reason: <i>No Threat Found</i>)</li>
+        </ol>
+      </li>
+      <li><i>Why</i>: Solves false-negative risks by routing border-line predictions to human moderators while instantly flagging high-confidence policy violations.</li>
+    </ul>
+  </li>
+</ul>
+
+</div>

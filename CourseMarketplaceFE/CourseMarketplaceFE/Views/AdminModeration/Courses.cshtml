@@ -165,7 +165,7 @@
                                 break;
                         }
                         
-                        <tr data-course-id="@item.CourseId" class="group transition-all duration-300 @threatRowClass">
+                        <tr id="course_@item.CourseId" data-course-id="@item.CourseId" class="group transition-all duration-300 @threatRowClass">
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
@@ -915,6 +915,24 @@
             sortSelect.value = "oldest";
             triggerAjaxFetch();
         });
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        if (window.location.hash) {
+            const targetId = window.location.hash.substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                setTimeout(() => {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    const classes = ['ring-8', 'ring-red-500', 'bg-red-100'];
+                    targetEl.classList.add(...classes, 'transition-all', 'duration-1000');
+                    
+                    setTimeout(() => {
+                        targetEl.classList.remove(...classes);
+                    }, 3000);
+                }, 500);
+            }
+        }
     });
 </script>
 }

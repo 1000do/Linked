@@ -374,12 +374,13 @@ public class CourseRepository : ICourseRepository
             }
         }
 
-        // 2. Search (Title or Instructor)
+        // 2. Search (Title, Instructor, or CourseId)
         if (!string.IsNullOrEmpty(filter.Search))
         {
             var search = filter.Search.ToLower();
             query = query.Where(c => c.Title.ToLower().Contains(search) ||
-                                   c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search));
+                                   c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search) ||
+                                   c.CourseId.ToString() == search);
         }
 
         // 3. Category Filter

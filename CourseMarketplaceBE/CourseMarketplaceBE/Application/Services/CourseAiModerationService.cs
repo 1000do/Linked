@@ -370,7 +370,7 @@ namespace CourseMarketplaceBE.Application.Services
             await SaveAiFeedbackChangesAsync();
 
             string notificationContent = GetNotificationContent(courseId, moderationStatus, flaggedFields, manualAuditFields);
-            await NotifyManagersAsync("AI Moderation Result", notificationContent, UrlConst.AdminCourseModerationURL);
+            await NotifyManagersAsync("AI Moderation Result", notificationContent, UrlConst.AdminCourseModerationURL + $"?search={courseId}#course_{courseId}");
             
             return true;
         }
@@ -547,7 +547,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var isHealthy = await _aiModerationService.HealthCheckAsync();
                 if (!isHealthy)
                 {
-                    await NotifyManagersAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
+                    await NotifyManagersAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL + $"?search={request.CourseId}#course_{request.CourseId}");
                     return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
@@ -574,7 +574,7 @@ namespace CourseMarketplaceBE.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during AI moderation for course {CourseId}", request.CourseId);
-                await NotifyManagersAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
+                await NotifyManagersAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL + $"?search={request.CourseId}#course_{request.CourseId}");
                 return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
             }
         }
