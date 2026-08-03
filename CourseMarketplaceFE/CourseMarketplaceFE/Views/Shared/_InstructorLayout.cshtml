@@ -27,6 +27,7 @@
 
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/toast-queue.js"></script>
     <script>
         // Prevent SweetAlert from altering the body height/padding, which breaks the fixed layout
         window.Swal = window.Swal.mixin({
@@ -373,58 +374,11 @@
                 }
             }
 
-            // Show a premium real-time toast alert
+            // Show a premium real-time toast alert using FIFO queue
             if (noti && noti.title && localStorage.getItem("AccountLocked") !== "true") {
-                const truncateText = (text, maxLength = 100) => {
-                    if (!text) return "";
-                    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-                };
-
-                const displayTitle = truncateText(noti.title, 255);
-                const displayContent = truncateText(noti.content, 100);
-
-                const Toast = Swal.mixin({
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 10000,
-                    timerProgressBar: true,
-                    width: '600px',
-                    padding: '24px',
-                    didOpen: (toast) => {
-                        toast.addEventListener('mouseenter', Swal.stopTimer);
-                        toast.addEventListener('mouseleave', Swal.resumeTimer);
-                        
-                        // Make entire toast clickable
-                        toast.style.cursor = 'pointer';
-                        toast.addEventListener('click', (e) => {
-                            if (e.target.tagName === 'BUTTON') return;
-                            e.preventDefault();
-                            const targetUrl = noti.linkAction || '/Instructor/Notifications';
-                            try {
-                                const urlObj = new URL(targetUrl, window.location.origin);
-                                if (urlObj.pathname.toLowerCase() === window.location.pathname.toLowerCase()) {
-                                    window.location.href = targetUrl;
-                                    window.location.reload();
-                                } else {
-                                    window.location.href = targetUrl;
-                                }
-                            } catch (err) {
-                                window.location.href = targetUrl;
-                            }
-                        });
-                    }
-                });
-
-                Toast.fire({
-                    icon: 'info',
-                    title: displayTitle,
-                    html: `
-                        <div class="text-left font-body">
-                            <p class="text-[12px] text-slate-600 mt-1 leading-relaxed">${displayContent}</p>
-                            ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-teal-600 hover:text-teal-700 transition-colors">View Detail &rarr;</a>` : ''}
-                        </div>
-                    `
+                ToastQueue.enqueue(noti, {
+                    defaultTargetUrl: '/Instructor/Notifications',
+                    accentColorClass: 'text-teal-600 hover:text-teal-700'
                 });
             }
 
