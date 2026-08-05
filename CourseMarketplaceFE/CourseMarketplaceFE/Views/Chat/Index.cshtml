@@ -335,7 +335,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
                             <p class="text-xs text-slate-500 m-0 truncate">${c.lastMessage || 'Start chatting...'}</p>
-                            ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount}</span>` : ''}
+                            ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount > 99 ? '99+' : c.unreadCount}</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -397,14 +397,15 @@
             const container = document.getElementById('pending-requests-container');
             const list = document.getElementById('pending-requests-list');
             const count = document.getElementById('pending-count');
-
+            
             if (!pendingRequests || pendingRequests.length === 0) {
                 container.style.display = 'none';
                 return;
             }
+            const pendingCount = pendingRequests.length;
 
             container.style.display = 'block';
-            count.innerText = pendingRequests.length;
+            count.innerText = pendingCount > 99 ? "99+" : pendingCount;
 
             const actor = '@actor'; // From Razor view
             const isStaffOrAdmin = actor === 'Admin' || actor === 'Staff';
