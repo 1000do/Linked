@@ -148,7 +148,7 @@
             <a href="/Notification/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">notifications</span> 
                 Notifications
-                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-noti-badge"></span>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden" id="admin-noti-badge"></span>
             </a>
             @if (!isStaff) {
                 <a href="/Coupon/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
@@ -159,7 +159,7 @@
             <a href="/Chat/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">forum</span> 
                 Monitor Chats
-                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-chat-badge"></span>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden" id="admin-chat-badge"></span>
             </a>
 
 
@@ -346,9 +346,23 @@
                 connection.on("ReceiveNotification", function (noti) {
                     // 1. Show red dot at sidebar and header notification menu
                     const adminBadge = document.getElementById('admin-noti-badge');
-                    if (adminBadge) adminBadge.classList.remove('hidden');
+                    if (adminBadge) {
+                        adminBadge.classList.remove('hidden');
+                        let currentCount = parseInt(adminBadge.textContent || "0");
+                        if (!isNaN(currentCount)) {
+                            currentCount++;
+                            adminBadge.textContent = currentCount > 99 ? '99+' : currentCount;
+                        }
+                    }
                     const headerBadge = document.getElementById('header-admin-noti-badge');
-                    if (headerBadge) headerBadge.classList.remove('hidden');
+                    if (headerBadge) {
+                        headerBadge.classList.remove('hidden');
+                        let currentCount = parseInt(headerBadge.textContent || "0");
+                        if (!isNaN(currentCount)) {
+                            currentCount++;
+                            headerBadge.textContent = currentCount > 99 ? '99+' : currentCount;
+                        }
+                    }
 
                     // Reload dropdown list
                     if (typeof loadAdminTopNotifications === 'function') loadAdminTopNotifications();
@@ -432,8 +446,15 @@
                 if (response.ok) {
                     const result = await response.json();
                     const notifications = result.data?.items || [];
-                    const hasUnread = notifications.some(n => n.isRead === false);
-                    if (sidebarBadge) hasUnread ? sidebarBadge.classList.remove('hidden') : sidebarBadge.classList.add('hidden');
+                    const unreadCount = result.data?.unreadCount !== undefined ? result.data.unreadCount : notifications.filter(n => n.isRead === false).length;
+                    if (sidebarBadge) {
+                        if (unreadCount > 0) {
+                            sidebarBadge.classList.remove('hidden');
+                            sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        } else {
+                            sidebarBadge.classList.add('hidden');
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Fetch error:", err);
@@ -449,7 +470,14 @@
                 if (response.ok) {
                     const result = await response.json();
                     const count = result.count || result.Count || 0;
-                    if (chatBadge) count > 0 ? chatBadge.classList.remove('hidden') : chatBadge.classList.add('hidden');
+                    if (chatBadge) {
+                        if (count > 0) {
+                            chatBadge.classList.remove('hidden');
+                            chatBadge.textContent = count > 99 ? '99+' : count;
+                        } else {
+                            chatBadge.classList.add('hidden');
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Fetch chat unread count error:", err);

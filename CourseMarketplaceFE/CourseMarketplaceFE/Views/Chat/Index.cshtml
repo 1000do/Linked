@@ -283,6 +283,18 @@
                 }
             });
 
+            chatPageConnection.on("Error", function (message) {
+                Swal.fire('Error', message, 'error');
+            });
+
+            window.addEventListener('focus', function () {
+                if (activeChatId && activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                    if (chatPageConnection.state === signalR.HubConnectionState.Connected) {
+                        chatPageConnection.invoke("MarkAsRead", parseInt(activeChatId)).catch(err => console.error(err));
+                    }
+                }
+            });
+
             try {
                 await chatPageConnection.start();
                 console.log("SignalR Connected.");
@@ -682,7 +694,9 @@
                 
                 const list = document.getElementById('message-list');
                 list.innerHTML = "";
-                messages.forEach(m => appendMessage(m));
+                if (Array.isArray(messages)) {
+                    messages.forEach(m => appendMessage(m));
+                }
                 scrollToBottom();
 
                 // Broadcast read receipt
