@@ -49,7 +49,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpPut("mark-all-as-read")]
-        [Authorize(Roles = "user,instructor")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> MarkAllAsRead()
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -68,7 +68,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         }
 
         [HttpPut("mark-as-read/{id}")]
-        [Authorize(Roles = "user,instructor")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

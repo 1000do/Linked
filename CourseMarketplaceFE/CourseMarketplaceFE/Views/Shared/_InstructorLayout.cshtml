@@ -208,7 +208,7 @@
             <a href="/Instructor/Notifications" class="@GetNavClass(isNotifications) @disabledClass relative">
                 <span class="@GetIconClass(isNotifications)">notifications</span>
                 Notifications
-                <span id="sidebar-noti-badge" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden"></span>
+                <span id="sidebar-noti-badge" class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden"></span>
             </a>
 
             @{
@@ -217,7 +217,7 @@
             <a href="/Chat/Instructor" class="@GetNavClass(isChat) @disabledClass relative">
                 <span class="@GetIconClass(isChat)">chat_bubble</span>
                 Messages
-                <span id="sidebar-msg-badge" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden"></span>
+                <span id="sidebar-msg-badge" class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden"></span>
             </a>
             
             <div class="h-px bg-slate-100 my-4 mx-3"></div>
@@ -353,7 +353,14 @@
         connection.on("ReceiveNotification", function (noti) {
             // 1. Hiện chấm đỏ ở chuông
             const badge = document.getElementById('noti-badge');
-            if(badge) badge.classList.remove('hidden');
+            if (badge) {
+                badge.classList.remove('hidden');
+                let currentCount = parseInt(badge.textContent || "0");
+                if (!isNaN(currentCount)) {
+                    currentCount++;
+                    badge.textContent = currentCount > 99 ? '99+' : currentCount;
+                }
+            }
 
             // 2. Cập nhật danh sách nhỏ ở chuông
             if (typeof loadTopNotifications === "function") loadTopNotifications();
@@ -398,6 +405,10 @@
             loadUnreadSummary();
         });
 
+        chatConnection.on("MessageRead", function() {
+            loadUnreadSummary();
+        });
+
         connection.on("AccountLockedOut", () => {
             localStorage.setItem("AccountLocked", "true");
             Swal.fire({
@@ -428,22 +439,34 @@
                     // Cập nhật Sidebar Notification Badge
                     const sidebarNotiBadge = document.getElementById('sidebar-noti-badge');
                     if (sidebarNotiBadge) {
-                        if (data.notificationCount > 0) sidebarNotiBadge.classList.remove('hidden');
-                        else sidebarNotiBadge.classList.add('hidden');
+                        if (data.notificationCount > 0) {
+                            sidebarNotiBadge.classList.remove('hidden');
+                            sidebarNotiBadge.textContent = data.notificationCount > 99 ? '99+' : data.notificationCount;
+                        } else {
+                            sidebarNotiBadge.classList.add('hidden');
+                        }
                     }
 
                     // Cập nhật Sidebar Message Badge
                     const sidebarMsgBadge = document.getElementById('sidebar-msg-badge');
                     if (sidebarMsgBadge) {
-                        if (data.chatCount > 0) sidebarMsgBadge.classList.remove('hidden');
-                        else sidebarMsgBadge.classList.add('hidden');
+                        if (data.chatCount > 0) {
+                            sidebarMsgBadge.classList.remove('hidden');
+                            sidebarMsgBadge.textContent = data.chatCount > 99 ? '99+' : data.chatCount;
+                        } else {
+                            sidebarMsgBadge.classList.add('hidden');
+                        }
                     }
 
                     // Cập nhật Header chuông badge (nếu có)
                     const headerNotiBadge = document.getElementById('noti-badge');
                     if (headerNotiBadge) {
-                        if (data.notificationCount > 0) headerNotiBadge.classList.remove('hidden');
-                        else headerNotiBadge.classList.add('hidden');
+                        if (data.notificationCount > 0) {
+                            headerNotiBadge.classList.remove('hidden');
+                            headerNotiBadge.textContent = data.notificationCount > 99 ? '99+' : data.notificationCount;
+                        } else {
+                            headerNotiBadge.classList.add('hidden');
+                        }
                     }
                 }
 

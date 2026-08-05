@@ -7,5 +7,6 @@ namespace CourseMarketplaceBE.Application.IServices
         Task SendReportUpdateAsync();
         Task SendReviewUpdateAsync();
         Task SendCourseUpdateAsync();
+        Task SendInstructorApplicationUpdateAsync();
     }
 }

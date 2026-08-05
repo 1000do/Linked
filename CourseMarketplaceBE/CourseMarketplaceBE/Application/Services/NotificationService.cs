@@ -48,6 +48,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<bool> SendNotificationAsync(int receiverId, string title, string content, string? linkAction)
         {
+            ValidateLinkAction(linkAction);
             var now = DateTime.SpecifyKind(DateTime.UtcNow.AddHours(7), DateTimeKind.Unspecified);
 
             var noti = new Notification
@@ -190,6 +191,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<int> SendAdvancedAsync(NotificationAdvancedDto dto, int senderId, string senderRole)
         {
+            ValidateLinkAction(dto.LinkAction);
             var targetUserIds = await ResolveTargetUserIdsAsync(dto, senderId, senderRole);
             if (!targetUserIds.Any()) return 0;
 
@@ -394,6 +396,19 @@ namespace CourseMarketplaceBE.Application.Services
             if (remainingManagerIds.Any())
             {
                 await _hubContext.Clients.Users(remainingManagerIds).SendAsync("ReceiveNotification");
+            }
+        }
+
+        private static void ValidateLinkAction(string? linkAction)
+        {
+            if (string.IsNullOrWhiteSpace(linkAction)) return;
+
+            var link = linkAction.Trim();
+            if (!link.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !link.StartsWith("https://", StringComparison.OrdinalIgnoreCase) &&
+                !link.StartsWith("/"))
+            {
+                throw new InvalidOperationException("Link Action must start with 'http://', 'https://', or '/'.");
             }
         }
     }

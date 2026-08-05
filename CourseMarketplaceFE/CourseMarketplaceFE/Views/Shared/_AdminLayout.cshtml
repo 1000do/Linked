@@ -119,9 +119,10 @@
         <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
             <div class="px-3 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-none">Workspace</div>
             
-            <a href="/AdminApproval" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminApproval" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">how_to_reg</span> 
                 Instructor Approvals
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden" id="admin-instructor-approval-badge"></span>
             </a>
             @if (!isStaff) {
                 <a href="/AdminAccount" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
@@ -151,7 +152,7 @@
             <a href="/Notification/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">notifications</span> 
                 Notifications
-                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-noti-badge"></span>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden" id="admin-noti-badge"></span>
             </a>
             @if (!isStaff) {
                 <a href="/Coupon/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
@@ -162,7 +163,7 @@
             <a href="/Chat/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">forum</span> 
                 Monitor Chats
-                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-rose-500 hidden" id="admin-chat-badge"></span>
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center hidden" id="admin-chat-badge"></span>
             </a>
 
 
@@ -341,6 +342,7 @@
                 loadPendingReviewCount();
                 loadPendingReportCount();
                 loadPendingCourseCount();
+                loadPendingApprovalStatus();
 
                 const connection = new signalR.HubConnectionBuilder()
                     .withUrl("/notificationHub", {
@@ -350,20 +352,16 @@
                     .build();
 
                 connection.on("ReceiveNotification", function (noti) {
-                    // 1. Show red dot at sidebar and header notification menu
-                    const adminBadge = document.getElementById('admin-noti-badge');
-                    if (adminBadge) adminBadge.classList.remove('hidden');
-                    const headerBadge = document.getElementById('header-admin-noti-badge');
-                    if (headerBadge) headerBadge.classList.remove('hidden');
-
-                    // Reload dropdown list
+                    // Reload notification unread count for current user
                     if (typeof loadAdminTopNotifications === 'function') loadAdminTopNotifications();
 
                     // Dispatch event for child views (like Notification/Admin page to reload list)
                     document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
 
-                    // Show a premium real-time toast alert using FIFO queue
-                    if (noti && noti.title) {
+                    // Show a premium real-time toast alert using FIFO queue if for current user
+                    const currentUserId = getAdminCurrentUserId();
+                    const notiReceiverId = noti ? (noti.receiverId !== undefined ? noti.receiverId : noti.ReceiverId) : null;
+                    if (noti && noti.title && (currentUserId === 0 || !notiReceiverId || notiReceiverId === currentUserId)) {
                         ToastQueue.enqueue(noti, {
                             defaultTargetUrl: '/Notification/Admin',
                             accentColorClass: 'text-emerald-600 hover:text-emerald-700'
@@ -416,6 +414,7 @@
                     })
                     .withAutomaticReconnect()
                     .build();
+               
 
                 reportConnection.on("ReceiveReportUpdate", function () {
                     document.dispatchEvent(new CustomEvent("ReceiveReportUpdateEvent"));
@@ -451,10 +450,43 @@
                 });
 
                 courseModerationConnection.start().catch(err => console.error("Admin Course Moderation Hub connection error: ", err));
+
+                const approvalConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/instructorApprovalHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+                approvalConnection.on("InstructorApplicationUpdated", function () {
+                    if (typeof loadPendingApprovalStatus === 'function') {
+                        loadPendingApprovalStatus();
+                    }
+                    document.dispatchEvent(new CustomEvent("InstructorApplicationUpdatedEvent"));
+                });
+
+                approvalConnection.start().catch(err => console.error("Admin Instructor Approval Hub connection error: ", err));
             }
         });
 
-
+        function getAdminCurrentUserId() {
+            try {
+                if (!window.ADMIN_LAYOUT_TOKEN) return parseInt("@(Context.Request.Cookies["UserId"] ?? "0")", 10) || 0;
+                const base64Url = window.ADMIN_LAYOUT_TOKEN.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const payload = JSON.parse(jsonPayload);
+                const sid = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+                         ?? payload['sub']
+                         ?? payload['nameid']
+                         ?? payload['nameidentifier']
+                         ?? 0;
+                return parseInt(sid, 10) || parseInt("@(Context.Request.Cookies["UserId"] ?? "0")", 10) || 0;
+            } catch(e) {
+                return parseInt("@(Context.Request.Cookies["UserId"] ?? "0")", 10) || 0;
+            }
+        }
 
         function timeSince(date) {
             const seconds = Math.floor((new Date() - date) / 1000);
@@ -477,15 +509,39 @@
 
         async function loadAdminTopNotifications() {
             const sidebarBadge = document.getElementById('admin-noti-badge');
+            const headerBadge = document.getElementById('header-admin-noti-badge');
             if (!window.ADMIN_LAYOUT_TOKEN) return;
 
             try {
                 const response = await fetch("/Notification/GetAllAdmin");
                 if (response.ok) {
                     const result = await response.json();
-                    const notifications = result.data?.items || [];
-                    const hasUnread = notifications.some(n => n.isRead === false);
-                    if (sidebarBadge) hasUnread ? sidebarBadge.classList.remove('hidden') : sidebarBadge.classList.add('hidden');
+                    const notifications = result.data?.items || result.items || (Array.isArray(result) ? result : []);
+                    const currentUserId = getAdminCurrentUserId();
+                    
+                    // Filter notifications to only count unread notifications matching receiverId === currentUserId
+                    const unreadCount = notifications.filter(n => {
+                        const isUnread = (n.isRead === false || n.IsRead === false);
+                        const receiverId = n.receiverId !== undefined ? n.receiverId : n.ReceiverId;
+                        return isUnread && (currentUserId === 0 || receiverId === currentUserId);
+                    }).length;
+
+                    if (sidebarBadge) {
+                        if (unreadCount > 0) {
+                            sidebarBadge.classList.remove('hidden');
+                            sidebarBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        } else {
+                            sidebarBadge.classList.add('hidden');
+                        }
+                    }
+                    if (headerBadge) {
+                        if (unreadCount > 0) {
+                            headerBadge.classList.remove('hidden');
+                            headerBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                        } else {
+                            headerBadge.classList.add('hidden');
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Fetch error:", err);
@@ -501,7 +557,14 @@
                 if (response.ok) {
                     const result = await response.json();
                     const count = result.count || result.Count || 0;
-                    if (chatBadge) count > 0 ? chatBadge.classList.remove('hidden') : chatBadge.classList.add('hidden');
+                    if (chatBadge) {
+                        if (count > 0) {
+                            chatBadge.classList.remove('hidden');
+                            chatBadge.textContent = count > 99 ? '99+' : count;
+                        } else {
+                            chatBadge.classList.add('hidden');
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Fetch chat unread count error:", err);
@@ -568,6 +631,28 @@
                 }
             } catch (err) {
                 console.error("Fetch pending review count error:", err);
+            }
+        }
+        async function loadPendingApprovalStatus() {
+            const approvalBadge = document.getElementById('admin-instructor-approval-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN) return;
+
+            try {
+                const response = await fetch("/AdminApproval/GetPendingCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count !== undefined ? result.count : (result.Count !== undefined ? result.Count : 0);
+                    if (approvalBadge) {
+                        if (count > 0) {
+                            approvalBadge.classList.remove('hidden');
+                            approvalBadge.textContent = count > 99 ? '99+' : count;
+                        } else {
+                            approvalBadge.classList.add('hidden');
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending approval status error:", err);
             }
         }
     </script>

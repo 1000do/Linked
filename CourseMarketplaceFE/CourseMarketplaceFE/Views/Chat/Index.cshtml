@@ -225,12 +225,12 @@
             });
 
             chatPageConnection.on("SupportRequestAccepted", async (data) => {
-                if (activeChatId === 'support_ticket') {
-                    isWaitingForSupportStaff = false;
-                    await loadChats();
-                    selectChat(data.chatId || data.ChatId, 'Support Team', '/img/default-avatar.png', true, true);
-                } else {
-                    await loadChats();
+                isWaitingForSupportStaff = false;
+                await loadChats();
+                await loadPendingRequests();
+                const newChatId = data.chatId || data.ChatId;
+                if (activeChatId === 'support_ticket' || activeChatId === newChatId) {
+                    selectChat(newChatId, 'Support Team', '/img/default-avatar.png', true, true);
                 }
             });
 
@@ -283,6 +283,18 @@
                 }
             });
 
+            chatPageConnection.on("Error", function (message) {
+                Swal.fire('Error', message, 'error');
+            });
+
+            window.addEventListener('focus', function () {
+                if (activeChatId && activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                    if (chatPageConnection.state === signalR.HubConnectionState.Connected) {
+                        chatPageConnection.invoke("MarkAsRead", parseInt(activeChatId)).catch(err => console.error(err));
+                    }
+                }
+            });
+
             try {
                 await chatPageConnection.start();
                 console.log("SignalR Connected.");
@@ -323,7 +335,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
                             <p class="text-xs text-slate-500 m-0 truncate">${c.lastMessage || 'Start chatting...'}</p>
-                            ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount}</span>` : ''}
+                            ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount > 99 ? '99+' : c.unreadCount}</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -385,14 +397,15 @@
             const container = document.getElementById('pending-requests-container');
             const list = document.getElementById('pending-requests-list');
             const count = document.getElementById('pending-count');
-
+            
             if (!pendingRequests || pendingRequests.length === 0) {
                 container.style.display = 'none';
                 return;
             }
+            const pendingCount = pendingRequests.length;
 
             container.style.display = 'block';
-            count.innerText = pendingRequests.length;
+            count.innerText = pendingCount > 99 ? "99+" : pendingCount;
 
             const actor = '@actor'; // From Razor view
             const isStaffOrAdmin = actor === 'Admin' || actor === 'Staff';
@@ -496,6 +509,7 @@
                     const pendings = await pendingRes.json();
                     if (pendings && pendings.length > 0) {
                         showPendingSupportUI(pendings[0].initialMessage);
+                        await loadPendingRequests();
                         return;
                     }
                 }
@@ -576,6 +590,7 @@
             document.getElementById('chat-content').style.display = 'none';
             document.getElementById('empty-state').style.display = 'block';
             document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+            loadPendingRequests();
         }
         // ------------------------------ //
 
@@ -682,7 +697,9 @@
                 
                 const list = document.getElementById('message-list');
                 list.innerHTML = "";
-                messages.forEach(m => appendMessage(m));
+                if (Array.isArray(messages)) {
+                    messages.forEach(m => appendMessage(m));
+                }
                 scrollToBottom();
 
                 // Broadcast read receipt
@@ -827,6 +844,7 @@
                     if (res.ok) {
                         input.value = "";
                         showPendingSupportUI(content);
+                        await loadPendingRequests();
                     } else {
                         Swal.fire('Error', 'Failed to send request.', 'error');
                     }

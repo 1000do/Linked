@@ -16,11 +16,13 @@ public class ChatController : ControllerBase
 {
     private readonly IChatService _chatService;
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly IRedisService _redisService;
 
-    public ChatController(IChatService chatService, IHubContext<ChatHub> hubContext)
+    public ChatController(IChatService chatService, IHubContext<ChatHub> hubContext, IRedisService redisService)
     {
         _chatService = chatService;
         _hubContext = hubContext;
+        _redisService = redisService;
     }
 
     [HttpGet("support-account")]
@@ -200,8 +202,9 @@ public class ChatController : ControllerBase
         {
             var ticket = await _chatService.CreateSupportRequestAsync(accountId, dto);
             
-            // Broadcast to the target role group
+            // Broadcast to the target role group and sender user group
             await _hubContext.Clients.Group($"Role_{dto.TargetRole.ToLower()}").SendAsync("NewSupportRequest", ticket);
+            await _hubContext.Clients.Group($"User_{accountId}").SendAsync("NewSupportRequest", ticket);
             
             return Ok(ticket);
         }
@@ -218,13 +221,11 @@ public class ChatController : ControllerBase
         var accountId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
         try
         {
-            // Get ticket details to know the sender before we accept (and consume) it
-            var tickets = await _chatService.GetPendingRequestsAsync(accountId, "admin");
-            if (tickets == null || tickets.Count == 0) tickets = await _chatService.GetPendingRequestsAsync(accountId, "staff");
+            // Get ticket details directly from Redis cache to know the sender before we accept (and consume) it
+            var allTickets = await _redisService.GetCacheAsync<List<SupportTicketDto>>("ActiveSupportTickets") ?? new List<SupportTicketDto>();
+            var ticket = allTickets.FirstOrDefault(t => t.TicketId == ticketId);
             
-            var ticket = tickets?.FirstOrDefault(t => t.TicketId == ticketId);
-            
-            // Broadcast to remove from lists
+            // Broadcast to remove from admin/staff lists
             await _hubContext.Clients.Group("Role_staff").SendAsync("RemoveSupportRequest", ticketId);
             await _hubContext.Clients.Group("Role_admin").SendAsync("RemoveSupportRequest", ticketId);
 
@@ -244,8 +245,9 @@ public class ChatController : ControllerBase
 
             if (ticket != null)
             {
-                // Notify the sender that their request was accepted
+                // Notify the sender that their request was accepted & update their UI
                 await _hubContext.Clients.Group($"User_{ticket.SenderId}").SendAsync("SupportRequestAccepted", new { ChatId = chatId, TicketId = ticketId });
+                await _hubContext.Clients.Group($"User_{ticket.SenderId}").SendAsync("RemoveSupportRequest", ticketId);
             }
             
             return Ok(new { ChatId = chatId });
