@@ -324,8 +324,13 @@ public class Program
                     // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) &&
-                        (path.StartsWithSegments("/notificationHub") || path.StartsWithSegments("/chatHub")))
+                    if (!string.IsNullOrEmpty(accessToken) && 
+                        (path.StartsWithSegments("/notificationHub") || 
+                         path.StartsWithSegments("/chatHub") || 
+                         path.StartsWithSegments("/financeHub") ||
+                         path.StartsWithSegments("/courseModerationHub") ||
+                         path.StartsWithSegments("/reportModerationHub") ||
+                         path.StartsWithSegments("/reviewModerationHub")))
                     {
                         context.Token = accessToken;
                         return Task.CompletedTask;
