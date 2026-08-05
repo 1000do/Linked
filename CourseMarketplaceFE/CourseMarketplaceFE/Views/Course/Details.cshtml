@@ -211,11 +211,10 @@
                                     .Sum(m => m.MaterialMetadata?.Duration ?? 0);
                                 var totalResources = Model.Lessons.SelectMany(l => l.LearningMaterials)
                                     .Count(m => m.MaterialMetadata?.FileType != "video");
-                                var heroTotalHours = Math.Round(totalDurationInSeconds / 3600.0, 1);
                             }
                             <li class="flex items-center gap-3 text-slate-600">
                                 <span class="material-symbols-outlined text-[18px]">ondemand_video</span>
-                                <span>@(heroTotalHours > 0 ? heroTotalHours.ToString("F1") : "0") hours on-demand video</span>
+                                <span>@FormatDuration(totalDurationInSeconds) on-demand video</span>
                             </li>
                             <li class="flex items-center gap-3 text-slate-600">
                                 <span class="material-symbols-outlined text-[18px]">description</span>

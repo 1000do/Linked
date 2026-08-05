@@ -167,7 +167,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
                         sId,
                         "Instructor Temporarily Suspended",
                         "This instructor has been temporarily suspended for 30 days.\nDuring this period, their courses will not receive new updates and you will not be able to contact them.\nWe apologize for any inconvenience.",
-                        null!
+                        $"/Course/Details/{c.CourseId}"
                     );
                     sentAny = true;
                 }
