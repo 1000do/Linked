@@ -124,7 +124,7 @@ namespace CourseMarketplaceBE.Application.Services
                         ReceiverId = studentId,
                         Title = "Course Content Updated",
                         Content = $"The course '{course.Title}' you enrolled in has been updated with new content. Check it out now!",
-                        LinkAction = $"/Course/Learn?id={courseId}"
+                        LinkAction = $"/Course/Learn/{courseId}"
                     }).ToList();
 
                     await _notificationService.SendBulkNotificationsAsync(studentNotifications);
@@ -154,7 +154,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     "Course Rejected",
                     $"Your course '{course.Title}' was not approved. Reason: {reason}",
-                    $"/InstructorCourse/Editor?id={courseId}"
+                    $"/InstructorCourse/Editor/{courseId}"
                 );
             }
 
@@ -209,7 +209,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     subject,
                     message,
-                    $"/InstructorCourse/Editor?id={courseId}"
+                    $"/InstructorCourse/Editor/{courseId}"
                 );
             }
 
@@ -388,7 +388,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     "Course Rejected",
                     $"Your course '{course.Title}' was not approved. Please check details in the course editor.",
-                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                    $"/InstructorCourse/Editor/{request.CourseId}"
                 );
             }
 
@@ -539,7 +539,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     subject,
                     message,
-                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                    $"/InstructorCourse/Editor/{request.CourseId}"
                 );
             }
 
