@@ -1066,7 +1066,7 @@ public partial class AppDbContext : DbContext
 
         modelBuilder.Entity<CourseStats>(entity =>
         {
-            entity.HasNoKey();
+            entity.HasKey(e => e.CourseId);
             entity.ToView("view_course_stats");
         });
 

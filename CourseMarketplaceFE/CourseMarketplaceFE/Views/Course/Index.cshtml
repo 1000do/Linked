@@ -234,7 +234,7 @@
                 else
                 {
                     <!-- Active Filter Badges Container -->
-                    <div id="active-filters-badges" class="mb-5 flex flex-wrap items-center gap-2 @(string.IsNullOrEmpty(currentQuery) && string.IsNullOrEmpty(currentCategory) && currentSort == "newest" && string.IsNullOrEmpty(currentPrice) && string.IsNullOrEmpty(currentRating) ? "hidden" : "")">
+                    <div id="active-filters-badges" class="mb-5 flex flex-wrap items-center gap-2 @(string.IsNullOrEmpty(currentQuery) && string.IsNullOrEmpty(currentCategory) && (string.IsNullOrEmpty(currentSort) || currentSort == "newest") && (string.IsNullOrEmpty(currentPrice) || currentPrice == "all") && (string.IsNullOrEmpty(currentRating) || currentRating == "all") ? "hidden" : "")">
                         <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Active Filters:</span>
                         
                         @if (!string.IsNullOrEmpty(currentQuery))

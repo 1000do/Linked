@@ -127,13 +127,11 @@ public class CourseRepository : ICourseRepository
         // 0.2. Filtering by rating
         if (!string.IsNullOrEmpty(rating) && rating != "all")
         {
-            if (decimal.TryParse(rating, out decimal minRating))
+            if (decimal.TryParse(rating, System.Globalization.CultureInfo.InvariantCulture, out decimal minRating))
             {
-                queryable = from c in queryable
-                            join s in _context.CourseStats on c.CourseId equals s.CourseId into statsGroup
-                            from s in statsGroup.DefaultIfEmpty()
-                            where s != null && s.RatingAverage >= (double)minRating
-                            select c;
+                double minRatingDouble = (double)minRating;
+                queryable = queryable.Where(c => _context.CourseStats
+                    .Any(s => s.CourseId == c.CourseId && s.RatingAverage >= minRatingDouble));
             }
         }
 

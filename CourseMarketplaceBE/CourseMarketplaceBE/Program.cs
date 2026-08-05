@@ -330,6 +330,7 @@ public class Program
                          path.StartsWithSegments("/financeHub") ||
                          path.StartsWithSegments("/courseModerationHub") ||
                          path.StartsWithSegments("/reportModerationHub") ||
+                         path.StartsWithSegments("/adminModerationHub") ||
                          path.StartsWithSegments("/reviewModerationHub")))
                     {
                         context.Token = accessToken;
@@ -474,6 +475,7 @@ public class Program
         app.MapHub<CourseModerationHub>("/courseModerationHub");
         app.MapHub<ChatHub>("/chatHub");
         app.MapHub<FinanceHub>("/financeHub");
+        app.MapHub<AdminModerationHub>("/adminModerationHub");
 
         app.MapControllers();
 

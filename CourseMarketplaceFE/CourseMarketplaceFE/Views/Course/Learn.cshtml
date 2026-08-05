@@ -497,7 +497,7 @@
         function isLessonCompleted(lessonId) {
             const mIds = lessonMaterialsMap[lessonId];
             if (!mIds || mIds.length === 0) return false;
-            return mIds.every(id => completedMaterialIdsArray.includes(id));
+            return mIds.every(id => completedMaterialIdsArray.includes(Number(id)));
         }
 
         function updateSequentialLockState() {
@@ -565,13 +565,18 @@
 
                     // Update checkmarks in sidebar
                     if (data.completedMaterialIds) {
-                        completedMaterialIdsArray = data.completedMaterialIds;
+                        completedMaterialIdsArray = data.completedMaterialIds.map(Number);
                         data.completedMaterialIds.forEach(id => {
                             const checkIcon = document.getElementById('check-' + id);
                             if (checkIcon) checkIcon.classList.remove('hidden');
                         });
                     } else {
                         completedMaterialIdsArray = [];
+                    }
+
+                    // Sync video completion status for currently active video
+                    if (currentMaterialId) {
+                        isCurrentVideoCompleted = completedMaterialIdsArray.includes(Number(currentMaterialId));
                     }
 
                     // Update lesson locks (Sequential Progression)
@@ -1294,7 +1299,7 @@
             }
 
             // Anti-skip setup
-            isCurrentVideoCompleted = completedMaterialIdsArray.includes(materialId);
+            isCurrentVideoCompleted = completedMaterialIdsArray.includes(Number(materialId));
             maxPlayedTime = 0;
 
             if (isVideo) {
@@ -1433,7 +1438,8 @@
             quizIframe.src = '/QuizAttempt/Take/' + quizId;
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadProgress();
             const firstItem = document.querySelector('.material-item');
             if (firstItem) {
                 firstItem.classList.remove('active-material');
@@ -1443,7 +1449,6 @@
                 const reviewsBtn = document.querySelector('button[onclick="switchTab(\\\'reviews\\\', this)"]');
                 if (reviewsBtn) reviewsBtn.click();
             }
-            loadProgress();
             loadLessonRatings();
         });
 

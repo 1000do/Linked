@@ -35,6 +35,7 @@ public class CheckoutService : ICheckoutService
     private readonly IUserRepository _userRepo;
     private readonly IAdminFinanceService _adminFinanceService;
     private readonly IConfiguration _configuration;
+    private readonly IWishlistService _wishlistService;
 
     public CheckoutService(
         ICheckoutRepository repo,
@@ -47,7 +48,8 @@ public class CheckoutService : ICheckoutService
         ICourseRepository courseRepo,
         ICouponRepository couponRepo,
         IUserRepository userRepo,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IWishlistService wishlistService)
     {
         _repo = repo;
         _enrollmentRepo = enrollmentRepo;
@@ -60,6 +62,7 @@ public class CheckoutService : ICheckoutService
         _userRepo = userRepo;
         _adminFinanceService = adminFinanceService;
         _configuration = configuration;
+        _wishlistService = wishlistService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -419,6 +422,15 @@ public class CheckoutService : ICheckoutService
 
             await ProcessEnrollmentAsync(userId, courseId, course.Title);
             await ProcessPayoutAndNotificationAsync(transaction, course.InstructorId, course.Title, purchasePrice, currentTransferRate);
+            
+            try
+            {
+                await _wishlistService.RemoveFromWishlistAsync(userId, courseId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[CHECKOUT-DEBUG] Failed to remove course {CourseId} from wishlist for user {UserId}", courseId, userId);
+            }
         }
     }
 

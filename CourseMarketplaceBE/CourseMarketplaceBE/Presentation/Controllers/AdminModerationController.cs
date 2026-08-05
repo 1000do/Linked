@@ -7,6 +7,8 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CourseMarketplaceBE.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CourseMarketplaceBE.Presentation.Controllers
 {
@@ -20,13 +22,15 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         private readonly IReportModerationService _reportService;
         private readonly IReviewModerationService _reviewModerationService;
         private readonly IHubService _hubService;
+        private readonly IHubContext<AdminModerationHub> _hubContext;
 
         public AdminModerationController(
             ICourseModerationService courseModerationService,
             IUserReportModerationService userReportModerationService,
             IReportModerationService reportService,
             IReviewModerationService reviewModerationService,
-            IHubService hubService)
+            IHubService hubService,
+            IHubContext<AdminModerationHub> hubContext)
         {
             _courseModerationService = courseModerationService;
             _userReportModerationService = userReportModerationService;
@@ -82,37 +86,60 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         public async Task<IActionResult> ApproveCourse(int id, [FromBody] string? feedback)
         {
             var result = await _courseModerationService.ApproveCourseAsync(id, feedback);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await _hubContext.Clients.Group("admin_moderators").SendAsync("ModerationQueueUpdated");
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/reject/{id}")]
         public async Task<IActionResult> RejectCourse(int id, [FromBody] string reason)
         {
             var result = await _courseModerationService.RejectCourseAsync(id, reason);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await _hubContext.Clients.Group("admin_moderators").SendAsync("ModerationQueueUpdated");
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/reject-detailed")]
         public async Task<IActionResult> RejectCourseDetailed([FromBody] RejectCourseDetailedRequest request)
         {
             var result = await _courseModerationService.RejectCourseDetailedAsync(request);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await _hubContext.Clients.Group("admin_moderators").SendAsync("ModerationQueueUpdated");
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/flag/{id}")]
         public async Task<IActionResult> FlagCourse(int id, [FromBody] string reason)
         {
             var result = await _courseModerationService.FlagCourseAsync(id, reason);
-            return result ? Ok() : NotFound();
+            if (result)
+            {
+                await _hubContext.Clients.Group("admin_moderators").SendAsync("ModerationQueueUpdated");
+                return Ok();
+            }
+            return NotFound();
         }
 
         [HttpPost("courses/unflag/{id}")]
         public async Task<IActionResult> UnflagCourse(int id)
         {
             var result = await _courseModerationService.UnflagCourseAsync(id);
-            return result 
-                ? Ok(ApiResponse<string>.SuccessResponse("Course unflagged successfully.")) 
-                : NotFound(ApiResponse<string>.ErrorResponse("Course not found or could not be unflagged."));
+            if (result)
+            {
+                await _hubContext.Clients.Group("admin_moderators").SendAsync("ModerationQueueUpdated");
+                return Ok(ApiResponse<string>.SuccessResponse("Course unflagged successfully."));
+            }
+            return NotFound(ApiResponse<string>.ErrorResponse("Course not found or could not be unflagged."));
         }
 
         // ── Legacy report endpoint (kept for backward compatibility) ────────
