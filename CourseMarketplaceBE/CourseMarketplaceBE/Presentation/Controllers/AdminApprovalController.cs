@@ -11,7 +11,13 @@ namespace CourseMarketplaceBE.Presentation.Controllers
     public class AdminApprovalController : ControllerBase
     {
         private readonly IInstructorApprovalService _service;
-        public AdminApprovalController(IInstructorApprovalService service) => _service = service;
+        private readonly IHubService _hubService;
+
+        public AdminApprovalController(IInstructorApprovalService service, IHubService hubService)
+        {
+            _service = service;
+            _hubService = hubService;
+        }
 
         [HttpGet("pending-instructors")]
         [Authorize(Roles = "admin,staff")]
@@ -40,6 +46,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                 var result = await _service.ApproveOrRejectAsync(dto);
                 if (result)
                 {
+                    await _hubService.SendInstructorApplicationUpdateAsync();
                     return Ok(new { status = 200, message = "Operation successful" });
                 }
                 return BadRequest(new { status = 400, message = "Instructor not found or an error occurred" });

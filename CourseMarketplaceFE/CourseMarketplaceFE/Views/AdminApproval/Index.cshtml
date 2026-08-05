@@ -153,7 +153,20 @@
 @section Scripts {
     <script>
         // Parse model data directly to JS
-        const originalData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items ?? new List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let originalData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items ?? new List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+        async function reloadPendingInstructors() {
+            try {
+                const response = await fetch(`/AdminApproval/GetPendingListJson?page=@Model.Page&pageSize=@Model.PageSize`);
+                if (response.ok) {
+                    const data = await response.json();
+                    originalData = data.items || data.Items || [];
+                    applyFilters();
+                }
+            } catch (err) {
+                console.error("Error reloading pending instructors:", err);
+            }
+        }
 
         function renderTable(data) {
             const tbody = document.getElementById('approval-table-body');
@@ -384,22 +397,6 @@
                             popup: 'rounded-2xl border border-slate-100 shadow-xl'
                         }
                     });
-
-                    // Premium slide out animation
-                    const row = document.getElementById(`row-${id}`);
-                    if (row) {
-                        row.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                        row.style.opacity = '0';
-                        row.style.transform = 'translateX(20px)';
-                        
-                        setTimeout(() => {
-                            const index = originalData.findIndex(item => item.instructorId === id);
-                            if (index > -1) {
-                                originalData.splice(index, 1);
-                            }
-                            applyFilters();
-                        }, 300);
-                    }
                 } else {
                     Swal.fire({
                         title: 'Execution Error',
@@ -434,6 +431,9 @@
             document.getElementById('search-input').addEventListener('input', applyFilters);
             document.getElementById('filter-expertise').addEventListener('change', applyFilters);
             document.getElementById('sort-select').addEventListener('change', applyFilters);
+
+            // Real-time SignalR event listener from _AdminLayout
+            document.addEventListener('InstructorApplicationUpdatedEvent', reloadPendingInstructors);
 
             // First render
             applyFilters();

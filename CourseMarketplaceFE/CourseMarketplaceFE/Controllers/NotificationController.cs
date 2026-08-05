@@ -82,7 +82,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "user,instructor")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> MarkAllAsRead()
         {
             var response = await _api.PutAsync("notification/mark-all-as-read", null);
@@ -91,7 +91,7 @@ namespace CourseMarketplaceFE.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "user,instructor")]
+        [Authorize(Roles = "user,instructor,admin,staff")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
             var response = await _api.PutAsync($"notification/mark-as-read/{id}", null);

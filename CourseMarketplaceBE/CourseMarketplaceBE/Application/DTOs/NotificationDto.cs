@@ -13,13 +13,14 @@ namespace CourseMarketplaceBE.Application.DTOs
     }
     public class NotificationAdvancedDto
     {
-        public string TargetType { get; set; } = "SINGLE"; // "ALL" ho?c "SINGLE"
+        public string TargetType { get; set; } = "SINGLE"; // "ALL" hoặc "SINGLE"
         public List<string>? Emails { get; set; } // Dùng Email thay vì Username
         [Required]
         [MaxLength(255)]
         public string Title { get; set; } = null!;
         [Required]
         public string Content { get; set; } = null!;
+        [RegularExpression(@"^(https?://|/).*$", ErrorMessage = "Link Action must start with 'http://', 'https://', or '/'.")]
         public string? LinkAction { get; set; }
     }
 

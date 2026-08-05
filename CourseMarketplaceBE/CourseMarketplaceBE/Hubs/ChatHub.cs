@@ -1,5 +1,7 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.IRepositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System;
@@ -14,15 +16,18 @@ public class ChatHub : Hub
     private readonly IChatService _chatService;
     private readonly IRedisService _redisService;
     private readonly INotificationService _notificationService;
+    private readonly IUserRepository _userRepo;
 
     public ChatHub(
         IChatService chatService, 
         IRedisService redisService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IUserRepository userRepo)
     {
         _chatService = chatService;
         _redisService = redisService;
         _notificationService = notificationService;
+        _userRepo = userRepo;
     }
 
     public override async Task OnConnectedAsync()
@@ -126,13 +131,33 @@ public class ChatHub : Hub
     public async Task Typing(int chatId, bool isTyping)
     {
         var accountId = GetAccountId();
-        var name = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Someone";
+        var name = Context.User?.FindFirst("FullName")?.Value 
+                   ?? Context.User?.FindFirst(ClaimTypes.Name)?.Value;
         
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            var account = await _userRepo.GetAccountByIdAsync(accountId);
+            if (account != null)
+            {
+                name = ResolveFullName(account);
+            }
+        }
+
+        name ??= "User";
+
         var participantIds = await _chatService.GetParticipantIdsAsync(chatId);
         foreach (var pId in participantIds)
         {
             await Clients.Group($"User_{pId}").SendAsync("UserTyping", new { ChatId = chatId, AccountId = accountId, Name = name, IsTyping = isTyping });
         }
+    }
+
+    private static string ResolveFullName(Account account)
+    {
+        if (account.Manager != null)
+            return account.Manager.DisplayName ?? "Manager";
+
+        return account.User?.FullName ?? "User";
     }
 
     public async Task MarkAsRead(int chatId)

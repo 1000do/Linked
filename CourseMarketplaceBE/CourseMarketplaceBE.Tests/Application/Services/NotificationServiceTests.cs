@@ -814,5 +814,41 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         //Assert
         await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Admin cannot send notifications to other admins.");
     }
+
+    [Theory]
+    [InlineData("invalid-link")]
+    [InlineData("ftp://example.com")]
+    [InlineData("javascript:alert(1)")]
+    public async Task SendAdvancedAsync_InvalidLinkAction_ThrowsInvalidOperationException(string invalidLink)
+    {
+        //Arrange
+        var dto = new NotificationAdvancedDto { TargetType = "ALL", Title = "T", Content = "C", LinkAction = invalidLink };
+
+        //Act
+        Func<Task> act = async () => await _sut.SendAdvancedAsync(dto, 1, "system");
+
+        //Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Link Action must start with 'http://', 'https://', or '/'.");
+    }
+
+    [Theory]
+    [InlineData("http://example.com")]
+    [InlineData("https://example.com/test")]
+    [InlineData("/Course/Details/1")]
+    public async Task SendAdvancedAsync_ValidLinkAction_DoesNotThrow(string validLink)
+    {
+        //Arrange
+        var dto = new NotificationAdvancedDto { TargetType = "ALL", Title = "T", Content = "C", LinkAction = validLink };
+        _userRepoMock.GetAllManagerIdsAsync().Returns(new List<int> { 999 });
+        _userRepoMock.GetAllUserIdsAsync().Returns(new List<int> { 2 });
+        _repoMock.SaveChangesAsync().Returns(1);
+
+        //Act
+        var result = await _sut.SendAdvancedAsync(dto, 1, "system");
+
+        //Assert
+        result.Should().Be(1);
+    }
 }
 }

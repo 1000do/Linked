@@ -484,10 +484,8 @@
             console.log("Notification Sender Role: " + noti.senderRole);
             console.log("Notification Is Read: " + noti.isRead);
 
-            // Staff viewing a notification addressed to them → mark as read
-            if (currentUserRole === 'staff' && 
-                noti.receiverId === currentUserId && 
-                !noti.isRead) {
+            // Mark as read if the notification is addressed to the current user
+            if (currentUserId && noti.receiverId === currentUserId && !noti.isRead) {
                 
                 try {
                     const res = await fetch(`${API_URL}/MarkAsRead/${id}`, {
@@ -530,6 +528,19 @@
                 Swal.fire({
                     title: 'Invalid Recipient',
                     text: "You cannot send a notification to yourself.",
+                    icon: 'warning',
+                    confirmButtonColor: '#10b981',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl' }
+                });
+                return;
+            }
+
+            const linkActionVal = (document.getElementById('linkAction').value || '').trim();
+            if (linkActionVal && !linkActionVal.startsWith('/') && !/^https?:\/\//i.test(linkActionVal)) {
+                Swal.fire({
+                    title: 'Invalid Action Link',
+                    text: "Link Action must start with http://, https://, or /",
                     icon: 'warning',
                     confirmButtonColor: '#10b981',
                     background: '#ffffff',

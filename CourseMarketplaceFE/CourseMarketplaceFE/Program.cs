@@ -87,6 +87,13 @@ namespace CourseMarketplaceFE
                     },
                     new Yarp.ReverseProxy.Configuration.RouteConfig
                     {
+                        RouteId = "instructorapprovalhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/instructorApprovalHub/{**catch-all}" }
+                       
+                      },
+                  new Yarp.ReverseProxy.Configuration.RouteConfig
+                  {
                         RouteId = "adminmoderationhub_route",
                         ClusterId = "backend_cluster",
                         Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/adminModerationHub/{**catch-all}" }

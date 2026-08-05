@@ -232,6 +232,11 @@ public class UserRepository : IUserRepository
         return await _context.Managers.Select(m => m.ManagerId).ToListAsync();
     }
 
+    public async Task<List<int>> GetAllStaffIdsAsync()
+    {
+        return await _context.Managers.Where(m => m.Role == "staff").Select(m => m.ManagerId).ToListAsync();
+    }
+
     public async Task<int> GetTotalStudentsCountAsync()
     {
         return await _context.Users.CountAsync();

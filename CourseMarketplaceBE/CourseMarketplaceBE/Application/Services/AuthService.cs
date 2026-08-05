@@ -247,6 +247,7 @@ public class AuthService : IAuthService
                 new Claim(ClaimTypes.NameIdentifier, a.AccountId.ToString()),
                 new Claim(ClaimTypes.Email, a.Email),
                 new Claim(ClaimTypes.Role, role),          // ← dùng [Authorize(Roles="manager")]
+                new Claim(ClaimTypes.Name, fullName),
                 new Claim("FullName", fullName),
                 new Claim("AvatarUrl", avatar)
             }),
