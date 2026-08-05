@@ -15,7 +15,6 @@ using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Share.Helpers;
 using Microsoft.Extensions.Logging;
 using CourseMarketplaceBE.Domain.Enums;
-using CourseMarketplaceBE.Domain.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services;
 

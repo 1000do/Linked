@@ -73,6 +73,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _aiFeedbackRepositoryMock = Substitute.For<IAiFeedbackRepository>();
             _materialRepositoryMock = Substitute.For<IMaterialRepository>();
             _lessonRepositoryMock = Substitute.For<ILessonRepository>();
+            var _hubServiceMock = Substitute.For<IHubService>();
 
             _sut = new CourseAiModerationService(
                 _aiModerationServiceMock,
@@ -95,7 +96,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _notificationServiceMock,
                 _aiFeedbackRepositoryMock,
                 _materialRepositoryMock,
-                _lessonRepositoryMock
+                _lessonRepositoryMock,
+                _hubServiceMock
             );
         }
 

@@ -134,17 +134,20 @@
                     Manage AI Service
                 </a>
             }
-            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">school</span> 
                 Course Moderation
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center hidden" id="admin-course-badge"></span>
             </a>
-            <a href="/AdminModeration/Reviews" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminModeration/Reviews" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">comment</span> 
                 Review Moderation
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center hidden" id="admin-review-badge"></span>
             </a>
-            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">flag</span> 
                 Report Center
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center hidden" id="admin-report-badge"></span>
             </a>
             <a href="/Notification/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">notifications</span> 
@@ -336,6 +339,9 @@
                 // Initialize unread badge and top notifications on load
                 loadAdminTopNotifications();
                 loadAdminUnreadChatsCount();
+                loadPendingReviewCount();
+                loadPendingReportCount();
+                loadPendingCourseCount();
                 loadPendingApprovalStatus();
 
                 const connection = new signalR.HubConnectionBuilder()
@@ -402,13 +408,55 @@
 
                 chatConnection.start().catch(err => console.error("Admin Chat Hub connection error: ", err));
 
+                const reportConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/reportModerationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+               
+
+                reportConnection.on("ReceiveReportUpdate", function () {
+                    document.dispatchEvent(new CustomEvent("ReceiveReportUpdateEvent"));
+                    if (typeof loadPendingReportCount === 'function') loadPendingReportCount();
+                });
+
+                reportConnection.start().catch(err => console.error("Admin Report Hub connection error: ", err));
+
+                const reviewConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/reviewModerationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                reviewConnection.on("ReceiveReviewUpdate", function () {
+                    document.dispatchEvent(new CustomEvent("ReceiveReviewUpdateEvent"));
+                    if (typeof loadPendingReviewCount === 'function') loadPendingReviewCount();
+                });
+
+                reviewConnection.start().catch(err => console.error("Admin Review Hub connection error: ", err));
+
+                const courseModerationConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/courseModerationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                courseModerationConnection.on("ReceiveCourseUpdate", function () {
+                    document.dispatchEvent(new CustomEvent("ReceiveCourseUpdateEvent"));
+                    if (typeof loadPendingCourseCount === 'function') loadPendingCourseCount();
+                });
+
+                courseModerationConnection.start().catch(err => console.error("Admin Course Moderation Hub connection error: ", err));
+
                 const approvalConnection = new signalR.HubConnectionBuilder()
                     .withUrl("/instructorApprovalHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
                     .withAutomaticReconnect()
                     .build();
-
                 approvalConnection.on("InstructorApplicationUpdated", function () {
                     if (typeof loadPendingApprovalStatus === 'function') {
                         loadPendingApprovalStatus();
@@ -453,6 +501,10 @@
             interval = seconds / 60;
             if (interval > 1) return Math.floor(interval) + " mins ago";
             return Math.floor(seconds) + " seconds ago";
+        }
+
+        function getBadgeCount(count){
+            return count > 99 ? '99+' : count;
         }
 
         async function loadAdminTopNotifications() {
@@ -519,6 +571,68 @@
             }
         }
 
+        async function loadPendingCourseCount() {
+            const courseBadge = document.getElementById('admin-course-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN || !courseBadge) return;
+
+            try {
+                const response = await fetch("/AdminModeration/PendingCourseCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || 0;
+                    if (count > 0) {
+                        courseBadge.classList.remove('hidden');
+                        courseBadge.innerText = getBadgeCount(count);
+                    } else {
+                        courseBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending course count error:", err);
+            }
+        }
+
+        async function loadPendingReportCount() {
+            const reportBadge = document.getElementById('admin-report-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN || !reportBadge) return;
+
+            try {
+                const response = await fetch("/AdminModeration/PendingReportCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || 0;
+                    if (count > 0) {
+                        reportBadge.classList.remove('hidden');
+                        reportBadge.innerText = getBadgeCount(count);
+                    } else {
+                        reportBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending report count error:", err);
+            }
+        }
+
+        async function loadPendingReviewCount() {
+            const reviewBadge = document.getElementById('admin-review-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN || !reviewBadge) return;
+
+            try {
+                const response = await fetch("/AdminModeration/PendingReviewCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || 0;
+                    if (count > 0) {
+                        reviewBadge.classList.remove('hidden');
+                        reviewBadge.innerText = getBadgeCount(count);
+                    } else {
+                        reviewBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending review count error:", err);
+            }
+        }
         async function loadPendingApprovalStatus() {
             const approvalBadge = document.getElementById('admin-instructor-approval-badge');
             if (!window.ADMIN_LAYOUT_TOKEN) return;

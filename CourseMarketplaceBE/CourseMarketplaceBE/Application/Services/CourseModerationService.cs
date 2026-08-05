@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services
@@ -66,6 +67,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             course.CourseStatus = CourseStatus.Published.ToValue();
             course.ModerationFeedback = null;
+            course.ThreatLevel = AiThreatLevel.Approved;
             course.FieldModerationFeedbacks.Clear();
             course.UpdatedAt = DateTime.Now;
             course.LastApprovedAt = DateTime.Now;

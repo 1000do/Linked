@@ -40,6 +40,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IAiFeedbackRepository _aiFeedbackRepository;
         private readonly IMaterialRepository _materialRepository;
         private readonly ILessonRepository _lessonRepository;
+        private readonly IHubService _hubService;
 
         public CourseAiModerationService(
             IAiModerationService aiModerationService,
@@ -62,7 +63,8 @@ namespace CourseMarketplaceBE.Application.Services
             INotificationService notificationService,
             IAiFeedbackRepository aiFeedbackRepository,
             IMaterialRepository materialRepository,
-            ILessonRepository lessonRepository)
+            ILessonRepository lessonRepository,
+            IHubService hubService)
         {
             _aiModerationService = aiModerationService;
             _aiModelManagementService = aiModelManagementService;
@@ -85,6 +87,7 @@ namespace CourseMarketplaceBE.Application.Services
             _aiFeedbackRepository = aiFeedbackRepository;
             _materialRepository = materialRepository;
             _lessonRepository = lessonRepository;
+            _hubService = hubService;
         }
 
         public async Task<bool> StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
@@ -105,6 +108,8 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             });
 
+            await _hubService.SendCourseUpdateAsync();
+            
             return true;
         }
 
@@ -372,6 +377,7 @@ namespace CourseMarketplaceBE.Application.Services
             string notificationContent = GetNotificationContent(courseId, moderationStatus, flaggedFields, manualAuditFields);
             await NotifyManagersAsync("AI Moderation Result", notificationContent, UrlConst.AdminCourseModerationURL + $"?search={courseId}#course_{courseId}");
             
+            await _hubService.SendCourseUpdateAsync();
             return true;
         }
 
