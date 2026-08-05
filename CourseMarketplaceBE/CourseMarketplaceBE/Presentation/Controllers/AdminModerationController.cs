@@ -19,17 +19,23 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         private readonly IUserReportModerationService _userReportModerationService;
         private readonly IReportModerationService _reportService;
         private readonly IReviewModerationService _reviewModerationService;
+        private readonly IReportModerationHubService _reportHubService;
+        private readonly IReviewModerationHubService _reviewHubService;
 
         public AdminModerationController(
             ICourseModerationService courseModerationService,
             IUserReportModerationService userReportModerationService,
             IReportModerationService reportService,
-            IReviewModerationService reviewModerationService)
+            IReviewModerationService reviewModerationService,
+            IReportModerationHubService reportHubService,
+            IReviewModerationHubService reviewHubService)
         {
             _courseModerationService = courseModerationService;
             _userReportModerationService = userReportModerationService;
             _reportService = reportService;
             _reviewModerationService = reviewModerationService;
+            _reportHubService = reportHubService;
+            _reviewHubService = reviewHubService;
         }
 
         private int? GetUserId()
@@ -164,9 +170,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var result = await _reportService.ResolveCourseReportAsync(reportId, resolverId.Value, request);
-                return result
-                    ? Ok(ApiResponse<string>.SuccessResponse("Report resolved successfully."))
-                    : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+                if (result)
+                {
+                    await _reportHubService.SendReportUpdateAsync();
+                    return Ok(ApiResponse<string>.SuccessResponse("Report resolved successfully."));
+                }
+                return NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -203,9 +212,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var result = await _reportService.ResolveCourseReviewReportAsync(reportId, resolverId.Value, request);
-                return result
-                    ? Ok(ApiResponse<string>.SuccessResponse("Course review report resolved successfully."))
-                    : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+                if (result)
+                {
+                    await _reportHubService.SendReportUpdateAsync();
+                    return Ok(ApiResponse<string>.SuccessResponse("Course review report resolved successfully."));
+                }
+                return NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
             }
             catch (KeyNotFoundException ex)
             {
@@ -238,9 +250,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 var result = await _reportService.ResolveLessonReviewReportAsync(reportId, resolverId.Value, request);
-                return result
-                    ? Ok(ApiResponse<string>.SuccessResponse("Lesson review report resolved successfully."))
-                    : NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
+                if (result)
+                {
+                    await _reportHubService.SendReportUpdateAsync();
+                    return Ok(ApiResponse<string>.SuccessResponse("Lesson review report resolved successfully."));
+                }
+                return NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
             }
             catch (KeyNotFoundException ex)
             {
@@ -324,6 +339,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 await _reviewModerationService.ApproveReviewAsync(request);
+                await _reviewHubService.SendReviewUpdateAsync();
                 return Ok(ApiResponse<string>.SuccessResponse("Review approved successfully."));
             }
             catch (KeyNotFoundException ex)
@@ -342,6 +358,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 await _reviewModerationService.RejectReviewAsync(request);
+                await _reviewHubService.SendReviewUpdateAsync();
                 return Ok(ApiResponse<string>.SuccessResponse("Review rejected successfully."));
             }
             catch (KeyNotFoundException ex)

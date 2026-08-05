@@ -159,6 +159,8 @@ public class Program
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<IReportModerationHubService, ReportModerationHubService>();
+        builder.Services.AddScoped<IReviewModerationHubService, ReviewModerationHubService>();
         builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
         builder.Services.AddSingleton<IOtpService, OtpService>();
@@ -463,6 +465,8 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapHub<NotificationHub>("/notificationHub");
+        app.MapHub<ReportModerationHub>("/reportModerationHub");
+        app.MapHub<ReviewModerationHub>("/reviewModerationHub");
         app.MapHub<ChatHub>("/chatHub");
         app.MapHub<FinanceHub>("/financeHub");
 

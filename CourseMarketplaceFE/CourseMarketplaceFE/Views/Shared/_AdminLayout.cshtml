@@ -403,6 +403,32 @@
                 });
 
                 chatConnection.start().catch(err => console.error("Admin Chat Hub connection error: ", err));
+
+                const reportConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/reportModerationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                reportConnection.on("ReceiveReportUpdate", function () {
+                    document.dispatchEvent(new CustomEvent("ReceiveReportUpdateEvent"));
+                });
+
+                reportConnection.start().catch(err => console.error("Admin Report Hub connection error: ", err));
+
+                const reviewConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/reviewModerationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                reviewConnection.on("ReceiveReviewUpdate", function () {
+                    document.dispatchEvent(new CustomEvent("ReceiveReviewUpdateEvent"));
+                });
+
+                reviewConnection.start().catch(err => console.error("Admin Review Hub connection error: ", err));
             }
         });
 
