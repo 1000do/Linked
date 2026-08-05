@@ -225,12 +225,12 @@
             });
 
             chatPageConnection.on("SupportRequestAccepted", async (data) => {
-                if (activeChatId === 'support_ticket') {
-                    isWaitingForSupportStaff = false;
-                    await loadChats();
-                    selectChat(data.chatId || data.ChatId, 'Support Team', '/img/default-avatar.png', true, true);
-                } else {
-                    await loadChats();
+                isWaitingForSupportStaff = false;
+                await loadChats();
+                await loadPendingRequests();
+                const newChatId = data.chatId || data.ChatId;
+                if (activeChatId === 'support_ticket' || activeChatId === newChatId) {
+                    selectChat(newChatId, 'Support Team', '/img/default-avatar.png', true, true);
                 }
             });
 
@@ -509,6 +509,7 @@
                     const pendings = await pendingRes.json();
                     if (pendings && pendings.length > 0) {
                         showPendingSupportUI(pendings[0].initialMessage);
+                        await loadPendingRequests();
                         return;
                     }
                 }
@@ -589,6 +590,7 @@
             document.getElementById('chat-content').style.display = 'none';
             document.getElementById('empty-state').style.display = 'block';
             document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+            loadPendingRequests();
         }
         // ------------------------------ //
 
@@ -842,6 +844,7 @@
                     if (res.ok) {
                         input.value = "";
                         showPendingSupportUI(content);
+                        await loadPendingRequests();
                     } else {
                         Swal.fire('Error', 'Failed to send request.', 'error');
                     }

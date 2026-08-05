@@ -21,10 +21,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class InstructorController : ControllerBase
 {
     private readonly IInstructorService _instructorService;
+    private readonly IHubService _hubService;
 
-    public InstructorController(IInstructorService instructorService)
+    public InstructorController(IInstructorService instructorService, IHubService hubService)
     {
         _instructorService = instructorService;
+        _hubService = hubService;
     }
 
     // ─── 1. NỘP ĐƠN ĐĂNG KÝ ────────────────────────────────────────
@@ -44,6 +46,7 @@ public class InstructorController : ControllerBase
         try
         {
             var result = await _instructorService.SubmitApplicationAsync(userId.Value, request);
+            await _hubService.SendInstructorApplicationUpdateAsync();
             return Ok(new { status = 200, message = result });
         }
         catch (InvalidOperationException ex)

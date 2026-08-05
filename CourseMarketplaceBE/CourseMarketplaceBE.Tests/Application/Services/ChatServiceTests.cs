@@ -21,6 +21,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ICourseRepository _courseRepoMock;
         private readonly IRedisService _redisMock;
         private readonly IConfiguration _configMock;
+        private readonly INotificationService _notificationMock;
         private readonly ChatService _sut;
 
         public ChatServiceTests()
@@ -29,6 +30,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _userRepoMock = Substitute.For<IUserRepository>();
             _courseRepoMock = Substitute.For<ICourseRepository>();
             _redisMock = Substitute.For<IRedisService>();
+            _notificationMock = Substitute.For<INotificationService>();
 
             var inMemorySettings = new Dictionary<string, string> {
                 {"ChatSettings:EnableAttachments", "true"}
@@ -42,7 +44,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _userRepoMock,
                 _courseRepoMock,
                 _redisMock,
-                _configMock
+                _configMock,
+                _notificationMock
             );
         }
 

@@ -775,6 +775,19 @@
         let miniChatConn = null;
 
         // 2. Logic cho Support Popup (Mini Chat)
+        function markMiniChatAsRead() {
+            if (miniChatId && miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
+                miniChatConn.invoke("MarkAsRead", parseInt(miniChatId)).catch(err => console.error(err));
+            }
+        }
+
+        window.addEventListener('focus', function () {
+            const popup = document.getElementById('support-chat-popup');
+            if (popup && popup.style.display === 'flex') {
+                markMiniChatAsRead();
+            }
+        });
+
         function toggleSupportPopup() {
             const popup = document.getElementById('support-chat-popup');
             if (!popup) return;
@@ -785,6 +798,7 @@
                 const badge = document.getElementById('global-chat-badge');
                 if (badge) badge.style.display = 'none';
                 initMiniChat();
+                markMiniChatAsRead();
             }
         }
 
@@ -1076,6 +1090,11 @@
                     
                 container.innerHTML = html;
                 container.scrollTop = container.scrollHeight;
+                
+                // Mark chat as read when history is loaded
+                if (document.getElementById('support-chat-popup').style.display === 'flex') {
+                    markMiniChatAsRead();
+                }
             } catch (err) {
                 console.error("Load mini history error:", err);
             }
@@ -1099,7 +1118,26 @@
                     miniChatConn.invoke("Typing", miniChatId, false).catch(e => console.error(e));
                 }
             }, 2000);
+            
+            markMiniChatAsRead();
         };
+
+        // Add focus listener directly for safety
+        document.addEventListener('DOMContentLoaded', () => {
+            const miniInput = document.getElementById('mini-chat-input');
+            if (miniInput) {
+                miniInput.addEventListener('focus', () => {
+                    markMiniChatAsRead();
+                });
+            }
+            
+            const miniContent = document.getElementById('mini-chat-content');
+            if (miniContent) {
+                miniContent.addEventListener('click', () => {
+                    markMiniChatAsRead();
+                });
+            }
+        });
 
         async function sendMiniMsg() {
             const input = document.getElementById('mini-chat-input');
@@ -1356,6 +1394,9 @@
 
                     if (popup && popup.style.display === 'flex' && msgChatId == miniChatId) {
                         appendMiniMsg(message);
+                        if (document.hasFocus()) {
+                            markMiniChatAsRead();
+                        }
                     } else if (window.location.pathname.toLowerCase() !== "/chat") {
                         const chatBadge = document.getElementById('global-chat-badge');
                         if (chatBadge) {
