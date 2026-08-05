@@ -928,8 +928,6 @@
                 triggerAjaxFetch();
             }, 300);
         });
-    });
-    document.addEventListener("DOMContentLoaded", function () {
         if (clearBtn) {
             clearBtn.addEventListener("click", () => {
                 if (searchInput) searchInput.value = "";
@@ -951,6 +949,7 @@
 
             modConnection.on("ModerationQueueUpdated", () => {
                 triggerAjaxFetch(currentPage);
+                if (typeof loadPendingCourseCount === 'function') loadPendingCourseCount();
             });
 
             modConnection.start().catch(err => console.error("AdminModerationHub connection error:", err));

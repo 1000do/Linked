@@ -37,6 +37,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             _reportService = reportService;
             _reviewModerationService = reviewModerationService;
             _hubService = hubService;
+            _hubContext = hubContext;
         }
 
         [HttpGet("reports/pending-count")]
