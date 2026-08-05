@@ -14,12 +14,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class ReviewController : ControllerBase
 {
     private readonly IReviewService _reviewService;
-    private readonly IReviewModerationHubService _reviewHubService;
+    private readonly IHubService _hubService;
 
-    public ReviewController(IReviewService reviewService, IReviewModerationHubService reviewHubService)
+    public ReviewController(IReviewService reviewService, IHubService hubService)
     {
         _reviewService = reviewService;
-        _reviewHubService = reviewHubService;
+        _hubService = hubService;
     }
 
     private int? GetUserId()
@@ -118,7 +118,7 @@ public class ReviewController : ControllerBase
         {
             bool requireCompletion = string.Equals(source, "detail", StringComparison.OrdinalIgnoreCase);
             await _reviewService.SubmitReviewAsync(userId.Value, request, requireCompletion);
-            await _reviewHubService.SendReviewUpdateAsync();
+            await _hubService.SendReviewUpdateAsync();
             return Ok(ApiResponse<string>.SuccessResponse(string.Empty, "Review has been sent for auditing and will appear when approved."));
         }
         catch (BadRequestException ex)
@@ -150,7 +150,7 @@ public class ReviewController : ControllerBase
         try
         {
             await _reviewService.UpdateReviewAsync(userId.Value, request);
-            await _reviewHubService.SendReviewUpdateAsync();
+            await _hubService.SendReviewUpdateAsync();
             return Ok(ApiResponse<string>.SuccessResponse(string.Empty, "Review has been sent for auditing and will appear when approved."));
         }
         catch (InvalidOperationException ex)
@@ -184,7 +184,7 @@ public class ReviewController : ControllerBase
                 ReviewId = reviewId,
                 Type = type
             });
-            await _reviewHubService.SendReviewUpdateAsync();
+            await _hubService.SendReviewUpdateAsync();
             return Ok(ApiResponse<string>.SuccessResponse("Review deleted successfully."));
         }
         catch (InvalidOperationException ex)

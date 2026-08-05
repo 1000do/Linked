@@ -82,6 +82,8 @@
             <div class="w-48 relative">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sort By</label>
                 <select name="sortBy" id="sort-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
+                    <option value="priority_desc" selected="@(ViewBag.SortBy == "priority_desc")">Priority (High to Low)</option>
+                    <option value="priority_asc" selected="@(ViewBag.SortBy == "priority_asc")">Priority (Low to High)</option>
                     <option value="threat_desc" selected="@(ViewBag.SortBy == "threat_desc")">Threat Level (High to Low)</option>
                     <option value="threat_asc" selected="@(ViewBag.SortBy == "threat_asc")">Threat Level (Low to High)</option>
                     <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Oldest (Priority)</option>
@@ -914,6 +916,14 @@
             statusSelect.value = "all";
             sortSelect.value = "oldest";
             triggerAjaxFetch();
+        });
+
+        let courseUpdateTimeout;
+        document.addEventListener("ReceiveCourseUpdateEvent", () => {
+            clearTimeout(courseUpdateTimeout);
+            courseUpdateTimeout = setTimeout(() => {
+                triggerAjaxFetch();
+            }, 300);
         });
     });
     document.addEventListener("DOMContentLoaded", function () {

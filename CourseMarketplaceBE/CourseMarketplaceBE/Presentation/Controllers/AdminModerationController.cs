@@ -19,23 +19,42 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         private readonly IUserReportModerationService _userReportModerationService;
         private readonly IReportModerationService _reportService;
         private readonly IReviewModerationService _reviewModerationService;
-        private readonly IReportModerationHubService _reportHubService;
-        private readonly IReviewModerationHubService _reviewHubService;
+        private readonly IHubService _hubService;
 
         public AdminModerationController(
             ICourseModerationService courseModerationService,
             IUserReportModerationService userReportModerationService,
             IReportModerationService reportService,
             IReviewModerationService reviewModerationService,
-            IReportModerationHubService reportHubService,
-            IReviewModerationHubService reviewHubService)
+            IHubService hubService)
         {
             _courseModerationService = courseModerationService;
             _userReportModerationService = userReportModerationService;
             _reportService = reportService;
             _reviewModerationService = reviewModerationService;
-            _reportHubService = reportHubService;
-            _reviewHubService = reviewHubService;
+            _hubService = hubService;
+        }
+
+        [HttpGet("reports/pending-count")]
+        public async Task<IActionResult> GetPendingReportCount()
+        {
+            var stats = await _reportService.GetReportStatsAsync();
+            return Ok(new { count = stats.TotalPending });
+        }
+
+        [HttpGet("reviews/pending-count")]
+        public async Task<IActionResult> GetPendingReviewCount()
+        {
+            var stats = await _reviewModerationService.GetModerationStatsAsync();
+            var count = stats?.GetType()?.GetProperty("TotalPending")?.GetValue(stats, null) as int? ?? 0;
+            return Ok(new { count = count });
+        }
+
+        [HttpGet("courses/pending-count")]
+        public async Task<IActionResult> GetPendingCourseCount()
+        {
+            var stats = await _courseModerationService.GetCourseModerationStatsAsync();
+            return Ok(new { count = stats?.PendingCount ?? 0 });
         }
 
         private int? GetUserId()
@@ -172,7 +191,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                 var result = await _reportService.ResolveCourseReportAsync(reportId, resolverId.Value, request);
                 if (result)
                 {
-                    await _reportHubService.SendReportUpdateAsync();
+                    await _hubService.SendReportUpdateAsync();
                     return Ok(ApiResponse<string>.SuccessResponse("Report resolved successfully."));
                 }
                 return NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
@@ -214,7 +233,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                 var result = await _reportService.ResolveCourseReviewReportAsync(reportId, resolverId.Value, request);
                 if (result)
                 {
-                    await _reportHubService.SendReportUpdateAsync();
+                    await _hubService.SendReportUpdateAsync();
                     return Ok(ApiResponse<string>.SuccessResponse("Course review report resolved successfully."));
                 }
                 return NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
@@ -252,7 +271,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
                 var result = await _reportService.ResolveLessonReviewReportAsync(reportId, resolverId.Value, request);
                 if (result)
                 {
-                    await _reportHubService.SendReportUpdateAsync();
+                    await _hubService.SendReportUpdateAsync();
                     return Ok(ApiResponse<string>.SuccessResponse("Lesson review report resolved successfully."));
                 }
                 return NotFound(ApiResponse<string>.ErrorResponse("Report not found."));
@@ -339,7 +358,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 await _reviewModerationService.ApproveReviewAsync(request);
-                await _reviewHubService.SendReviewUpdateAsync();
+                await _hubService.SendReviewUpdateAsync();
                 return Ok(ApiResponse<string>.SuccessResponse("Review approved successfully."));
             }
             catch (KeyNotFoundException ex)
@@ -358,7 +377,7 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             try
             {
                 await _reviewModerationService.RejectReviewAsync(request);
-                await _reviewHubService.SendReviewUpdateAsync();
+                await _hubService.SendReviewUpdateAsync();
                 return Ok(ApiResponse<string>.SuccessResponse("Review rejected successfully."));
             }
             catch (KeyNotFoundException ex)

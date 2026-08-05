@@ -412,6 +412,7 @@
                     Swal.fire('Error', 'Request failed', 'error');
                 }
             }
+        }
         // ── Real-time Updates ──
         let reviewUpdateTimeout;
         document.addEventListener("ReceiveReviewUpdateEvent", () => {
@@ -420,5 +421,6 @@
                 if (typeof loadData === 'function') loadData(currentPage);
             }, 300);
         });
+        
     </script>
 }

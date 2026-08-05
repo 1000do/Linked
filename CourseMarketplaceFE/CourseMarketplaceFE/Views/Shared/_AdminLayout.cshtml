@@ -133,17 +133,20 @@
                     Manage AI Service
                 </a>
             }
-            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminModeration/Courses" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">school</span> 
                 Course Moderation
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center hidden" id="admin-course-badge"></span>
             </a>
-            <a href="/AdminModeration/Reviews" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminModeration/Reviews" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">comment</span> 
                 Review Moderation
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center hidden" id="admin-review-badge"></span>
             </a>
-            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group">
+            <a href="/AdminModeration/Reports" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">flag</span> 
                 Report Center
+                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center hidden" id="admin-report-badge"></span>
             </a>
             <a href="/Notification/Admin" class="nav-item flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-50 group relative">
                 <span class="material-symbols-outlined text-[18px] text-slate-400 group-hover:text-emerald-500 transition-colors duration-300">notifications</span> 
@@ -335,6 +338,9 @@
                 // Initialize unread badge and top notifications on load
                 loadAdminTopNotifications();
                 loadAdminUnreadChatsCount();
+                loadPendingReviewCount();
+                loadPendingReportCount();
+                loadPendingCourseCount();
 
                 const connection = new signalR.HubConnectionBuilder()
                     .withUrl("/notificationHub", {
@@ -413,6 +419,7 @@
 
                 reportConnection.on("ReceiveReportUpdate", function () {
                     document.dispatchEvent(new CustomEvent("ReceiveReportUpdateEvent"));
+                    if (typeof loadPendingReportCount === 'function') loadPendingReportCount();
                 });
 
                 reportConnection.start().catch(err => console.error("Admin Report Hub connection error: ", err));
@@ -426,9 +433,24 @@
 
                 reviewConnection.on("ReceiveReviewUpdate", function () {
                     document.dispatchEvent(new CustomEvent("ReceiveReviewUpdateEvent"));
+                    if (typeof loadPendingReviewCount === 'function') loadPendingReviewCount();
                 });
 
                 reviewConnection.start().catch(err => console.error("Admin Review Hub connection error: ", err));
+
+                const courseModerationConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/courseModerationHub", {
+                        accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
+                    })
+                    .withAutomaticReconnect()
+                    .build();
+
+                courseModerationConnection.on("ReceiveCourseUpdate", function () {
+                    document.dispatchEvent(new CustomEvent("ReceiveCourseUpdateEvent"));
+                    if (typeof loadPendingCourseCount === 'function') loadPendingCourseCount();
+                });
+
+                courseModerationConnection.start().catch(err => console.error("Admin Course Moderation Hub connection error: ", err));
             }
         });
 
@@ -447,6 +469,10 @@
             interval = seconds / 60;
             if (interval > 1) return Math.floor(interval) + " mins ago";
             return Math.floor(seconds) + " seconds ago";
+        }
+
+        function getBadgeCount(count){
+            return count > 99 ? '99+' : count;
         }
 
         async function loadAdminTopNotifications() {
@@ -479,6 +505,69 @@
                 }
             } catch (err) {
                 console.error("Fetch chat unread count error:", err);
+            }
+        }
+
+        async function loadPendingCourseCount() {
+            const courseBadge = document.getElementById('admin-course-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN || !courseBadge) return;
+
+            try {
+                const response = await fetch("/AdminModeration/PendingCourseCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || 0;
+                    if (count > 0) {
+                        courseBadge.classList.remove('hidden');
+                        courseBadge.innerText = getBadgeCount(count);
+                    } else {
+                        courseBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending course count error:", err);
+            }
+        }
+
+        async function loadPendingReportCount() {
+            const reportBadge = document.getElementById('admin-report-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN || !reportBadge) return;
+
+            try {
+                const response = await fetch("/AdminModeration/PendingReportCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || 0;
+                    if (count > 0) {
+                        reportBadge.classList.remove('hidden');
+                        reportBadge.innerText = getBadgeCount(count);
+                    } else {
+                        reportBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending report count error:", err);
+            }
+        }
+
+        async function loadPendingReviewCount() {
+            const reviewBadge = document.getElementById('admin-review-badge');
+            if (!window.ADMIN_LAYOUT_TOKEN || !reviewBadge) return;
+
+            try {
+                const response = await fetch("/AdminModeration/PendingReviewCount");
+                if (response.ok) {
+                    const result = await response.json();
+                    const count = result.count || 0;
+                    if (count > 0) {
+                        reviewBadge.classList.remove('hidden');
+                        reviewBadge.innerText = getBadgeCount(count);
+                    } else {
+                        reviewBadge.classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error("Fetch pending review count error:", err);
             }
         }
     </script>

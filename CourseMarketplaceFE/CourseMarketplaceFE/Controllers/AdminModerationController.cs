@@ -20,12 +20,48 @@ namespace CourseMarketplaceFE.Controllers
             _apiClient = apiClient;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> PendingReportCount()
+        {
+            var response = await _apiClient.GetAsync("/api/admin/moderation/reports/pending-count");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { count = 0 });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PendingReviewCount()
+        {
+            var response = await _apiClient.GetAsync("/api/admin/moderation/reviews/pending-count");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { count = 0 });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> PendingCourseCount()
+        {
+            var response = await _apiClient.GetAsync("/api/admin/moderation/courses/pending-count");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { count = 0 });
+        }
+
         public async Task<IActionResult> Courses(string? search, string? category, string? status, string? sortBy, int page = 1, int pageSize = 6)
         {
             ViewBag.Search = search;
             ViewBag.Category = category;
             ViewBag.Status = status ?? "all";
-            ViewBag.SortBy = sortBy ?? "threat_desc";
+            ViewBag.SortBy = sortBy ?? "priority_desc";
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
 
