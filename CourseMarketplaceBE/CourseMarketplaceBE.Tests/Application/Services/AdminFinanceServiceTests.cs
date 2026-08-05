@@ -1113,7 +1113,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             txn.TransactionsStatus.Should().Be("refund_pending");
             txn.TransactionExt.Should().NotBeNull();
             await _mockRepo.Received(1).SaveChangesAsync();
-            await _mockNotiService.Received(1).SendNotificationAsync(1, "New Refund Request", Arg.Any<string>(), "/AdminFinance/Refunds");
+            await _mockNotiService.Received(1).SendNotificationAsync(1, "New Refund Request", Arg.Any<string>(), "/AdminFinance?tab=rf");
         }
 
         [Fact]
