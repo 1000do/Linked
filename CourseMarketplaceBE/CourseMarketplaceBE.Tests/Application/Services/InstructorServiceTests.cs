@@ -24,6 +24,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IUserRepository _userRepoMock;
         private readonly IStripeConnectService _stripeConnectMock;
         private readonly ICourseRepository _courseRepoMock;
+        private readonly INotificationService _notificationServiceMock;
         private readonly InstructorService _sut;
 
         public InstructorServiceTests()
@@ -34,6 +35,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _userRepoMock = Substitute.For<IUserRepository>();
             _stripeConnectMock = Substitute.For<IStripeConnectService>();
             _courseRepoMock = Substitute.For<ICourseRepository>();
+            _notificationServiceMock = Substitute.For<INotificationService>();
 
             _sut = new InstructorService(
                 _repoMock,
@@ -41,7 +43,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _financeRepoMock,
                 _userRepoMock,
                 _stripeConnectMock,
-                _courseRepoMock
+                _courseRepoMock,
+                _notificationServiceMock
             );
         }
 
