@@ -36,7 +36,9 @@
         <div class="m-auto max-w-lg bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-xl flex items-center gap-3">
             <span class="material-symbols-outlined">error</span>
             <span class="font-medium">@ViewBag.Error</span>
-            <a href="javascript:history.back()" class="ml-auto text-emerald-600 font-medium hover:underline">Go Back</a>
+            <button onclick="location.reload()" class="ml-auto text-emerald-600 font-medium hover:underline flex items-center gap-1">
+                <span class="material-symbols-outlined text-[16px]">refresh</span> Retry
+            </button>
         </div>
     }
     else
@@ -48,8 +50,8 @@
 </div>
 
 @section Scripts {
+    <script id="quiz-data" type="application/json">@Html.Raw(ViewBag.QuizDataJson ?? "null")</script>
     <script>
-        const quizDataRaw = '@Html.Raw(ViewBag.QuizDataJson ?? "null")';
         const isPreviewMode = @(isPreview ? "true" : "false");
         let quizData = null;
         let userAnswers = {}; // questionId -> selectedOptionId
@@ -58,18 +60,38 @@
         let timerInterval = null;
         let currentQuestionIndex = 0;
 
-        if (quizDataRaw !== 'null') {
-            try {
-                quizData = JSON.parse(quizDataRaw);
-            } catch(e) { console.error("Error parsing quiz data", e); }
+        try {
+            const rawEl = document.getElementById('quiz-data');
+            if (rawEl && rawEl.textContent.trim() !== 'null') {
+                quizData = JSON.parse(rawEl.textContent);
+            }
+        } catch(e) {
+            console.error("Error parsing quiz data", e);
         }
 
         function initApp() {
-            if (!quizData) return;
+            if (!quizData) {
+                const quizAppEl = document.getElementById('quiz-app');
+                if (quizAppEl) {
+                    quizAppEl.innerHTML = `
+                        <div class="m-auto max-w-lg bg-red-50 border border-red-200 text-red-600 px-6 py-5 rounded-2xl flex flex-col items-center text-center gap-3">
+                            <span class="material-symbols-outlined text-4xl">error</span>
+                            <p class="font-bold text-lg">Unable to load quiz</p>
+                            <p class="text-sm text-red-500">${@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Error ?? "Quiz data could not be loaded or parsed properly."))}</p>
+                            <button onclick="location.reload()" class="mt-2 inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm">
+                                <span class="material-symbols-outlined text-[18px]">refresh</span> Retry
+                            </button>
+                        </div>
+                    `;
+                }
+                return;
+            }
             
-            quizData.questions.forEach(q => {
-                userAnswers[q.questionId] = null;
-            });
+            if (quizData.questions && Array.isArray(quizData.questions)) {
+                quizData.questions.forEach(q => {
+                    userAnswers[q.questionId] = null;
+                });
+            }
 
             if (quizData.timeLimitMinutes > 0) {
                 timeRemaining = quizData.timeLimitMinutes * 60;

@@ -32,18 +32,18 @@ class Settings(BaseSettings):
     WHISPER_MODEL_NAME: str = os.getenv("WHISPER_MODEL_NAME", "small")
     
     # Processing config
-    TEXT_BATCH_SIZE: int = int(os.getenv("TEXT_BATCH_SIZE", 32))
-    TEXT_WINDOW_SIZE: int = int(os.getenv("TEXT_WINDOW_SIZE", 128))
-    TEXT_STRIDE: int = int(os.getenv("TEXT_STRIDE", 64))
+    # TEXT_BATCH_SIZE: int = int(os.getenv("TEXT_BATCH_SIZE", 32))
+    # TEXT_WINDOW_SIZE: int = int(os.getenv("TEXT_WINDOW_SIZE", 128))
+    # TEXT_STRIDE: int = int(os.getenv("TEXT_STRIDE", 64))
     
     # Embedding config
     MEDIA_EMBEDDING_DIM: int = int(os.getenv("MEDIA_EMBEDDING_DIM", 512))
     TEXT_EMBEDDING_DIM: int = int(os.getenv("TEXT_EMBEDDING_DIM", 384))
-    COSINE_SIMILARITY_THRESHOLD: float = float(os.getenv("COSINE_SIMILARITY_THRESHOLD", 0.85))
+    # COSINE_SIMILARITY_THRESHOLD: float = float(os.getenv("COSINE_SIMILARITY_THRESHOLD", 0.85))
     
     # Timeout config (in seconds)
-    MODEL_LOAD_TIMEOUT: int = int(os.getenv("MODEL_LOAD_TIMEOUT", 300))
-    INFERENCE_TIMEOUT: int = int(os.getenv("INFERENCE_TIMEOUT", 60))
+    # MODEL_LOAD_TIMEOUT: int = int(os.getenv("MODEL_LOAD_TIMEOUT", 300))
+    # INFERENCE_TIMEOUT: int = int(os.getenv("INFERENCE_TIMEOUT", 60))
     REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", 300))
     
     # Logging

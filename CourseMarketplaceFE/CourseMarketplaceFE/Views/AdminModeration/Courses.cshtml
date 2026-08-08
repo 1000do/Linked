@@ -82,9 +82,11 @@
             <div class="w-48 relative">
                 <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">Sort By</label>
                 <select name="sortBy" id="sort-select" class="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm appearance-none cursor-pointer outline-none">
+                    <option value="priority_desc" selected="@(ViewBag.SortBy == "priority_desc")">Priority (High to Low)</option>
+                    <option value="priority_asc" selected="@(ViewBag.SortBy == "priority_asc")">Priority (Low to High)</option>
                     <option value="threat_desc" selected="@(ViewBag.SortBy == "threat_desc")">Threat Level (High to Low)</option>
                     <option value="threat_asc" selected="@(ViewBag.SortBy == "threat_asc")">Threat Level (Low to High)</option>
-                    <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Oldest (Priority)</option>
+                    <option value="oldest" selected="@(ViewBag.SortBy == "oldest")">Oldest</option>
                     <option value="newest" selected="@(ViewBag.SortBy == "newest")">Newest</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
@@ -113,7 +115,7 @@
                         <th class="px-8 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
+                <tbody class="divide-y divide-slate-200">
                     @if (!Model.Items.Any())
                     {
                         <tr>
@@ -133,6 +135,7 @@
                         var isPending = item.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) ?? false;
                         
                         string threatRowClass = "";
+                        string threatBorderClass = "";
                         string threatBadgeClass = "";
                         string threatIcon = "";
                         string threatLabel = "";
@@ -140,33 +143,37 @@
                         switch (item.ThreatLevel)
                         {
                             case AiThreatLevel.FlaggedOrRejected:
-                                threatRowClass = "bg-red-50/30 border-l-4 border-l-red-500 hover:bg-red-50/50 opacity-100";
+                                threatRowClass = "bg-red-50/40 hover:bg-red-50 opacity-100";
+                                threatBorderClass = "border-l-4 border-l-red-500";
                                 threatBadgeClass = "bg-red-100 text-red-700 border-red-200 animate-pulse";
                                 threatIcon = "warning";
                                 threatLabel = "CRITICAL THREAT";
                                 break;
                             case AiThreatLevel.ManualAudit:
-                                threatRowClass = "bg-amber-50/30 border-l-4 border-l-amber-500 hover:bg-amber-50/50 opacity-100";
+                                threatRowClass = "bg-amber-50/40 hover:bg-amber-50 opacity-100";
+                                threatBorderClass = "border-l-4 border-l-amber-500";
                                 threatBadgeClass = "bg-amber-100 text-amber-700 border-amber-200";
                                 threatIcon = "error";
                                 threatLabel = "HIGH THREAT";
                                 break;
                             case AiThreatLevel.Approved:
-                                threatRowClass = "bg-emerald-50/30 border-l-4 border-l-emerald-500 hover:bg-emerald-50/50 opacity-100";
+                                threatRowClass = "bg-emerald-50/40 hover:bg-emerald-50 opacity-100";
+                                threatBorderClass = "border-l-4 border-l-emerald-500";
                                 threatBadgeClass = "bg-emerald-100 text-emerald-700 border-emerald-200";
                                 threatIcon = "check_circle";
                                 threatLabel = "CLEAN";
                                 break;
                             default:
-                                threatRowClass = isPending ? "opacity-100" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0";
+                                threatRowClass = isPending ? "opacity-100 hover:bg-slate-50" : "opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0 hover:bg-slate-50";
+                                threatBorderClass = "border-l-4 border-transparent";
                                 threatBadgeClass = "bg-slate-100 text-slate-600 border-slate-200";
                                 threatIcon = "pending";
                                 threatLabel = "PENDING / NONE";
                                 break;
                         }
                         
-                        <tr data-course-id="@item.CourseId" class="group transition-all duration-300 @threatRowClass">
-                            <td class="px-8 py-6">
+                        <tr id="course_@item.CourseId" data-course-id="@item.CourseId" class="group transition-all duration-300 @threatRowClass">
+                            <td class="px-8 py-6 @threatBorderClass">
                                 <div class="flex items-center gap-4">
                                     <div class="w-14 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-100 shadow-sm">
                                         <img src="@(string.IsNullOrEmpty(item.CourseThumbnailUrl) ? "/img/default-course.png" : item.CourseThumbnailUrl)" 
@@ -319,10 +326,10 @@
                 <div class="flex items-center gap-1.5">
                     @if (Model.Page > 1)
                     {
-                        <a href="@Url.Action("Courses", new { page = Model.Page - 1, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
-                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5">
+                        <button type="button" onclick="fetchCoursesPage(@(Model.Page - 1))"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">chevron_left</span>
-                        </a>
+                        </button>
                     }
 
                     @for (int p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
@@ -333,17 +340,17 @@
                         }
                         else
                         {
-                            <a href="@Url.Action("Courses", new { page = p, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
-                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-semibold text-xs">@p</a>
+                            <button type="button" onclick="fetchCoursesPage(@p)"
+                               class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-semibold text-xs cursor-pointer">@p</button>
                         }
                     }
 
                     @if (Model.Page < Model.TotalPages)
                     {
-                        <a href="@Url.Action("Courses", new { page = Model.Page + 1, pageSize = Model.PageSize, search = ViewBag.Search, category = ViewBag.Category, status = ViewBag.Status, sortBy = ViewBag.SortBy })"
-                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold">
+                        <button type="button" onclick="fetchCoursesPage(@(Model.Page + 1))"
+                           class="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200/80 text-slate-500 hover:bg-white hover:text-slate-800 transition-all shadow-sm/5 font-bold cursor-pointer">
                             <span class="material-symbols-outlined text-[16px]">chevron_right</span>
-                        </a>
+                        </button>
                     }
                 </div>
             </div>
@@ -352,7 +359,7 @@
 </div>
 
 <!-- Reject Modal -->
-<div id="reject-modal" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6 backdrop-blur-sm">
+<div id="reject-modal" class="fixed inset-0 bg-black/60 z-[100] hidden flex items-center justify-center p-6 backdrop-blur-sm">
     <div class="bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
         <!-- Header -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-between">
@@ -394,28 +401,34 @@
     let rejectCourseData = null;
     let rejectRowCounter = 0;
     let debounceTimer;
+    let currentPage = 1;
 
     // AJAX fetching for courses
-    function triggerAjaxFetch() {
-        const searchVal = document.getElementById("search-input").value.trim();
-        const categoryVal = document.getElementById("category-select").value;
-        const statusVal = document.getElementById("status-select").value;
-        const sortByVal = document.getElementById("sort-select").value;
-
+    function triggerAjaxFetch(page = currentPage) {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
-            fetchCourses(searchVal, categoryVal, statusVal, sortByVal);
+            fetchCourses(page);
         }, 300);
     }
 
-    async function fetchCourses(search, category, status, sortBy) {
+    function fetchCoursesPage(page) {
+        fetchCourses(page);
+    }
+
+    async function fetchCourses(page = currentPage) {
+        currentPage = page;
+        const search = document.getElementById("search-input").value.trim();
+        const category = document.getElementById("category-select").value;
+        const status = document.getElementById("status-select").value;
+        const sortBy = document.getElementById("sort-select").value;
+
         const container = document.getElementById("moderation-table-container");
         if (container) {
             container.style.opacity = "0.5";
             container.style.transition = "opacity 0.15s ease-in-out";
         }
 
-        const url = `/AdminModeration/Courses?search=${encodeURIComponent(search)}&category=${category}&status=${status}&sortBy=${sortBy}`;
+        const url = `/AdminModeration/Courses?search=${encodeURIComponent(search)}&category=${category}&status=${status}&sortBy=${sortBy}&page=${page}`;
         try {
             const resp = await fetch(url);
             const htmlText = await resp.text();
@@ -452,7 +465,7 @@
         }
         
         // Refresh AJAX to sync list filters and stats badge
-        triggerAjaxFetch();
+        triggerAjaxFetch(currentPage);
     }
 
     async function approveCourse(id) {
@@ -501,6 +514,9 @@
         rejectCourseId = id;
         rejectRowCounter = 0;
         const modal = document.getElementById('reject-modal');
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
         const loading = document.getElementById('reject-loading');
         const container = document.getElementById('reject-items-container');
         const addBtn = document.getElementById('add-reject-item-btn');
@@ -669,6 +685,9 @@
         const rows = document.querySelectorAll('.reject-row');
         const items = [];
         let valid = true;
+        const keysSeen = new Set();
+        let hasDuplicate = false;
+        let duplicateName = '';
 
         rows.forEach(row => {
             const select = row.querySelector('.reject-target');
@@ -681,6 +700,17 @@
             }
 
             const selectedOption = select.options[select.selectedIndex];
+            const lId = selectedOption.dataset.lessonId || '';
+            const mId = selectedOption.dataset.materialId || '';
+            const uniqueKey = `${target}_${lId}_${mId}`;
+
+            if (keysSeen.has(uniqueKey)) {
+                hasDuplicate = true;
+                duplicateName = selectedOption.text.replace(/^@@(file|lesson|course)[\:\s]*/i, '') || target;
+            } else {
+                keysSeen.add(uniqueKey);
+            }
+
             const item = {
                 target,
                 reason,
@@ -694,6 +724,11 @@
 
         if (!valid || items.length === 0) {
             Swal.fire('Information Missing', 'Please select a specific element and type a reason for each rejection row.', 'warning');
+            return;
+        }
+
+        if (hasDuplicate) {
+            Swal.fire('Duplicate Element Selected', `The element "${duplicateName}" is selected more than once. Please remove duplicate rows or combine their reasons.`, 'warning');
             return;
         }
 
@@ -792,7 +827,7 @@
         const result = await response.json();
         if (result.success) {
             Swal.fire('Success', 'The course has been unflagged.', 'success')
-                .then(() => location.reload());
+                .then(() => dimCourseRowInDOM(id));
         } else {
             Swal.fire('Error', 'An error occurred while unflagging this course.', 'error');
         }
@@ -868,26 +903,75 @@
         }
     });
 
-    // Wire up filter controls
+    // Wire up filter controls & initializations
     document.addEventListener("DOMContentLoaded", () => {
+        const rejectModal = document.getElementById('reject-modal');
+        if (rejectModal && rejectModal.parentElement !== document.body) {
+            document.body.appendChild(rejectModal);
+        }
+
         const searchInput = document.getElementById("search-input");
         const categorySelect = document.getElementById("category-select");
         const statusSelect = document.getElementById("status-select");
         const sortSelect = document.getElementById("sort-select");
         const clearBtn = document.getElementById("btn-clear-filters");
 
-        searchInput.addEventListener("input", triggerAjaxFetch);
-        categorySelect.addEventListener("change", triggerAjaxFetch);
-        statusSelect.addEventListener("change", triggerAjaxFetch);
-        sortSelect.addEventListener("change", triggerAjaxFetch);
+        if (searchInput) searchInput.addEventListener("input", () => triggerAjaxFetch(1));
+        if (categorySelect) categorySelect.addEventListener("change", () => triggerAjaxFetch(1));
+        if (statusSelect) statusSelect.addEventListener("change", () => triggerAjaxFetch(1));
+        if (sortSelect) sortSelect.addEventListener("change", () => triggerAjaxFetch(1));
 
-        clearBtn.addEventListener("click", () => {
-            searchInput.value = "";
-            categorySelect.value = "0";
-            statusSelect.value = "all";
-            sortSelect.value = "oldest";
-            triggerAjaxFetch();
+        let courseUpdateTimeout;
+        document.addEventListener("ReceiveCourseUpdateEvent", () => {
+            clearTimeout(courseUpdateTimeout);
+            courseUpdateTimeout = setTimeout(() => {
+                triggerAjaxFetch();
+            }, 300);
         });
+        if (clearBtn) {
+            clearBtn.addEventListener("click", () => {
+                if (searchInput) searchInput.value = "";
+                if (categorySelect) categorySelect.value = "0";
+                if (statusSelect) statusSelect.value = "all";
+                if (sortSelect) sortSelect.value = "priority_desc";
+                triggerAjaxFetch(1);
+            });
+        }
+
+        // SignalR Real-time moderation queue listener via dedicated hub
+        if (window.ADMIN_LAYOUT_TOKEN) {
+            const modConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/adminModerationHub", {
+                    accessTokenFactory: () => window.ADMIN_LAYOUT_TOKEN
+                })
+                .withAutomaticReconnect()
+                .build();
+
+            modConnection.on("ModerationQueueUpdated", () => {
+                triggerAjaxFetch(currentPage);
+                if (typeof loadPendingCourseCount === 'function') loadPendingCourseCount();
+            });
+
+            modConnection.start().catch(err => console.error("AdminModerationHub connection error:", err));
+        }
+
+        // Handle URL hash auto-scroll highlight
+        if (window.location.hash) {
+            const targetId = window.location.hash.substring(1);
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                setTimeout(() => {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    const classes = ['ring-8', 'ring-red-500', 'bg-red-100'];
+                    targetEl.classList.add(...classes, 'transition-all', 'duration-1000');
+                    
+                    setTimeout(() => {
+                        targetEl.classList.remove(...classes);
+                    }, 3000);
+                }, 500);
+            }
+        }
     });
 </script>
 }

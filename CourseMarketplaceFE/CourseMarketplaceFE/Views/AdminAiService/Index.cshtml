@@ -158,7 +158,7 @@
 <!-- ========================================================================= -->
 <!-- MODAL: ADD AI MODEL -->
 <!-- ========================================================================= -->
-<div id="addAiModelModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 ease-out opacity-0">
+<div id="addAiModelModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 flex items-center justify-center p-4 transition-all duration-300 ease-out opacity-0">
     <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-300 ease-out">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-base font-bold text-slate-900">Register New AI Model</h3>
@@ -227,7 +227,7 @@
 <!-- ========================================================================= -->
 <!-- MODAL: EDIT AI MODEL -->
 <!-- ========================================================================= -->
-<div id="editAiModelModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 backdrop-blur-sm flex items-center justify-center p-4 transition-all duration-300 ease-out opacity-0">
+<div id="editAiModelModal" class="fixed inset-0 z-50 hidden bg-slate-950/40 flex items-center justify-center p-4 transition-all duration-300 ease-out opacity-0">
     <div class="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-all duration-300 ease-out">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 class="text-base font-bold text-slate-900">Edit AI Model</h3>
@@ -312,7 +312,11 @@
         }
 
         function openAddAiModelModal() {
+            document.body.classList.add('overflow-hidden');
             const modal = document.getElementById('addAiModelModal');
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
@@ -321,6 +325,7 @@
         }
 
         function closeAddAiModelModal() {
+            document.body.classList.remove('overflow-hidden');
             const modal = document.getElementById('addAiModelModal');
             modal.classList.add('opacity-0');
             modal.firstElementChild.classList.add('scale-95');
@@ -347,6 +352,7 @@
         }
 
         function openEditAiModelModal(btn) {
+            document.body.classList.add('overflow-hidden');
             const id = btn.getAttribute('data-id');
             const provider = btn.getAttribute('data-provider');
             const version = btn.getAttribute('data-version');
@@ -360,6 +366,9 @@
             document.getElementById('editDescription').value = desc;
 
             const modal = document.getElementById('editAiModelModal');
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
+            }
             modal.classList.remove('hidden');
             setTimeout(() => {
                 modal.classList.remove('opacity-0');
@@ -368,6 +377,7 @@
         }
 
         function closeEditAiModelModal() {
+            document.body.classList.remove('overflow-hidden');
             const modal = document.getElementById('editAiModelModal');
             modal.classList.add('opacity-0');
             modal.firstElementChild.classList.add('scale-95');

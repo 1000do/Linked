@@ -22,6 +22,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ICourseRepository _courseRepoMock;
         private readonly INotificationService _notifMock;
         private readonly IUserRepository _userRepoMock;
+        private readonly IWishlistService _wishlistServiceMock;
         private readonly EnrollmentService _sut;
 
         public EnrollmentServiceTests()
@@ -30,12 +31,14 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _courseRepoMock = Substitute.For<ICourseRepository>();
             _notifMock = Substitute.For<INotificationService>();
             _userRepoMock = Substitute.For<IUserRepository>();
+            _wishlistServiceMock = Substitute.For<IWishlistService>();
 
             _sut = new EnrollmentService(
                 _repoMock,
                 _courseRepoMock,
                 _notifMock,
-                _userRepoMock
+                _userRepoMock,
+                _wishlistServiceMock
             );
         }
 

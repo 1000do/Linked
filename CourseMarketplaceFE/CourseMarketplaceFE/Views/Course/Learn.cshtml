@@ -33,6 +33,11 @@
     var tokenForLayout = Context.Request.Cookies["AccessToken"]
                          ?? Context.Request.Cookies[".AspNetCore.Identity.Application"] ?? "";
     var firstMaterial = Model.Lessons.SelectMany(l => l.LearningMaterials).FirstOrDefault();
+
+    var userRole = (Context.Request.Cookies["UserRole"] ?? "").ToLower();
+    var isStaffOrAdmin = userRole == "admin" || userRole == "staff" || User.IsInRole("admin") || User.IsInRole("staff");
+    var isCourseOwner = Model.IsOwner;
+    var canSkipVideoServer = isStaffOrAdmin || isCourseOwner;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -283,7 +288,7 @@
                                 }
                                 bool isPending = string.Equals(lesson.LessonStatus, "pending", StringComparison.OrdinalIgnoreCase) || string.Equals(material.LearningStatus, "pending", StringComparison.OrdinalIgnoreCase);
 
-                                <div class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
+                                <div id="material_@material.MaterialId" class="material-item group cursor-pointer border-b border-slate-50 @(material == firstMaterial ? "active-material" : "")"
                                       onclick="playMaterial('@material.MaterialUrl', '@material.Title', '@(material.Description?.Replace("'", "\\'"))', this, '@mFileType', @material.MaterialId, @lesson.LessonId, @isPending.ToString().ToLower())">
                                     <div class="px-4 py-4 flex gap-3">
                                         <div class="flex flex-col items-center pt-1 shrink-0">
@@ -317,7 +322,7 @@
                 
                 @if (Model.CourseQuizzes != null && Model.CourseQuizzes.Any(q => !q.IsHidden))
                 {
-                    <div class="lesson-section border-b border-indigo-50 mt-4">
+                    <div class="lesson-section quiz-section border-b border-indigo-50 mt-4">
                         <button class="w-full px-4 py-3 bg-indigo-50 flex items-center justify-between text-left hover:bg-indigo-100 transition-colors"
                                 onclick="this.nextElementSibling.classList.toggle('hidden')">
                             <div>
@@ -325,15 +330,18 @@
                                 <div class="flex items-center gap-2">
                                     <h3 class="font-bold text-sm text-indigo-900">Quizzes</h3>
                                     <span class="text-[11px] font-bold text-indigo-600 bg-white border border-indigo-200 px-1.5 py-0.5 rounded-md leading-none">@Model.CourseQuizzes.Count(q => !q.IsHidden)</span>
+                                    <span class="quiz-lock-icon hidden text-indigo-400" title="Complete all lessons to unlock quizzes">
+                                        <span class="material-symbols-outlined text-[16px]">lock</span>
+                                    </span>
                                 </div>
                             </div>
                             <span class="material-symbols-outlined text-indigo-400">expand_more</span>
                         </button>
-                        <div class="lesson-items bg-white">
+                        <div class="lesson-items quiz-items bg-white">
                             @foreach (var quiz in Model.CourseQuizzes.Where(q => !q.IsHidden))
                             {
                                 <div class="material-item group cursor-pointer border-b border-slate-50 hover:bg-indigo-50/50 transition-colors"
-                                     onclick="playQuiz(@quiz.QuizId, '@Html.Raw(quiz.Title.Replace("'", "\\'"))', '@Html.Raw(quiz.Description?.Replace("'", "\\'") ?? "")', this)">
+                                     onclick="playQuiz(@quiz.QuizId, '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(quiz.Title))', '@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(quiz.Description ?? ""))', this)">
                                     <div class="px-4 py-4 flex gap-3">
                                         <div class="flex flex-col items-center pt-1 shrink-0">
                                             <span class="material-symbols-outlined text-[20px] text-indigo-400 group-hover:text-indigo-600">quiz</span>
@@ -362,6 +370,7 @@
 
     <!-- </script> -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/toast-queue.js"></script>
     <!-- Global Logout Form -->
     <form id="global-logout-form" asp-controller="Account" asp-action="Logout" method="post" style="display:none;">
         @Html.AntiForgeryToken()
@@ -463,6 +472,16 @@
         let isCurrentVideoCompleted = false;
         let maxPlayedTime = 0;
 
+        const canSkipVideoServer = @(canSkipVideoServer ? "true" : "false");
+        function canSkipVideo() {
+            if (canSkipVideoServer) return true;
+            if (typeof currentUserRole !== 'undefined' && currentUserRole) {
+                const roleLower = currentUserRole.toLowerCase();
+                if (roleLower === 'admin' || roleLower === 'staff') return true;
+            }
+            return false;
+        }
+
         const lessonMaterialsMap = {
             @foreach(var l in Model.Lessons) {
                 @:@l.LessonId: [@string.Join(",", l.LearningMaterials.Select(m => m.MaterialId))],
@@ -478,7 +497,7 @@
         function isLessonCompleted(lessonId) {
             const mIds = lessonMaterialsMap[lessonId];
             if (!mIds || mIds.length === 0) return false;
-            return mIds.every(id => completedMaterialIdsArray.includes(id));
+            return mIds.every(id => completedMaterialIdsArray.includes(Number(id)));
         }
 
         function updateSequentialLockState() {
@@ -491,7 +510,7 @@
                 const lockIcon = sectionEl.querySelector('.lesson-lock-icon');
                 const itemsContainer = sectionEl.querySelector('.lesson-items');
 
-                const isUnlocked = (idx === 0) || prevCompleted;
+                const isUnlocked = (idx === 0) || prevCompleted || canSkipVideo();
 
                 if (isUnlocked) {
                     sectionEl.dataset.isLocked = "false";
@@ -509,6 +528,29 @@
 
                 prevCompleted = isLessonCompleted(lid);
             });
+
+            // Lock/unlock Quizzes section (requires all lessons to be completed)
+            const quizSectionEl = document.querySelector('.quiz-section');
+            if (quizSectionEl) {
+                const quizLockIcon = quizSectionEl.querySelector('.quiz-lock-icon');
+                const quizItemsContainer = quizSectionEl.querySelector('.quiz-items');
+                const allLessonsCompleted = lessonOrderList.length === 0 || lessonOrderList.every(lid => isLessonCompleted(lid));
+                const isQuizUnlocked = allLessonsCompleted || canSkipVideo();
+
+                if (isQuizUnlocked) {
+                    quizSectionEl.dataset.isLocked = "false";
+                    if (quizLockIcon) quizLockIcon.classList.add('hidden');
+                    if (quizItemsContainer) {
+                        quizItemsContainer.classList.remove('opacity-50', 'pointer-events-none', 'select-none');
+                    }
+                } else {
+                    quizSectionEl.dataset.isLocked = "true";
+                    if (quizLockIcon) quizLockIcon.classList.remove('hidden');
+                    if (quizItemsContainer) {
+                        quizItemsContainer.classList.add('opacity-50', 'pointer-events-none', 'select-none');
+                    }
+                }
+            }
         }
 
         async function loadProgress() {
@@ -523,13 +565,18 @@
 
                     // Update checkmarks in sidebar
                     if (data.completedMaterialIds) {
-                        completedMaterialIdsArray = data.completedMaterialIds;
+                        completedMaterialIdsArray = data.completedMaterialIds.map(Number);
                         data.completedMaterialIds.forEach(id => {
                             const checkIcon = document.getElementById('check-' + id);
                             if (checkIcon) checkIcon.classList.remove('hidden');
                         });
                     } else {
                         completedMaterialIdsArray = [];
+                    }
+
+                    // Sync video completion status for currently active video
+                    if (currentMaterialId) {
+                        isCurrentVideoCompleted = completedMaterialIdsArray.includes(Number(currentMaterialId));
                     }
 
                     // Update lesson locks (Sequential Progression)
@@ -560,7 +607,7 @@
         };
 
         videoPlayer.onseeking = () => {
-            if (!isCurrentVideoCompleted) {
+            if (!canSkipVideo() && !isCurrentVideoCompleted) {
                 if (videoPlayer.currentTime > maxPlayedTime + 1.5) {
                     videoPlayer.currentTime = maxPlayedTime;
                     const Toast = Swal.mixin({
@@ -606,7 +653,7 @@
 
         videoPlayer.onended = () => {
             if (currentMaterialId) {
-                if (isCurrentVideoCompleted || maxPlayedTime >= (videoPlayer.duration * 0.95)) {
+                if (canSkipVideo() || isCurrentVideoCompleted || maxPlayedTime >= (videoPlayer.duration * 0.95)) {
                     markAsCompleted(currentMaterialId);
                 } else {
                     const Toast = Swal.mixin({
@@ -1252,7 +1299,7 @@
             }
 
             // Anti-skip setup
-            isCurrentVideoCompleted = completedMaterialIdsArray.includes(materialId);
+            isCurrentVideoCompleted = completedMaterialIdsArray.includes(Number(materialId));
             maxPlayedTime = 0;
 
             if (isVideo) {
@@ -1342,6 +1389,22 @@
         }
 
         function playQuiz(quizId, title, description, element) {
+            const quizSectionEl = element.closest('.quiz-section');
+            if (quizSectionEl && quizSectionEl.dataset.isLocked === "true") {
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                Toast.fire({
+                    icon: 'warning',
+                    title: 'Please complete all lessons in the course before taking the quiz!'
+                });
+                return;
+            }
+
             currentMaterialId = null; // Quizzes are not marked complete via video API
             currentLessonId = null;
 
@@ -1375,7 +1438,8 @@
             quizIframe.src = '/QuizAttempt/Take/' + quizId;
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
+            await loadProgress();
             const firstItem = document.querySelector('.material-item');
             if (firstItem) {
                 firstItem.classList.remove('active-material');
@@ -1385,7 +1449,6 @@
                 const reviewsBtn = document.querySelector('button[onclick="switchTab(\\\'reviews\\\', this)"]');
                 if (reviewsBtn) reviewsBtn.click();
             }
-            loadProgress();
             loadLessonRatings();
         });
 
@@ -1405,56 +1468,9 @@
 
             notiConn.on("ReceiveNotification", (noti) => {
                 if (noti && noti.title && localStorage.getItem("AccountLocked") !== "true") {
-                    const truncateText = (text, maxLength = 100) => {
-                        if (!text) return "";
-                        return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
-                    };
-
-                    const displayTitle = truncateText(noti.title, 255);
-                    const displayContent = truncateText(noti.content, 100);
-
-                    const Toast = Swal.mixin({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 10000,
-                        timerProgressBar: true,
-                        width: '600px',
-                        padding: '24px',
-                        didOpen: (toast) => {
-                            toast.addEventListener('mouseenter', Swal.stopTimer);
-                            toast.addEventListener('mouseleave', Swal.resumeTimer);
-                            
-                            // Make entire toast clickable
-                            toast.style.cursor = 'pointer';
-                                toast.addEventListener('click', (e) => {
-                                    if (e.target.tagName === 'BUTTON') return;
-                                    e.preventDefault();
-                                    const targetUrl = noti.linkAction || '/Notification';
-                                    try {
-                                        const urlObj = new URL(targetUrl, window.location.origin);
-                                        if (urlObj.pathname.toLowerCase() === window.location.pathname.toLowerCase()) {
-                                            window.location.href = targetUrl;
-                                            window.location.reload();
-                                        } else {
-                                            window.location.href = targetUrl;
-                                        }
-                                    } catch (err) {
-                                        window.location.href = targetUrl;
-                                    }
-                                });
-                        }
-                    });
-
-                    Toast.fire({
-                        icon: 'info',
-                        title: displayTitle,
-                        html: `
-                            <div class="text-left font-body">
-                                <p class="text-[12px] text-slate-600 mt-1 leading-relaxed">${displayContent}</p>
-                                ${noti.linkAction ? `<a href="${noti.linkAction}" class="inline-block mt-2 text-[12px] font-bold text-emerald-600 hover:text-emerald-700 transition-colors">View Detail &rarr;</a>` : ''}
-                            </div>
-                        `
+                    ToastQueue.enqueue(noti, {
+                        defaultTargetUrl: '/Notification',
+                        accentColorClass: 'text-emerald-600 hover:text-emerald-700'
                     });
                 }
             });
@@ -1476,6 +1492,31 @@
             });
             notiConn.start().catch(err => console.error("Noti Hub Error", err));
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (window.location.hash) {
+                const targetId = window.location.hash.substring(1);
+                const targetEl = document.getElementById(targetId);
+                if (targetEl && targetId.startsWith('material_')) {
+                    setTimeout(() => {
+                        const itemsContainer = targetEl.closest('.lesson-items');
+                        if (itemsContainer && itemsContainer.classList.contains('hidden')) {
+                            const btn = itemsContainer.previousElementSibling;
+                            if (btn) btn.click();
+                        }
+                        
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetEl.click();
+                        
+                        const classes = ['ring-4', 'ring-red-500', 'bg-red-100']
+                        targetEl.classList.add(...classes, 'transition-all', 'duration-1000');
+                        setTimeout(() => {
+                            targetEl.classList.remove(...classes);
+                        }, 3000);
+                    }, 500);
+                }
+            }
+        });
     </script>
 </body>
 </html>

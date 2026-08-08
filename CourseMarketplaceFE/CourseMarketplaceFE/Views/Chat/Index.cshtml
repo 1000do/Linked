@@ -225,12 +225,12 @@
             });
 
             chatPageConnection.on("SupportRequestAccepted", async (data) => {
-                if (activeChatId === 'support_ticket') {
-                    isWaitingForSupportStaff = false;
-                    await loadChats();
-                    selectChat(data.chatId || data.ChatId, 'Support Team', '/img/default-avatar.png', true);
-                } else {
-                    await loadChats();
+                isWaitingForSupportStaff = false;
+                await loadChats();
+                await loadPendingRequests();
+                const newChatId = data.chatId || data.ChatId;
+                if (activeChatId === 'support_ticket' || activeChatId === newChatId) {
+                    selectChat(newChatId, 'Support Team', '/img/default-avatar.png', true, true);
                 }
             });
 
@@ -283,6 +283,18 @@
                 }
             });
 
+            chatPageConnection.on("Error", function (message) {
+                Swal.fire('Error', message, 'error');
+            });
+
+            window.addEventListener('focus', function () {
+                if (activeChatId && activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                    if (chatPageConnection.state === signalR.HubConnectionState.Connected) {
+                        chatPageConnection.invoke("MarkAsRead", parseInt(activeChatId)).catch(err => console.error(err));
+                    }
+                }
+            });
+
             try {
                 await chatPageConnection.start();
                 console.log("SignalR Connected.");
@@ -323,7 +335,7 @@
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1">
                             <p class="text-xs text-slate-500 m-0 truncate">${c.lastMessage || 'Start chatting...'}</p>
-                            ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount}</span>` : ''}
+                            ${c.unreadCount > 0 ? `<span class="unread-count">${c.unreadCount > 99 ? '99+' : c.unreadCount}</span>` : ''}
                         </div>
                     </div>
                 </div>
@@ -385,14 +397,15 @@
             const container = document.getElementById('pending-requests-container');
             const list = document.getElementById('pending-requests-list');
             const count = document.getElementById('pending-count');
-
+            
             if (!pendingRequests || pendingRequests.length === 0) {
                 container.style.display = 'none';
                 return;
             }
+            const pendingCount = pendingRequests.length;
 
             container.style.display = 'block';
-            count.innerText = pendingRequests.length;
+            count.innerText = pendingCount > 99 ? "99+" : pendingCount;
 
             const actor = '@actor'; // From Razor view
             const isStaffOrAdmin = actor === 'Admin' || actor === 'Staff';
@@ -429,7 +442,7 @@
                 if (res.ok) {
                     const data = await res.json();
                     await loadChats();
-                    selectChat(data.chatId, senderName, senderAvatar, true);
+                    selectChat(data.chatId, senderName, senderAvatar, true, true);
                     loadPendingRequests(); // Refresh the list to remove the accepted ticket
                 } else {
                     const error = await res.json();
@@ -472,6 +485,23 @@
         }
 
         async function contactStaff() {
+            // 0. Kiểm tra xem đã có cuộc hội thoại hỗ trợ đang hoạt động (contextType === 'system') trong danh sách chat chưa
+            if (allChats && allChats.length > 0) {
+                const supportChats = allChats.filter(c => (c.contextType || c.ContextType) === 'system');
+                if (supportChats && supportChats.length > 0) {
+                    // Ưu tiên cuộc hội thoại có tin nhắn gần nhất
+                    supportChats.sort((a, b) => new Date(b.lastMessageAt || b.LastMessageAt || 0) - new Date(a.lastMessageAt || a.LastMessageAt || 0));
+                    const latestSupport = supportChats[0];
+                    selectChat(
+                        latestSupport.chatId || latestSupport.ChatId,
+                        latestSupport.partnerName || latestSupport.PartnerName || 'Support Team',
+                        latestSupport.partnerAvatar || latestSupport.PartnerAvatar || '/img/default-avatar.png',
+                        latestSupport.isOnline !== undefined ? latestSupport.isOnline : (latestSupport.IsOnline !== undefined ? latestSupport.IsOnline : true)
+                    );
+                    return;
+                }
+            }
+
             // 1. Kiểm tra xem có ticket nào đang chờ không
             try {
                 const pendingRes = await fetch("/Chat/GetPendingRequests");
@@ -479,6 +509,7 @@
                     const pendings = await pendingRes.json();
                     if (pendings && pendings.length > 0) {
                         showPendingSupportUI(pendings[0].initialMessage);
+                        await loadPendingRequests();
                         return;
                     }
                 }
@@ -559,6 +590,7 @@
             document.getElementById('chat-content').style.display = 'none';
             document.getElementById('empty-state').style.display = 'block';
             document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+            loadPendingRequests();
         }
         // ------------------------------ //
 
@@ -587,16 +619,18 @@
         }
 
         // 3. Chọn cuộc hội thoại
-        async function selectChat(chatId, name, avatar, isOnline = true) {
+        async function selectChat(chatId, name, avatar, isOnline = true, forceReload = false) {
             currentChatId = chatId;
             document.querySelector('.chat-wrapper').classList.add('chat-active');
 
-            if (activeChatId === chatId) return;
+            if (!forceReload && activeChatId === chatId) return;
             
             // Clear typing state for previous chat if any
             if (activeChatId && typeof chatPageTypingTimeout !== 'undefined') {
                 try {
-                    chatPageConnection.invoke("Typing", activeChatId, false);
+                    if (activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                        chatPageConnection.invoke("Typing", activeChatId, false);
+                    }
                     clearTimeout(chatPageTypingTimeout);
                 } catch(e) {}
             }
@@ -630,7 +664,9 @@
             // Join SignalR group to receive typing and read events for newly created chats
             if (chatPageConnection && chatPageConnection.state === signalR.HubConnectionState.Connected) {
                 try {
-                    await chatPageConnection.invoke("JoinChat", chatId);
+                    if (chatId !== 'support_ticket' && !isNaN(chatId)) {
+                        await chatPageConnection.invoke("JoinChat", chatId);
+                    }
                 } catch (e) { console.error("JoinChat error:", e); }
             }
 
@@ -661,11 +697,15 @@
                 
                 const list = document.getElementById('message-list');
                 list.innerHTML = "";
-                messages.forEach(m => appendMessage(m));
+                if (Array.isArray(messages)) {
+                    messages.forEach(m => appendMessage(m));
+                }
                 scrollToBottom();
 
                 // Broadcast read receipt
-                chatPageConnection.invoke("MarkAsRead", chatId);
+                if (chatId !== 'support_ticket' && !isNaN(chatId)) {
+                    chatPageConnection.invoke("MarkAsRead", chatId);
+                }
                 
                 // Refresh local chat list and global sidebar unread badge
                 await loadChats();
@@ -677,6 +717,10 @@
 
         function appendMessage(m) {
             console.log('appendMessage received:', m);
+            const msgId = m.messageId || m.MessageId;
+            if (msgId && document.getElementById(`msg-${msgId}`)) {
+                return; // Tránh hiển thị trùng lặp tin nhắn nếu đã tồn tại
+            }
             const list = document.getElementById('message-list');
             const sid = senderIdOf(m);
             const isMe = sid === chatMyAccountId && chatMyAccountId > 0;
@@ -800,6 +844,7 @@
                     if (res.ok) {
                         input.value = "";
                         showPendingSupportUI(content);
+                        await loadPendingRequests();
                     } else {
                         Swal.fire('Error', 'Failed to send request.', 'error');
                     }
@@ -1005,6 +1050,26 @@
             });
 
             if (confirmResult.isConfirmed) {
+                if (activeChatId === 'support_ticket' || isNaN(activeChatId)) {
+                    document.getElementById('message-list').innerHTML = "";
+                    activeChatId = null;
+                    isWaitingForSupportStaff = false;
+                    document.getElementById('chat-content').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+                    
+                    Swal.fire({
+                        title: 'Cleared!',
+                        text: 'The chat history was successfully cleared.',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl' }
+                    });
+                    return;
+                }
+
                 try {
                     const res = await fetch(`/Chat/ClearHistory?chatId=${activeChatId}`, {
                         method: 'DELETE'
@@ -1053,12 +1118,14 @@
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
 
-            if (!activeChatId) return;
+            if (!activeChatId || activeChatId === 'support_ticket' || isNaN(activeChatId)) return;
             chatPageConnection.invoke("Typing", activeChatId, true);
             
             clearTimeout(chatPageTypingTimeout);
             chatPageTypingTimeout = setTimeout(() => {
-                chatPageConnection.invoke("Typing", activeChatId, false);
+                if (activeChatId && activeChatId !== 'support_ticket' && !isNaN(activeChatId)) {
+                    chatPageConnection.invoke("Typing", activeChatId, false);
+                }
             }, 3000);
         });
 

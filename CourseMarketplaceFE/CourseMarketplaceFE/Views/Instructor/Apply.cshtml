@@ -213,8 +213,17 @@
                                     <span class="material-symbols-outlined text-base text-primary">category</span>
                                     Areas of Expertise <span class="text-red-500">*</span>
                                 </label>
-                                <input asp-for="ExpertiseCategories" type="text" placeholder="e.g., C#, .NET Core, Cloud Computing, Microservices, System Architecture"
-                                       class="w-full px-4 py-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm font-medium text-slate-800 placeholder:text-slate-400" />
+                                
+                                <div class="relative">
+                                    <!-- Hidden input to store comma-separated values for form submission -->
+                                    <input type="hidden" asp-for="ExpertiseCategories" id="hiddenExpertiseCategories" />
+                                    
+                                    <div id="expertise-tag-box" class="flex flex-wrap gap-2 px-4 py-3.5 bg-slate-50/70 border border-slate-200 rounded-2xl min-h-[52px] focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all cursor-text" onclick="document.getElementById('expertiseInput').focus()">
+                                        <input type="text" id="expertiseInput" class="flex-1 bg-transparent border-none text-sm outline-none px-1 min-w-[150px] font-medium text-slate-800 placeholder:text-slate-400" placeholder="Type category and press Enter...">
+                                    </div>
+                                    <div id="expertise-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 shadow-xl rounded-xl z-20 max-h-48 overflow-y-auto py-1"></div>
+                                </div>
+
                                 <p class="text-[11px] text-slate-400 mt-1.5 font-medium">List the main technical domains, programming languages, or topics you specialize in teaching.</p>
                                 <span asp-validation-for="ExpertiseCategories" class="text-xs text-red-500 mt-1 block"></span>
                             </div>
@@ -640,6 +649,107 @@
                 }
             }
         }
+
+        // --- EXPERTISE CATEGORIES AUTOCOMPLETE LOGIC ---
+        const expertiseInput = document.getElementById('expertiseInput');
+        const expertiseSuggestions = document.getElementById('expertise-suggestions');
+        const hiddenExpertiseCategories = document.getElementById('hiddenExpertiseCategories');
+        
+        let allCategories = [];
+        let selectedExpertise = [];
+
+        // Pre-load if model already has some
+        const initialExpertise = hiddenExpertiseCategories.value;
+        if (initialExpertise) {
+            selectedExpertise = initialExpertise.split(',').map(s => s.trim()).filter(s => s);
+            // Limit to 1
+            if (selectedExpertise.length > 1) {
+                selectedExpertise = [selectedExpertise[0]];
+            }
+            renderExpertiseTags();
+        }
+
+        // Fetch categories from API
+        async function fetchCategories() {
+            try {
+                const res = await fetch('/api/public/courses/categories');
+                const apiResp = await res.json();
+                if (apiResp.success && apiResp.data) {
+                    // API returns list of CategoryResponse with categoriesName property
+                    allCategories = apiResp.data.map(c => c.categoriesName); 
+                }
+            } catch (err) { console.error('Failed to load categories', err); }
+        }
+        fetchCategories();
+
+        expertiseInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            if (query.length < 1) { 
+                expertiseSuggestions.classList.add('hidden'); 
+                return; 
+            }
+            
+            // Filter locally instead of API call per keystroke
+            const matched = allCategories.filter(c => c.toLowerCase().includes(query));
+            
+            if (matched.length > 0) {
+                expertiseSuggestions.innerHTML = matched
+                    .filter(m => !selectedExpertise.some(s => s.toLowerCase() === m.toLowerCase()))
+                    .map(m => `<div class="px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary cursor-pointer transition-colors font-medium" onclick="addExpertiseTag('${m.replace(/'/g, "\\'")}')">${m}</div>`).join('');
+                
+                if (expertiseSuggestions.innerHTML) {
+                    expertiseSuggestions.classList.remove('hidden');
+                } else {
+                    expertiseSuggestions.classList.add('hidden');
+                }
+            } else { 
+                expertiseSuggestions.innerHTML = `<div class="px-4 py-2 text-sm text-slate-500 italic">No matching categories found...</div>`;
+                expertiseSuggestions.classList.remove('hidden');
+            }
+        });
+
+        function addExpertiseTag(val) {
+            // Only allow 1 category to be selected
+            selectedExpertise = [val]; 
+            renderExpertiseTags(); 
+            
+            expertiseInput.value = '';
+            expertiseSuggestions.classList.add('hidden');
+        }
+
+        function renderExpertiseTags() {
+            const box = document.getElementById('expertise-tag-box');
+            box.querySelectorAll('.expertise-pill').forEach(el => el.remove());
+            
+            selectedExpertise.forEach((val, idx) => {
+                const pill = document.createElement('span');
+                pill.className = "expertise-pill inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-primary/10 text-primary border border-primary/20 select-none shadow-sm";
+                pill.innerHTML = `${val} <button type="button" onclick="removeExpertiseTag(${idx})" class="text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full p-0.5 transition-colors material-symbols-outlined text-[14px] outline-none border-0">close</button>`;
+                box.insertBefore(pill, expertiseInput);
+            });
+            
+            hiddenExpertiseCategories.value = selectedExpertise.join(', ');
+
+            // Hide input if 1 category is selected
+            if (selectedExpertise.length >= 1) {
+                expertiseInput.style.display = 'none';
+            } else {
+                expertiseInput.style.display = 'block';
+                expertiseInput.focus();
+            }
+        }
+
+        function removeExpertiseTag(idx) { 
+            selectedExpertise.splice(idx, 1); 
+            renderExpertiseTags(); 
+        }
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!document.getElementById('expertise-tag-box').contains(e.target) && e.target !== expertiseSuggestions) {
+                expertiseSuggestions.classList.add('hidden');
+            }
+        });
     </script>
 }
 

@@ -36,7 +36,7 @@ namespace CourseMarketplaceBE.Application.DTOs
         public string? Search { get; set; }
         public string? Category { get; set; }
         public string? Status { get; set; } = "pending";
-        public string? SortBy { get; set; } = "oldest"; // oldest (urgent), newest
+        public string? SortBy { get; set; } = "priority_desc"; // priority_desc, priority_asc, threat_desc, threat_asc, oldest, newest
     }
 
     public class UserReportModerationDto

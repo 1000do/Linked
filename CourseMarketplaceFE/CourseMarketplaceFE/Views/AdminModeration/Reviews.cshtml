@@ -404,7 +404,6 @@
                             confirmButtonColor: '#10b981'
                         }).then(() => {
                             closeDetailsModal();
-                            loadData(); // Reload to update stats and list
                         });
                     } else {
                         Swal.fire('Error', data.message || 'Action failed', 'error');
@@ -414,5 +413,14 @@
                 }
             }
         }
+        // ── Real-time Updates ──
+        let reviewUpdateTimeout;
+        document.addEventListener("ReceiveReviewUpdateEvent", () => {
+            clearTimeout(reviewUpdateTimeout);
+            reviewUpdateTimeout = setTimeout(() => {
+                if (typeof loadData === 'function') loadData(currentPage);
+            }, 300);
+        });
+        
     </script>
 }

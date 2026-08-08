@@ -22,10 +22,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class ReportController : ControllerBase
 {
     private readonly IReportSubmissionService _reportService;
+    private readonly IHubService _hubService;
 
-    public ReportController(IReportSubmissionService reportService)
+    public ReportController(IReportSubmissionService reportService, IHubService hubService)
     {
         _reportService = reportService;
+        _hubService = hubService;
     }
 
     private int? GetUserId()
@@ -52,6 +54,7 @@ public class ReportController : ControllerBase
         try
         {
             await _reportService.CreateCourseReportAsync(userId.Value, request);
+            await _hubService.SendReportUpdateAsync();
             return Ok(ApiResponse<string>.SuccessResponse("Your report has been submitted and will be reviewed shortly."));
         }
         catch (KeyNotFoundException ex)
@@ -81,6 +84,7 @@ public class ReportController : ControllerBase
         try
         {
             await _reportService.CreateCourseReviewReportAsync(userId.Value, request);
+            await _hubService.SendReportUpdateAsync();
             return Ok(ApiResponse<string>.SuccessResponse("Your course review report has been submitted."));
         }
         catch (KeyNotFoundException ex)
@@ -110,6 +114,7 @@ public class ReportController : ControllerBase
         try
         {
             await _reportService.CreateLessonReviewReportAsync(userId.Value, request);
+            await _hubService.SendReportUpdateAsync();
             return Ok(ApiResponse<string>.SuccessResponse("Your lesson review report has been submitted."));
         }
         catch (KeyNotFoundException ex)

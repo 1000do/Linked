@@ -58,6 +58,19 @@
             <div class="relative w-full md:w-52">
                 <select id="filter-expertise" class="w-full appearance-none pl-3.5 pr-10 py-2 border border-slate-200 rounded-xl text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-slate-700 cursor-pointer shadow-sm">
                     <option value="all">All Specializations</option>
+                    <option value="Design">Design</option>
+                    <option value="Software Development">Software Development</option>
+                    <option value="Business">Business</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="Photography & Video">Photography & Video</option>
+                    <option value="Music">Music</option>
+                    <option value="Languages">Languages</option>
+                    <option value="Health & Fitness">Health & Fitness</option>
+                    <option value="Data Science & AI Engineering">Data Science & AI Engineering</option>
+                    <option value="Personal Development">Personal Development</option>
+                    <option value="Finance & Investing">Finance & Investing</option>
+                    <option value="Office Productivity">Office Productivity</option>
+                    <option value="Lifestyle">Lifestyle</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[18px]">arrow_drop_down</span>
             </div>
@@ -140,7 +153,20 @@
 @section Scripts {
     <script>
         // Parse model data directly to JS
-        const originalData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items ?? new List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        let originalData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items ?? new List<CourseMarketplaceFE.Models.InstructorApprovalViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+        async function reloadPendingInstructors() {
+            try {
+                const response = await fetch(`/AdminApproval/GetPendingListJson?page=@Model.Page&pageSize=@Model.PageSize`);
+                if (response.ok) {
+                    const data = await response.json();
+                    originalData = data.items || data.Items || [];
+                    applyFilters();
+                }
+            } catch (err) {
+                console.error("Error reloading pending instructors:", err);
+            }
+        }
 
         function renderTable(data) {
             const tbody = document.getElementById('approval-table-body');
@@ -278,7 +304,8 @@
             if (expVal !== 'all') {
                 filtered = filtered.filter(item => {
                     if (!item.expertiseCategories) return false;
-                    return item.expertiseCategories.split(',').map(c => c.trim()).includes(expVal);
+                    const itemCats = item.expertiseCategories.split(',').map(c => c.trim().toLowerCase());
+                    return itemCats.includes(expVal.toLowerCase());
                 });
             }
 
@@ -370,22 +397,6 @@
                             popup: 'rounded-2xl border border-slate-100 shadow-xl'
                         }
                     });
-
-                    // Premium slide out animation
-                    const row = document.getElementById(`row-${id}`);
-                    if (row) {
-                        row.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                        row.style.opacity = '0';
-                        row.style.transform = 'translateX(20px)';
-                        
-                        setTimeout(() => {
-                            const index = originalData.findIndex(item => item.instructorId === id);
-                            if (index > -1) {
-                                originalData.splice(index, 1);
-                            }
-                            applyFilters();
-                        }, 300);
-                    }
                 } else {
                     Swal.fire({
                         title: 'Execution Error',
@@ -416,28 +427,13 @@
 
         // Initialize dynamic filter items and default state
         document.addEventListener('DOMContentLoaded', () => {
-            const categories = new Set();
-            originalData.forEach(item => {
-                if (item.expertiseCategories) {
-                    item.expertiseCategories.split(',').forEach(cat => {
-                        const trimmed = cat.trim();
-                        if (trimmed) categories.add(trimmed);
-                    });
-                }
-            });
-
-            const filterSelect = document.getElementById('filter-expertise');
-            categories.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat;
-                opt.textContent = cat;
-                filterSelect.appendChild(opt);
-            });
-
-            // Bind listeners for dynamic filters
+            // Bind listeners for sorting and text search
             document.getElementById('search-input').addEventListener('input', applyFilters);
             document.getElementById('filter-expertise').addEventListener('change', applyFilters);
             document.getElementById('sort-select').addEventListener('change', applyFilters);
+
+            // Real-time SignalR event listener from _AdminLayout
+            document.addEventListener('InstructorApplicationUpdatedEvent', reloadPendingInstructors);
 
             // First render
             applyFilters();

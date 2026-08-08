@@ -77,6 +77,7 @@ class BaseService:
         confidence_score: float,
         flagged_content: list = None,
         manual_audit_content: list = None,
+        approved_content: list = None,
         details: dict = None,
         latency_ms: float = 0.0,
         model_id: int = 0
@@ -105,6 +106,7 @@ class BaseService:
             "reason": reason,
             "flagged_content": flagged_content or [],
             "manual_audit_content": manual_audit_content or [],
+            "approved_content": approved_content or [],
             "details": details or {},
             "confidence_score": float(confidence_score),
             "latency_ms": float(latency_ms),

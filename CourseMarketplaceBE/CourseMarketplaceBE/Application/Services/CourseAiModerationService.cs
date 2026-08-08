@@ -37,6 +37,10 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IBackgroundTaskQueue _taskQueue;
         private readonly IUserRepository _userRepo;
         private readonly INotificationService _notificationService;
+        private readonly IAiFeedbackRepository _aiFeedbackRepository;
+        private readonly IMaterialRepository _materialRepository;
+        private readonly ILessonRepository _lessonRepository;
+        private readonly IHubService _hubService;
 
         public CourseAiModerationService(
             IAiModerationService aiModerationService,
@@ -56,7 +60,11 @@ namespace CourseMarketplaceBE.Application.Services
             IEmbeddingService embeddingService,
             IBackgroundTaskQueue taskQueue,
             IUserRepository userRepo,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IAiFeedbackRepository aiFeedbackRepository,
+            IMaterialRepository materialRepository,
+            ILessonRepository lessonRepository,
+            IHubService hubService)
         {
             _aiModerationService = aiModerationService;
             _aiModelManagementService = aiModelManagementService;
@@ -76,6 +84,10 @@ namespace CourseMarketplaceBE.Application.Services
             _taskQueue = taskQueue;
             _userRepo = userRepo;
             _notificationService = notificationService;
+            _aiFeedbackRepository = aiFeedbackRepository;
+            _materialRepository = materialRepository;
+            _lessonRepository = lessonRepository;
+            _hubService = hubService;
         }
 
         public async Task<bool> StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
@@ -96,6 +108,8 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             });
 
+            await _hubService.SendCourseUpdateAsync();
+            
             return true;
         }
 
@@ -331,86 +345,147 @@ namespace CourseMarketplaceBE.Application.Services
         }
 
 
-        private async Task ResolveCourseAIModerationResult(CourseModerationResult result)
+        private async Task<bool> ResolveCourseAIModerationResult(CourseModerationResult result)
         {
             _logger.LogInformation("Resolving AI moderation result for course {CourseId}", result.CourseId);
 
-            var (threatLevel, feedback) = EvaluateModerationFeedback(result);
+            int courseId = result.CourseId;
+            string moderationStatus = result.ModerationStatus;
+            var flaggedFields = result.FlaggedFields ?? [];
+            var manualAuditFields = result.ManualAuditFields ?? [];
 
-            await _courseCommandService.UpdateCourseStatusAndFeedbackAsync(
-                result.CourseId,
-                null,
-                feedback,
-                threatLevel);
+            await ResolveThreatLevelAsync(courseId, moderationStatus);
 
-            var notificationContent = $"Course {result.CourseId} requires manual review following AI Moderation. Threat Level: {threatLevel}.\n\nDetails:\n{feedback}";
-            await NotifyManagersAsync("Manual Review Required", notificationContent, UrlConst.AdminCourseModerationURL);
+            if (result.StageLogs != null)
+            {
+                foreach (var stageLog in result.StageLogs)
+                {
+                    if (stageLog.Stage == 1)
+                    {
+                        await ResolveDeduplicationResultAsync(stageLog);
+                    }
+                    else if (stageLog.Stage == 2)
+                    {
+                        await ResolveClassificationResultAsync(courseId, stageLog);
+                    }
+                }
+            }
+            
+            // N-Tier architecture: save changes after all additions are made
+            await SaveAiFeedbackChangesAsync();
+
+            string notificationContent = GetNotificationContent(courseId, moderationStatus, flaggedFields, manualAuditFields);
+            await NotifyManagersAsync("AI Moderation Result", notificationContent, UrlConst.AdminCourseModerationURL + $"?search={courseId}#course_{courseId}");
+            
+            await _hubService.SendCourseUpdateAsync();
+            return true;
         }
 
-        private (AiThreatLevel ThreatLevel, string Feedback) EvaluateModerationFeedback(CourseModerationResult result)
+        private async Task<bool> ResolveThreatLevelAsync(int courseId, string moderationStatus)
         {
-            string statusStr = result.ModerationStatus;
             AiThreatLevel threatLevel = AiThreatLevel.None;
-            string feedback = "";
-
-            var flaggedReasons = new List<string>();
-            var manualAuditReasons = new List<string>();
-
-            foreach (var log in result.StageLogs)
-            {
-                if (log.Result == StageLogResult.Flagged.ToValue() || log.Result == StageLogResult.MatchFound.ToValue())
-                {
-                    var fields = string.Join(", ", log.FlaggedFields);
-                    var reasonText = log.Reason ?? "AI moderation flag";
-                    flaggedReasons.Add($"[{fields}] {reasonText}");
-                }
-                
-                if (log.ManualAuditFields != null && log.ManualAuditFields.Any())
-                {
-                    var fields = string.Join(", ", log.ManualAuditFields);
-                    var reasonText = log.Reason ?? "AI suggested manual audit";
-                    manualAuditReasons.Add($"[{fields}] {reasonText}");
-                }
-            }
-
-            if (statusStr == ModerationStatus.Approved.ToValue())
-            {
-                threatLevel = AiThreatLevel.Approved;
-                feedback = "AI moderation passed. Awaiting manual review.";
-            }
-            else if (statusStr == ModerationStatus.Rejected.ToValue() || statusStr == ModerationStatus.Flagged.ToValue())
+            
+            if (moderationStatus == ModerationStatus.Rejected.ToValue() || moderationStatus == ModerationStatus.Flagged.ToValue())
             {
                 threatLevel = AiThreatLevel.FlaggedOrRejected;
-
-                if (flaggedReasons.Any())
-                {
-                    feedback = "AI flagged the following issues:\n- " + string.Join("\n- ", flaggedReasons);
-                }
-                else
-                {
-                    feedback = "Course content violates the moderation policy according to AI.";
-                }
-
-                if (manualAuditReasons.Any())
-                {
-                    feedback += "\n\nAdditionally, AI suggested manual audit for the following:\n- " + string.Join("\n- ", manualAuditReasons);
-                }
             }
-            else if (statusStr == ModerationStatus.ManualAudit.ToValue())
+            else if (moderationStatus == ModerationStatus.ManualAudit.ToValue())
             {
                 threatLevel = AiThreatLevel.ManualAudit;
-                
-                if (manualAuditReasons.Any())
+            }
+            else if (moderationStatus == ModerationStatus.Approved.ToValue())
+            {
+                threatLevel = AiThreatLevel.Approved;
+            }
+
+            await _courseCommandService.UpdateCourseThreatLevelAsync(courseId, threatLevel);
+            return true;
+        }
+
+        private async Task<bool> ResolveDeduplicationResultAsync(StageLog stageLog)
+        {
+            if (stageLog.Details == null) return false;
+            
+            var jsonString = JsonSerializer.Serialize(stageLog.Details);
+            var details = JsonSerializer.Deserialize<JsonElement>(jsonString);
+            
+            if (!details.TryGetProperty("candidate_material_id", out var candidateProp)) return false;
+            int candidateId = candidateProp.GetInt32();
+            
+            int? existingId = details.TryGetProperty("existing_material_id", out var existProp) && existProp.ValueKind != JsonValueKind.Null ? existProp.GetInt32() : null;
+            float simScore = details.TryGetProperty("similarity_score", out var simProp) ? simProp.GetSingle() : 0f;
+            
+            bool duplicationFound = existingId.HasValue && existingId > 0 && stageLog.Result == StageLogResult.MatchFound.ToValue();
+            string feedbackText = await GetDeDuplicationFeedbackText(duplicationFound, simScore, existingId ?? 0);
+            
+            return await PersistAiFeedbackAsync($"material_{candidateId}", candidateId, stageLog.Result, feedbackText);
+        }
+
+        private async Task<string> GetDeDuplicationFeedbackText(bool duplicationFound, float simScore, int existingMaterialId)
+        {
+            if (!duplicationFound) return "No duplicate content found.";
+            
+            var material = await _materialRepository.GetByIdAsync(existingMaterialId);
+            string materialTitle = material?.Title ?? "Unknown Material";
+            string lessonTitle = "Unknown Lesson";
+            string courseTitle = "Unknown Course";
+
+            if (material != null && material.LessonId.HasValue)
+            {
+                var lesson = await _lessonRepository.GetByIdAsync(material.LessonId.Value);
+                lessonTitle = lesson?.Title ?? lessonTitle;
+                if (lesson != null && lesson.CourseId.HasValue)
                 {
-                    feedback = "AI suggested manual audit for the following:\n- " + string.Join("\n- ", manualAuditReasons);
-                }
-                else
-                {
-                    feedback = "AI suggested manual audit due to low confidence in its moderation result.";
+                    var course = await _courseRepository.GetByIdAsync(lesson.CourseId.Value);
+                    courseTitle = course?.Title ?? courseTitle;
                 }
             }
 
-            return (threatLevel, feedback);
+            return $"Identical or highly similar content found ({simScore * 100:0.##}% match). This matches the material '{materialTitle}' from the lesson '{lessonTitle}' in the course '{courseTitle}'.";
+        }
+
+        private async Task<bool> ResolveClassificationResultAsync(int courseId, StageLog stageLog)
+        {
+            await ProcessClassificationFieldsAsync(stageLog, stageLog.FlaggedFields, courseId, ModerationStatus.Flagged.ToValue());
+            await ProcessClassificationFieldsAsync(stageLog, stageLog.ManualAuditFields, courseId, ModerationStatus.ManualAudit.ToValue());
+            await ProcessClassificationFieldsAsync(stageLog, stageLog.ApprovedFields, courseId, ModerationStatus.Approved.ToValue());
+            return true;
+        }
+
+        private async Task<bool> ProcessClassificationFieldsAsync(StageLog stageLog, List<string> fields, int courseId, string moderationStatus)
+        {
+            if (fields == null) return false;
+            foreach (var fieldName in fields)
+            {
+                if (stageLog.Details == null || !stageLog.Details.TryGetValue(fieldName, out var detailsObj)) continue;
+
+                var jsonString = JsonSerializer.Serialize(detailsObj);
+                var jsonElement = JsonSerializer.Deserialize<JsonElement>(jsonString);
+
+                string text = "", reason = "", rawLabel = "";
+
+                if (stageLog.Step == 1)
+                {
+                    text = jsonElement.TryGetProperty("text", out var t) ? t.GetString() ?? "" : "";
+                    reason = jsonElement.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : "";
+                    rawLabel = jsonElement.TryGetProperty("raw_label", out var l) ? l.GetString() ?? "" : "";
+                }
+                else if (stageLog.Step == 2)
+                {
+                    if (jsonElement.TryGetProperty("classification", out var classificationNode))
+                    {
+                        text = classificationNode.TryGetProperty("text", out var t) ? t.GetString() ?? "" : "";
+                        reason = classificationNode.TryGetProperty("reason", out var r) ? r.GetString() ?? "" : "";
+                        rawLabel = classificationNode.TryGetProperty("raw_label", out var l) ? l.GetString() ?? "" : "";
+                    }
+                }
+
+                string feedbackText = GetClassificationFeedbackText(text, rawLabel, reason, moderationStatus);
+                int id = GetIdFromFieldName(fieldName, courseId);
+                
+                await PersistAiFeedbackAsync(fieldName, id, moderationStatus, feedbackText);
+            }
+            return true;
         }
 
 
@@ -478,7 +553,7 @@ namespace CourseMarketplaceBE.Application.Services
                 var isHealthy = await _aiModerationService.HealthCheckAsync();
                 if (!isHealthy)
                 {
-                    await NotifyManagersAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL);
+                    await NotifyManagersAsync("AI Service Unhealthy", $"Course {request.CourseId} requires manual review due to AI service being unhealthy.", UrlConst.AdminCourseModerationURL + $"?search={request.CourseId}#course_{request.CourseId}");
                     return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
                 }
 
@@ -505,7 +580,7 @@ namespace CourseMarketplaceBE.Application.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during AI moderation for course {CourseId}", request.CourseId);
-                await NotifyManagersAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL);
+                await NotifyManagersAsync("Moderation Process Exception", $"Exception during AI moderation for course {request.CourseId}: {ex.Message}", UrlConst.AdminCourseModerationURL + $"?search={request.CourseId}#course_{request.CourseId}");
                 return new CourseModerationResult { CourseId = request.CourseId, ModerationStatus = ModerationStatus.ManualAudit.ToValue() };
             }
         }
@@ -623,5 +698,79 @@ namespace CourseMarketplaceBE.Application.Services
         //     var others = await _contentHashService.GetAllCourseHashesAsync();
         //     return await GetExactDuplicationResult(new ExactDuplicationCommand { CourseExt = current, ExistingCourseExts = others });
         // }
+        private string GetClassificationFeedbackText(string text, string rawLabel, string reason, string moderationStatus)
+        {
+            if (moderationStatus == ModerationStatus.Approved.ToValue()) 
+                return "Content is safe.";
+                
+            if (moderationStatus == ModerationStatus.ManualAudit.ToValue()) 
+                return $"Manual audit suggested. Reason: {reason}. Text snippet: '{text}'";
+                
+            return $"Content flagged as {rawLabel}. Reason: {reason}. Text snippet: '{text}'";
+        }
+
+        private int GetIdFromFieldName(string fieldName, int courseId)
+        {
+            if (string.IsNullOrEmpty(fieldName)) return 0;
+            if (fieldName.StartsWith("course", StringComparison.OrdinalIgnoreCase)) return courseId;
+            
+            var parts = fieldName.Split('.');
+            if (parts.Length > 0)
+            {
+                var entityParts = parts[0].Split('_');
+                if (entityParts.Length > 1 && int.TryParse(entityParts[1], out int id))
+                {
+                    return id;
+                }
+            }
+            return 0;
+        }
+
+        private string GetNotificationContent(int courseId, string moderationStatus, List<string> flaggedFields, List<string> manualAuditFields)
+        {
+            string content = $"Course {courseId} requires manual review following AI Moderation.\nAI Moderation Result: {moderationStatus}.";
+            if (flaggedFields != null && flaggedFields.Any())
+            {
+                content += $"\nSevere Threats found in: {string.Join(", ", flaggedFields)}";
+            }
+            if (manualAuditFields != null && manualAuditFields.Any())
+            {
+                content += $"\nModerate Threats found in: {string.Join(", ", manualAuditFields)}";
+            }
+            return content;
+        }
+
+        private async Task<bool> PersistAiFeedbackAsync(string fieldName, int id, string moderationStatus, string feedbackText)
+        {
+            if (id < 1) return false;
+
+            if (fieldName.StartsWith("course", StringComparison.OrdinalIgnoreCase))
+            {
+                _aiFeedbackRepository.AddCourseFeedback(new CourseAiFeedback { CourseId = id, FieldName = fieldName, ModerationStatus = moderationStatus, FeedbackText = feedbackText, DateAdded = DateTime.UtcNow });
+            }
+            else if (fieldName.StartsWith("lesson", StringComparison.OrdinalIgnoreCase))
+            {
+                _aiFeedbackRepository.AddLessonFeedback(new LessonAiFeedback { LessonId = id, FieldName = fieldName, ModerationStatus = moderationStatus, FeedbackText = feedbackText, DateAdded = DateTime.UtcNow });
+            }
+            else if (fieldName.StartsWith("material", StringComparison.OrdinalIgnoreCase))
+            {
+                _aiFeedbackRepository.AddMaterialFeedback(new LearningMaterialAiFeedback { MaterialId = id, FieldName = fieldName, ModerationStatus = moderationStatus, FeedbackText = feedbackText, DateAdded = DateTime.UtcNow });
+            }
+            else return false;
+            
+            return true;
+        }
+
+        private async Task SaveAiFeedbackChangesAsync()
+        {
+            try
+            {
+                await _aiFeedbackRepository.SaveChangesAsync();
+            }
+            catch (CourseException ex)
+            {
+                throw new BadRequestException(ex.Message);
+            }
+        }
     }
 }

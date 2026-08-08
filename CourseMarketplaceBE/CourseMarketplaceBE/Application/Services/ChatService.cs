@@ -17,19 +17,22 @@ public class ChatService : IChatService
     private readonly ICourseRepository _courseRepository;
     private readonly IRedisService _redisService;
     private readonly IConfiguration _configuration;
+    private readonly INotificationService _notificationService;
 
     public ChatService(
         IChatRepository chatRepository, 
         IUserRepository userRepository,
         ICourseRepository courseRepository,
         IRedisService redisService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        INotificationService notificationService)
     {
         _chatRepository = chatRepository;
         _userRepository = userRepository;
         _courseRepository = courseRepository;
         _redisService = redisService;
         _configuration = configuration;
+        _notificationService = notificationService;
     }
 
     public async Task<List<ChatListDto>> GetMyChatsAsync(int accountId)
@@ -223,6 +226,21 @@ public class ChatService : IChatService
         var ticket = CreateTicketFromDto(senderId, sender, dto);
 
         await AddTicketToCacheAsync(ticket);
+        
+        var staffIds = await _userRepository.GetAllStaffIdsAsync();
+        if (staffIds != null && staffIds.Any())
+        {
+            var senderName = sender.User?.FullName ?? sender.Manager?.DisplayName ?? "A user";
+            var notifications = staffIds.Select(staffId => new NotificationBulkDto
+            {
+                ReceiverId = staffId,
+                Title = "New Support Request",
+                Content = $"{senderName} has sent a new support request.",
+                LinkAction = "/Chat/Admin"
+            }).ToList();
+            
+            await _notificationService.SendBulkNotificationsAsync(notifications);
+        }
         
         return ticket;
     }
@@ -428,7 +446,7 @@ public class ChatService : IChatService
         }
 
         if (!canCreate)
-            throw new UnauthorizedAccessException("You do not have permission to initiate this conversation.");
+            throw new UnauthorizedAccessException("You must complete the course to begin this conversation.");
     }
 
     private async Task<int?> TryGetExistingPrivateChatAsync(int senderId, int targetAccountId, string? contextType, int? contextId)

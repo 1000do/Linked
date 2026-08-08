@@ -1,0 +1,42 @@
+@{
+    ViewData["Title"] = "Requesting a refund - Help Center";
+}
+
+<section class="py-16 md:py-24 bg-slate-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a href="/Help" class="text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center transition-colors">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                Back to Help Center
+            </a>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-8">Requesting a refund</h1>
+            
+            <div class="prose prose-slate max-w-none text-slate-700 space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Refund Eligibility</h2>
+                    <p>We want you to be satisfied, so all eligible courses can be refunded within 14 days of purchase. However, automated rejections may apply if:</p>
+                    <ul class="list-disc list-inside space-y-3">
+                        <li>The request is made after 14 days from the date of purchase.</li>
+                        <li>You have completed more than 20% of the course material.</li>
+                        <li>You have already requested and received a refund for the same course previously.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">How to Request a Refund</h2>
+                    <ol class="list-decimal list-inside space-y-3">
+                        <li>Navigate to the <strong>Purchase History</strong> page from your dashboard.</li>
+                        <li>Locate the transaction for the course you wish to return.</li>
+                        <li>Click the <strong>Refund Request</strong> button next to the transaction.</li>
+                        <li>In the confirmation modal, enter a valid reason for the refund (this is required).</li>
+                        <li>Click <strong>Submit Request</strong>.</li>
+                    </ol>
+                    <p class="mt-4">If accepted, the transaction status will update to "refund pending". If denied due to an eligibility violation, you will receive an immediate rejection message explaining the reason.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

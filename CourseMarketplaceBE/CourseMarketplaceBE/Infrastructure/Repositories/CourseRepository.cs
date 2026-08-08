@@ -127,13 +127,11 @@ public class CourseRepository : ICourseRepository
         // 0.2. Filtering by rating
         if (!string.IsNullOrEmpty(rating) && rating != "all")
         {
-            if (decimal.TryParse(rating, out decimal minRating))
+            if (decimal.TryParse(rating, System.Globalization.CultureInfo.InvariantCulture, out decimal minRating))
             {
-                queryable = from c in queryable
-                            join s in _context.CourseStats on c.CourseId equals s.CourseId into statsGroup
-                            from s in statsGroup.DefaultIfEmpty()
-                            where s != null && s.RatingAverage >= (double)minRating
-                            select c;
+                double minRatingDouble = (double)minRating;
+                queryable = queryable.Where(c => _context.CourseStats
+                    .Any(s => s.CourseId == c.CourseId && s.RatingAverage >= minRatingDouble));
             }
         }
 
@@ -374,12 +372,13 @@ public class CourseRepository : ICourseRepository
             }
         }
 
-        // 2. Search (Title or Instructor)
+        // 2. Search (Title, Instructor, or CourseId)
         if (!string.IsNullOrEmpty(filter.Search))
         {
             var search = filter.Search.ToLower();
             query = query.Where(c => c.Title.ToLower().Contains(search) ||
-                                   c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search));
+                                   c.Instructor!.InstructorNavigation!.FullName.ToLower().Contains(search) ||
+                                   c.CourseId.ToString() == search);
         }
 
         // 3. Category Filter
@@ -388,23 +387,55 @@ public class CourseRepository : ICourseRepository
             query = query.Where(c => c.Category!.CategoriesName == filter.Category || c.CategoryId.ToString() == filter.Category);
         }
 
-        // 4. Sorting (Urgency/Threat Level)
+        // 4. Sorting (Urgency/Threat Level/Priority)
         if (filter.SortBy == "newest")
         {
             query = query.OrderByDescending(c => c.UpdatedAt);
-        }
-        else if (filter.SortBy == "threat_asc")
-        {
-            query = query.OrderBy(c => c.ThreatLevel).ThenBy(c => c.UpdatedAt);
         }
         else if (filter.SortBy == "oldest")
         {
             query = query.OrderBy(c => c.UpdatedAt);
         }
+        else if (filter.SortBy == "priority_asc")
+        {
+            query = query.OrderBy(c => c.CourseStatus == "pending" ? 5 :
+                                       c.CourseStatus == "rejected" ? 4 :
+                                       (c.CourseStatus == "archived" && c.CourseFlagCount >= 3) ? 3 :
+                                       c.CourseStatus == "published" ? 2 :
+                                       c.CourseStatus == "archived" ? 1 : 0)
+                         .ThenByDescending(c => c.ThreatLevel)
+                         .ThenBy(c => c.UpdatedAt);
+        }
+        else if (filter.SortBy == "threat_asc")
+        {
+            query = query.OrderBy(c => c.ThreatLevel)
+                         .ThenByDescending(c => c.CourseStatus == "pending" ? 5 :
+                                                c.CourseStatus == "rejected" ? 4 :
+                                                (c.CourseStatus == "archived" && c.CourseFlagCount >= 3) ? 3 :
+                                                c.CourseStatus == "published" ? 2 :
+                                                c.CourseStatus == "archived" ? 1 : 0)
+                         .ThenBy(c => c.UpdatedAt);
+        }
+        else if (filter.SortBy == "threat_desc")
+        {
+            query = query.OrderByDescending(c => c.ThreatLevel)
+                         .ThenByDescending(c => c.CourseStatus == "pending" ? 5 :
+                                                c.CourseStatus == "rejected" ? 4 :
+                                                (c.CourseStatus == "archived" && c.CourseFlagCount >= 3) ? 3 :
+                                                c.CourseStatus == "published" ? 2 :
+                                                c.CourseStatus == "archived" ? 1 : 0)
+                         .ThenBy(c => c.UpdatedAt);
+        }
         else
         {
-            // default (threat_desc): Threat Level descending
-            query = query.OrderByDescending(c => c.ThreatLevel).ThenBy(c => c.UpdatedAt);
+            // default (priority_desc): Priority High to Low -> Threat Level High to Low -> Oldest
+            query = query.OrderByDescending(c => c.CourseStatus == "pending" ? 5 :
+                                                 c.CourseStatus == "rejected" ? 4 :
+                                                 (c.CourseStatus == "archived" && c.CourseFlagCount >= 3) ? 3 :
+                                                 c.CourseStatus == "published" ? 2 :
+                                                 c.CourseStatus == "archived" ? 1 : 0)
+                         .ThenByDescending(c => c.ThreatLevel)
+                         .ThenBy(c => c.UpdatedAt);
         }
 
         var totalCount = await query.CountAsync();

@@ -1,15 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
-using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Domain.Constants;
-using System.Text.Json;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services;
@@ -231,8 +231,8 @@ public class ReviewService : IReviewService
             var ownerEnrollment = await _enrollmentRepo.GetEnrollmentWithProgressAsync(userId, courseId);
             bool hasReviewed = ownerEnrollment != null
                 && (await _reviewRepo.GetCourseReviewByEnrollmentAsync(ownerEnrollment.EnrollmentId)) != null;
-            var reviewedLessonIds = ownerEnrollment != null 
-                ? await _reviewRepo.GetReviewedLessonIdsAsync(ownerEnrollment.EnrollmentId) 
+            var reviewedLessonIds = ownerEnrollment != null
+                ? await _reviewRepo.GetReviewedLessonIdsAsync(ownerEnrollment.EnrollmentId)
                 : new List<int>();
 
             return new EnrollmentStatusResponse
@@ -445,7 +445,7 @@ public class ReviewService : IReviewService
 
             tempReview.CourseId = review.Lesson?.CourseId ?? 0;
             tempReview.LessonId = review.LessonId;
-            
+
             await UpdateReviewStatusInDatabaseAsync(request.ReviewId, true, ReviewStatus.Pending.ToValue());
 
             var moderationRecord = new LessonReviewModerationRecord
@@ -475,7 +475,7 @@ public class ReviewService : IReviewService
                 throw new InvalidOperationException("This review has been removed and cannot be edited.");
 
             tempReview.CourseId = review.Enrollment?.CourseId ?? 0;
-            
+
             await UpdateReviewStatusInDatabaseAsync(request.ReviewId, false, ReviewStatus.Pending.ToValue());
 
             var moderationRecord = new CourseReviewModerationRecord

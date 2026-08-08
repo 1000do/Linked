@@ -15,17 +15,20 @@ public class EnrollmentService : IEnrollmentService
     private readonly ICourseRepository _courseRepo;
     private readonly INotificationService _notificationService;
     private readonly IUserRepository _userRepo;
+    private readonly IWishlistService _wishlistService;
 
     public EnrollmentService(
         IEnrollmentRepository repo, 
         ICourseRepository courseRepo,
         INotificationService notificationService,
-        IUserRepository userRepo)
+        IUserRepository userRepo,
+        IWishlistService wishlistService)
     {
         _repo = repo;
         _courseRepo = courseRepo;
         _notificationService = notificationService;
         _userRepo = userRepo;
+        _wishlistService = wishlistService;
     }
 
     public async Task EnrollFreeAsync(int userId, int courseId)
@@ -66,7 +69,15 @@ public class EnrollmentService : IEnrollmentService
             await _repo.AddEnrollmentAsync(enrollment);
             int rows1 = await _repo.SaveChangesAsync();
             /* zero rows exception removed */
-
+            
+            try
+            {
+                await _wishlistService.RemoveFromWishlistAsync(userId, courseId);
+            }
+            catch
+            {
+                // Ignore if it fails to remove from wishlist
+            }
 
             await transaction.CommitAsync();
 

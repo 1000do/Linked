@@ -39,6 +39,7 @@ class StageLog(BaseModel):
     reason: str = Field(..., description="Explanation of result")
     flagged_fields: List[str] = Field(default_factory=list, validation_alias="flagged_content", serialization_alias="flagged_fields")
     manual_audit_fields: List[str] = Field(default_factory=list, validation_alias="manual_audit_content", serialization_alias="manual_audit_fields")
+    approved_fields: List[str] = Field(default_factory=list, validation_alias="approved_content", serialization_alias="approved_fields")
     details: Dict[str, Any] = Field(default_factory=dict)
     latency_ms: float = Field(0.0)
     confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence in this decision")

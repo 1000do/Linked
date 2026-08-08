@@ -60,6 +60,8 @@ public partial class Course
 
     public virtual ICollection<CourseFieldModerationFeedback> FieldModerationFeedbacks { get; set; } = new List<CourseFieldModerationFeedback>();
 
+    public virtual ICollection<CourseAiFeedback> CourseAiFeedbacks { get; set; } = new List<CourseAiFeedback>();
+
     public string? WhatYouWillLearn { get; set; }
 
     public string? Requirements { get; set; }

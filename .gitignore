@@ -11,14 +11,13 @@ obj/
 # Cache files
 *.cache
 
-
 # Secret management
 secrets.json
 *.usersecrets
 .env
 *.env
-**/.env.*
-.env.example
+**/.env
+# .env.example
 
 # Node / Frontend
 node_modules/
@@ -34,7 +33,6 @@ ai_models/
 **/*.pyc
 **/__pycache__
 
-
 scratch/
 /private_ngoc
 
@@ -43,3 +41,10 @@ scratch/
 **/TestHTMLReports
 **/rp5_extracted
 /CourseMarketplaceBE/CourseMarketplaceBE_Tests/CoverageReport/summary.html
+
+# User Guides
+docs/Tài_user_guide.md
+docs/Tài_user_guide_vi.md
+
+# demo
+docs/demo_data/

@@ -64,5 +64,32 @@ namespace CourseMarketplaceFE.Controllers
 
             return Json(new { success = false, message = "Error processing on Server" });
         }
+
+        [HttpGet]
+        [Authorize(Roles = "admin,staff")]
+        public async Task<IActionResult> GetPendingCount()
+        {
+            var response = await _apiClient.GetAsync("/api/AdminApproval/pending-instructors?page=1&pageSize=1");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var data = JsonSerializer.Deserialize<PagedResult<InstructorApprovalViewModel>>(content, _jsonOptions);
+                return Json(new { count = data?.TotalCount ?? 0 });
+            }
+            return Json(new { count = 0 });
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "admin,staff")]
+        public async Task<IActionResult> GetPendingListJson(int page = 1, int pageSize = 10)
+        {
+            var response = await _apiClient.GetAsync($"/api/AdminApproval/pending-instructors?page={page}&pageSize={pageSize}");
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            return Json(new { items = new List<InstructorApprovalViewModel>(), totalCount = 0 });
+        }
     }
 }

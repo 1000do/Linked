@@ -24,6 +24,7 @@ public class ReviewAiModerationService : IReviewAiModerationService
     private readonly ICourseRepository _courseRepo;
     private readonly ILessonRepository _lessonRepo;
     private readonly IReviewModerationRecordRepository _moderationRecordRepo;
+    private readonly IHubService _hubService;
 
     public ReviewAiModerationService(
         IReviewService reviewService,
@@ -37,7 +38,8 @@ public class ReviewAiModerationService : IReviewAiModerationService
         ILogger<ReviewAiModerationService> logger,
         ICourseRepository courseRepo,
         ILessonRepository lessonRepo,
-        IReviewModerationRecordRepository moderationRecordRepo)
+        IReviewModerationRecordRepository moderationRecordRepo,
+        IHubService hubService)
     {
         _reviewService = reviewService;
         _enrollmentRepo = enrollmentRepo;
@@ -51,6 +53,7 @@ public class ReviewAiModerationService : IReviewAiModerationService
         _courseRepo = courseRepo;
         _lessonRepo = lessonRepo;
         _moderationRecordRepo = moderationRecordRepo;
+        _hubService = hubService;
     }
 
     public async Task<ReviewAiModerationResponse> HandleReviewAiModerationAsync(TempReviewDto tempDto)
@@ -185,6 +188,8 @@ public class ReviewAiModerationService : IReviewAiModerationService
         await _moderationRecordRepo.SaveChangesAsync();
 
         await NotifyManagersAsync("Review AI Moderation Result", aiNote, $"/AdminModeration/Reviews");
+        
+        await _hubService.SendReviewUpdateAsync();
     }
 
     private async Task NotifyManagersAsync(string title, string content, string? linkAction)

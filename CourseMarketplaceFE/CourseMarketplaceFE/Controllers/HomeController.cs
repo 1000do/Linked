@@ -131,5 +131,61 @@ namespace CourseMarketplaceFE.Controllers
         {
             public int CourseId { get; set; }
         }
+
+        // --- Static Pages ---
+        
+        [Route("About")]
+        public IActionResult AboutUs()
+        {
+            return View();
+        }
+
+        [Route("Teach")]
+        public IActionResult Careers()
+        {
+            return View();
+        }
+
+        [Route("Contact")]
+        public IActionResult Contact()
+        {
+            return View();
+        }
+
+        [Route("Help")]
+        public IActionResult HelpCenter()
+        {
+            return View();
+        }
+
+        [Route("Faq")]
+        public IActionResult FAQs()
+        {
+            return View();
+        }
+
+        [Route("Terms")]
+        public IActionResult TermsOfUse()
+        {
+            return View();
+        }
+
+        [Route("Privacy")]
+        public IActionResult PrivacyPolicy()
+        {
+            return View();
+        }
+
+        [Route("TermsOfService")]
+        public IActionResult TermsOfService()
+        {
+            return View();
+        }
+
+        [Route("Cookies")]
+        public IActionResult CookiePolicy()
+        {
+            return View();
+        }
     }
 }

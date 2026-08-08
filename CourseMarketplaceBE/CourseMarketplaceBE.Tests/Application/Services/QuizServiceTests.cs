@@ -1089,6 +1089,53 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.TotalQuestions.Should().Be(2);
         }
 
+        [Fact]
+        public async Task GetAttemptDetailAsync_QuizInstructor_AllowsAccess()
+        {
+            var attempt = new QuizAttempt
+            {
+                AttemptId = 1, UserId = 99, QuizId = 10, Score = 80, IsPassed = true,
+                QuizAttemptQuestions = new List<QuizAttemptQuestion>(),
+                QuizAttemptAnswers = new List<QuizAttemptAnswer>()
+            };
+            _quizRepoMock.GetAttemptByIdAsync(1).Returns(attempt);
+            _quizRepoMock.GetByIdAsync(10).Returns(new Quiz { QuizId = 10, InstructorId = 2, Title = "Q" });
+
+            var result = await _sut.GetAttemptDetailAsync(1, 2);
+
+            result.Should().NotBeNull();
+            result.AttemptId.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task GetQuizForStudentAsync_ExistingUnsubmittedAttempt_ReusesAttempt()
+        {
+            var quiz = new Quiz { QuizId = 1, InstructorId = 99, TotalQuestions = 1, CourseId = 10 };
+            _quizRepoMock.GetByIdWithQuestionsAsync(1).Returns(quiz);
+            _enrollmentRepoMock.IsUserEnrolledInAnyCoursWithQuizAsync(2, 1).Returns(true);
+
+            var existingAttempt = new QuizAttempt
+            {
+                AttemptId = 999, QuizId = 1, UserId = 2, SubmittedAt = null,
+                QuizAttemptQuestions = new List<QuizAttemptQuestion>
+                {
+                    new QuizAttemptQuestion
+                    {
+                        OrderIndex = 1,
+                        Question = new QuizQuestion { QuestionId = 101, QuestionText = "Existing?", QuizOptions = new List<QuizOption>() }
+                    }
+                }
+            };
+            _quizRepoMock.GetLatestUnsubmittedAttemptAsync(1, 2).Returns(existingAttempt);
+
+            var result = await _sut.GetQuizForStudentAsync(1, 2);
+
+            result.AttemptId.Should().Be(999);
+            result.Questions.Should().HaveCount(1);
+            result.Questions[0].QuestionText.Should().Be("Existing?");
+            await _quizRepoMock.DidNotReceive().SaveAttemptAsync(Arg.Any<QuizAttempt>());
+        }
+
         #endregion
     
     }

@@ -212,6 +212,9 @@ public class ReviewModerationService : IReviewModerationService
             }
 
             message = $"Your review was flagged for inappropriate content and has been rejected by Admin.\n\n{contextInfo}\nReview Comment: \"{comment}\"";
+            linkAction = (lessonId.HasValue && lessonId.Value > 0)
+                ? $"/Course/Learn/{courseId}"
+                : $"/Course/Details/{courseId}";
         }
 
         await _notificationService.SendNotificationAsync(

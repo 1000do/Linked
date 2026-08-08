@@ -69,6 +69,12 @@ namespace CourseMarketplaceFE
                     },
                     new Yarp.ReverseProxy.Configuration.RouteConfig
                     {
+                        RouteId = "coursemoderationhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/courseModerationHub/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
                         RouteId = "chathub_route",
                         ClusterId = "backend_cluster",
                         Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/chatHub/{**catch-all}" }
@@ -84,6 +90,31 @@ namespace CourseMarketplaceFE
                         RouteId = "financehub_route",
                         ClusterId = "backend_cluster",
                         Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/financeHub/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "reportmoderationhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/reportModerationHub/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "reviewmoderationhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/reviewModerationHub/{**catch-all}" }
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "instructorapprovalhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/instructorApprovalHub/{**catch-all}" }
+
+                    },
+                    new Yarp.ReverseProxy.Configuration.RouteConfig
+                    {
+                        RouteId = "adminmoderationhub_route",
+                        ClusterId = "backend_cluster",
+                        Match = new Yarp.ReverseProxy.Configuration.RouteMatch { Path = "/adminModerationHub/{**catch-all}" }
                     }
                 }, new[]
                 {

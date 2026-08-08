@@ -1,0 +1,95 @@
+@{
+    ViewData["Title"] = "Help Center - LinkedLearn";
+}
+
+<section class="py-16 md:py-24 bg-slate-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">How can we help?</h1>
+            <p class="text-lg text-slate-600">Browse topics to find answers to your questions.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Getting Started -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-2xl">rocket_launch</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Getting Started</h3>
+                <ul class="space-y-3">
+                    <li><a href="/Help/RegisterAccount" class="text-slate-600 hover:text-emerald-600 transition-colors">How to register a new account</a></li>
+                    <li><a href="/Help/LoginOut" class="text-slate-600 hover:text-emerald-600 transition-colors">Logging in and out</a></li>
+                    <li><a href="/Help/UpdateProfile" class="text-slate-600 hover:text-emerald-600 transition-colors">Updating your profile and password</a></li>
+                    <li><a href="/Help/VerifyEmail" class="text-slate-600 hover:text-emerald-600 transition-colors">Verifying your email</a></li>
+                </ul>
+            </div>
+
+            <!-- Learning -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-2xl">menu_book</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Learning</h3>
+                <ul class="space-y-3">
+                    <li><a href="/Help/EnrollCourse" class="text-slate-600 hover:text-emerald-600 transition-colors">Enrolling in a course</a></li>
+                    <li><a href="/Help/TrackProgress" class="text-slate-600 hover:text-emerald-600 transition-colors">Tracking your learning progress</a></li>
+                    <li><a href="/Help/TakeQuiz" class="text-slate-600 hover:text-emerald-600 transition-colors">Taking quizzes</a></li>
+                    <li><a href="/Help/SubmitReview" class="text-slate-600 hover:text-emerald-600 transition-colors">Submitting course reviews</a></li>
+                </ul>
+            </div>
+
+            <!-- Purchases -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-2xl">shopping_cart</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Purchasing & Refunds</h3>
+                <ul class="space-y-3">
+                    <li><a href="/Help/AddToCart" class="text-slate-600 hover:text-emerald-600 transition-colors">Adding courses to your cart</a></li>
+                    <li><a href="/Help/ApplyCoupon" class="text-slate-600 hover:text-emerald-600 transition-colors">Applying discount coupons</a></li>
+                    <li><a href="/Help/TransactionHistory" class="text-slate-600 hover:text-emerald-600 transition-colors">Viewing transaction history</a></li>
+                    <li><a href="/Help/RequestRefund" class="text-slate-600 hover:text-emerald-600 transition-colors">Requesting a refund</a></li>
+                </ul>
+            </div>
+
+            <!-- Teaching -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-2xl">co_present</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Teaching</h3>
+                <ul class="space-y-3">
+                    <li><a href="/Teach" class="text-slate-600 hover:text-emerald-600 transition-colors">Becoming an instructor</a></li>
+                    <li><a href="/Help/PublishCourse" class="text-slate-600 hover:text-emerald-600 transition-colors">Creating and publishing courses</a></li>
+                    <li><a href="/Help/ManageLessons" class="text-slate-600 hover:text-emerald-600 transition-colors">Managing lessons and materials</a></li>
+                    <li><a href="/Help/StripePayouts" class="text-slate-600 hover:text-emerald-600 transition-colors">Setting up Stripe payouts</a></li>
+                </ul>
+            </div>
+
+            <!-- Moderation & Reporting -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-2xl">flag</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Trust & Safety</h3>
+                <ul class="space-y-3">
+                    <li><a href="/Help/ReportReviews" class="text-slate-600 hover:text-emerald-600 transition-colors">Reporting inappropriate reviews</a></li>
+                    <li><a href="/Help/ReportCourse" class="text-slate-600 hover:text-emerald-600 transition-colors">Reporting course quality issues</a></li>
+                    <li><a href="/Help/AiModeration" class="text-slate-600 hover:text-emerald-600 transition-colors">AI moderation services</a></li>
+                </ul>
+            </div>
+
+            <!-- Communication -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="w-12 h-12 bg-cyan-50 text-cyan-600 rounded-xl flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-2xl">forum</span>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900 mb-4">Communication</h3>
+                <ul class="space-y-3">
+                    <li><a href="/Help/ChatSystem" class="text-slate-600 hover:text-emerald-600 transition-colors">Using the chat system</a></li>
+                    <li><a href="/Help/ManageNotifications" class="text-slate-600 hover:text-emerald-600 transition-colors">Managing notifications</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>

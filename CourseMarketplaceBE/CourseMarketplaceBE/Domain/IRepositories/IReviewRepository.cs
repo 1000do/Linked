@@ -1,6 +1,6 @@
-using CourseMarketplaceBE.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Domain.Entities;
 
 namespace CourseMarketplaceBE.Domain.IRepositories;
 

@@ -232,7 +232,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.Title.Should().Be(request.Title);
 
             await _instructorRepoMock.Received(1).GetByIdAsync(instructorId);
-            _courseRepoMock.Received(1).Add(Arg.Is<Course>(c => c.Title == request.Title));
+            _courseRepoMock.Received(1).Add(Arg.Is<Course>(c => c.Title == request.Title && c.CourseStatus == CourseStatus.Draft.ToValue()));
             await _courseExtRepoMock.Received(1).SaveChangesAsync();
             _mapperMock.Received(1).Map<CourseResponse>(Arg.Any<Course>());
         }

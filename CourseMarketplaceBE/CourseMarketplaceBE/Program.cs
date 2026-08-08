@@ -159,6 +159,7 @@ public class Program
         builder.Services.AddSignalR(); // Đăng ký SignalR
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<INotificationService, NotificationService>();
+        builder.Services.AddScoped<IHubService, HubService>();
         builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
         builder.Services.AddSingleton<IOtpService, OtpService>();
@@ -242,6 +243,7 @@ public class Program
         builder.Services.AddScoped<IReviewModerationRecordRepository, ReviewModerationRecordRepository>();
         builder.Services.AddScoped<CourseMarketplaceBE.Application.IServices.IReviewModerationService, CourseMarketplaceBE.Application.Services.ReviewModerationService>();
         builder.Services.AddScoped<IContentHashService, ContentHashService>();
+        builder.Services.AddScoped<IAiFeedbackRepository, AiFeedbackRepository>();
         builder.Services.AddSingleton<Ganss.Xss.IHtmlSanitizer, Ganss.Xss.HtmlSanitizer>();
         builder.Services.AddScoped<IHtmlTextManipulationService, HtmlTextManipulationService>();
 
@@ -322,8 +324,15 @@ public class Program
                     // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) &&
-                        (path.StartsWithSegments("/notificationHub") || path.StartsWithSegments("/chatHub")))
+                    if (!string.IsNullOrEmpty(accessToken) && 
+                        (path.StartsWithSegments("/notificationHub") || 
+                         path.StartsWithSegments("/chatHub") || 
+                         path.StartsWithSegments("/financeHub") ||
+                         path.StartsWithSegments("/courseModerationHub") ||
+                         path.StartsWithSegments("/reportModerationHub") ||
+                         path.StartsWithSegments("/adminModerationHub") ||
+                         path.StartsWithSegments("/instructorApprovalHub") ||
+                         path.StartsWithSegments("/reviewModerationHub")))
                     {
                         context.Token = accessToken;
                         return Task.CompletedTask;
@@ -462,8 +471,13 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapHub<NotificationHub>("/notificationHub");
+        app.MapHub<ReportModerationHub>("/reportModerationHub");
+        app.MapHub<ReviewModerationHub>("/reviewModerationHub");
+        app.MapHub<CourseModerationHub>("/courseModerationHub");
         app.MapHub<ChatHub>("/chatHub");
         app.MapHub<FinanceHub>("/financeHub");
+        app.MapHub<InstructorApprovalHub>("/instructorApprovalHub");
+        app.MapHub<AdminModerationHub>("/adminModerationHub");
 
         app.MapControllers();
 

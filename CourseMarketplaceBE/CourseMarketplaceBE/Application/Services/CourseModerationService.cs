@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace CourseMarketplaceBE.Application.Services
@@ -66,6 +67,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             course.CourseStatus = CourseStatus.Published.ToValue();
             course.ModerationFeedback = null;
+            course.ThreatLevel = AiThreatLevel.Approved;
             course.FieldModerationFeedbacks.Clear();
             course.UpdatedAt = DateTime.Now;
             course.LastApprovedAt = DateTime.Now;
@@ -124,7 +126,7 @@ namespace CourseMarketplaceBE.Application.Services
                         ReceiverId = studentId,
                         Title = "Course Content Updated",
                         Content = $"The course '{course.Title}' you enrolled in has been updated with new content. Check it out now!",
-                        LinkAction = $"/Course/Learn?id={courseId}"
+                        LinkAction = $"/Course/Learn/{courseId}"
                     }).ToList();
 
                     await _notificationService.SendBulkNotificationsAsync(studentNotifications);
@@ -154,7 +156,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     "Course Rejected",
                     $"Your course '{course.Title}' was not approved. Reason: {reason}",
-                    $"/InstructorCourse/Editor?id={courseId}"
+                    $"/InstructorCourse/Editor/{courseId}"
                 );
             }
 
@@ -209,7 +211,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     subject,
                     message,
-                    $"/InstructorCourse/Editor?id={courseId}"
+                    $"/InstructorCourse/Editor/{courseId}"
                 );
             }
 
@@ -259,6 +261,22 @@ namespace CourseMarketplaceBE.Application.Services
         {
             var course = await _courseRepository.GetByIdAsync(request.CourseId);
             if (course == null) return false;
+
+            // Deduplicate items to prevent duplicate processing for the same target element
+            if (request.Items != null && request.Items.Count > 0)
+            {
+                var seenKeys = new HashSet<string>();
+                var uniqueItems = new List<RejectCourseItemDto>();
+                foreach (var item in request.Items)
+                {
+                    var key = $"{item.Target}_{item.LessonId}_{item.MaterialId}";
+                    if (seenKeys.Add(key))
+                    {
+                        uniqueItems.Add(item);
+                    }
+                }
+                request.Items = uniqueItems;
+            }
 
             var rejectedLessonIds = new HashSet<int>();
             var rejectedMaterialIds = new HashSet<int>();
@@ -372,7 +390,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     "Course Rejected",
                     $"Your course '{course.Title}' was not approved. Please check details in the course editor.",
-                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                    $"/InstructorCourse/Editor/{request.CourseId}"
                 );
             }
 
@@ -523,7 +541,7 @@ namespace CourseMarketplaceBE.Application.Services
                     course.InstructorId.Value,
                     subject,
                     message,
-                    $"/InstructorCourse/Editor?id={request.CourseId}"
+                    $"/InstructorCourse/Editor/{request.CourseId}"
                 );
             }
 
