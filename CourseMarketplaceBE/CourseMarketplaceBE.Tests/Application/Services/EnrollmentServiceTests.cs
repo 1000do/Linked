@@ -129,6 +129,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             await _repoMock.Received(1).AddEnrollmentAsync(Arg.Is<Enrollment>(e => e.UserId == userId && e.CourseId == courseId && e.Title == "Test Title"));
             await _repoMock.Received(1).SaveChangesAsync();
+            await _wishlistServiceMock.Received(1).RemoveFromWishlistAsync(userId, courseId);
             await transactionMock.Received(1).CommitAsync();
             await _notifMock.Received(1).SendNotificationAsync(99, "New student enrolled", "John Doe has enrolled in your free course 'Test Title'.", $"/Course/Details/{courseId}");
         }
@@ -186,6 +187,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             await act.Should().ThrowAsync<Exception>().WithMessage("DB Error");
             await transactionMock.Received(1).RollbackAsync();
+        }
+
+        [Fact]
+        public async Task EnrollFreeAsync_WishlistServiceThrowsException_ContinuesEnrollment()
+        {
+            int userId = 1;
+            int courseId = 2;
+            var course = new Course { CourseId = courseId, CourseStatus = CourseStatus.Published.ToValue(), Price = 0, InstructorId = 99 };
+            var transactionMock = Substitute.For<IDbContextTransaction>();
+
+            _courseRepoMock.GetByIdAsync(courseId).Returns(course);
+            _courseRepoMock.IsEnrolledAsync(userId, courseId).Returns(false);
+            _repoMock.BeginTransactionAsync().Returns(transactionMock);
+            _userRepoMock.GetUserByIdAsync(userId).Returns(new User { FullName = "John Doe" });
+            
+            _wishlistServiceMock.RemoveFromWishlistAsync(userId, courseId).ThrowsAsync(new Exception("Wishlist Error"));
+
+            await _sut.EnrollFreeAsync(userId, courseId);
+
+            await transactionMock.Received(1).CommitAsync();
+            await _notifMock.Received(1).SendNotificationAsync(99, "New student enrolled", "John Doe has enrolled in your free course ''.", $"/Course/Details/{courseId}");
         }
 
         // ----------------------------------------------------
@@ -414,6 +436,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 { 
                     EnrollmentId = 12, 
                     CourseId = null
+                },
+                new Enrollment
+                {
+                    EnrollmentId = 13,
+                    CourseId = 4,
+                    Course = new Course
+                    {
+                        Title = "Title4",
+                        Instructor = null
+                    },
+                    IsCompleted = null
+                },
+                new Enrollment
+                {
+                    EnrollmentId = 14,
+                    CourseId = 5,
+                    Course = new Course
+                    {
+                        Title = null,
+                        Instructor = new Instructor { InstructorNavigation = null }
+                    },
+                    IsCompleted = false
                 }
             };
 
@@ -422,10 +466,12 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _repoMock.GetCompletedMaterialCountAsync(10).Returns(3);
             _repoMock.GetCompletedMaterialCountAsync(11).Returns(0);
             _repoMock.GetCompletedMaterialCountAsync(12).Returns(0);
+            _repoMock.GetCompletedMaterialCountAsync(13).Returns(0);
+            _repoMock.GetCompletedMaterialCountAsync(14).Returns(0);
 
             var result = (await _sut.GetMyEnrolledCoursesAsync(1)).ToList();
 
-            result.Should().HaveCount(3);
+            result.Should().HaveCount(5);
             
             result[0].CourseId.Should().Be(2);
             result[0].Title.Should().Be("Title");
@@ -442,6 +488,15 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result[2].CourseId.Should().Be(0);
             result[2].Title.Should().Be("Unknown Course");
             result[2].ProgressPercentage.Should().Be(0);
+
+            result[3].CourseId.Should().Be(4);
+            result[3].Title.Should().Be("Title4");
+            result[3].InstructorName.Should().Be("Unknown Instructor");
+            result[3].CourseThumbnailUrl.Should().BeNull();
+
+            result[4].CourseId.Should().Be(5);
+            result[4].Title.Should().Be("Unknown Course");
+            result[4].InstructorName.Should().Be("Unknown Instructor");
         }
 
         [Fact]

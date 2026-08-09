@@ -237,6 +237,39 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _uploadServiceMock.Received(1).UploadImageAsync(mockFile);
             await _repoMock.Received(1).SaveChangesAsync();
         }
+
+        [Fact]
+        public async Task SubmitApplicationAsync_ResubmitValid_NullRetainedUrls_UpdatesAndReturnsSuccessMessage()
+        {
+            //Arrange 1
+            int userId = 1;
+            var mockFile = Substitute.For<IFormFile>();
+            mockFile.Length.Returns(100);
+            var request = new InstructorApplicationRequest 
+            { 
+                DocumentFiles = new List<IFormFile> { mockFile },
+                RetainedDocumentUrls = null, // Trigger null branch
+                StripeCountry = "us"
+            };
+            var account = new Account { IsVerified = true };
+            var existing = new Instructor { 
+                ApprovalStatus = InstructorApprovalStatus.Rejected.ToValue(),
+                DocumentUrl = "url1;old2"
+            };
+
+            //Arrange 2
+            _userRepoMock.GetAccountByIdAsync(userId).Returns(account);
+            _repoMock.GetByIdAsync(userId).Returns(existing);
+            _uploadServiceMock.UploadImageAsync(mockFile).Returns("newUrl");
+            _repoMock.SaveChangesAsync().Returns(1);
+
+            //Act
+            var result = await _sut.SubmitApplicationAsync(userId, request);
+
+            //Assert
+            result.Should().Be("Your application has been resubmitted. Please wait for admin approval.");
+            existing.DocumentUrl.Should().Be("newUrl");
+        }
         
         [Fact]
         public async Task SubmitApplicationAsync_NewApplicationWithUploadFailures_ThrowsInvalidOperationException()
@@ -1079,13 +1112,31 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                     CourseId = 1, 
                     CourseStatus = CourseStatus.Published.ToValue(), 
                     Title = "Course 1", 
-                    Enrollments = new List<Enrollment> { new Enrollment(), new Enrollment() } 
+                    Enrollments = new List<Enrollment> 
+                    { 
+                        new Enrollment { CourseReviews = new List<CourseReview> { new CourseReview { Rating = 5, IsRemoved = false } } }, 
+                        new Enrollment() 
+                    } 
                 },
                 new Course 
                 { 
                     CourseId = 2, 
                     CourseStatus = CourseStatus.Draft.ToValue(), 
                     Title = "Course 2" 
+                },
+                new Course 
+                {
+                    CourseId = 3,
+                    CourseStatus = CourseStatus.Published.ToValue(),
+                    Title = "Course 3",
+                    Enrollments = null // Trigger null branch
+                },
+                new Course
+                {
+                    CourseId = 4,
+                    CourseStatus = CourseStatus.Published.ToValue(),
+                    Title = "Course 4",
+                    Enrollments = new List<Enrollment> { new Enrollment { CourseReviews = null } } // Trigger null/empty validReviews branch
                 }
             };
 
@@ -1120,7 +1171,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.TotalCourses.Should().Be(1);
             result.TotalReviews.Should().Be(50);
             
-            result.Courses.Should().HaveCount(1);
+            result.Courses.Should().HaveCount(3);
             result.Courses.First().Title.Should().Be("Course 1");
             result.Courses.First().TotalStudents.Should().Be(2);
 
@@ -1220,6 +1271,30 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task SetupStripePayoutAsync_UserNavigationNull_UsesEmptyEmail()
+        {
+            //Arrange 1
+            int userId = 1;
+            var instructor = new Instructor
+            {
+                ApprovalStatus = InstructorApprovalStatus.Approved.ToValue(),
+                InstructorNavigation = new User { UserNavigation = null }, // Null to trigger email fallback
+                StripeAccountId = "acct_old"
+            };
+            var setupResult = new StripeConnectSetupResponse { StripeAccountId = "acct_new", OnboardingUrl = "http://url" };
+
+            //Arrange 2
+            _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "SG", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
+
+            //Act
+            var result = await _sut.SetupStripePayoutAsync(userId);
+
+            //Assert
+            result.StripeAccountId.Should().Be("acct_new");
+        }
+
+        [Fact]
         public async Task SetStripeCountryAsync_EmptyCountry_ThrowsInvalidOperationException()
         {
             //Arrange 1
@@ -1285,6 +1360,33 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.TotalStudents.Should().Be(0);
             result.AverageRating.Should().Be(0);
             result.Courses.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task GetPublicProfileAsync_UserNavigationNull_HandlesNulls()
+        {
+            //Arrange 1
+            int instructorId = 2;
+            var instructor = new Instructor 
+            { 
+                InstructorId = instructorId, 
+                ApprovalStatus = InstructorApprovalStatus.Approved.ToValue(),
+                InstructorNavigation = new User { UserId = instructorId, UserNavigation = null }, // user not null, UserNav null
+                Courses = new List<Course>()
+            };
+
+            //Arrange 2
+            _repoMock.GetByIdWithNavigationAsync(instructorId).Returns(instructor);
+            _repoMock.GetStatsAsync(instructorId).Returns(new InstructorStats()); // stats not null
+            _repoMock.CountActiveCoursesAsync(instructorId).Returns(0);
+            _repoMock.CountInstructorReviewsAsync(instructorId).Returns(0);
+
+            //Act
+            var result = await _sut.GetPublicProfileAsync(instructorId);
+
+            //Assert
+            result.Should().NotBeNull();
+            result!.AvatarUrl.Should().BeNull();
         }
     }
 }

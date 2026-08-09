@@ -829,6 +829,36 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task CreateWithdrawalAsync_MissingBranches_CoversAll()
+        {
+            //Arrange 1
+            var request = new WithdrawRequest { Amount = null, Description = null };
+            var stripeBalance = new StripePlatformBalanceDto { Available = 100m };
+            var stripePayout = new StripeWithdrawalResponseDto { Id = "po_123", Status = null };
+            
+            var mockClients = Substitute.For<Microsoft.AspNetCore.SignalR.IHubClients>();
+            var mockGroup = Substitute.For<Microsoft.AspNetCore.SignalR.IClientProxy>();
+            mockClients.Group(Arg.Any<string>()).Returns(mockGroup);
+
+            //Arrange 2
+            _mockStripeConnect.GetPlatformBalanceAsync().Returns(Task.FromResult(stripeBalance));
+            _mockStripeConnect.CreatePlatformWithdrawalAsync(100m, Arg.Any<string>(), 1).Returns(Task.FromResult(stripePayout));
+            _mockRepo.AddWithdrawalAsync(Arg.Any<PlatformWithdrawal>()).Returns(Task.FromResult(1));
+            _mockHubContext.Clients.Returns(mockClients);
+
+            //Act
+            var result = await _financeService.CreateWithdrawalAsync(request, 1);
+
+            //Assert
+            result.StripePayoutId.Should().Be("po_123");
+            result.Amount.Should().Be(100m);
+            result.Status.Should().Be("pending");
+            await _mockRepo.Received(1).AddWithdrawalAsync(Arg.Is<PlatformWithdrawal>(w => 
+                w.Amount == 100m && w.StripePayoutId == "po_123" && w.Description == null));
+            mockClients.Received(1).Group("AdminFinance");
+        }
+
+        [Fact]
         public async Task GetWithdrawalHistoryAsync_NoChanges_ReturnsData()
         {
             //Arrange 1
@@ -1308,6 +1338,16 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task RequestRefundAsync_NoCourseId_ThrowsException()
         {
+            var txn = new Transaction { AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = DateTime.UtcNow, OrderItem = null };
+            _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn));
+            
+            System.Func<Task> act = async () => await _financeService.RequestRefundAsync(1, 1, "Reason");
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Course not found for this transaction.");
+        }
+
+        [Fact]
+        public async Task RequestRefundAsync_OrderItemCourseIdNull_ThrowsException()
+        {
             var txn = new Transaction { AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = DateTime.UtcNow, OrderItem = new OrderItem { CourseId = null } };
             _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn));
             
@@ -1325,6 +1365,18 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
             result.RejectReason.Should().Be("having requested too many refunds within the refund period");
+            result.IsAutoRejected.Should().BeTrue();
+        }
+
+        [Fact]
+        public async Task RequestRefundAsync_TransactionCreatedAt_Null_Passes()
+        {
+            var txn = new Transaction { AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = null, OrderItem = new OrderItem { CourseId = 2 } };
+            _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn));
+            _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 2).Returns(Task.FromResult(new RefundEligibilityDto { }));
+            
+            var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
+            result.IsAutoRejected.Should().BeFalse();
         }
 
         [Fact]
@@ -1366,15 +1418,67 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task RequestRefundAsync_ValidRequest_WithExistingExt()
         {
+            //Arrange 1
             var txn = new Transaction { TransactionId = 1, AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = DateTime.UtcNow, OrderItem = new OrderItem { CourseId = 1 }, TransactionExt = new TransactionExt() };
             var metrics = new RefundEligibilityDto { };
+            
+            //Arrange 2
             _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn));
             _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
             _mockNotiService.SendNotificationAsync(1, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromException<bool>(new Exception("Fail"))); // Cover catch block
             
+            //Act
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
+            
+            //Assert
             result.IsAutoRejected.Should().BeFalse();
             txn.TransactionExt.RefundAdminNote.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task RequestRefundAsync_Gift_NotClaimed_OrNull_Proceeds()
+        {
+            //Arrange 1
+            var txn1 = new Transaction { TransactionId = 1, AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = DateTime.UtcNow, OrderItem = new OrderItem { CourseId = 1 }, OrderItemId = 10 };
+            var txn2 = new Transaction { TransactionId = 2, AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = DateTime.UtcNow, OrderItem = new OrderItem { CourseId = 1 }, OrderItemId = 11 };
+            var metrics = new RefundEligibilityDto { };
+
+            //Arrange 2
+            _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn1));
+            _mockRepo.GetTransactionWithFullGraphAsync(2).Returns(Task.FromResult<Transaction?>(txn2));
+            _mockGiftRepo.GetByOrderItemIdAsync(10).Returns(Task.FromResult<Gift?>(null)); // Null gift
+            _mockGiftRepo.GetByOrderItemIdAsync(11).Returns(Task.FromResult<Gift?>(new Gift { IsClaimed = false })); // Not claimed gift
+            _mockRepo.GetRefundEligibilityMetricsAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>()).Returns(Task.FromResult(metrics));
+            _mockNotiService.SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(true));
+
+            //Act
+            var result1 = await _financeService.RequestRefundAsync(1, 1, "Reason");
+            var result2 = await _financeService.RequestRefundAsync(2, 1, "Reason");
+
+            //Assert
+            result1.IsAutoRejected.Should().BeFalse();
+            result2.IsAutoRejected.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task RequestRefundAsync_ValidRequest_WithExistingExt_AlreadyRequestedAt()
+        {
+            //Arrange 1
+            var existingDate = new DateTime(2025, 1, 1);
+            var txn = new Transaction { TransactionId = 1, AccountFrom = 1, TransactionsStatus = "succeeded", TransactionCreatedAt = DateTime.UtcNow, OrderItem = new OrderItem { CourseId = 1 }, TransactionExt = new TransactionExt { RefundRequestedAt = existingDate } };
+            var metrics = new RefundEligibilityDto { };
+            
+            //Arrange 2
+            _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn));
+            _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
+            _mockNotiService.SendNotificationAsync(1, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(true));
+            
+            //Act
+            var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
+            
+            //Assert
+            result.IsAutoRejected.Should().BeFalse();
+            txn.TransactionExt.RefundRequestedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
 
         // --- ApproveRefundAsync ---
@@ -1417,13 +1521,43 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task ApproveRefundAsync_Valid_WithExistingExtAndFailingNoti()
         {
+            //Arrange 1
             var txn = new Transaction { TransactionId = 1, TransactionsStatus = "refund_pending", AccountFrom = 2, TransactionExt = new TransactionExt(), StripePaymentintentId = "pi_1" };
+            
+            //Arrange 2
             _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn));
             _mockPaymentGateway.RefundAsync("pi_1", Arg.Any<decimal>(), Arg.Any<string>()).Returns(Task.FromResult("re_1"));
             _mockNotiService.SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromException<bool>(new Exception("Fail")));
 
+            //Act
             await _financeService.ApproveRefundAsync(1, "Note");
+            
+            //Assert
             txn.TransactionExt.RefundAdminNote.Should().Be("Note");
+        }
+
+        [Fact]
+        public async Task ApproveRefundAsync_Gift_NotClaimed_OrNull_Proceeds()
+        {
+            //Arrange 1
+            var txn1 = new Transaction { TransactionId = 1, TransactionsStatus = "refund_pending", OrderItemId = 10, AccountFrom = 2, StripePaymentintentId = "pi_1" };
+            var txn2 = new Transaction { TransactionId = 2, TransactionsStatus = "refund_pending", OrderItemId = 11, AccountFrom = 2, StripePaymentintentId = "pi_2" };
+            
+            //Arrange 2
+            _mockRepo.GetTransactionWithFullGraphAsync(1).Returns(Task.FromResult<Transaction?>(txn1));
+            _mockRepo.GetTransactionWithFullGraphAsync(2).Returns(Task.FromResult<Transaction?>(txn2));
+            _mockGiftRepo.GetByOrderItemIdAsync(10).Returns(Task.FromResult<Gift?>(null)); // Null gift
+            _mockGiftRepo.GetByOrderItemIdAsync(11).Returns(Task.FromResult<Gift?>(new Gift { IsClaimed = false })); // Not claimed gift
+            _mockPaymentGateway.RefundAsync(Arg.Any<string>(), Arg.Any<decimal>(), Arg.Any<string>()).Returns(Task.FromResult("re_1"));
+            _mockNotiService.SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(true));
+
+            //Act
+            await _financeService.ApproveRefundAsync(1, "Note");
+            await _financeService.ApproveRefundAsync(2, "Note");
+
+            //Assert
+            txn1.TransactionsStatus.Should().Be("refunded");
+            txn2.TransactionsStatus.Should().Be("refunded");
         }
 
         // --- RejectRefundAsync ---

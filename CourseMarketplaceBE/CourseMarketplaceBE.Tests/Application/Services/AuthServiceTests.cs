@@ -243,6 +243,76 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task RefreshTokenAsync_ExpiryTimeExactlyNow_ReturnsNull()
+        {
+            //Arrange 1
+            var refreshToken = "valid-token";
+            var account = new Account { RefreshTokenExpiryTime = DateTime.UtcNow };
+
+            //Arrange 2
+            _mockUserRepo.GetAccountByRefreshTokenAsync(refreshToken).Returns(Task.FromResult<Account?>(account));
+
+            //Act
+            var result = await _authService.RefreshTokenAsync(refreshToken);
+
+            //Assert
+            result.Should().BeNull();
+            await _mockUserRepo.Received(1).GetAccountByRefreshTokenAsync(refreshToken);
+        }
+
+        [Fact]
+        public async Task RefreshTokenAsync_ManagerNoDisplayName_ReturnsFallback()
+        {
+            //Arrange 1
+            var refreshToken = "valid-token";
+            var account = new Account 
+            { 
+                AccountId = 1,
+                Email = "manager@gmail.com",
+                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1),
+                IsVerified = true,
+                Manager = new Manager { DisplayName = null }
+            };
+
+            //Arrange 2
+            _mockUserRepo.GetAccountByRefreshTokenAsync(refreshToken).Returns(Task.FromResult<Account?>(account));
+            _mockUserRepo.GetRoleByAccountIdAsync(account.AccountId).Returns(Task.FromResult("admin"));
+
+            //Act
+            var result = await _authService.RefreshTokenAsync(refreshToken);
+
+            //Assert
+            result.Should().NotBeNull();
+            result!.FullName.Should().Be("Manager");
+        }
+
+        [Fact]
+        public async Task RefreshTokenAsync_UserNoFullName_FallbackName_ReturnsFallback()
+        {
+            //Arrange 1
+            var refreshToken = "valid-token";
+            var account = new Account 
+            { 
+                AccountId = 1,
+                Email = "user@gmail.com",
+                RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(1),
+                IsVerified = true,
+                User = new User { FullName = null }
+            };
+
+            //Arrange 2
+            _mockUserRepo.GetAccountByRefreshTokenAsync(refreshToken).Returns(Task.FromResult<Account?>(account));
+            _mockUserRepo.GetRoleByAccountIdAsync(account.AccountId).Returns(Task.FromResult("student"));
+
+            //Act
+            var result = await _authService.RefreshTokenAsync(refreshToken);
+
+            //Assert
+            result.Should().NotBeNull();
+            result!.FullName.Should().Be("User");
+        }
+
+        [Fact]
         public async Task RefreshTokenAsync_ValidToken_ReturnsLoginResponse()
         {
             //Arrange 1
