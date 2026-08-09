@@ -1,7 +1,7 @@
 @startuml 
 <style>
     sequenceDiagram{
-        FontSize 16
+        FontSize 12
 
         arrow {
             ' Set the maximum width of the text on arrows
@@ -73,27 +73,13 @@ else Valid actor's authentication and authorization
     fe_ctrl--
     
     fe_ctrl -->> view--: Return View(model)
-    
+    view -> view++: Validate report's existence
+    view--
     alt Empty Report List
         view -->> act: Display empty state message
     else Reports Exist
-        view -->> act: Display list of pending course reports by default
+        view -->> act--: Display list of user reports
         
-        opt Actor Switches Category Subtab
-            act -> view: Click different category tab or subtab
-            view -> view++: Toggle subtab visibility
-            view--
-            view -->> act: Display report list for selected category
-        end
-        
-        opt Actor Navigates to Another Page
-            act -> view: Click pagination button
-            view -> fe_ctrl++: Send GET request to GetReportPartial
-            fe_ctrl -> fe_ctrl++: Fetch requested page of reports
-            fe_ctrl--
-            fe_ctrl -->> view--: Return PartialView
-            view -->> act--: Display requested page of reports
-        end
     end
 end
 @enduml
