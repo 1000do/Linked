@@ -195,7 +195,7 @@ public class LessonService : ILessonService
         lesson.Title = request.Title;
         lesson.UpdatedAt = DateTime.UtcNow;
         _lessonRepository.Update(lesson);
-        
+
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             lesson.LessonStatus = LessonStatus.Draft.ToValue();
@@ -265,7 +265,7 @@ public class LessonService : ILessonService
         var existingActiveVideos = new List<LearningMaterial>();
         if (fileType == "video")
         {
-            existingActiveVideos = allMaterials.Where(m => 
+            existingActiveVideos = allMaterials.Where(m =>
                 m.LearningStatus == LearningStatus.Active.ToValue() &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null))).ToList();
         }
@@ -344,7 +344,7 @@ public class LessonService : ILessonService
         }
 
         await _materialRepository.SaveChangesAsync();
-        
+
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             material.LearningStatus = LearningStatus.Draft.ToValue();
@@ -365,7 +365,7 @@ public class LessonService : ILessonService
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt,
-            CourseStatus = lesson.Course?.CourseStatus,
+            CourseStatus = lesson.Course.CourseStatus,
             LearningStatus = material.LearningStatus
         };
     }
@@ -380,6 +380,7 @@ public class LessonService : ILessonService
 
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
         if (lesson == null) throw new Exception("Lesson not found.");
+        
         await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "update materials");
 
         material.Title = request.Title;
@@ -409,7 +410,7 @@ public class LessonService : ILessonService
             MaterialMetadata = material.MaterialMetadata,
             CreatedAt = material.CreatedAt,
             UpdatedAt = material.UpdatedAt,
-            CourseStatus = lesson.Course?.CourseStatus,
+            CourseStatus = lesson.Course.CourseStatus,
             LearningStatus = material.LearningStatus
         };
     }
@@ -422,6 +423,7 @@ public class LessonService : ILessonService
 
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
         if (lesson == null) throw new Exception("Lesson not found.");
+        
         await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "remove materials");
 
         // Move file to trash on Cloudinary instead of deleting
@@ -498,7 +500,9 @@ public class LessonService : ILessonService
             throw new UnauthorizedAccessException("You do not have permission to permanently delete this material.");
         }
 
-        await ValidateInstructorAndCourseStateAsync(material.Lesson?.Course, instructorId, "permanently delete materials");
+        if (material.Lesson == null) throw new Exception("Lesson not found.");
+
+        await ValidateInstructorAndCourseStateAsync(material.Lesson.Course, instructorId, "permanently delete materials");
 
         // 1. Delete from Cloudinary if public ID exists
         if (!string.IsNullOrEmpty(material.CloudPublicId))
@@ -509,7 +513,7 @@ public class LessonService : ILessonService
         }
 
         // 2. Delete from DB
-        int? courseId = material.Lesson?.CourseId;
+        int? courseId = material.Lesson.CourseId;
         _materialRepository.Delete(material);
         await _materialRepository.SaveChangesAsync();
 
@@ -523,6 +527,7 @@ public class LessonService : ILessonService
 
         var lesson = await _lessonRepository.GetByIdAsync(material.LessonId ?? 0);
         if (lesson == null) throw new Exception("Lesson not found.");
+        
         await ValidateInstructorAndCourseStateAsync(lesson.Course, instructorId, "restore this material");
 
         var course = lesson.Course;
@@ -540,8 +545,8 @@ public class LessonService : ILessonService
         if (fileType == "video")
         {
             var existingMaterials = await _materialRepository.GetMaterialsByLessonIdAsync(lesson.LessonId);
-            var activeVideo = existingMaterials.FirstOrDefault(m => 
-                m.LearningStatus == LearningStatus.Active.ToValue() && 
+            var activeVideo = existingMaterials.FirstOrDefault(m =>
+                m.LearningStatus == LearningStatus.Active.ToValue() &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || m.MaterialMetadata == null));
 
             if (activeVideo != null)

@@ -1,11 +1,11 @@
 using System;
-using System.Threading.Tasks;
-using CourseMarketplaceBE.Domain.Entities;
-using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Application.IServices;
-using CourseMarketplaceBE.Domain.Constants;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Domain.Constants;
+using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.IRepositories;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -18,7 +18,7 @@ public class EnrollmentService : IEnrollmentService
     private readonly IWishlistService _wishlistService;
 
     public EnrollmentService(
-        IEnrollmentRepository repo, 
+        IEnrollmentRepository repo,
         ICourseRepository courseRepo,
         INotificationService notificationService,
         IUserRepository userRepo,
@@ -69,14 +69,15 @@ public class EnrollmentService : IEnrollmentService
             await _repo.AddEnrollmentAsync(enrollment);
             int rows1 = await _repo.SaveChangesAsync();
             /* zero rows exception removed */
-            
+
             try
             {
                 await _wishlistService.RemoveFromWishlistAsync(userId, courseId);
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore if it fails to remove from wishlist
+                // Do not abort enrollment, but log the issue for visibility
+                Console.WriteLine($"Failed to remove course {courseId} from user {userId}'s wishlist during enrollment. Error: {ex.Message}");
             }
 
             await transaction.CommitAsync();
@@ -86,12 +87,12 @@ public class EnrollmentService : IEnrollmentService
             {
                 var student = await _userRepo.GetUserByIdAsync(userId);
                 var studentName = student?.FullName ?? "A student";
-                
+
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
                     "New student enrolled",
                     $"{studentName} has enrolled in your free course '{course.Title}'.",
-                    $"/Course/Details/{courseId}" 
+                    $"/Course/Details/{courseId}"
                 );
             }
         }
@@ -104,8 +105,8 @@ public class EnrollmentService : IEnrollmentService
     public async Task<DTOs.ProgressResponse> GetProgressAsync(int userId, int courseId)
     {
         var enrollment = await _repo.GetEnrollmentAsync(userId, courseId);
-        
-        if (enrollment == null) 
+
+        if (enrollment == null)
         {
             // Bypass cho giảng viên: Trả về tiến độ ảo nếu là chủ sở hữu
             var course = await _courseRepo.GetByIdAsync(courseId);
@@ -114,7 +115,7 @@ public class EnrollmentService : IEnrollmentService
                 var courseStats = await _courseRepo.GetCourseStatsAsync(courseId);
                 return new DTOs.ProgressResponse
                 {
-                    EnrollmentId = 0, 
+                    EnrollmentId = 0,
                     LearnedMaterialCount = courseStats?.TotalMaterials ?? 0, // Chủ sở hữu coi như học hết
                     TotalMaterialCount = courseStats?.TotalMaterials ?? 0,
                     CompletedMaterialIds = new List<int>()
@@ -140,12 +141,12 @@ public class EnrollmentService : IEnrollmentService
     public async Task UpdateProgressAsync(int userId, int courseId, int materialId)
     {
         var enrollment = await _repo.GetEnrollmentWithProgressAsync(userId, courseId);
-        
+
         // Nếu không tìm thấy enrollment, kiểm tra xem có phải owner không
-        if (enrollment == null) 
+        if (enrollment == null)
         {
             var isOwner = await _courseRepo.IsOwnerAsync(userId, courseId);
-            if (isOwner) 
+            if (isOwner)
             {
                 // Giảng viên xem bài học của chính mình -> Không cần lưu tiến độ vào DB
                 return;
