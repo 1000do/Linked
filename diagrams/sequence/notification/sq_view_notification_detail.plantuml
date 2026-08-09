@@ -53,6 +53,9 @@ view->view++: Populate and display notification modal
 view--
 view-->>act: Display Notification Detail Modal
 
+view -> view++: Check notification read status
+view--
+
 alt Notification is unread
     view->fe_ctrl++: PUT /Notification/MarkAsRead/{id}
     
@@ -78,6 +81,9 @@ alt Notification is unread
     ctx-->>repo--: Return notification entity
     repo-->>sv--: Return notification entity
     
+    sv -> sv++: Validate notification existence and ownership
+    sv--
+    
     alt notification == null || notification.ReceiverId != userId
         sv-->>be_ctrl: throw KeyNotFoundException
         be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
@@ -93,6 +99,9 @@ alt Notification is unread
         repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Execute UPDATE statement
         
+        db -> db++: Check database save status
+        db--
+        
         alt Database Save Failure
             db-->>ctx: Throw DbUpdateException
             ctx-->>repo: Throw DbUpdateException
@@ -101,6 +110,8 @@ alt Notification is unread
             be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
             fe_ctrl-->>view: Return JSON error response
             view-->>act: Display error message
+
+            
         else Database Save Success
             db-->>ctx--: Return result
             ctx-->>repo--: Return result

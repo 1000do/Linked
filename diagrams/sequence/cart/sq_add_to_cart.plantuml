@@ -74,6 +74,9 @@ else Valid actor's authentication and authorization
     ctx-->>auth_sv--: Return verification status
     auth_sv-->>be_ctrl--: Return isVerified
     
+    be_ctrl -> be_ctrl++: Check email verification status
+    be_ctrl--
+    
     alt isVerified == false
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
         fe_ctrl-->>view: Return JSON (success = false, message = "Please verify your email address.")
@@ -137,6 +140,9 @@ else Valid actor's authentication and authorization
             sv->repo++: Call SaveChangesAsync()
             repo->ctx++: Call SaveChangesAsync()
             ctx->db++: Save changes to database
+            
+            db -> db++: Check database save status
+            db--
             
             alt Database Save Failure
                 db-->>ctx: Throw DbUpdateException

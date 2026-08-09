@@ -80,6 +80,9 @@ else User confirms
             ctx-->>repo--: Return CartItem entity
             repo-->>sv--: Return CartItem entity
             
+            sv -> sv++: Validate cart item existence
+            sv--
+            
             alt item == null
                 sv-->>be_ctrl: throw InvalidOperationException("Course not found in the cart.")
                 be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
@@ -90,6 +93,9 @@ else User confirms
                 
                 repo->ctx++: Call SaveChangesAsync()
                 ctx->db++: Save changes to database
+                
+                db -> db++: Check database save status
+                db--
                 
                 alt Database Save Failure
                     db-->>ctx: Throw DbUpdateException

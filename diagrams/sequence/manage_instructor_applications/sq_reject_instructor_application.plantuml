@@ -78,6 +78,9 @@ db -->> ctx--: Return instructor entity
 ctx -->> repo--: Return instructor entity
 repo -->> sv--: Return instructor entity
 
+sv -> sv++: Validate instructor application existence
+sv--
+
 alt instructor == null
     sv -->> be_ctrl: Return false
     be_ctrl -->> fe_ctrl: Return statusCode 400
