@@ -53,7 +53,7 @@ public class AuthService : IAuthService
     {
         var a = await _userRepo.GetAccountByRefreshTokenAsync(refreshToken);
 
-        if (a == null || a.RefreshTokenExpiryTime == null || a.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        if (a == null || !a.RefreshTokenExpiryTime.HasValue || a.RefreshTokenExpiryTime.Value <= DateTime.UtcNow)
             return null;
 
         return await GenerateLoginResponseAsync(a);

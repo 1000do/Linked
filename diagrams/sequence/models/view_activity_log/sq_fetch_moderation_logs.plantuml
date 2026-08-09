@@ -52,6 +52,8 @@ par Fetch Course Logs
     sv -> course_repo++: Call GetPagedAdminAsync(page, pageSize)
     course_repo -> ctx++: Query CourseAiUsageLogs
     ctx -> db++: Execute query
+    db -> db++: Check database\noperation status
+    db--
     alt Database Query Failure
         db -->> ctx: Return empty list, totalCount = 0
         ctx -->> course_repo: Return empty list, totalCount = 0
@@ -73,6 +75,8 @@ else Fetch Course Review Logs
     sv -> course_rev_repo++: Call GetPagedAdminAsync(page, pageSize)
     course_rev_repo -> ctx++: Query CourseReviewModerationLogs
     ctx -> db++: Execute query
+    db -> db++: Check database\noperation status
+    db--
     alt Database Query Failure
         db -->> ctx: Return empty list, totalCount = 0
         ctx -->> course_rev_repo: Return empty list, totalCount = 0
@@ -94,6 +98,8 @@ else Fetch Lesson Review Logs
     sv -> lesson_rev_repo++: Call GetPagedAdminAsync(page, pageSize)
     lesson_rev_repo -> ctx++: Query LessonReviewModerationLogs
     ctx -> db++: Execute query
+    db -> db++: Check database\noperation status
+    db--
     alt Database Query Failure
         db -->> ctx: Return empty list, totalCount = 0
         ctx -->> lesson_rev_repo: Return empty list, totalCount = 0

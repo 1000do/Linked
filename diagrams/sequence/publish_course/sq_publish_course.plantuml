@@ -92,10 +92,14 @@ else Invalid course content
     view -->> act: Display validation error message
 else Valid course update request
     cmd_sv -> repo++: Update(course)
+    repo -> ctx++: Update(course)
+    ctx-->>repo--: Return result
     repo -->> cmd_sv--: Return result
     cmd_sv -> repo++: SaveChangesAsync()
     repo -> ctx++: Call SaveChangesAsync()
     ctx -> db++: Save changes to database
+    db -> db++: Check database\noperation status
+    db--
     alt Database Save Failure
         db -->> ctx: throw DbUpdateException
         ctx -->> repo: throw DbUpdateException
@@ -119,7 +123,7 @@ else Valid course update request
 
         par Background Task
             ref over sv, db: Handle Course Moderation With AI
-        else Main Thread Return
+        else Main Thread
             queue -->> sv--: Return result
             sv -->> be_ctrl--: Return result
         
