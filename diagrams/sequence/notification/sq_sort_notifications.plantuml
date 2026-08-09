@@ -54,7 +54,7 @@ view->fe_ctrl++: GET /Notification/Admin
 fe_ctrl-->>view--: Return Admin View
 
 view->hub++: Start SignalR connection to /notificationHub
-hub-->>view: Connection established successfully
+hub-->>view--: Connection established successfully
 
 view->fe_ctrl++: GET /Notification/GetAllAdmin
 
@@ -79,6 +79,9 @@ else Valid actor's authentication and authorization
     ctx->db++: Execute SELECT query
     db-->>ctx--: Return old notifications list
     ctx-->>repo--: Return old notifications list
+    
+    repo -> repo++: Check old notifications count
+    repo--
     
     opt Old notifications exist
         repo->ctx++: Mark IsRemoved = true for old notifications

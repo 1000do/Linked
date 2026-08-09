@@ -73,6 +73,9 @@ else Valid actor's authentication and authorization
     ctx-->>repo--: Return notification list & count
     repo-->>sv--: Return notification list & count
     
+    sv -> sv++: Check notifications count
+    sv--
+    
     alt Notifications exist
         sv->notif_dto++: Call NotificationResponseDto()
         notif_dto-->>sv--: Return NotificationResponseDto list
