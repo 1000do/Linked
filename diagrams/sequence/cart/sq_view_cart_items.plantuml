@@ -79,6 +79,9 @@ act->view++: Access Shopping Cart page
         ctx-->>repo--: Return List<CartItem>
         repo-->>sv--: Return List<CartItem>
         
+        sv -> sv++: Check if couponCode is provided
+        sv--
+        
         opt couponCode is provided
             loop for each couponCode in list
                 sv->couponRepo++: Call GetByCodeAsync(code)
@@ -87,6 +90,9 @@ act->view++: Access Shopping Cart page
                 db-->>ctx--: Return Coupon
                 ctx-->>couponRepo--: Return Coupon
                 couponRepo-->>sv--: Return Coupon
+                
+                sv -> sv++: Validate coupon status and limits
+                sv--
                 
                 alt coupon is null OR inactive OR expired/limit reached
                     sv-->>be_ctrl: throw InvalidOperationException

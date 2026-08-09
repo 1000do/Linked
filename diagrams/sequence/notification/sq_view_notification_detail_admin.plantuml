@@ -53,6 +53,9 @@ view->view++: Populate and display notification detail modal
 view--
 view-->>act: Display Notification Detail Modal
 
+view -> view++: Check user role and notification state
+view--
+
 alt User role is staff AND notification belongs to user AND notification is unread
     view->fe_ctrl++: PUT /Notification/MarkAsRead/{id}
     
@@ -78,6 +81,9 @@ alt User role is staff AND notification belongs to user AND notification is unre
     ctx-->>repo--: Return notification entity
     repo-->>sv--: Return notification entity
     
+    sv -> sv++: Validate notification existence and ownership
+    sv--
+    
     alt notification == null || notification.ReceiverId != userId
         sv-->>be_ctrl: throw KeyNotFoundException
         be_ctrl-->>fe_ctrl: Return statusCode 404 (NotFound)
@@ -92,6 +98,9 @@ alt User role is staff AND notification belongs to user AND notification is unre
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Execute UPDATE statement
+        
+        db -> db++: Check database save status
+        db--
         
         alt Database Save Failure
             db-->>ctx: Throw DbUpdateException

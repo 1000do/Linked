@@ -119,7 +119,8 @@ else hasAccess == true
     sv->repo++: Call SaveChangesAsync()
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes (Execute UPDATE statement)
-    
+    db -> db++: Check database save status
+        db--
     alt Database Save Failure
         db-->>ctx: Throw DbUpdateException
         ctx-->>repo: Throw DbUpdateException

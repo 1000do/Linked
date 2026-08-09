@@ -52,6 +52,9 @@ act++
 act->view++: Access Chat page
 view->fe_ctrl++: GET /Chat/Index
 
+fe_ctrl -> fe_ctrl++: Check AccessToken cookie
+fe_ctrl--
+
 alt AccessToken cookie is missing
     fe_ctrl -->> login_view: Redirect to LoginPage
     activate login_view
