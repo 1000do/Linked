@@ -78,6 +78,9 @@ view->fe_ctrl++: DELETE /Chat/ClearHistory?chatId={chatId}
     ctx-->>repo--: Return participant
     repo-->>sv--: Return participant
     
+    sv -> sv++: Validate participant existence
+    sv--
+    
     alt participant == null
         sv-->>be_ctrl: Return false
         be_ctrl-->>fe_ctrl: Return statusCode 400 (BadRequest)
@@ -93,6 +96,9 @@ view->fe_ctrl++: DELETE /Chat/ClearHistory?chatId={chatId}
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Save changes (Execute UPDATE statement)
+        
+        db -> db++: Check database save status
+        db--
         
         alt Database Save Failure
             db-->>ctx: Throw DbUpdateException

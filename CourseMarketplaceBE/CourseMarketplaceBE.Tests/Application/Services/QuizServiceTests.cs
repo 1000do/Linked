@@ -964,7 +964,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 {
                     new AttemptAnswerRequest { QuestionId = 101, SelectedOptionId = 1 }, // Correct
                     new AttemptAnswerRequest { QuestionId = 102, SelectedOptionId = 2 }, // Incorrect
-                    new AttemptAnswerRequest { QuestionId = 103, SelectedOptionId = null } // Skipped but sent
+                    new AttemptAnswerRequest { QuestionId = 103, SelectedOptionId = null }, // Skipped but sent
+                    new AttemptAnswerRequest { QuestionId = 104, SelectedOptionId = 999 } // Invalid option (option == null branch)
                 }
             };
             
@@ -988,9 +989,14 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                         QuestionId = 103, 
                         Question = new QuizQuestion { QuizOptions = new List<QuizOption> { new QuizOption { OptionId = 3, IsCorrect = true } } }
                     },
-                    new QuizAttemptQuestion // not in answers
+                    new QuizAttemptQuestion 
                     {
                         QuestionId = 104,
+                        Question = new QuizQuestion { QuizOptions = new List<QuizOption> { new QuizOption { OptionId = 4, IsCorrect = false } } }
+                    },
+                    new QuizAttemptQuestion // not in answers
+                    {
+                        QuestionId = 105,
                         Question = new QuizQuestion { QuizOptions = new List<QuizOption>() }
                     }
                 },
@@ -1001,8 +1007,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             var result = await _sut.SubmitAttemptAsync(req, 2);
 
-            // 1 correct out of 4 total questions => 25%
-            result.Score.Should().Be(25);
+            // 1 correct out of 5 total questions => 20%
+            result.Score.Should().Be(20);
             result.IsPassed.Should().BeFalse();
             result.CorrectCount.Should().Be(1);
         }
@@ -1070,12 +1076,32 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                             QuestionId = 102, 
                             QuizOptions = new List<QuizOption> { new QuizOption { OptionId = 2, IsCorrect = true, OrderIndex = 1 } }
                         }
+                    },
+                    new QuizAttemptQuestion 
+                    { 
+                        OrderIndex = 3,
+                        Question = new QuizQuestion 
+                        { 
+                            QuestionId = 103, 
+                            QuizOptions = new List<QuizOption> { new QuizOption { OptionId = 3, IsCorrect = true, OrderIndex = 1 } }
+                        }
+                    },
+                    new QuizAttemptQuestion 
+                    { 
+                        OrderIndex = 4,
+                        Question = new QuizQuestion 
+                        { 
+                            QuestionId = 104, 
+                            QuizOptions = new List<QuizOption> { new QuizOption { OptionId = 4, IsCorrect = true, OrderIndex = 1 } }
+                        }
                     }
                 },
                 QuizAttemptAnswers = new List<QuizAttemptAnswer>
                 {
                     new QuizAttemptAnswer { QuestionId = 101, SelectedOptionId = 1 }, // Correct
-                    new QuizAttemptAnswer { QuestionId = 102, SelectedOptionId = 3 }  // Wrong/Not found
+                    new QuizAttemptAnswer { QuestionId = 102, SelectedOptionId = 3 }, // Wrong/Not found
+                    new QuizAttemptAnswer { QuestionId = 103, SelectedOptionId = null } // Skipped
+                    // 104 missing (userAnswer == null)
                 }
             };
             _quizRepoMock.GetAttemptByIdAsync(1).Returns(attempt);
@@ -1086,7 +1112,9 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.CorrectCount.Should().Be(1);
             result.Questions[0].IsCorrect.Should().BeTrue();
             result.Questions[1].IsCorrect.Should().BeFalse();
-            result.TotalQuestions.Should().Be(2);
+            result.Questions[2].IsCorrect.Should().BeFalse();
+            result.Questions[3].IsCorrect.Should().BeFalse();
+            result.TotalQuestions.Should().Be(4);
         }
 
         [Fact]

@@ -70,7 +70,8 @@ else Valid actor's authentication and authorization
         
         repo -> ctx++: Query AiModels
         ctx -> db++: Execute query
-        
+        db ->db++: Check database\noperation status
+        db--
         alt Database Query Failure
             db -->> ctx: Return empty list, totalCount = 0
             ctx -->> repo: Return empty list, totalCount = 0
@@ -99,8 +100,6 @@ else Valid actor's authentication and authorization
             view -->> act: Display AI model list
             
             act -> view: Click "Details" icon button on a model entry
-            view -> view++: Populate model details dialog
-            view--
             view -->> act--: Display model details in a popup
         end
 end

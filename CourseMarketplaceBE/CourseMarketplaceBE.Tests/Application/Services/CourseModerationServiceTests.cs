@@ -233,6 +233,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task ApproveCourseAsync_CourseFound_NullMaterials_NullLessons_UpdatesCourseAndReturnsTrue()
+        {
+            //Arrange 1
+            int courseId = 1;
+            var course = new Course { CourseId = courseId, InstructorId = null };
+            
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(course);
+            _materialRepoMock.GetByCourseIdAsync(courseId).Returns((List<LearningMaterial>)null!);
+            _lessonRepoMock.GetByCourseIdAsync(courseId).Returns((List<Lesson>)null!);
+            _courseRepoMock.SaveChangesAsync().Returns(1);
+
+            //Act
+            var result = await _sut.ApproveCourseAsync(courseId, "feedback");
+
+            //Assert
+            result.Should().BeTrue();
+            course.CourseStatus.Should().Be(CourseStatus.Published.ToValue());
+            course.ModerationFeedback.Should().BeNull();
+        }
+
+        [Fact]
         public async Task ApproveCourseAsync_CourseFound_WithMaterialsNotRemoved_UpdatesLearningStatusToActive()
         {
             //Arrange 1
