@@ -233,6 +233,29 @@ public class CourseQueryService : ICourseQueryService
             response.IsOwner = false;
         }
 
+        if (!response.IsOwner && !response.IsEnrolled && response.Lessons != null)
+        {
+            bool hasAllowedPreview = false;
+            foreach (var lesson in response.Lessons.OrderBy(l => l.LessonId))
+            {
+                if (lesson.LearningMaterials != null)
+                {
+                    foreach (var m in lesson.LearningMaterials.OrderBy(m => m.MaterialId))
+                    {
+                        if (!hasAllowedPreview && m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                            m.MaterialUrl = "PROXY_STREAM";
+                            hasAllowedPreview = true;
+                        }
+                        else
+                        {
+                            m.MaterialUrl = null;
+                        }
+                    }
+                }
+            }
+        }
+
         if (!string.Equals(response.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
             bool isStaffOrAdmin = false;

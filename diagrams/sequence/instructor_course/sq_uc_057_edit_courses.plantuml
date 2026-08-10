@@ -53,11 +53,15 @@ fe_ctrl -> be_ctrl++: PUT /api/courses/{id}
 be_ctrl -> sv++: Call UpdateCourseAsync(courseId, request, instructorId)
 
 sv -> repo++: Call GetByIdAsync(courseId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch course
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return course entity
 repo -->> sv--: Return course entity
+
+
+sv -> sv++: Check condition: Course Not Found
+sv--
 
 alt Course Not Found
     sv -->> be_ctrl: throw Exception
@@ -65,6 +69,8 @@ alt Course Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display course not found message
 else Course Found
+    sv -> sv++: Check condition: Not Course Owner
+    sv--
     alt Not Course Owner
         sv -->> be_ctrl: throw UnauthorizedAccessException
         be_ctrl -->> fe_ctrl: Return statusCode 403
@@ -80,6 +86,8 @@ else Course Found
             fe_ctrl -->> view: Return JSON (success=false)
             view -->> act: Display lockout restriction message
         else Account is active
+            sv -> sv++: Check condition: Archived and Flagged >= 3
+            sv--
             alt Archived and Flagged >= 3
                 sv -->> be_ctrl: throw BadRequestException
                 be_ctrl -->> fe_ctrl: Return statusCode 400
@@ -91,6 +99,8 @@ else Course Found
                 fe_ctrl -->> view: Return JSON (success=false)
                 view -->> act: Display pending review message
             else Can Edit
+                sv -> sv++: Check condition: Has New Thumbnail File
+                sv--
                 opt Has New Thumbnail File
                     sv -> storage_sv++: Call UploadImageAsync(ThumbnailFile)
                     storage_sv -->> sv--: Return thumbnailUrl
@@ -111,9 +121,13 @@ else Course Found
                 repo -->> sv--: Return
                 
                 sv -> repo++: Call SaveChangesAsync()
-                repo -> ctx++: Save changes to database
-                ctx -> db++: Update Course
+                repo -> ctx++: Call SaveChangesAsync()
+                ctx -> db++: Save changes to database
                 
+
+                db -> db++: Check condition: Database Save Failure
+        db--
+
                 alt Database Save Failure
                     db -->> ctx: throw DbUpdateException
                     ctx -->> repo: throw DbUpdateException

@@ -37,12 +37,12 @@ mainframe View Chat History
 
 actor User as act
 participant "ChatIndexPage" as view
+participant "ChatHub" as hub
 participant "LoginPage" as login_view
 participant "ErrorPage" as error_page
 participant "ChatController" as fe_ctrl <<frontend controller>>
 participant "ChatController" as be_ctrl <<backend controller>>
-participant "ChatHub" as hub
-participant ":ChatService" as sv
+participant ":IChatService" as sv
 participant ":IChatRepository" as repo
 participant ":MessageDto" as msg_dto
 participant ":AppDbContext" as ctx
@@ -50,7 +50,7 @@ database Database as db
 
 act++
 act->view++: Click on partner in Chat List
-view->view++: Select chat (chatId)
+view->view++: selectChat(chatId, name, avatar, isOnline)
 view--
 
 view->fe_ctrl++: GET /Chat/GetHistory?roomId={chatId}
@@ -71,82 +71,49 @@ else Valid actor's authentication and authorization
     
     be_ctrl->sv++: Call GetChatHistoryAsync(chatId, accountId)
 
-sv->sv++: Call HasAccessToChatAsync(accountId, chatId)
-sv->repo++: Call IsParticipantAsync(chatId, accountId)
-repo->ctx++: Call IsParticipantAsync(chatId, accountId)
-ctx->db++: Execute SELECT query
+sv->sv++: Call ValidateChatAccessAsync(accountId, chatId)
+sv--
 
-db-->>ctx--: Return isParticipant
-ctx-->>repo--: Return isParticipant
-repo-->>sv--: Return isParticipant
-sv-->>sv--: Return hasAccess
-
-alt hasAccess == false
-    sv-->>be_ctrl: throw UnauthorizedAccessException
+alt Unauthorized Access
+    sv-->>be_ctrl: Throw UnauthorizedAccessException
     be_ctrl-->>fe_ctrl: Return statusCode 403 (Forbidden)
-    fe_ctrl-->>view: Return Forbidden
-    view-->>act: Display unauthorized error message
-else hasAccess == true
+    fe_ctrl-->>view: Return statusCode 403 (Forbidden)
+    view-->>act: Display permission error message
+else Valid chat access permission
     sv->sv++: Call MarkChatAsReadAsync(chatId, accountId)
+    sv--
     
-    sv->repo++: Call MarkAsReadAsync(chatId, accountId)
-    repo->ctx++: Call MarkAsReadAsync(chatId, accountId)
-    ctx-->>repo--: Return success
-    repo-->>sv--: Return success
+    sv->repo++: Call GetParticipantAsync(chatId, accountId)
+    repo-->>sv--: Return ChatParticipant
     
-    sv->repo++: Call SaveChangesAsync()
-    repo->ctx++: Call SaveChangesAsync()
-    ctx->db++: Save changes (Execute UPDATE statement)
+    sv->repo++: Call GetMessagesByChatIdAsync(chatId)
+    repo->ctx++: Call GetMessagesByChatIdAsync(chatId)
+    ctx->db++: Execute SELECT query
+    db-->>ctx--: Return messages list
+    ctx-->>repo--: Return messages list
+    repo-->>sv--: Return messages list
     
-    alt Database Save Failure
-        db-->>ctx: Throw DbUpdateException
-        ctx-->>repo: Throw DbUpdateException
-        repo-->>sv: Throw DbUpdateException
-        sv-->>be_ctrl: Throw DbUpdateException
-        be_ctrl-->>fe_ctrl: Return statusCode 500 (InternalServerError)
-        fe_ctrl-->>view: Return JSON error
-        view-->>act: Display database error message
-    else Database Save Success
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return result
-        repo-->>sv--: Return result
-        sv-->>sv--: Return success
-        
-        sv->repo++: Call GetParticipantAsync(chatId, accountId)
-        repo->ctx++: Call GetParticipantAsync(chatId, accountId)
-        ctx->db++: Execute SELECT query
-        db-->>ctx--: Return ChatParticipant
-        ctx-->>repo--: Return ChatParticipant
-        repo-->>sv--: Return ChatParticipant
-        
-        sv->repo++: Call GetMessagesByChatIdAsync(chatId)
-        repo->ctx++: Call GetMessagesByChatIdAsync(chatId)
-        ctx->db++: Execute SELECT query
-        db-->>ctx--: Return Messages list
-        ctx-->>repo--: Return List<Message>
-        repo-->>sv--: Return List<Message>
-        
-        sv->sv++: Filter messages where SentAt > ClearedAt
-        sv--
-        sv->msg_dto++: Call MessageDto()
-        msg_dto-->>sv--: Return MessageDto list
-        
-        sv-->>be_ctrl--: Return List<MessageDto>
-        be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok) with message list
-        fe_ctrl-->>view--: Return JSON message list
-        
-        view->view++: renderChatHistory(messages)
+    sv->sv++: Call FilterMessagesByClearedAt(messages, clearedAt)
+    sv--
+    
+    sv->msg_dto++: Call MessageDto()
+    msg_dto-->>sv--: Return MessageDto list
+    
+    sv-->>be_ctrl--: Return MessageDto list
+    be_ctrl-->>fe_ctrl--: Return statusCode 200 (Ok)
+    fe_ctrl-->>view--: Return JSON messages
+    
+    loop for each message m
+        view->view++: appendMessage(m)
         view--
-        view->view++: scrollToBottom()
-        view--
-        
-        view->hub++: Invoke MarkAsRead(chatId) via SignalR
-        hub->hub++: Broadcast ReadReceipt to Group ("Chat_{chatId}")
-        hub--
-        hub-->>view--: Broadcast read status update
-        
-        view-->>act--: Display chat messages and history
     end
+    view->view++: scrollToBottom()
+    view--
+    
+    view->hub++: Invoke MarkAsRead(chatId) via SignalR
+    hub-->>view--: Broadcast read receipt via SignalR
+    
+    view-->>act--: Display chat messages in panel
 end
 end
 

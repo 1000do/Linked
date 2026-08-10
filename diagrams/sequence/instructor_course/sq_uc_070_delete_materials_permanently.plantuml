@@ -51,11 +51,15 @@ fe_ctrl -> be_ctrl++: DELETE /api/lessons/materials/{materialId}/permanent
 be_ctrl -> sv++: Call PermanentDeleteMaterialAsync(materialId, instructorId)
 
 sv -> repo++: Call GetByIdAsync(materialId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch material
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return material entity
 repo -->> sv--: Return material entity
+
+
+sv -> sv++: Check condition: Material Not Found
+sv--
 
 alt Material Not Found
     sv -->> be_ctrl: throw Exception
@@ -86,9 +90,13 @@ else Material Found
         repo -->> sv--: Return
         
         sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Delete Material Record
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
+
+        db -> db++: Check condition: Database Save Failure
+        db--
+
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

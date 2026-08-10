@@ -51,8 +51,8 @@ fe_ctrl -> be_ctrl++: GET /api/reviews/course/{courseId}
 be_ctrl -> sv++: Call GetCourseReviewsAsync(courseId, page, pageSize, starFilter)
 
 sv -> repo++: Call GetCourseReviewsWithDetailsAsync(courseId, page, pageSize, starFilter)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch reviews
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return review entities and totalCount
 repo -->> sv--: Return (reviews, totalCount)

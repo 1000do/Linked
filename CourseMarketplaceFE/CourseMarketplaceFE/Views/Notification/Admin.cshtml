@@ -441,7 +441,7 @@
                 const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
-                console.log("Decoded token: " + jsonPayload);
+                // console.log("Decoded token: " + jsonPayload);
                 return JSON.parse(jsonPayload);
             } catch (e) {
                 console.error("Failed to decode token", e);
@@ -479,16 +479,16 @@
             const decoded = decodeToken(TOKEN);
             const currentUserId = decoded ? parseInt(decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || decoded["nameid"]) : null;
             const currentUserRole = decoded ? (decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || decoded["role"]) : null;
-            console.log("Current User ID: " + currentUserId);
-            console.log("Current User Role: " + currentUserRole);
-            console.log("Notification Receiver ID: " + noti.receiverId);
-            console.log("Notification Receiver Role: " + noti.receiverRole);
-            console.log("Notification Sender ID: " + noti.senderId);
-            console.log("Notification Sender Role: " + noti.senderRole);
-            console.log("Notification Is Read: " + noti.isRead);
+            // console.log("Current User ID: " + currentUserId);
+            // console.log("Current User Role: " + currentUserRole);
+            // console.log("Notification Receiver ID: " + noti.receiverId);
+            // console.log("Notification Receiver Role: " + noti.receiverRole);
+            // console.log("Notification Sender ID: " + noti.senderId);
+            // console.log("Notification Sender Role: " + noti.senderRole);
+            // console.log("Notification Is Read: " + noti.isRead);
 
             // Mark as read if the notification is addressed to the current user
-            if (currentUserId && noti.receiverId === currentUserId && !noti.isRead) {
+            if (currentUserId && (!noti.receiverId || noti.receiverId == currentUserId) && !noti.isRead) {
                 
                 try {
                     const res = await fetch(`${API_URL}/MarkAsRead/${id}`, {

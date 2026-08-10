@@ -57,11 +57,14 @@ fe_ctrl -> be_ctrl++: POST /api/admin-moderation/courses/approve/{id}
 be_ctrl -> sv++: Call ApproveCourseAsync(id, feedback)
 
 sv -> repo++: Call GetByIdAsync(id)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch course
+repo -> ctx++: Query course from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return course entity
 repo -->> sv--: Return course entity
+
+sv -> sv++: Validate course existence
+sv--
 
 alt Course Not Found
     sv -->> be_ctrl: Return false
@@ -73,6 +76,10 @@ else Course Found
     sv--
     
     sv -> material_repo++: Call GetByCourseIdAsync(id)
+    material_repo -> ctx++: Query materials from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return query results
+    ctx -->> material_repo--: Return materials
     material_repo -->> sv--: Return materials
     
     sv -> sv++: Set all active materials LearningStatus = "active"
@@ -82,6 +89,10 @@ else Course Found
     embed_sv -->> sv--: Return
     
     sv -> lesson_repo++: Call GetByCourseIdAsync(id)
+    lesson_repo -> ctx++: Query lessons from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return query results
+    ctx -->> lesson_repo--: Return lessons
     lesson_repo -->> sv--: Return lessons
     
     sv -> sv++: Set all active lessons LessonStatus = "active"
@@ -101,7 +112,14 @@ else Course Found
     notif_sv -->> sv--: Return
     
     sv -> enroll_repo++: Call GetEnrolledUserIdsAsync(id)
+    enroll_repo -> ctx++: Query enrolled users from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return query results
+    ctx -->> enroll_repo--: Return enrolledUserIds
     enroll_repo -->> sv--: Return enrolledUserIds
+    
+    sv -> sv++: Check if there are enrolled users
+    sv--
     
     opt Has Enrolled Users
         sv -> notif_sv++: Call SendBulkNotificationsAsync(studentNotifications)

@@ -36,6 +36,8 @@ mainframe Delete Quiz
 
 actor Instructor as act
 participant "QuizListPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "QuizController" as fe_ctrl <<frontend controller>>
 participant "QuizController" as be_ctrl <<backend controller>>
 participant ":QuizService" as sv
@@ -46,39 +48,77 @@ database Database as db
 act ++
 act -> view++: Click Delete Quiz
 view -> fe_ctrl++: POST /Quiz/SoftDelete/{id}
-fe_ctrl -> be_ctrl++: DELETE /api/quizzes/{id}
 
-be_ctrl -> sv++: Call SoftDeleteQuizAsync(id, instructorId)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-sv -> sv++: Validate Ownership and Delete Conditions
-sv--
-
-alt Validation Failed
-    sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
-    be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
-    fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display validation error message
-else Can Delete
-    sv -> repo++: Call SoftDeleteAsync(id)
-    repo -> ctx++: Update IsRemoved = true
-    ctx -> db++: Update Quiz Record
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: DELETE /api/quizzes/{id}
     
-    alt Database Save Failure
-        db -->> ctx: throw DbUpdateException
-        ctx -->> repo: throw DbUpdateException
-        repo -->> sv: throw DbUpdateException
-        sv -->> be_ctrl: throw DbUpdateException
-        be_ctrl -->> fe_ctrl: Return statusCode 500
+    be_ctrl -> sv++: Call SoftDeleteQuizAsync(id, instructorId)
+    
+    sv -> repo++: Call GetByIdAsync(id)
+    repo -> ctx++: Query quiz from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return quiz data
+    ctx -->> repo--: Return quiz entity
+    repo -->> sv--: Return quiz entity
+    
+    sv -> repo++: Call HasActiveAttemptsAsync(id)
+    repo -> ctx++: Query active attempts from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return boolean flag
+    ctx -->> repo--: Return active attempts status
+    repo -->> sv--: Return active attempts status
+    
+    sv -> repo++: Call IsQuizInEnrolledCourseAsync(id)
+    repo -> ctx++: Query course enrollment status from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return boolean flag
+    ctx -->> repo--: Return enrollment status
+    repo -->> sv--: Return enrollment status
+    
+    sv -> sv++: Validate Ownership, Active Attempts & Enrollment
+    sv--
+    
+    alt Validation Failed
+        sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display server error message
-    else Database Save Success
-        db -->> ctx--: Return returnCode
-        ctx -->> repo--: Return numberOfRowsAffected
-        repo -->> sv--: Return
+        view -->> act: Display validation error message
+    else Can Delete
+        sv -> repo++: Call SoftDeleteAsync(id)
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
-        sv -->> be_ctrl--: Return success
-        be_ctrl -->> fe_ctrl--: Return statusCode 200
-        fe_ctrl -->> view--: Return JSON (success=true)
-        view -->> act--: Display quiz deleted successfully
+        db -> db++: Check database constraints
+        db--
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return result
+            
+            sv -->> be_ctrl--: Return result
+            be_ctrl -->> fe_ctrl--: Return statusCode 200
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display quiz deleted successfully
+        end
     end
 end

@@ -372,8 +372,13 @@
                     .withUrl("/notificationHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect()
                     .build();
+
+                document.addEventListener("ReceiveNotificationEvent", function () {
+                    if (typeof loadAdminTopNotifications === 'function') loadAdminTopNotifications();
+                });
 
                 connection.on("ReceiveNotification", function (noti) {
                     // Reload notification unread count for current user
@@ -385,7 +390,7 @@
                     // Show a premium real-time toast alert using FIFO queue if for current user
                     const currentUserId = getAdminCurrentUserId();
                     const notiReceiverId = noti ? (noti.receiverId !== undefined ? noti.receiverId : noti.ReceiverId) : null;
-                    if (noti && noti.title && (currentUserId === 0 || !notiReceiverId || notiReceiverId === currentUserId)) {
+                    if (noti && noti.title && (currentUserId === 0 || !notiReceiverId || notiReceiverId == currentUserId)) {
                         ToastQueue.enqueue(noti, {
                             defaultTargetUrl: '/Notification/Admin',
                             accentColorClass: 'text-emerald-600 hover:text-emerald-700'
@@ -415,6 +420,7 @@
                     .withUrl("/chatHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect()
                     .build();
 
@@ -436,6 +442,7 @@
                     .withUrl("/reportModerationHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect()
                     .build();
                
@@ -451,6 +458,7 @@
                     .withUrl("/reviewModerationHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect()
                     .build();
 
@@ -465,6 +473,7 @@
                     .withUrl("/courseModerationHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect()
                     .build();
 
@@ -479,6 +488,7 @@
                     .withUrl("/instructorApprovalHub", {
                         accessTokenFactory: () => ADMIN_LAYOUT_TOKEN
                     })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect()
                     .build();
                 approvalConnection.on("InstructorApplicationUpdated", function () {

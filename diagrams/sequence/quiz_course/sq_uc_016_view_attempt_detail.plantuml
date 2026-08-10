@@ -51,11 +51,15 @@ fe_ctrl -> be_ctrl++: GET /api/quiz-attempts/detail/{attemptId}
 be_ctrl -> sv++: Call GetAttemptDetailAsync(attemptId, userId)
 
 sv -> repo++: Call GetAttemptByIdAsync(attemptId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch quiz attempt and answers
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return attempt entity
 repo -->> sv--: Return attempt entity
+
+
+sv -> sv++: Check condition: Attempt Not Found
+sv--
 
 alt Attempt Not Found
     sv -->> be_ctrl: throw KeyNotFoundException
@@ -63,6 +67,8 @@ alt Attempt Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display attempt not found message
 else Attempt Found
+    sv -> sv++: Check condition: Not Attempt Owner
+    sv--
     alt Not Attempt Owner
         sv -->> be_ctrl: throw UnauthorizedAccessException
         be_ctrl -->> fe_ctrl: Return statusCode 403

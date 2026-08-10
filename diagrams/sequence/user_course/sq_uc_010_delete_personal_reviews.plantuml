@@ -64,79 +64,60 @@ else Valid actor's authentication and authorization
     fe_ctrl -> be_ctrl++: DELETE /api/review/delete (request)
     be_ctrl -> sv++: Call DeleteReviewAsync(userId, request)
     
-    alt type == "lesson"
-        sv -> repo++: Call GetLessonReviewByIdAsync(reviewId)
-        repo -> ctx++: Execute query
-        ctx -> db++: Fetch review
+
+    sv -> sv++: Check condition: type == "lesson"
+    sv--
+
+    sv -> repo++: Call GetReviewByIdAsync(reviewId, type)
+    note right of repo: Repository resolves internally whether to fetch\nLessonReview or CourseReview based on type
+    repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return query results
+    ctx -->> repo--: Return review entity
+    repo -->> sv--: Return review entity
+    
+
+    sv -> sv++: Check condition: Review == null OR Not Owner
+    sv--
+
+    alt Review == null OR Not Owner
+        sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display error message
+    else Valid Review
+        sv -> repo++: Call HasPendingReportsAsync(reviewId, type)
+        repo -> ctx++: Query data from DbSet
+        ctx -> db++: Execute query
         db -->> ctx--: Return query results
-        ctx -->> repo--: Return lesson review entity
-        repo -->> sv--: Return lesson review entity
+        ctx -->> repo--: Return hasPending flag
+        repo -->> sv--: Return hasPending flag
         
-        alt Review == null OR Not Owner
-            sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
-            be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
+
+        sv -> sv++: Check condition: hasPending == true
+        sv--
+
+        alt hasPending == true
+            sv -->> be_ctrl: throw InvalidOperationException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display error message
-        else Valid Review
-            sv -> repo++: Call HasPendingLessonReviewReportsAsync(reviewId)
-            repo -> ctx++: Execute query
-            ctx -> db++: Check reports
-            db -->> ctx--: Return query results
-            ctx -->> repo--: Return hasPending flag
-            repo -->> sv--: Return hasPending flag
-            
-            alt hasPending == true
-                sv -->> be_ctrl: throw InvalidOperationException
-                be_ctrl -->> fe_ctrl: Return statusCode 400
-                fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display moderation error message
-            else No pending reports
-                sv -> repo++: Call UpdateLessonReview(review)
-                repo -> ctx++: Update entity state (IsRemoved=true)
-                ctx -->> repo--: Return
-                repo -->> sv--: Return
-            end
-        end
-        
-    else type == "course" OR null
-        sv -> repo++: Call GetCourseReviewByIdAsync(reviewId)
-        repo -> ctx++: Execute query
-        ctx -> db++: Fetch review
-        db -->> ctx--: Return query results
-        ctx -->> repo--: Return course review entity
-        repo -->> sv--: Return course review entity
-        
-        alt Review == null OR Not Owner
-            sv -->> be_ctrl: throw InvalidOperationException / UnauthorizedAccessException
-            be_ctrl -->> fe_ctrl: Return statusCode 400 / 403
-            fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display error message
-        else Valid Review
-            sv -> repo++: Call HasPendingCourseReviewReportsAsync(reviewId)
-            repo -> ctx++: Execute query
-            ctx -> db++: Check reports
-            db -->> ctx--: Return query results
-            ctx -->> repo--: Return hasPending flag
-            repo -->> sv--: Return hasPending flag
-            
-            alt hasPending == true
-                sv -->> be_ctrl: throw InvalidOperationException
-                be_ctrl -->> fe_ctrl: Return statusCode 400
-                fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display moderation error message
-            else No pending reports
-                sv -> repo++: Call UpdateCourseReview(review)
-                repo -> ctx++: Update entity state (IsRemoved=true)
-                ctx -->> repo--: Return
-                repo -->> sv--: Return
-            end
+            view -->> act: Display moderation error message
+        else No pending reports
+            sv -> repo++: Call UpdateReview(review)
+            repo -> ctx++: Update entity state (IsRemoved=true)
+            ctx -->> repo--: Return
+            repo -->> sv--: Return
         end
     end
     
     sv -> repo++: Call SaveChangesAsync()
-    repo -> ctx++: Save changes to database
-    ctx -> db++: Update Review
+    repo -> ctx++: Call SaveChangesAsync()
+    ctx -> db++: Save changes to database
     
+
+    db -> db++: Check condition: Database Save Failure
+        db--
+
     alt Database Save Failure
         db -->> ctx: throw DbUpdateException
         ctx -->> repo: throw DbUpdateException

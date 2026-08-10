@@ -1324,6 +1324,7 @@
         if (instructorId) {
             const financeConn = new signalR.HubConnectionBuilder()
                 .withUrl("/financeHub")
+                .configureLogging(signalR.LogLevel.Warning)
                 .withAutomaticReconnect()
                 .build();
 

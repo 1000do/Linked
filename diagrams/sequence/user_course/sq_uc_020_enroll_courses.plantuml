@@ -71,6 +71,10 @@ else Valid actor's authentication and authorization
     be_ctrl -> auth_sv++: Call IsEmailVerifiedAsync(userId)
     auth_sv -->> be_ctrl--: Return IsEmailVerified flag
     
+
+    be_ctrl -> be_ctrl++: Check condition: Email Not Verified
+    be_ctrl--
+
     alt Email Not Verified
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
@@ -79,25 +83,33 @@ else Valid actor's authentication and authorization
         be_ctrl -> sv++: Call EnrollFreeAsync(userId, courseId)
         
         sv -> course_repo++: Call GetByIdAsync(courseId)
-        course_repo -> ctx++: Execute query
-        ctx -> db++: Fetch course
+        course_repo -> ctx++: Query data from DbSet
+        ctx -> db++: Execute query
         db -->> ctx--: Return query results
         ctx -->> course_repo--: Return course entity
         course_repo -->> sv--: Return course entity
         
-        alt Course == null OR CourseStatus != Published OR Price > 0 OR InstructorId == userId
+
+        sv -> sv++: Validate Course Eligibility
+        sv--
+
+        alt Invalid Course (Not Found, Unpublished, Paid, or Owned)
             sv -->> be_ctrl: throw InvalidOperationException
             be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success=false)
             view -->> act: Display enrollment error message
         else Valid Course
             sv -> course_repo++: Call IsEnrolledAsync(userId, courseId)
-            course_repo -> ctx++: Execute query
-            ctx -> db++: Check enrollment
+            course_repo -> ctx++: Query data from DbSet
+            ctx -> db++: Execute query
             db -->> ctx--: Return query results
             ctx -->> course_repo--: Return IsEnrolled flag
             course_repo -->> sv--: Return IsEnrolled flag
             
+
+            sv -> sv++: Check condition: Already Enrolled
+            sv--
+
             alt Already Enrolled
                 sv -->> be_ctrl: throw InvalidOperationException
                 be_ctrl -->> fe_ctrl: Return statusCode 400
@@ -120,15 +132,25 @@ else Valid actor's authentication and authorization
                 repo -->> sv--: Return result
                 
                 sv -> repo++: Call SaveChangesAsync()
-                repo -> ctx++: Save changes to database
-                ctx -> db++: Insert Enrollment
+                repo -> ctx++: Call SaveChangesAsync()
+                ctx -> db++: Save changes to database
                 
+
+                db -> db++: Check condition: Database Save Failure
+        db--
+
                 alt Database Save Failure
-                    db -->> ctx: throw DbUpdateException
-                    ctx -->> repo: throw DbUpdateException
-                    repo -->> sv: throw DbUpdateException
-                    sv -> sv++: Call transaction.RollbackAsync()
-                    sv--
+                    db -->> ctx--: throw DbUpdateException
+                    ctx -->> repo--: throw DbUpdateException
+                    repo -->> sv--: throw DbUpdateException
+                    
+                    sv -> repo++: Call transaction.RollbackAsync()
+                    repo -> ctx++: Rollback transaction
+                    ctx -> db++: Rollback db transaction
+                    db -->> ctx--: Return result
+                    ctx -->> repo--: Return
+                    repo -->> sv--: Return
+                    
                     sv -->> be_ctrl: throw DbUpdateException
                     be_ctrl -->> fe_ctrl: Return statusCode 500
                     fe_ctrl -->> view: Return JSON (success=false)
@@ -138,13 +160,19 @@ else Valid actor's authentication and authorization
                     ctx -->> repo--: Return numberOfRowsAffected
                     repo -->> sv--: Return numberOfRowsAffected
                     
-                    sv -> sv++: Call transaction.CommitAsync()
-                    sv--
+                    sv -> repo++: Call transaction.CommitAsync()
+                    repo -> ctx++: Commit transaction
+                    ctx -> db++: Commit db transaction
+                    db -->> ctx--: Return result
+                    ctx -->> repo--: Return
+                    repo -->> sv--: Return
                     
+                    sv -> sv++: Check if Instructor exists to send notification
+                    sv--
                     opt course.InstructorId HasValue
                         sv -> user_repo++: Call GetUserByIdAsync(userId)
-                        user_repo -> ctx++: Execute query
-                        ctx -> db++: Fetch user
+                        user_repo -> ctx++: Query data from DbSet
+                        ctx -> db++: Execute query
                         db -->> ctx--: Return query results
                         ctx -->> user_repo--: Return user entity
                         user_repo -->> sv--: Return student entity

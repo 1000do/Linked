@@ -36,6 +36,8 @@ mainframe Assign Quiz to Course
 
 actor Instructor as act
 participant "CourseEditorPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "CourseQuizController" as fe_ctrl <<frontend controller>>
 participant "CourseQuizController" as be_ctrl <<backend controller>>
 participant ":QuizService" as sv
@@ -50,48 +52,90 @@ act ++
 act -> view++: Select a quiz to add
 view -> fe_ctrl++: POST /CourseQuiz/Add
 
-fe_ctrl -> be_ctrl++: POST /api/courses/{courseId}/quizzes
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-be_ctrl -> sv++: Call AddQuizToCourseAsync(request, instructorId)
-
-sv -> course_repo++: Call GetByIdAsync(request.CourseId)
-course_repo -->> sv--: Return course entity
-
-sv -> sv++: Validate Course Ownership
-sv--
-
-alt Course Not Found Or Unauthorized
-    sv -->> be_ctrl: throw UnauthorizedAccessException
-    be_ctrl -->> fe_ctrl: Return statusCode 403
-    fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display unauthorized error message
-else Authorized
-    sv -> ett++: Call CourseQuiz()
-    ett -->> sv--: Return CourseQuiz entity
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: POST /api/courses/{courseId}/quizzes
     
-    sv -> repo++: Call AddCourseQuizAsync(courseQuiz)
-    repo -> ctx++: Save changes to database
-    ctx -> db++: Insert CourseQuiz
+    be_ctrl -> sv++: Call AddQuizToCourseAsync(request, instructorId)
     
-    alt Database Save Failure
-        db -->> ctx: throw DbUpdateException
-        ctx -->> repo: throw DbUpdateException
-        repo -->> sv: throw DbUpdateException
-        sv -->> be_ctrl: throw DbUpdateException
-        be_ctrl -->> fe_ctrl: Return statusCode 500
+    sv -> course_repo++: Call GetByIdAsync(courseId)
+    course_repo -> ctx++: Query course from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return course data
+    ctx -->> course_repo--: Return course entity
+    course_repo -->> sv--: Return course entity
+
+    sv -> repo++: Call GetByIdAsync(quizId)
+    repo -> ctx++: Query quiz from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return quiz data
+    ctx -->> repo--: Return quiz entity
+    repo -->> sv--: Return quiz entity
+    
+    sv -> sv++: Validate quiz assignment request
+    sv--
+    
+    alt Course Pending
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display server error message
-    else Database Save Success
-        db -->> ctx--: Return returnCode
-        ctx -->> repo--: Return numberOfRowsAffected
-        repo -->> sv--: Return result
+        view -->> act: Display course under review error message
+    else Quiz Not Found
+        sv -->> be_ctrl: throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display quiz not found error message
+    else Unauthorized Access
+        sv -->> be_ctrl: throw UnauthorizedAccessException
+        be_ctrl -->> fe_ctrl: Return statusCode 403
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display unauthorized error message
+    else Quiz Already Assigned
+        sv -->> be_ctrl: throw InvalidOperationException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
+        fe_ctrl -->> view: Return JSON (success=false)
+        view -->> act: Display quiz already added error message
+    else Valid quiz assignment request
+        sv -> ett++: Call CourseQuiz()
+        ett -->> sv--: Return CourseQuiz entity
         
-        sv -> res++: Call CourseQuizResponse()
-        res -->> sv--: Return CourseQuizResponse object
+        sv -> repo++: Call AddToCourseAsync(courseQuiz)
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
-        sv -->> be_ctrl--: Return CourseQuizResponse object
-        be_ctrl -->> fe_ctrl--: Return statusCode 200
-        fe_ctrl -->> view--: Return JSON (success=true)
-        view -->> act--: Display quiz assigned successfully
+        db -> db++: Check database constraints
+        db--
+        
+        alt Database Save Failure
+            db -->> ctx: throw DbUpdateException
+            ctx -->> repo: throw DbUpdateException
+            repo -->> sv: throw DbUpdateException
+            sv -->> be_ctrl: throw DbUpdateException
+            be_ctrl -->> fe_ctrl: Return statusCode 500
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display server error message
+        else Database Save Success
+            db -->> ctx--: Return returnCode
+            ctx -->> repo--: Return numberOfRowsAffected
+            repo -->> sv--: Return createdCourseQuiz
+            
+            sv -> res++: Call CourseQuizResponse()
+            res -->> sv--: Return CourseQuizResponse object
+            
+            sv -->> be_ctrl--: Return CourseQuizResponse object
+            be_ctrl -->> fe_ctrl--: Return statusCode 201
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display quiz assigned successfully
+        end
     end
 end

@@ -56,11 +56,15 @@ sv -> sv++: Sanitize HTML Description
 sv--
 
 sv -> lesson_repo++: Call GetByIdAsync(lessonId)
-lesson_repo -> ctx++: Execute query
-ctx -> db++: Fetch lesson with materials and course
+lesson_repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> lesson_repo--: Return lesson entity
 lesson_repo -->> sv--: Return lesson entity
+
+
+sv -> sv++: Check condition: Lesson Not Found OR Not Owner
+sv--
 
 alt Lesson Not Found OR Not Owner
     sv -->> be_ctrl: throw Exception
@@ -77,6 +81,8 @@ else Lesson Found
         fe_ctrl -->> view: Return JSON (success=false)
         view -->> act: Display validation error message
     else Valid
+        sv -> sv++: Check condition: Has MaterialFile
+        sv--
         opt Has MaterialFile
             sv -> storage_sv++: Call UploadVideoAsync(MaterialFile)
             storage_sv -->> sv--: Return uploadedUrl
@@ -89,9 +95,13 @@ else Lesson Found
         sv--
         
         sv -> lesson_repo++: Call SaveChangesAsync()
-        lesson_repo -> ctx++: Save changes to database
-        ctx -> db++: Insert Material
+        lesson_repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
+
+        db -> db++: Check condition: Database Save Failure
+        db--
+
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> lesson_repo: throw DbUpdateException

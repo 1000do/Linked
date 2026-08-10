@@ -721,7 +721,7 @@
             const reportData = event.currentTarget.closest('tr').getAttribute('data-report');
             if (reportData) {
                 const r = JSON.parse(reportData);
-                console.log("Report data:",r);
+                // console.log("Report data:",r);
                 moderateCourseReport(r.reportId, r.courseTitle, r.courseId);
             }
         } catch (e) { console.error('Failed to parse report data', e); }
@@ -733,7 +733,7 @@
             const reportData = event.currentTarget.closest('tr').getAttribute('data-report');
             if (reportData) {
                 const r = JSON.parse(reportData);
-                console.log("Report data:",r);
+                // console.log("Report data:",r);
                 moderateReviewReport(r.reportId, r.reviewComment || 'Review', r.reviewType);
             }
         } catch (e) { console.error('Failed to parse report data', e); }
@@ -745,7 +745,7 @@
             const reportData = event.currentTarget.closest('tr').getAttribute('data-report');
             if (reportData) {
                 const r = JSON.parse(reportData);
-                console.log("Report data:",r);
+                // console.log("Report data:",r);
                 showResolutionDetails(r.resolverEmail, r.resolutionNote, r.resolvedAt);
             }
         } catch (e) { console.error('Failed to parse report data', e); }
