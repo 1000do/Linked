@@ -59,12 +59,16 @@ alt Valid actor's authentication and authorization
     be_ctrl -> sv++: Call SubmitReviewAsync(userId, request, requireCompletion)
     
     sv -> lockout_repo++: Call GetActiveLockoutAsync(userId, "review")
-    lockout_repo -> ctx++: Execute query
-    ctx -> db++: Fetch lockout
+    lockout_repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> lockout_repo--: Return lockout entity
     lockout_repo -->> sv--: Return lockout entity
     
+
+    sv -> sv++: Check condition: Active Lockout Exists
+    sv--
+
     alt Active Lockout Exists
         sv -->> be_ctrl: throw BadRequestException
         be_ctrl -->> fe_ctrl: Return statusCode 400
@@ -72,16 +76,20 @@ alt Valid actor's authentication and authorization
         view -->> act: Display restriction message
     else No Active Lockout
         sv -> course_repo++: Call IsOwnerAsync(userId, courseId)
-        course_repo -> ctx++: Execute query
-        ctx -> db++: Check owner
+        course_repo -> ctx++: Query data from DbSet
+        ctx -> db++: Execute query
         db -->> ctx--: Return query results
         ctx -->> course_repo--: Return IsOwner flag
         course_repo -->> sv--: Return IsOwner flag
         
+
+        sv -> sv++: Check condition: Is Owner
+        sv--
+
         alt Is Owner
             sv -> enroll_repo++: Call GetEnrollmentWithProgressAsync(userId, courseId)
-            enroll_repo -> ctx++: Execute query
-            ctx -> db++: Fetch enrollment
+            enroll_repo -> ctx++: Query data from DbSet
+            ctx -> db++: Execute query
             db -->> ctx--: Return query results
             ctx -->> enroll_repo--: Return enrollment entity
             enroll_repo -->> sv--: Return enrollment entity
@@ -89,18 +97,23 @@ alt Valid actor's authentication and authorization
 
         else Not Owner
             sv -> enroll_repo++: Call GetEnrollmentWithProgressAsync(userId, courseId)
-            enroll_repo -> ctx++: Execute query
-            ctx -> db++: Fetch enrollment
+            enroll_repo -> ctx++: Query data from DbSet
+            ctx -> db++: Execute query
             db -->> ctx--: Return query results
             ctx -->> enroll_repo--: Return enrollment entity
             enroll_repo -->> sv--: Return enrollment entity
             
+
+            sv -> sv++: Check Validate Enrollment Status
+
             alt Enrollment == null OR (requireCompletion == true AND Not Completed)
                 sv -->> be_ctrl: throw InvalidOperationException
                 be_ctrl -->> fe_ctrl: Return statusCode 400
                 fe_ctrl -->> view: Return JSON (success=false)
                 view -->> act: Display requirement error message
             else Enrollment Valid
+                sv -> sv++: Check condition: requireCompletion == false
+                sv--
                 opt requireCompletion == false
                     sv -> enroll_repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
                     enroll_repo -->> sv--: Return learnedCount
@@ -121,9 +134,13 @@ alt Valid actor's authentication and authorization
         end
         
         sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Insert Review
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
+
+        db -> db++: Check condition: Database Save Failure
+        db--
+
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

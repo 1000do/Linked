@@ -60,6 +60,10 @@ db -->> ctx--: Return lesson data
 ctx -->> lesson_repo--: Return lesson entity
 lesson_repo -->> sv--: Return lesson entity
 
+
+sv -> sv++: Check condition: Lesson Not Found
+sv--
+
 alt Lesson Not Found
     sv -->> be_ctrl: throw KeyNotFoundException
     be_ctrl -->> fe_ctrl: Return statusCode 404

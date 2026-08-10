@@ -51,11 +51,15 @@ fe_ctrl -> be_ctrl++: POST /api/quiz-attempts/submit
 be_ctrl -> sv++: Call SubmitAttemptAsync(request, userId)
 
 sv -> repo++: Call GetAttemptByIdAsync(request.AttemptId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch quiz attempt
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return attempt entity
 repo -->> sv--: Return attempt entity
+
+
+sv -> sv++: Check condition: Attempt Not Found
+sv--
 
 alt Attempt Not Found
     sv -->> be_ctrl: throw KeyNotFoundException
@@ -63,33 +67,40 @@ alt Attempt Not Found
     fe_ctrl -->> view: Return JSON (success=false)
     view -->> act: Display attempt not found message
 else Attempt Found
+    sv -> sv++: Check condition: Not Attempt Owner
+    sv--
     alt Not Attempt Owner
         sv -->> be_ctrl: throw UnauthorizedAccessException
         be_ctrl -->> fe_ctrl: Return statusCode 403
         fe_ctrl -->> view: Return JSON (success=false)
         view -->> act: Display unauthorized message
     else Is Attempt Owner
+        sv -> sv++: Check condition: Already Submitted
+        sv--
         alt Already Submitted
             sv -->> be_ctrl: throw InvalidOperationException
             be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success=false)
             view -->> act: Display already submitted message
         else Not Yet Submitted
-            sv -> sv++: Fetch quiz details for scoring
-            sv--
-            sv -> sv++: Loop through submitted answers and score them
-            sv--
+            sv -> repo++: Call GetQuizByIdAsync(attempt.QuizId)
+            repo -> ctx++: Query data from DbSet
+            ctx -> db++: Execute query
+            db -->> ctx--: Return query results
+            ctx -->> repo--: Return quiz entity
+            repo -->> sv--: Return quiz entity
             
-            sv -> sv++: Calculate total score and isPassed
-            sv--
-            
-            sv -> sv++: Update attempt.SubmittedAt, Score, IsPassed
+            sv -> sv++: Score submitted answers and update attempt result
             sv--
             
             sv -> repo++: Call SaveAttemptAsync(attempt)
-            repo -> ctx++: Save changes to database
-            ctx -> db++: Update QuizAttempt
+            repo -> ctx++: Call SaveChangesAsync()
+            ctx -> db++: Save changes to database
             
+
+            db -> db++: Check condition: Database Save Failure
+        db--
+
             alt Database Save Failure
                 db -->> ctx: throw DbUpdateException
                 ctx -->> repo: throw DbUpdateException

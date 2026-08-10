@@ -52,11 +52,15 @@ fe_ctrl -> be_ctrl++: DELETE /api/lessons/{id}
 be_ctrl -> sv++: Call DeleteLessonAsync(id, instructorId)
 
 sv -> repo++: Call GetByIdAsync(id)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch lesson
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return lesson entity
 repo -->> sv--: Return lesson entity
+
+
+sv -> sv++: Check condition: Lesson Not Found
+sv--
 
 alt Lesson Not Found
     sv -->> be_ctrl: throw Exception
@@ -81,14 +85,18 @@ else Lesson Found
         ctx -->> repo--: Return
         repo -->> sv--: Return
         
+
+        sv -> sv++: Check condition: Course is Published
+        sv--
+
         opt Course is Published
             sv -> sv++: Set course.CourseStatus = "draft"
             sv--
         end
         
         sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Update Lesson (Soft Delete)
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         db -->> ctx--: Return returnCode
         ctx -->> repo--: Return numberOfRowsAffected
         repo -->> sv--: Return numberOfRowsAffected
@@ -100,10 +108,10 @@ else Lesson Found
             sv -> sv++: Call Cache Invalidation Logic
             sv--
             
-            sv -->> be_ctrl--: Return success
-            be_ctrl -->> fe_ctrl--: Return statusCode 200
-            fe_ctrl -->> view--: Return JSON (success=true)
-            view -->> act--: Display lesson removed successfully
+            sv -->> be_ctrl: Return success
+            be_ctrl -->> fe_ctrl: Return statusCode 200
+            fe_ctrl -->> view: Return JSON (success=true)
+            view -->> act: Display lesson removed successfully
         else numberOfRowsAffected = 0
             sv -->> be_ctrl--: throw InvalidOperationException
             be_ctrl -->> fe_ctrl--: Return statusCode 400

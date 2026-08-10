@@ -52,8 +52,8 @@ fe_ctrl -> be_ctrl++: GET /api/admin-moderation/courses/pending?keyword={keyword
 be_ctrl -> sv++: Call GetPendingCoursesAsync(filter)
 
 sv -> repo++: Call GetPendingCoursesModerationAsync(filter)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch pending courses
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return entities and totalCount
 

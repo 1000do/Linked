@@ -68,8 +68,8 @@ else Valid actor's authentication and authorization
     be_ctrl -> sv++: Call GetMyEnrolledCoursesAsync(userId)
     
     sv -> repo++: Call GetMyEnrolledCoursesAsync(userId)
-    repo -> ctx++: Execute query
-    ctx -> db++: Fetch enrolled courses
+    repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> repo--: Return enrollments
     repo -->> sv--: Return enrollments

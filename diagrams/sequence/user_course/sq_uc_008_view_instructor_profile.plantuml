@@ -51,11 +51,15 @@ fe_ctrl -> be_ctrl++: GET /api/instructor/profile/{id}
 be_ctrl -> sv++: Call GetPublicProfileAsync(id)
 
 sv -> repo++: Call GetByIdWithNavigationAsync(id)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch instructor data
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return instructor entity
 repo -->> sv--: Return instructor entity
+
+
+sv -> sv++: Check Approved Status
+sv--
 
 alt Instructor == null OR ApprovalStatus != Approved
     sv -->> be_ctrl: Return null
@@ -64,15 +68,15 @@ alt Instructor == null OR ApprovalStatus != Approved
     view -->> act: Display NotFound message
 else Instructor Found and Approved
     sv -> repo++: Call GetStatsAsync(id)
-    repo -> ctx++: Execute query
-    ctx -> db++: Fetch stats
+    repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> repo--: Return stats
     repo -->> sv--: Return instructor stats
     
     sv -> repo++: Call CountActiveCoursesAsync(id)
-    repo -> ctx++: Execute query
-    ctx -> db++: Count active courses
+    repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> repo--: Return count
     repo -->> sv--: Return active courses count
