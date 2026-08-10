@@ -98,7 +98,7 @@
                 <p id="modal-content" class="text-slate-600 leading-relaxed whitespace-pre-wrap break-words"></p>
             </div>
             <div id="modal-link" class="hidden mt-4">
-                <a id="modal-link-btn" href="#" 
+                <a id="modal-link-btn" href="#" target="_blank" rel="noopener noreferrer" 
                    class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-sm">
                      <span class="material-symbols-outlined text-lg">open_in_new</span>
                      <span id="modal-link-text">View Details</span>
@@ -214,13 +214,7 @@
                                 <p class="text-sm text-slate-600 mt-1 line-clamp-2 break-words">
                                     ${noti.content}
                                 </p>
-                                ${noti.linkAction ? `
-                                    <a href="${noti.linkAction}" 
-                                       class="inline-flex items-center gap-1.5 mt-2 px-4 py-1.5 bg-primary/10 text-primary text-xs font-bold rounded-lg hover:bg-primary/20 transition-colors"
-                                       onclick="event.stopPropagation()">
-                                        <span class="material-symbols-outlined text-[14px]">open_in_new</span>
-                                        View Details
-                                    </a>` : ''}
+
 
                                 <div class="flex items-center justify-between mt-4">
                                     <div class="flex items-center gap-2">
@@ -325,6 +319,7 @@
                     const localNoti = allNotifications.find(n => n.notificationId === id);
                     if(localNoti) localNoti.isRead = true;
                     applyNotificationFilters();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
                 }
             } catch (err) { console.error(err); }
         }
@@ -361,6 +356,7 @@
                     });
                     allNotifications = allNotifications.filter(n => n.notificationId !== id);
                     applyNotificationFilters();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
                 }
             } catch (err) { console.error(err); }
         }
@@ -389,6 +385,7 @@
                 if (response.ok) {
                     allNotifications.forEach(n => n.isRead = true);
                     applyNotificationFilters();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
 
                     Swal.fire({
                         title: 'Marked All as Read',
@@ -406,7 +403,7 @@
         // Attach filter listeners
         document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener("ReceiveNotificationEvent", () => {
-                console.log("Real-time notification update received, reloading...");
+                // console.log("Real-time notification update received, reloading...");
                 loadNotifications();
             });
 

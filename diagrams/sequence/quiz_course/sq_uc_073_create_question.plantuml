@@ -36,6 +36,8 @@ mainframe Create Question
 
 actor Instructor as act
 participant "QuestionBankPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "QuestionBankController" as fe_ctrl <<frontend controller>>
 participant "QuestionBankController" as be_ctrl <<backend controller>>
 participant ":QuestionBankService" as sv
@@ -50,58 +52,78 @@ act ++
 act -> view++: Submit add question form
 view -> fe_ctrl++: POST /QuestionBank/CreateQuestion?courseId={courseId}
 
-fe_ctrl -> be_ctrl++: POST /api/QuestionBank/courses/{courseId}/questions
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-be_ctrl -> sv++: Call AddQuestionAsync(courseId, request, instructorId)
-
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: POST /api/QuestionBank/courses/{courseId}/questions
+    
+    be_ctrl -> sv++: Call AddQuestionAsync(courseId, request, instructorId)
+    
     sv -> sv++: Validate Quiz Options
     sv--
-
-alt Invalid Options
-    sv -->> be_ctrl: throw ArgumentException
-    be_ctrl -->> fe_ctrl: Return statusCode 400
-    fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display validation error message
-else Valid Options
-    sv -> course_repo++: Call GetByIdAsync(courseId)
-    course_repo -->> sv--: Return course entity
-
-    sv -> sv++: Validate Course Ownership
-    sv--
     
-    alt Course Not Found Or Unauthorized
-        sv -->> be_ctrl: throw UnauthorizedAccessException
-        be_ctrl -->> fe_ctrl: Return statusCode 403
+    alt Invalid Options
+        sv -->> be_ctrl: throw ArgumentException
+        be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display unauthorized error message
-    else Authorized
-        sv -> ett++: Call QuizQuestion()
-        ett -->> sv--: Return QuizQuestion entity
+        view -->> act: Display validation error message
+    else Valid Options
+        sv -> course_repo++: Call GetByIdAsync(courseId)
+        course_repo -> ctx++: Query course from DbSet
+        ctx -> db++: Execute query
+        db -->> ctx--: Return course data
+        ctx -->> course_repo--: Return course entity
+        course_repo -->> sv--: Return course entity
+    
+        sv -> sv++: Validate Course Ownership
+        sv--
         
-        sv -> repo++: Call AddQuestionAsync(question)
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Insert QuizQuestion and QuizOptions
-        
-        alt Database Save Failure
-            db -->> ctx: throw DbUpdateException
-            ctx -->> repo: throw DbUpdateException
-            repo -->> sv: throw DbUpdateException
-            sv -->> be_ctrl: throw DbUpdateException
-            be_ctrl -->> fe_ctrl: Return statusCode 500
+        alt Course Not Found Or Unauthorized
+            sv -->> be_ctrl: throw UnauthorizedAccessException
+            be_ctrl -->> fe_ctrl: Return statusCode 403
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display server error message
-        else Database Save Success
-            db -->> ctx--: Return returnCode
-            ctx -->> repo--: Return numberOfRowsAffected
-            repo -->> sv--: Return createdQuestion
+            view -->> act: Display unauthorized error message
+        else Authorized
+            sv -> ett++: Call QuizQuestion()
+            ett -->> sv--: Return QuizQuestion entity
             
-            sv -> res++: Call QuizQuestionResponse()
-            res -->> sv--: Return QuizQuestionResponse object
+            sv -> repo++: Call AddQuestionAsync(question)
+            repo -> ctx++: Call SaveChangesAsync()
+            ctx -> db++: Save changes to database
             
-            sv -->> be_ctrl--: Return QuizQuestionResponse object
-            be_ctrl -->> fe_ctrl--: Return statusCode 200
-            fe_ctrl -->> view--: Return JSON (success=true)
-            view -->> act--: Display question added successfully
+            db -> db++: Check database constraints
+            db--
+            
+            alt Database Save Failure
+                db -->> ctx: throw DbUpdateException
+                ctx -->> repo: throw DbUpdateException
+                repo -->> sv: throw DbUpdateException
+                sv -->> be_ctrl: throw DbUpdateException
+                be_ctrl -->> fe_ctrl: Return statusCode 500
+                fe_ctrl -->> view: Return JSON (success=false)
+                view -->> act: Display server error message
+            else Database Save Success
+                db -->> ctx--: Return returnCode
+                ctx -->> repo--: Return numberOfRowsAffected
+                repo -->> sv--: Return createdQuestion
+                
+                sv -> res++: Call QuizQuestionResponse()
+                res -->> sv--: Return QuizQuestionResponse object
+                
+                sv -->> be_ctrl--: Return QuizQuestionResponse object
+                be_ctrl -->> fe_ctrl--: Return statusCode 200
+                fe_ctrl -->> view--: Return JSON (success=true)
+                view -->> act--: Display question added successfully
+            end
         end
     end
 end

@@ -944,6 +944,7 @@
                 .withUrl("/adminModerationHub", {
                     accessTokenFactory: () => window.ADMIN_LAYOUT_TOKEN
                 })
+                .configureLogging(signalR.LogLevel.Warning)
                 .withAutomaticReconnect()
                 .build();
 

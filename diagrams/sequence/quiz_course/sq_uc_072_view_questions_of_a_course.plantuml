@@ -42,6 +42,8 @@ participant ":QuestionBankService" as sv
 participant ":QuizQuestionResponse" as res
 participant ":ILessonRepository" as lesson_repo
 participant ":IQuestionBankRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
 
 act ++
 act -> view++: Select a lesson
@@ -52,7 +54,15 @@ fe_ctrl -> be_ctrl++: GET /api/QuestionBank/lessons/{lessonId}/questions
 be_ctrl -> sv++: Call GetQuestionsByLessonAsync(lessonId, instructorId)
 
 sv -> lesson_repo++: Call GetByIdAsync(lessonId)
+lesson_repo -> ctx++: Query lesson from DbSet
+ctx -> db++: Execute query
+db -->> ctx--: Return lesson data
+ctx -->> lesson_repo--: Return lesson entity
 lesson_repo -->> sv--: Return lesson entity
+
+
+sv -> sv++: Check condition: Lesson Not Found
+sv--
 
 alt Lesson Not Found
     sv -->> be_ctrl: throw KeyNotFoundException
@@ -70,6 +80,10 @@ else Lesson Found
         view -->> act: Display unauthorized error message
     else Authorized
         sv -> repo++: Call GetQuestionsByLessonAsync(lessonId)
+        repo -> ctx++: Query questions by lesson from DbSet
+        ctx -> db++: Execute query
+        db -->> ctx--: Return query results
+        ctx -->> repo--: Return List<QuizQuestion>
         repo -->> sv--: Return List<QuizQuestion>
         
         loop For each QuizQuestion in list

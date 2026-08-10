@@ -543,14 +543,17 @@
         @{
             var firstVideo = Model.Lessons
                 .SelectMany(l => l.LearningMaterials)
-                .FirstOrDefault(m => !string.IsNullOrEmpty(m.MaterialUrl) && (m.MaterialMetadata?.FileType?.ToLower() == "video" || m.MaterialUrl.Contains(".mp4")));
+                .FirstOrDefault(m => !string.IsNullOrEmpty(m.MaterialUrl) && (m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true || m.MaterialUrl.Contains(".mp4") || m.MaterialUrl == "PROXY_STREAM"));
         }
         @if (firstVideo != null && !string.IsNullOrEmpty(firstVideo.MaterialUrl))
         {
             <video id="previewVideo" class="w-full h-full" controls controlsList="nodownload">
                 @{
                     var previewUrl = firstVideo.MaterialUrl;
-                    if (!string.IsNullOrEmpty(previewUrl) && previewUrl.Contains("cloudinary.com")) {
+                    if (previewUrl == "PROXY_STREAM") {
+                        previewUrl = $"/Course/StreamMaterial?materialId={firstVideo.MaterialId}";
+                    }
+                    else if (!string.IsNullOrEmpty(previewUrl) && previewUrl.Contains("cloudinary.com")) {
                         previewUrl = previewUrl.Replace("/video/upload/", "/video/upload/f_auto,q_auto/");
                     }
                 }
@@ -570,7 +573,7 @@
 
 <script>
     const localDetailsToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
-    console.log("localDetailsToken",localDetailsToken);
+    // console.log("localDetailsToken",localDetailsToken);
     let allExpanded = false;
     
     function showSwalLikeSuccessPopup(title, text, callback) {
@@ -638,7 +641,7 @@
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
-            console.log("Decoded token: " + jsonPayload);
+            // console.log("Decoded token: " + jsonPayload);
             return JSON.parse(jsonPayload);
         } catch (e) {
             console.error("Failed to decode token", e);
@@ -979,8 +982,8 @@
                 const data = result.data.items;
 
                 list.innerHTML = data.map(r => {
-                    console.log("r.userId: ",r.userId);
-                    console.log("r.UserId : ",r.UserId);
+                    // console.log("r.userId: ",r.userId);
+                    // console.log("r.UserId : ",r.UserId);
                     const isOwn = localCurrentUserId > 0 && (r.userId == localCurrentUserId || r.UserId == localCurrentUserId);
                     if (r.reviewStatus === 'pending' && !isOwn) return '';
                     const createdTime = r.createdAt ? new Date(r.createdAt).getTime() : 0;
