@@ -132,7 +132,7 @@ namespace CourseMarketplaceFE.Controllers
             if (string.IsNullOrEmpty(token))
                 return Unauthorized();
 
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = _httpClientFactory.CreateClient("BackendApi");
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
             // Forward the Range header
@@ -142,7 +142,7 @@ namespace CourseMarketplaceFE.Controllers
                 httpClient.DefaultRequestHeaders.Add("Range", rangeHeader);
             }
 
-            var response = await httpClient.GetAsync($"http://localhost:5031/api/lessons/materials/{materialId}/stream", HttpCompletionOption.ResponseHeadersRead);
+            var response = await httpClient.GetAsync($"lessons/materials/{materialId}/stream", HttpCompletionOption.ResponseHeadersRead);
             if (!response.IsSuccessStatusCode)
                 return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
 
