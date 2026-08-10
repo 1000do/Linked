@@ -44,8 +44,32 @@
         return idStr ? parseInt(idStr) : null;
     }
 
+    async function markAsReadIfUnread(noti) {
+        if (!noti) return;
+        const notiId = noti.notificationId || noti.id || noti.NotificationId || noti.notiId || noti.NotiId;
+        const recId = noti.receiverId || noti.ReceiverId;
+        const isRead = noti.isRead !== undefined ? noti.isRead : noti.IsRead;
+        const currentUserId = getCurrentUserId();
+
+        if (!isRead && notiId && parseInt(notiId, 10) > 0) {
+            if (!recId || recId == currentUserId || !currentUserId) {
+                try {
+                    const response = await fetch(`/Notification/MarkAsRead/${notiId}`, { method: 'PUT' });
+                    if (response.ok) {
+                        noti.isRead = true;
+                        noti.IsRead = true;
+                        document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+                    }
+                } catch (err) {
+                    console.error("Failed to mark notification as read from toast/modal:", err);
+                }
+            }
+        }
+    }
+
     function showNotificationDetailModal(noti) {
         isShowing = true;
+        markAsReadIfUnread(noti);
         const rawDate = noti.createdAt || noti.CreatedAt;
         const createdAtDate = rawDate ? new Date(rawDate) : new Date();
         const formattedDate = !isNaN(createdAtDate.getTime())
@@ -167,24 +191,7 @@
                     if (e.target.tagName === 'BUTTON') return;
                     e.preventDefault();
 
-                    const currentUserId = getCurrentUserId();
-                    const notiId = noti.notificationId || noti.id || noti.NotificationId;
-                    const recId = noti.receiverId || noti.ReceiverId;
-                    const isRead = noti.isRead !== undefined ? noti.isRead : noti.IsRead;
-
-                    if (currentUserId && recId === currentUserId && !isRead && notiId) {
-                        try {
-                            const response = await fetch(`/Notification/MarkAsRead/${notiId}`, { method: 'PUT' });
-                            if (response.ok) {
-                                noti.isRead = true;
-                                noti.IsRead = true;
-                                document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
-                            }
-                        } catch (err) {
-                            console.error("Failed to mark notification as read from toast:", err);
-                        }
-                    }
-
+                    await markAsReadIfUnread(noti);
                     showNotificationDetailModal(noti);
                 });
             },

@@ -325,6 +325,7 @@
                     const localNoti = allNotifications.find(n => n.notificationId === id);
                     if(localNoti) localNoti.isRead = true;
                     applyNotificationFilters();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
                 }
             } catch (err) { console.error(err); }
         }
@@ -361,6 +362,7 @@
                     });
                     allNotifications = allNotifications.filter(n => n.notificationId !== id);
                     applyNotificationFilters();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
                 }
             } catch (err) { console.error(err); }
         }
@@ -389,6 +391,7 @@
                 if (response.ok) {
                     allNotifications.forEach(n => n.isRead = true);
                     applyNotificationFilters();
+                    document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
 
                     Swal.fire({
                         title: 'Marked All as Read',
@@ -406,7 +409,7 @@
         // Attach filter listeners
         document.addEventListener('DOMContentLoaded', () => {
             document.addEventListener("ReceiveNotificationEvent", () => {
-                console.log("Real-time notification update received, reloading...");
+                // console.log("Real-time notification update received, reloading...");
                 loadNotifications();
             });
 

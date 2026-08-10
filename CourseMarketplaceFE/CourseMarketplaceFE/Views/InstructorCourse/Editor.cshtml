@@ -1057,7 +1057,7 @@
         let isSubmitting = false;
 
         window.addNewLesson = function() {
-            console.log("Add New Lesson clicked");
+            // console.log("Add New Lesson clicked");
             const modal = document.getElementById('add-lesson-modal');
             const input = document.getElementById('new-lesson-title');
             if (!modal) { console.error("Modal not found!"); return; }
@@ -1082,7 +1082,7 @@
             }, 300);
         };
 
-        console.log("Editor Scripts Initializing...");
+        // console.log("Editor Scripts Initializing...");
 
 
         // ─── Quill ───
@@ -1467,11 +1467,11 @@
         }
 
         // Debugging — inspect what the server gave us
-        console.log("Lessons Data loaded:", lessonsData);
+        // console.log("Lessons Data loaded:", lessonsData);
         if (lessonsData.length > 0) {
-            console.log("First lesson keys:", Object.keys(lessonsData[0]));
+            // console.log("First lesson keys:", Object.keys(lessonsData[0]));
             if (lessonsData[0].learningMaterials || lessonsData[0].LearningMaterials) {
-                console.log("First lesson has materials:", lessonsData[0].learningMaterials || lessonsData[0].LearningMaterials);
+                // console.log("First lesson has materials:", lessonsData[0].learningMaterials || lessonsData[0].LearningMaterials);
             } else {
                 console.warn("First lesson has NO learningMaterials property. Available keys:", Object.keys(lessonsData[0]));
             }
@@ -1906,7 +1906,7 @@
                 lessonFeedbackEl.classList.add('hidden');
             }
 
-            console.log("Selecting Lesson:", lessonId, lesson); // Debug log
+            // console.log("Selecting Lesson:", lessonId, lesson); // Debug log
             let durationDisplay = "0 mins";
             
             // Update Status Badge
@@ -1946,7 +1946,7 @@
             if (lesson) {
                 // Handle various casing: learningMaterials, LearningMaterials, learning_materials
                 const materials = lesson.learningMaterials || lesson.LearningMaterials || lesson.learning_materials || [];
-                console.log("Materials found for lesson:", lessonId, materials);
+                // console.log("Materials found for lesson:", lessonId, materials);
                 
                 if (Array.isArray(materials) && materials.length > 0) {
                     materials.forEach(material => {
@@ -2770,7 +2770,7 @@
         };
 
         window.saveResourceMaterial = function(resourceUrl, resourceName, fileSize, fileExtension) {
-            console.log(`Saving resource material...\nURL:${resourceUrl}\nTitle:${resourceName}\nSize:${fileSize}\nFormat(extension):${fileExtension}`);
+            // console.log(`Saving resource material...\nURL:${resourceUrl}\nTitle:${resourceName}\nSize:${fileSize}\nFormat(extension):${fileExtension}`);
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;

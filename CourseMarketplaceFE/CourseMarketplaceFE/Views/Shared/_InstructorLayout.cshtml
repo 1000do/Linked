@@ -347,8 +347,14 @@
             .withUrl("/notificationHub", {
                 accessTokenFactory: () => LAYOUT_TOKEN
             })
+            .configureLogging(signalR.LogLevel.Warning)
             .withAutomaticReconnect()
             .build();
+
+        document.addEventListener("ReceiveNotificationEvent", function () {
+            if (typeof loadTopNotifications === "function") loadTopNotifications();
+            if (typeof loadUnreadSummary === "function") loadUnreadSummary();
+        });
 
         connection.on("ReceiveNotification", function (noti) {
             // 1. Hiện chấm đỏ ở chuông
@@ -398,6 +404,7 @@
             .withUrl("/chatHub", {
                 accessTokenFactory: () => LAYOUT_TOKEN
             })
+            .configureLogging(signalR.LogLevel.Warning)
             .withAutomaticReconnect()
             .build();
 

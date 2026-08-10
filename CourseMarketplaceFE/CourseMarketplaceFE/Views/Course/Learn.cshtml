@@ -940,7 +940,7 @@
 
         // ── currentUserId từ JWT ────────────────────────────────────────────────────
         const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
-        console.log("currentToken",currentToken);
+        // console.log("currentToken",currentToken);
         
         function decodeToken(token) {
             try {
@@ -949,7 +949,7 @@
                 const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));
-                console.log("Decoded token: " + jsonPayload);
+                // console.log("Decoded token: " + jsonPayload);
                 return JSON.parse(jsonPayload);
             } catch (e) {
                 console.error("Failed to decode token", e);
@@ -1322,7 +1322,7 @@
 
                 videoSource.src = optimizedUrl;
                 videoPlayer.load();
-                videoPlayer.play().catch(e => console.log('Auto-play blocked or failed:', e));
+                videoPlayer.play().catch(e => { /* Auto-play blocked or failed */ });
                 
                 videoPlayer.onloadeddata = () => {
                     videoLoader.classList.add('hidden');
@@ -1454,7 +1454,7 @@
 
         // Forced logout SignalR logic
         var localTokenForLayout = "@tokenForLayout";
-        console.log("Token for layout:", localTokenForLayout);
+        // console.log("Token for layout:", localTokenForLayout);
         if (currentToken) {
             if (localStorage.getItem("AccountLocked") === "true") {
                 localStorage.removeItem("AccountLocked");
@@ -1464,6 +1464,7 @@
 
             const notiConn = new signalR.HubConnectionBuilder()
                 .withUrl("/notificationHub", { accessTokenFactory: () => currentToken })
+                .configureLogging(signalR.LogLevel.Warning)
                 .withAutomaticReconnect().build();
 
             notiConn.on("ReceiveNotification", (noti) => {

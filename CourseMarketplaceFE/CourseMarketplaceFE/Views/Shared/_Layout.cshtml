@@ -255,6 +255,7 @@
     <script>
         // 1. Initialize global variables
         const currentToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
+        window.LEARNER_LAYOUT_TOKEN = currentToken;
 
         // --- GLOBAL LOGIC MOVED FROM SITE.JS ---
         async function toggleWishlist(btn, courseId) {
@@ -759,7 +760,7 @@
 
         const cookieUserId = parseInt(`@Html.Raw(Context.Request.Cookies["UserId"] ?? "0")`.trim(), 10) || 0;
         const currentUserId = getAccountIdFromJwt(currentToken) || cookieUserId;
-        console.log('[MiniChat] currentUserId =', currentUserId);
+        // console.log('[MiniChat] currentUserId =', currentUserId);
 
         function getMiniSenderId(m) {
             const v = m.senderId ?? m.SenderId;
@@ -949,7 +950,7 @@
             try {
                 // Ensure SignalR connection is ready
                 if (!miniChatConn || miniChatConn.state !== signalR.HubConnectionState.Connected) {
-                    console.log("[MiniChat] Waiting for connection...");
+                    // console.log("[MiniChat] Waiting for connection...");
                     await new Promise(resolve => {
                         const interval = setInterval(() => {
                             if (miniChatConn && miniChatConn.state === signalR.HubConnectionState.Connected) {
@@ -1276,6 +1277,23 @@
             return date.toLocaleDateString('en-US');
         }
 
+        async function handleNotificationClick(id, linkAction) {
+            if (id && parseInt(id, 10) > 0) {
+                try {
+                    const res = await fetch(`/Notification/MarkAsRead/${id}`, { method: 'PUT' });
+                    if (res.ok) {
+                        document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+                    }
+                } catch (e) {}
+            }
+            if (linkAction && linkAction !== 'null' && linkAction !== 'undefined' && linkAction !== '') {
+                window.location.href = linkAction;
+            } else {
+                window.location.href = '/Notification';
+            }
+        }
+        window.handleNotificationClick = handleNotificationClick;
+
         async function loadTopNotifications() {
             const container = document.getElementById('notification-items-container');
             const badge = document.getElementById('noti-badge');
@@ -1303,8 +1321,11 @@
                         return;
                     }
                     container.innerHTML = top3.map(n => `
-                        <div class="p-4 border-b border-slate-50 hover:bg-emerald-50/50 transition-all cursor-pointer" onclick="location.href='${n.linkAction ? n.linkAction : '/Notification'}'">
-                            <p class="text-xs font-bold text-slate-800 truncate">${n.title}</p>
+                        <div class="p-4 border-b border-slate-50 hover:bg-emerald-50/50 transition-all cursor-pointer ${!n.isRead ? 'bg-emerald-50/20' : ''}" onclick="handleNotificationClick(${n.notificationId || n.id}, '${n.linkAction || ''}')">
+                            <div class="flex items-center gap-2">
+                                ${!n.isRead ? '<span class="w-2 h-2 bg-emerald-600 rounded-full shrink-0"></span>' : ''}
+                                <p class="text-xs font-bold text-slate-800 truncate">${n.title}</p>
+                            </div>
                             <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.content}</p>
                             <p class="text-[9px] text-slate-300 mt-2 uppercase font-bold">${timeSince(new Date(n.createdAt))}</p>
                         </div>
@@ -1332,7 +1353,12 @@
                 // SignalR Noti
                 const notiConn = new signalR.HubConnectionBuilder()
                     .withUrl("/notificationHub", { accessTokenFactory: () => currentToken })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect().build();
+                document.addEventListener("ReceiveNotificationEvent", function () {
+                    if (typeof loadTopNotifications === 'function') loadTopNotifications();
+                });
+
                 notiConn.on("ReceiveNotification", (noti) => {
                     loadTopNotifications();
                     document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
@@ -1370,6 +1396,7 @@
                 // SignalR Chat
                 miniChatConn = new signalR.HubConnectionBuilder()
                     .withUrl("/chatHub", { accessTokenFactory: () => currentToken })
+                    .configureLogging(signalR.LogLevel.Warning)
                     .withAutomaticReconnect().build();
 
                 miniChatConn.on("ReceiveMessage", function (message) {
