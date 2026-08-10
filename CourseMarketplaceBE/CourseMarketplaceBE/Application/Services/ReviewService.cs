@@ -94,7 +94,11 @@ public class ReviewService : IReviewService
         var responses = new List<ReviewResponse>();
         foreach (var r in courseReviews)
         {
-            var isInstructor = instructorId.HasValue && r.Enrollment?.UserId == instructorId.Value;
+            var enrollment = r.Enrollment
+                ?? throw new InvalidOperationException("Review enrollment not found.");
+            var enrolledUser = enrollment.User
+                ?? throw new InvalidOperationException("Enrolled user not found.");
+            var isInstructor = instructorId.HasValue && enrollment.UserId == instructorId.Value;
             var isRemoved = r.IsRemoved ?? false;
             var status = r.CourseReviewStatus ?? "ok";
             var comment = r.Comment ?? "";
@@ -113,9 +117,9 @@ public class ReviewService : IReviewService
             responses.Add(new ReviewResponse
             {
                 ReviewId = r.CourseReviewId,
-                UserId = r.Enrollment?.UserId ?? 0,
-                UserFullName = r.Enrollment?.User?.FullName ?? "Anonymous",
-                UserAvatarUrl = r.Enrollment?.User?.UserNavigation?.AvatarUrl,
+                UserId = enrollment.UserId ?? 0,
+                UserFullName = enrolledUser.FullName ?? "Anonymous",
+                UserAvatarUrl = enrolledUser.UserNavigation?.AvatarUrl,
                 Rating = rating,
                 Comment = comment,
                 CreatedAt = r.CreatedAt ?? DateTime.Now,
@@ -141,7 +145,11 @@ public class ReviewService : IReviewService
 
         var responses = lessonReviews.Select(r =>
         {
-            var isInstructor = instructorId.HasValue && r.Enrollment?.UserId == instructorId.Value;
+            var enrollment = r.Enrollment
+                ?? throw new InvalidOperationException("Review enrollment not found.");
+            var enrolledUser = enrollment.User
+                ?? throw new InvalidOperationException("Enrolled user not found.");
+            var isInstructor = instructorId.HasValue && enrollment.UserId == instructorId.Value;
             var isRemoved = r.IsRemoved ?? false;
             var status = r.LessonReviewStatus ?? "ok";
             var comment = r.Comment ?? "";
@@ -160,9 +168,9 @@ public class ReviewService : IReviewService
             return new ReviewResponse
             {
                 ReviewId = r.LessonReviewId,
-                UserId = r.Enrollment?.UserId ?? 0,
-                UserFullName = r.Enrollment?.User?.FullName ?? "Anonymous",
-                UserAvatarUrl = r.Enrollment?.User?.UserNavigation?.AvatarUrl,
+                UserId = enrollment.UserId ?? 0,
+                UserFullName = enrolledUser.FullName ?? "Anonymous",
+                UserAvatarUrl = enrolledUser.UserNavigation?.AvatarUrl,
                 Rating = rating,
                 Comment = comment,
                 CreatedAt = r.CreatedAt ?? DateTime.Now,
@@ -469,12 +477,14 @@ public class ReviewService : IReviewService
         {
             var review = await _reviewRepo.GetCourseReviewByIdAsync(request.ReviewId)
                 ?? throw new InvalidOperationException("Review not found.");
-            if (review.Enrollment?.UserId != userId)
+            if (review.Enrollment == null)
+                throw new InvalidOperationException("Review enrollment not found.");
+            if (review.Enrollment.UserId != userId)
                 throw new UnauthorizedAccessException("You can only edit your own reviews.");
             if (review.IsRemoved == true)
                 throw new InvalidOperationException("This review has been removed and cannot be edited.");
 
-            tempReview.CourseId = review.Enrollment?.CourseId ?? 0;
+            tempReview.CourseId = review.Enrollment.CourseId ?? 0;
 
             await UpdateReviewStatusInDatabaseAsync(request.ReviewId, false, ReviewStatus.Pending.ToValue());
 

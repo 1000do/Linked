@@ -401,6 +401,9 @@ public class Program
 
         var app = builder.Build();
 
+        // Intercept and obfuscate user identity cookies
+        app.UseMiddleware<CourseMarketplaceBE.Presentation.Middlewares.CookieObfuscationMiddleware>();
+
         // 🔥 9. Migration
         using (var scope = app.Services.CreateScope())
         {

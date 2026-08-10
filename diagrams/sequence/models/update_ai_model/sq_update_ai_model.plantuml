@@ -49,9 +49,8 @@ database Database as db
 
 act ++
 act -> view++: Click the edit icon on a model entry
-view -> view++: Open edit modal with pre-filled details
-view--
-act -> view: Modify model details and click "Save Changes"
+view -> act--: Display "Edit Model" modal with pre-filled details
+act -> view++: Modify model details and click "Save Changes"
 
 
 
@@ -107,12 +106,15 @@ else Valid actor's authentication and authorization
         sv--
         
         sv -> repo++: Call Update(model)
-        repo -->> sv--: Return updated model
+        repo -> ctx++: Update(model)
+        ctx-->>repo--: Return result
+        repo -->> sv--: Return result
         
         sv -> repo++: Call SaveChangesAsync()
         repo -> ctx++: Call SaveChangesAsync()
         ctx -> db++: Save changes to database
-        
+        db -> db++: Check database\noperation status
+        db--
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

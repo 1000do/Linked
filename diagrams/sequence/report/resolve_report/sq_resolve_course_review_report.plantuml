@@ -47,10 +47,10 @@ database Database as db
 
 act ++
 act -> view++: Click "Moderate" on a course review report row
-view -->> act: Display Moderate Report popup
+view -->> act--: Display Moderate Report popup
 
-act -> view: Enter moderation details
-act -> view: Click "Submit Decision"
+act -> view++: Enter moderation details,\n click "Submit Decision"
+
 
 view -> view++: Validate form input
 view--
@@ -102,19 +102,18 @@ else Valid actor's authentication and authorization
         sv -> sv++: Update course review report fields
         sv--
 
-    opt Report is accepted
-        sv -> sv++: Call ApplyCourseReviewPenaltyAsync()
-        sv--
-    end
 
     sv -> repo++: UpdateCourseReviewReport(report)
+    repo -> ctx++: Update()
+    ctx-->>repo--: Return result
     repo -->> sv--: Return result
 
     sv -> sv++: SaveReportChangesAsync()
     sv -> repo++: SaveChangesAsync()
     repo -> ctx++: Call SaveChangesAsync()
     ctx -> db++: Save changes to database
-
+    db -> db++: Check database\n operation status
+    db--
     alt Database Save Failure
         db -->> ctx: Throw DbUpdateException
         ctx -->> repo: Throw DbUpdateException

@@ -51,6 +51,8 @@ par Fetch Course Reports
     sv -> repo++: Call GetAllCourseReportsAsync(status, page, pageSize)
     repo -> ctx++: Query course reports
     ctx -> db++: Execute query
+    db -> db++: Check database\n operation status
+    db--
     
     alt Database Query Failure
         db -->> ctx: Return empty list, totalCount = 0
@@ -80,6 +82,8 @@ else Fetch Course Review Reports
     sv -> repo++: Call GetAllCourseReviewReportsAsync(status, page, pageSize)
     repo -> ctx++: Query course review reports
     ctx -> db++: Execute query
+    db -> db++: Check database\n operation status
+    db--
     
     alt Database Query Failure
         db -->> ctx: Return empty list, totalCount = 0
@@ -109,6 +113,8 @@ else Fetch Lesson Review Reports
     sv -> repo++: Call GetAllLessonReviewReportsAsync(status, page, pageSize)
     repo -> ctx++: Query lesson review reports
     ctx -> db++: Execute query
+    db -> db++: Check database\n operation status
+    db--
     
     alt Database Query Failure
         db -->> ctx: Return empty list, totalCount = 0

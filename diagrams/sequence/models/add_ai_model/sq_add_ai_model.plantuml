@@ -50,9 +50,9 @@ database Database as db
 
 act ++
 act -> view++: Click "Add AI Model" button
-view -> view++: Open model registration modal
-view--
-act -> view: Fill in model details and click "Add Model"
+view -> act--: Display model registration modal
+
+act -> view++: Fill in model details and click "Add Model"
 
 
 
@@ -92,13 +92,16 @@ else Valid actor's authentication and authorization
     ett -->> sv--: Return AiModel object
     
     sv -> repo++: Call Add(model)
-    
-    repo -->> sv--: Return added AiModel
+    repo -> ctx++: Add(model)
+    ctx-->>repo--: Return result
+    repo -->> sv--: Return result    
+
     
     sv -> repo++: Call SaveChangesAsync()
     repo -> ctx++: Call SaveChangesAsync()
     ctx -> db++: Save changes to database
-    
+    db -> db++: Check database\noperation status
+    db--
     alt Database Save Failure
         db -->> ctx: throw DbUpdateException
         ctx -->> repo: throw DbUpdateException

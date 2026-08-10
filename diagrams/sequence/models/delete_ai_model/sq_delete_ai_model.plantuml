@@ -70,12 +70,13 @@ else Valid actor's authentication and authorization
     be_ctrl -> sv++: Call ToggleModelStatusAsync(id)
     
     sv -> repo++: Call GetByIdAsync(id)
-    repo -> ctx++: Find model by ID via DbSet
+    repo -> ctx++: Find model by id
     ctx -> db++: Query AI Model
     db -->> ctx--: Return model or null
     ctx -->> repo--: Return model or null
     repo -->> sv--: Return model or null
-    
+    sv -> sv++: Validate model's existence
+    sv--
     alt Model Not Found
         sv -->> be_ctrl: throw KeyNotFoundException
         be_ctrl -->> fe_ctrl: Return statusCode 404
@@ -86,12 +87,15 @@ else Valid actor's authentication and authorization
         sv--
         
         sv -> repo++: Call Update(model)
-        repo -->> sv--: Return updated model
+        repo -> ctx++: Update(model)
+        ctx-->>repo--: Return result
+        repo -->> sv--: Return result
         
         sv -> repo++: Call SaveChangesAsync()
         repo -> ctx++: Call SaveChangesAsync()
         ctx -> db++: Save changes to database
-        
+        db -> db++: Check database\noperation status
+        db--
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

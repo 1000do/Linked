@@ -130,7 +130,7 @@ namespace CourseMarketplaceBE.Application.Services
         //   PlatformNetProfit  = GrossRevenue - TotalPaidOut - PendingEscrow
         //                      = Tiền sàn THỰC SỰ giữ được
         // ═══════════════════════════════════════════════════════════════════════
-            public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null)
+        public async Task<FinancialSummaryResponse> GetFinancialSummaryAsync(int? year = null, int? month = null)
         {
             var grossRevenue = await _repo.GetGrossRevenueAsync(year, month);
             var totalPaidOut = await _repo.GetTotalPaidOutAsync(year, month);
@@ -1032,7 +1032,7 @@ namespace CourseMarketplaceBE.Application.Services
             }
 
             // Thực thi refund Stripe & Reverse Transfer & Revoke Enrollment (Sẽ tự động lưu cả note ở trên)
-            var refundResult = await RefundTransactionAsync(transactionId, txn.TransactionExt?.RefundReason);
+            var refundResult = await RefundTransactionAsync(transactionId, txn.TransactionExt.RefundReason);
 
             // Gửi thông báo đến học viên
             if (txn.AccountFrom.HasValue)

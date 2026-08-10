@@ -130,6 +130,9 @@ namespace CourseMarketplaceFE
 
             var app = builder.Build();
 
+            // Intercept and obfuscate user identity cookies
+            app.UseMiddleware<CourseMarketplaceFE.Middlewares.CookieObfuscationMiddleware>();
+
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
             {

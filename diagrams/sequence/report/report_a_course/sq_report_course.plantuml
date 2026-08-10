@@ -52,7 +52,8 @@ view -->> act--: Display report course form modal
 
 
 act -> view++: Input reason and description, click "Submit Report"
-
+view -> view++: Validate form input
+view--
 opt Invalid form input
     view -->> act: Display validation error message
 end
@@ -110,7 +111,8 @@ else Valid actor's authentication and authorization
         sv -> repo++: SaveChangesAsync()
         repo -> ctx++: SaveChangesAsync()
         ctx -> db++: Save changes to database
-        
+        db -> db++: Check database\n operation status
+        db--
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

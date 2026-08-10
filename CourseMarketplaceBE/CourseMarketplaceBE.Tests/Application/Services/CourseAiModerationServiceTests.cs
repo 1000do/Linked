@@ -679,6 +679,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task UpdateCourseAIIntegrationsAsync_IntegrationRoleNullAndModelTypesNull_DoesNotCrash()
+        {
+            //Arrange 1
+            int courseId = 1;
+            var integration = new CourseAiIntegration { Role = null, ModelId = 2 };
+            var integrations = new List<CourseAiIntegration> { integration };
+            var classifiers = new List<AiModelDto> { new AiModelDto { ModelId = 1, ProcessType = null, ModelType = null } };
+            var embGenerators = new List<AiModelDto>();
+            var thresholds = new Dictionary<string, float>();
+
+            //Arrange 2
+            _aiIntegrationRepositoryMock.GetByCourseIdAsync(courseId).Returns(integrations);
+
+            //Act
+            await InvokePrivateMethodAsync("UpdateCourseAIIntegrationsAsync", courseId, classifiers, embGenerators, thresholds);
+
+            //Assert
+            _aiIntegrationRepositoryMock.Received(1).Update(Arg.Any<CourseAiIntegration>());
+        }
+
+        [Fact]
         public async Task SaveCourseAiIntegrationChangesAsync_Success_ReturnsRowsAffected()
         {
             //Arrange 1
@@ -769,6 +790,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             result.Should().BeEquivalentTo(new List<int> { 5, 6 });
+        }
+
+        [Fact]
+        public async Task GetCourseMaterialIdsAsync_LessonsWithNullMaterials_ReturnsEmptyList()
+        {
+            //Arrange 1
+            int courseId = 1;
+            var response = new CourseModerationDetailResponse { 
+                Lessons = new List<LessonResponse> { 
+                    new LessonResponse { LearningMaterials = null! } 
+                } 
+            };
+            
+            //Arrange 2
+            _redisServiceMock.GetCacheAsync<CourseModerationDetailResponse>(Arg.Any<string>()).Returns(response);
+
+            //Act
+            var result = await InvokePrivateMethodAsync<List<int>>("GetCourseMaterialIdsAsync", courseId);
+
+            //Assert
+            result.Should().BeEmpty();
         }
 
         [Fact]
