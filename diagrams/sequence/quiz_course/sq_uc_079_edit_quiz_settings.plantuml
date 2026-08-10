@@ -36,6 +36,8 @@ mainframe Edit Quiz Settings
 
 actor Instructor as act
 participant "QuizEditorPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "QuizController" as fe_ctrl <<frontend controller>>
 participant "QuizController" as be_ctrl <<backend controller>>
 participant ":QuizService" as sv
@@ -46,77 +48,97 @@ database Database as db
 act ++
 act -> view++: Modify quiz settings and click Save
 view -> fe_ctrl++: POST /Quiz/UpdateSettings/{id}
-fe_ctrl -> be_ctrl++: PUT /api/quizzes/{id}/settings
 
-be_ctrl -> sv++: Call UpdateQuizSettingsAsync(id, request, instructorId)
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-sv -> sv++: Validate quiz options and title uniqueness
-sv--
-
-alt Validation Failed
-    sv -->> be_ctrl: throw ArgumentException
-    be_ctrl -->> fe_ctrl: Return statusCode 400
-    fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display validation error message
-else Validation Passed
-    sv -> sv++: Validate quiz distributions
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: PUT /api/quizzes/{id}/settings
+    
+    be_ctrl -> sv++: Call UpdateQuizSettingsAsync(id, request, instructorId)
+    
+    sv -> sv++: Validate quiz options and title uniqueness
     sv--
     
-    alt Distributions Invalid
+    alt Validation Failed
         sv -->> be_ctrl: throw ArgumentException
         be_ctrl -->> fe_ctrl: Return statusCode 400
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display invalid distribution message
-    else Distributions Valid
-        sv -> repo++: Call GetByIdAsync(id)
-        repo -> ctx++: Execute query
-        ctx -> db++: Fetch quiz and distributions
-        db -->> ctx--: Return query results
-        ctx -->> repo--: Return quiz entity
-        repo -->> sv--: Return quiz entity
+        view -->> act: Display validation error message
+    else Validation Passed
+        sv -> sv++: Validate quiz distributions
+        sv--
         
-        alt Quiz Not Found
-            sv -->> be_ctrl: throw KeyNotFoundException
-            be_ctrl -->> fe_ctrl: Return statusCode 404
+        alt Distributions Invalid
+            sv -->> be_ctrl: throw ArgumentException
+            be_ctrl -->> fe_ctrl: Return statusCode 400
             fe_ctrl -->> view: Return JSON (success=false)
-            view -->> act: Display quiz not found message
-        else Quiz Found
-            sv -> sv++: Validate Ownership
+            view -->> act: Display invalid distribution message
+        else Distributions Valid
+            sv -> repo++: Call GetByIdAsync(id)
+            repo -> ctx++: Query quiz from DbSet
+            ctx -> db++: Execute query
+            db -->> ctx--: Return query results
+            ctx -->> repo--: Return quiz entity
+            repo -->> sv--: Return quiz entity
+            
+            sv -> sv++: Check if quiz exists
             sv--
             
-            alt Not Quiz Owner
-                sv -->> be_ctrl: throw UnauthorizedAccessException
-                be_ctrl -->> fe_ctrl: Return statusCode 403
+            alt Quiz Not Found
+                sv -->> be_ctrl: throw KeyNotFoundException
+                be_ctrl -->> fe_ctrl: Return statusCode 404
                 fe_ctrl -->> view: Return JSON (success=false)
-                view -->> act: Display unauthorized message
-            else Is Quiz Owner
-                sv -> sv++: Update quiz properties and distributions
+                view -->> act: Display quiz not found message
+            else Quiz Found
+                sv -> sv++: Validate Ownership
                 sv--
                 
-                sv -> repo++: Call UpdateAsync(quiz)
-                repo -> ctx++: Save changes to database
-                ctx -> db++: Update Quiz and Distributions
-                
-                alt Database Save Failure
-                    db -->> ctx: throw DbUpdateException
-                    ctx -->> repo: throw DbUpdateException
-                    repo -->> sv: throw DbUpdateException
-                    sv -->> be_ctrl: throw DbUpdateException
-                    be_ctrl -->> fe_ctrl: Return statusCode 500
+                alt Not Quiz Owner
+                    sv -->> be_ctrl: throw UnauthorizedAccessException
+                    be_ctrl -->> fe_ctrl: Return statusCode 403
                     fe_ctrl -->> view: Return JSON (success=false)
-                    view -->> act: Display server error message
-                else Database Save Success
-                    db -->> ctx--: Return returnCode
-                    ctx -->> repo--: Return
-                    repo -->> sv--: Return
-                    
-                    sv -> sv++: Map to QuizDetailResponse
+                    view -->> act: Display unauthorized message
+                else Is Quiz Owner
+                    sv -> sv++: Update quiz properties and distributions
                     sv--
                     
-                    sv -->> be_ctrl--: Return QuizDetailResponse object
-                    be_ctrl -->> fe_ctrl--: Return statusCode 200
-                    fe_ctrl -->> view--: Return JSON (success=true)
-                    view -->> act--: Display quiz updated successfully
+                    sv -> repo++: Call UpdateAsync(quiz)
+                    repo -> ctx++: Call SaveChangesAsync()
+                    ctx -> db++: Save changes to database
+                    
+                    db -> db++: Check database constraints
+                    db--
+                    
+                    alt Database Save Failure
+                        db -->> ctx: throw DbUpdateException
+                        ctx -->> repo: throw DbUpdateException
+                        repo -->> sv: throw DbUpdateException
+                        sv -->> be_ctrl: throw DbUpdateException
+                        be_ctrl -->> fe_ctrl: Return statusCode 500
+                        fe_ctrl -->> view: Return JSON (success=false)
+                        view -->> act: Display server error message
+                    else Database Save Success
+                        db -->> ctx--: Return returnCode
+                        ctx -->> repo--: Return numberOfRowsAffected
+                        repo -->> sv--: Return result
+                        
+                        sv -> sv++: Map to QuizDetailResponse
+                        sv--
+                        
+                        sv -->> be_ctrl--: Return QuizDetailResponse object
+                        be_ctrl -->> fe_ctrl--: Return statusCode 200
+                        fe_ctrl -->> view--: Return JSON (success=true)
+                        view -->> act--: Display quiz updated successfully
+                    end
                 end
             end
         end
