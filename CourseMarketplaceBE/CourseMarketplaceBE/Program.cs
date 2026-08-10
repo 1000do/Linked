@@ -144,6 +144,7 @@ public class Program
         builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
+        builder.Services.AddScoped<IMaterialStreamService, MaterialStreamService>();
         builder.Services.AddScoped<ICourseQueryService, CourseQueryService>();
         builder.Services.AddScoped<ICourseCommandService, CourseCommandService>();
         builder.Services.AddScoped<ILessonService, LessonService>();

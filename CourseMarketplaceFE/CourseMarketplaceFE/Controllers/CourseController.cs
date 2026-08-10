@@ -9,10 +9,12 @@ namespace CourseMarketplaceFE.Controllers
     public class CourseController : Controller
     {
         private readonly ApiClient _apiClient;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public CourseController(ApiClient apiClient)
+        public CourseController(ApiClient apiClient, IHttpClientFactory httpClientFactory)
         {
             _apiClient = apiClient;
+            _httpClientFactory = httpClientFactory;
         }
 
         [Authorize(Roles = "user,instructor")]
@@ -122,6 +124,61 @@ namespace CourseMarketplaceFE.Controllers
             return View(new List<PublicCourseViewModel>());
         }
         
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> StreamMaterial(int materialId, [FromQuery] bool download = false)
+        {
+            var token = Request.Cookies["AccessToken"];
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized();
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            // Forward the Range header
+            var rangeHeader = Request.Headers["Range"].ToString();
+            if (!string.IsNullOrEmpty(rangeHeader))
+            {
+                httpClient.DefaultRequestHeaders.Add("Range", rangeHeader);
+            }
+
+            var response = await httpClient.GetAsync($"http://localhost:5031/api/lessons/materials/{materialId}/stream", HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+                return StatusCode((int)response.StatusCode, await response.Content.ReadAsStringAsync());
+
+            var stream = await response.Content.ReadAsStreamAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+
+            // Forward response headers
+            if (response.Content.Headers.ContentRange != null)
+            {
+                Response.Headers["Accept-Ranges"] = "bytes";
+                Response.Headers["Content-Range"] = response.Content.Headers.ContentRange.ToString();
+            }
+
+            if (response.Content.Headers.ContentLength.HasValue)
+            {
+                Response.ContentLength = response.Content.Headers.ContentLength.Value;
+            }
+
+            if (download)
+            {
+                string filename = $"material_{materialId}";
+                if (response.Headers.TryGetValues("Content-Disposition", out var cdValues))
+                {
+                    var cdStr = cdValues.FirstOrDefault();
+                    if (System.Net.Http.Headers.ContentDispositionHeaderValue.TryParse(cdStr, out var cd))
+                    {
+                        filename = cd.FileNameStar?.Trim('"') ?? cd.FileName?.Trim('"') ?? filename;
+                    }
+                }
+                return File(stream, contentType, filename);
+            }
+
+            Response.StatusCode = (int)response.StatusCode;
+            return File(stream, contentType);
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> SearchCoursesJson(string query)
