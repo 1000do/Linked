@@ -1,81 +1,3 @@
-## Function: `SubmitApplicationAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">SubmitApplicationAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">SubmitApplicationAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">97</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for SubmitApplicationAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">12</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">9</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">13</td>
-  </tr>
-</table>
-
-- **Test requirement:** Verify the functionality of SubmitApplicationAsync.
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 | UTCID08 | UTCID09 | UTCID10 | UTCID11 | UTCID12 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | AccountNotFound |  | O |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | AccountNotVerified |  |  | O |  |  |  |  |  |  |  |  |  |  |
-|  |  | TotalFilesLessThanOne |  |  |  | O |  |  |  |  |  |  |  |  |  |
-|  |  | TotalFilesGreaterThanThree |  |  |  |  | O |  |  |  |  |  |  |  |  |
-|  |  | ExistingInstructorNotRejected |  |  |  |  |  | O |  |  |  |  |  |  |  |
-|  |  | ResubmitWithLessThanOneValidUrl |  |  |  |  |  |  | O |  |  |  |  |  |  |
-|  |  | ResubmitWithMoreThanThreeValidUrls |  |  |  |  |  |  |  | O |  |  |  |  |  |
-|  |  | ResubmitValid |  |  |  |  |  |  |  |  | O |  |  |  |  |
-|  |  | NewApplicationWithUploadFailures |  |  |  |  |  |  |  |  |  | O |  |  |  |
-|  |  | NewApplicationValid |  |  |  |  |  |  |  |  |  |  | O |  |  |
-|  |  | WithNullDocumentFile |  |  |  |  |  |  |  |  |  |  |  | O |  |
-|  |  | NoValidRetainedUrlsAndNoFiles |  |  |  |  |  |  |  |  |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | UpdatesAndReturnsSuccessMessage |  |  |  |  |  |  |  |  | O |  |  |  |  |
-|  |  | AddsAndReturnsSuccessMessage |  |  |  |  |  |  |  |  |  |  | O |  |  |
-|  |  | SkipsAndUsesValidRetained |  |  |  |  |  |  |  |  |  |  |  | O |  |
-|  | **Exception** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  | O |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  | O |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  |  | O |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  |  |  | O |  |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  |  |  |  | O |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  |  |  |  |  | O |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  |  |  |  |  |  | O |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  |  |  |  |  |  |  |  | O |  |  |  |
-|  |  | ThrowsExceptionForNewApp |  |  |  |  |  |  |  |  |  |  |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | A | A | A | A | N | A | N | N | A |
-|  | **Passed/Failed** |  |  | P | P | P | P | P | P | P | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  | DFID001 | DFID002 | DFID003 | DFID004 | DFID005 | DFID006 | DFID007 |  | DFID008 |  |  | DFID009 |
-
 ## Function: `ApproveApplicationAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -86,13 +8,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">16</td>
+    <td colspan="3">10</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -138,70 +60,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  | DFID001 | DFID002 |  |  |
 
-## Function: `SetupStripePayoutAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">SetupStripePayoutAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">SetupStripePayoutAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">42</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for SetupStripePayoutAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">5</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">6</td>
-  </tr>
-</table>
-
-- **Test requirement:** Verify the functionality of SetupStripePayoutAsync.
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |
-|  |  | InstructorNotFound |  | O |  |  |  |  |
-|  |  | NotApproved |  |  | O |  |  |  |
-|  |  | SameStripeAccountId |  |  |  | O |  |  |
-|  |  | NewStripeAccountId |  |  |  |  | O |  |
-|  |  | InstructorNavigationNull |  |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |
-|  |  | ReturnsResponseWithoutSaving |  |  |  | O |  |  |
-|  |  | SavesAndReturnsResponse |  |  |  |  | O |  |
-|  |  | UsesEmptyEmail |  |  |  |  |  | O |
-|  | **Exception** |  |  |  |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  | O |  |  |  |  |
-|  |  | ThrowsInvalidOperationException |  |  | O |  |  |  |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  | DFID001 | DFID002 |  |  |  |
-
 ## Function: `VerifyStripeOnboardingAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -212,13 +70,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">29</td>
+    <td colspan="3">21</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -276,13 +134,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">2</td>
+    <td colspan="3">1</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -331,13 +189,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">24</td>
+    <td colspan="3">18</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -390,13 +248,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">2</td>
+    <td colspan="3">1</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -445,13 +303,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">30</td>
+    <td colspan="3">21</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -507,13 +365,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">12</td>
+    <td colspan="3">8</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -567,13 +425,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">17</td>
+    <td colspan="3">11</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -631,13 +489,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">5</td>
+    <td colspan="3">3</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -686,13 +544,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">44</td>
+    <td colspan="3">32</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -745,6 +603,133 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  |  |  |  |  |  |  |
 
+## Function: `SubmitApplicationAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SubmitApplicationAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SubmitApplicationAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">86</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SubmitApplicationAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">7</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">5</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">7</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of SubmitApplicationAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |
+|  |  | Account not found |  | O |  |  |  |  |  |  |
+|  |  | Account not verified |  |  | O |  |  |  |  |  |
+|  |  | Uploaded files < 1 |  |  |  | O |  |  |  |  |
+|  |  | Uploaded files > 3 |  |  |  |  | O |  |  |  |
+|  |  | Application already submitted (not rejected) |  |  |  |  |  | O |  |  |
+|  |  | Valid resubmission |  |  |  |  |  |  | O |  |
+|  |  | Valid new submission |  |  |  |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |
+|  |  | Returns success message |  |  |  |  |  |  | O | O |
+|  | **Exception** |  |  |  |  |  |  |  |  |  |
+|  |  | InvalidOperationException: Account not found |  | O |  |  |  |  |  |  |
+|  |  | InvalidOperationException: EMAIL_NOT_VERIFIED |  |  | O |  |  |  |  |  |
+|  |  | InvalidOperationException: Please upload at least 1 |  |  |  | O |  |  |  |  |
+|  |  | InvalidOperationException: maximum of 3 document |  |  |  |  | O |  |  |  |
+|  |  | InvalidOperationException: already submitted |  |  |  |  |  | O |  |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | A | A | N | N |
+|  | **Passed/Failed** |  | P | P | P | P | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  |  |  |  |  |  |  |  |
+
+## Function: `SetupStripePayoutAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SetupStripePayoutAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SetupStripePayoutAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">30</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SetupStripePayoutAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">3</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of SetupStripePayoutAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |
+|  |  | Instructor not found |  | O |  |  |
+|  |  | ApprovalStatus != Approved |  |  | O |  |
+|  |  | Valid request |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |
+|  |  | Returns StripeSetupResponse |  |  |  | O |
+|  | **Exception** |  |  |  |  |  |
+|  |  | InvalidOperationException: not submitted application |  | O |  |  |
+|  |  | InvalidOperationException: Application is not approved yet |  |  | O |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | N |
+|  | **Passed/Failed** |  | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  |  |  |  |
+
 ## Function: `GetPublicProfileAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -755,13 +740,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">43</td>
+    <td colspan="3">50</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -779,28 +764,26 @@
   <tr>
     <td colspan="2" style="text-align: center;">3</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">2</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">3</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">5</td>
+    <td colspan="6" style="text-align: center;">3</td>
   </tr>
 </table>
 
-- **Test requirement:** Verify the functionality of GetPublicProfileAsync.
+- **Test requirement:** Verify the functionality and validation rules of GetPublicProfileAsync.
 
 | Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 |
 | :--- | :--- | :--- | :--- | :---: | :---: | :---: |
 | **Condition** | **Precondition** |  |  |  |  |  |
-|  |  | ReturnsProfile |  | O |  |  |
-|  |  | ReturnsNull |  |  | O |  |
-|  |  | NullUserAndStats |  |  |  | O |
+|  |  | Instructor not found |  | O |  |  |
+|  |  | ApprovalStatus != Approved |  |  | O |  |
+|  |  | Valid request |  |  |  | O |
 | **Confirm** | **Return** |  |  |  |  |  |
-|  |  | WhenInstructorExists |  | O |  |  |
-|  |  | WhenInstructorDoesNotExistOrNotApproved |  |  | O |  |
-|  |  | HandlesNulls |  |  |  | O |
+|  |  | Returns null |  | O | O |  |
+|  |  | Returns InstructorPublicProfileDto |  |  |  | O |
 | **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 |
+|  | **Passed/Failed** |  | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 |
 |  | **Defect ID** |  |  |  |  |  |
-

@@ -8,9 +8,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -51,71 +51,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 |
 |  | **Defect ID** |  |  |  |
 
-## Function: `ApproveCourseAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">ApproveCourseAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">ApproveCourseAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">63</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for ApproveCourseAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">8</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">7</td>
-    <td colspan="1" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">9</td>
-  </tr>
-</table>
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 | UTCID08 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |  |
-|  |  | Course Not Found |  | O |  |  |  |  |  |  |  |
-|  |  | Course Is Pending |  |  | O | O | O | O | O | O | O |
-|  |  | Instructor Null |  |  |  | O | O | O | O |  |  |
-|  |  | Has Enrolled Users |  |  | O |  |  |  |  |  | O |
-|  |  | With Materials Pending/Removed |  |  |  |  | O |  |  |  |  |
-|  |  | With Materials Active |  |  |  |  |  | O |  |  |  |
-|  |  | With Lessons Pending |  |  |  |  |  |  | O |  |  |
-|  |  | With Lessons Active |  |  |  |  |  |  |  | O |  |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |  |
-|  |  | Returns False |  | O |  |  |  |  |  |  |  |
-|  |  | Approves Course (Returns True) |  |  | O | O | O | O | O | O | O |
-|  |  | Updates Material Status |  |  |  |  | O |  |  |  |  |
-|  |  | Updates Lesson Status |  |  |  |  |  |  | O |  |  |
-|  |  | Sends Bulk Notifications |  |  | O |  |  |  |  |  | O |
-|  |  | Sends Instructor Notification |  |  | O |  |  |  |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | N | N | N | N | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  | DFID001 |  |  |  |  |  |  |  |
-
 ## Function: `RejectCourseDetailedAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -126,13 +61,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">105</td>
+    <td colspan="3">119</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -150,11 +85,11 @@
   <tr>
     <td colspan="2" style="text-align: center;">13</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">10</td>
     <td colspan="1" style="text-align: center;">3</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">13</td>
+    <td colspan="6" style="text-align: center;">14</td>
   </tr>
 </table>
 
@@ -197,9 +132,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -271,9 +206,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -324,9 +259,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -381,9 +316,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -442,9 +377,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -502,9 +437,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -546,3 +481,63 @@
 |  | **Passed/Failed** |  |  | P | P |
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  | DFID001 |
+
+
+## Function: `ApproveCourseAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ApproveCourseAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ApproveCourseAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">64</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ApproveCourseAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of ApproveCourseAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |
+|  |  | Course not found |  | O |  |  |  |
+|  |  | Course found without InstructorId |  |  | O |  |  |
+|  |  | Course found with InstructorId and no students |  |  |  | O |  |
+|  |  | Course found with InstructorId and enrolled students |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |
+|  |  | Returns false |  | O |  |  |  |
+|  |  | Returns true |  |  | O | O | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | N | N | N |
+|  | **Passed/Failed** |  | P | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  |  |  |  |  |
