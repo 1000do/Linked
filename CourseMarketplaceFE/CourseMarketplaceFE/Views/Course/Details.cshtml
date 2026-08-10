@@ -570,7 +570,7 @@
 
 <script>
     const localDetailsToken = `@Html.Raw(Context.Request.Cookies["AccessToken"] ?? "")`.trim();
-    console.log("localDetailsToken",localDetailsToken);
+    // console.log("localDetailsToken",localDetailsToken);
     let allExpanded = false;
     
     function showSwalLikeSuccessPopup(title, text, callback) {
@@ -638,7 +638,7 @@
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));
-            console.log("Decoded token: " + jsonPayload);
+            // console.log("Decoded token: " + jsonPayload);
             return JSON.parse(jsonPayload);
         } catch (e) {
             console.error("Failed to decode token", e);
@@ -979,8 +979,8 @@
                 const data = result.data.items;
 
                 list.innerHTML = data.map(r => {
-                    console.log("r.userId: ",r.userId);
-                    console.log("r.UserId : ",r.UserId);
+                    // console.log("r.userId: ",r.userId);
+                    // console.log("r.UserId : ",r.UserId);
                     const isOwn = localCurrentUserId > 0 && (r.userId == localCurrentUserId || r.UserId == localCurrentUserId);
                     if (r.reviewStatus === 'pending' && !isOwn) return '';
                     const createdTime = r.createdAt ? new Date(r.createdAt).getTime() : 0;

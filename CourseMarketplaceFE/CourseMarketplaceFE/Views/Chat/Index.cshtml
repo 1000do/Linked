@@ -179,7 +179,7 @@
         const chatCookieUserId = parseInt("@currentAccountId", 10) || 0;
         const chatMyAccountId = getAccountIdFromToken(chatPageToken) || chatCookieUserId;
 
-        console.log('[Chat Debug] chatMyAccountId =', chatMyAccountId, '| chatCookieUserId =', chatCookieUserId);
+        // console.log('[Chat Debug] chatMyAccountId =', chatMyAccountId, '| chatCookieUserId =', chatCookieUserId);
 
         function senderIdOf(m) {
             const v = m.senderId ?? m.SenderId;
@@ -200,6 +200,7 @@
                 .withUrl(`${CHAT_API_URL}/chatHub`, {
                     accessTokenFactory: () => chatPageToken
                 })
+                .configureLogging(signalR.LogLevel.Warning)
                 .withAutomaticReconnect()
                 .build();
 
@@ -297,7 +298,7 @@
 
             try {
                 await chatPageConnection.start();
-                console.log("SignalR Connected.");
+                // console.log("SignalR Connected.");
             } catch (err) {
                 console.error("SignalR Connection Error: ", err);
             }
@@ -716,7 +717,7 @@
         }
 
         function appendMessage(m) {
-            console.log('appendMessage received:', m);
+            // console.log('appendMessage received:', m);
             const msgId = m.messageId || m.MessageId;
             if (msgId && document.getElementById(`msg-${msgId}`)) {
                 return; // Tránh hiển thị trùng lặp tin nhắn nếu đã tồn tại
@@ -964,7 +965,7 @@
                 }
 
                 selectedFiles.push(file);
-                console.log('In handleFileSelect, selectedFiles',selectedFiles);  
+                // console.log('In handleFileSelect, selectedFiles',selectedFiles);  
                 renderAttachmentPreview();
                 input.value = ""; // Reset để chọn lại cùng file
             }
@@ -1029,7 +1030,7 @@
 
         function removeSelectedFile(index) {
             selectedFiles.splice(index, 1);
-            console.log('In removeSelectedFile, selectedFiles',selectedFiles); 
+            //console.log('In removeSelectedFile, selectedFiles',selectedFiles); 
             renderAttachmentPreview();
         }
 

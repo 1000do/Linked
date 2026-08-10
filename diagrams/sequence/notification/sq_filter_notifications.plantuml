@@ -114,6 +114,9 @@ else Valid actor's authentication and authorization
     
     view-->>act: Display system notifications list
 
+    view->view++: Check selected filter type
+    view--
+
     alt Click role tab
         act->view++: Click a role tab (all / student / instructor / staff-admin)
         view->view++: switchRoleTab(role) (updates activeRoleTab & styles active button)
@@ -126,7 +129,6 @@ else Valid actor's authentication and authorization
     view--
     
     view->view++: applyFilters() (runs client-side filtering on cached notifications)
-
     view--
     
     view->view++: renderTable() (paginates and renders filtered results)

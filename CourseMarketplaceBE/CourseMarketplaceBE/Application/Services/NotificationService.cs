@@ -202,7 +202,7 @@ namespace CourseMarketplaceBE.Application.Services
             int numberOfRowsAffected = await _repo.SaveChangesAsync();
             /* zero rows exception removed */
 
-            await DispatchAdvancedNotificationsAsync(targetUserIds, dto, senderId, senderRole, now);
+            await DispatchAdvancedNotificationsAsync(notifications, senderRole);
             await NotifyRemainingManagersAsync(targetUserIds);
 
             return targetUserIds.Count;
@@ -350,20 +350,21 @@ namespace CourseMarketplaceBE.Application.Services
             }).ToList();
         }
 
-        private async Task DispatchAdvancedNotificationsAsync(List<int> targetUserIds, NotificationAdvancedDto dto, int senderId, string senderRole, DateTime now)
+        private async Task DispatchAdvancedNotificationsAsync(List<Notification> notifications, string senderRole)
         {
-            foreach (var uid in targetUserIds)
+            foreach (var noti in notifications)
             {
-                await _hubContext.Clients.User(uid.ToString()).SendAsync("ReceiveNotification", new
+                if (!noti.ReceiverId.HasValue) continue;
+                await _hubContext.Clients.User(noti.ReceiverId.Value.ToString()).SendAsync("ReceiveNotification", new
                 {
-                    notificationId = 0,
-                    title = dto.Title,
-                    content = dto.Content,
-                    linkAction = dto.LinkAction,
-                    createdAt = now,
-                    isRead = false,
-                    receiverId = uid,
-                    senderId = senderId,
+                    notificationId = noti.NotificationId,
+                    title = noti.Title,
+                    content = noti.Content,
+                    linkAction = noti.LinkAction,
+                    createdAt = noti.CreatedAt,
+                    isRead = noti.IsRead,
+                    receiverId = noti.ReceiverId.Value,
+                    senderId = noti.SenderId,
                     senderRole = senderRole
                 });
             }
