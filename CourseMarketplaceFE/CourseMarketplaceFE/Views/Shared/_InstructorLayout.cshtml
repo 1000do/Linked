@@ -481,6 +481,97 @@
             } catch (err) { console.error("Summary error:", err); }
         }
 
+        async function handleNotificationClick(id, linkAction) {
+            let noti = null;
+            if (window.topNotifications && Array.isArray(window.topNotifications)) {
+                noti = window.topNotifications.find(n => (n.notificationId || n.id || n.NotificationId) == id);
+            }
+
+            if (id && parseInt(id, 10) > 0 && (!noti || !noti.isRead)) {
+                try {
+                    const res = await fetch(`/Notification/MarkAsRead/${id}`, { method: 'PUT' });
+                    if (res.ok) {
+                        if (noti) noti.isRead = true;
+                        document.dispatchEvent(new CustomEvent("ReceiveNotificationEvent"));
+                    }
+                } catch (e) {}
+            }
+
+            if (noti && (noti.title || noti.content) && typeof Swal !== 'undefined') {
+                const escapeHtml = (str) => {
+                    if (!str) return '';
+                    return str.replace(/&/g, "&amp;")
+                              .replace(/</g, "&lt;")
+                              .replace(/>/g, "&gt;")
+                              .replace(/"/g, "&quot;")
+                              .replace(/'/g, "&#039;");
+                };
+
+                const rawDate = noti.createdAt || noti.CreatedAt;
+                const createdAtDate = rawDate ? new Date(rawDate) : new Date();
+                const formattedDate = !isNaN(createdAtDate.getTime())
+                    ? createdAtDate.toLocaleString('en-US', {
+                        hour: '2-digit', minute: '2-digit',
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour12: false
+                      })
+                    : '';
+
+                const title = escapeHtml(noti.title || noti.Title || 'Notification Details');
+                const content = escapeHtml(noti.content || noti.Content || '');
+                const actionUrl = noti.linkAction || noti.LinkAction || linkAction;
+
+                Swal.fire({
+                    title: `<div class="flex items-center gap-2 text-teal-700 text-base font-bold uppercase tracking-wider" style="text-align: left;">
+                                <span class="material-symbols-outlined text-xl">info</span>
+                                <span>Notification Details</span>
+                            </div>`,
+                    html: `
+                        <div class="text-left space-y-4 pt-2 font-sans" style="text-align: left;">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-800 leading-tight break-all mb-1">${title}</h3>
+                                ${formattedDate ? `
+                                    <div class="flex items-center gap-1 text-slate-400 text-xs uppercase tracking-tight font-medium mt-1">
+                                        <span class="material-symbols-outlined text-[14px]">schedule</span>
+                                        <span>${formattedDate}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 mt-3" style="background-color: #f8fafc; padding: 1.25rem; border-radius: 1rem; border: 1px solid #f1f5f9;">
+                                <p class="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap break-words m-0" style="color: #475569; font-size: 0.875rem; line-height: 1.6; margin: 0;">${content}</p>
+                            </div>
+                            ${actionUrl && actionUrl !== 'null' && actionUrl !== 'undefined' && actionUrl !== '' ? `
+                                <div class="pt-2" style="padding-top: 0.5rem;">
+                                    <a href="${actionUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-xs text-decoration-none" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background-color: #0d9488; color: white; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; text-decoration: none;" onclick="Swal.close()">
+                                        <span class="material-symbols-outlined text-base">open_in_new</span>
+                                        View Details
+                                    </a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `,
+                    showConfirmButton: true,
+                    confirmButtonText: 'Close',
+                    confirmButtonColor: '#64748b',
+                    customClass: {
+                        popup: 'rounded-3xl shadow-2xl border border-slate-100 p-6',
+                        title: 'p-0 text-left border-b border-slate-100 pb-4',
+                        htmlContainer: 'p-0 text-left',
+                        confirmButton: 'px-6 py-2.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-all text-sm shadow-none'
+                    },
+                    background: '#ffffff',
+                    width: '520px'
+                });
+            } else {
+                if (linkAction && linkAction !== 'null' && linkAction !== 'undefined' && linkAction !== '') {
+                    window.open(linkAction, '_blank');
+                } else {
+                    window.location.href = '/Instructor/Notifications';
+                }
+            }
+        }
+        window.handleNotificationClick = handleNotificationClick;
+
         async function loadTopNotifications() {
             const container = document.getElementById('notification-items-container');
             if (!container) return;
@@ -496,6 +587,7 @@
                 if (response.ok) {
                     const apiResp = await response.json();
                     const data = apiResp.data?.items || [];
+                    window.topNotifications = data;
                     const top3 = data.slice(0, 3);
 
                     if (top3.length === 0) {
@@ -503,7 +595,7 @@
                         return;
                     }
                     container.innerHTML = top3.map(n => `
-                        <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer" onclick="location.href='${n.linkAction ? n.linkAction : '/Notification'}'">
+                        <div class="p-4 border-b border-slate-50 hover:bg-slate-50 transition-colors cursor-pointer" onclick="handleNotificationClick(${n.notificationId || n.id})">
                             <div class="flex gap-3">
                                 <div class="flex-1">
                                     <div class="flex items-center gap-2">

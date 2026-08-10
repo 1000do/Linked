@@ -114,7 +114,7 @@
                     </div>
                     ${linkAction ? `
                         <div class="pt-2" style="padding-top: 0.5rem;">
-                            <a href="${linkAction}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-xs text-decoration-none" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background-color: #0d9488; color: white; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; text-decoration: none;" onclick="Swal.close()">
+                            <a href="${linkAction}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all text-xs text-decoration-none" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1.25rem; background-color: #0d9488; color: white; border-radius: 0.75rem; font-weight: 700; font-size: 0.75rem; text-decoration: none;" onclick="Swal.close()">
                                 <span class="material-symbols-outlined text-base">open_in_new</span>
                                 View Details
                             </a>
