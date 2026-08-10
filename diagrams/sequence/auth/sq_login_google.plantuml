@@ -29,9 +29,8 @@ hide footbox
 mainframe Login with Google
 actor "User/Instructor" as act
 
-participant "LoginView" as view
-participant "AdminNotificationView" as admin_view
 participant "HomeIndexView" as home_view
+participant "LoginView" as view
 participant "Google Identity" as Google
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
@@ -81,6 +80,8 @@ opt account == null
     
     sv->u_repo++: Call RegisterUserAsync(acc, user)
     u_repo->ctx++: Add Account and User entities
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
@@ -115,6 +116,8 @@ alt Account is locked out
 else Account is active
     sv->u_repo++: Call UpdateLastLoginAsync(accountId)
     u_repo->ctx++: Update LastLoginDate
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
@@ -135,6 +138,8 @@ else Account is active
     
     sv->u_repo++: Call SaveRefreshTokenAsync(accountId, refreshToken)
     u_repo->ctx++: Update RefreshToken
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
@@ -155,17 +160,8 @@ else Account is active
     
     fe_ctrl-->>view--: Return statusCode 200
     
-    view->view++: Check user role from cookies
-    view--
-    
-    alt role == admin or staff
-        view -->> admin_view--: Redirect to Admin Notification page
-        activate admin_view
-        admin_view -->> act--: Display Admin Notification page
-    else role == user or instructor
-        view -->> home_view--: Redirect to Home Index page
-        activate home_view
-        home_view -->> act--: Display Homepage
-    end
+    view -->> home_view--: Redirect to Home Index page
+    activate home_view
+    home_view -->> act--: Display Homepage
 end
 @enduml

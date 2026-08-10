@@ -70,6 +70,8 @@ else Valid coupon update request
     
     sv->repo++: Update(coupon)
     repo->ctx++: Mark entity as modified
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
     ctx-->>repo--: Return result
     repo-->>sv--: Return result
     
