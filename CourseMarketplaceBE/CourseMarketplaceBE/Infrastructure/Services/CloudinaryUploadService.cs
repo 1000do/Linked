@@ -52,9 +52,17 @@ public class CloudinaryUploadService : IFileUploadService
 
             await using var stream = file.OpenReadStream();
 
+            if (!CourseMarketplaceBE.Share.Helpers.FileValidationHelper.IsValidFile(stream, file.FileName))
+            {
+                _logger.LogWarning("⚠️ File validation failed for {file}", file.FileName);
+                return null;
+            }
+
+            var safeFileName = Guid.NewGuid().ToString("N") + System.IO.Path.GetExtension(file.FileName);
+
             var uploadParams = new ImageUploadParams
             {
-                File = new FileDescription(file.FileName, stream)
+                File = new FileDescription(safeFileName, stream)
             };
 
             // ✅ chỉ set nếu có preset
@@ -94,9 +102,17 @@ public class CloudinaryUploadService : IFileUploadService
 
             await using var stream = file.OpenReadStream();
 
+            if (!CourseMarketplaceBE.Share.Helpers.FileValidationHelper.IsValidFile(stream, file.FileName))
+            {
+                _logger.LogWarning("⚠️ Video file validation failed for {file}", file.FileName);
+                return null;
+            }
+
+            var safeFileName = Guid.NewGuid().ToString("N") + System.IO.Path.GetExtension(file.FileName);
+
             var uploadParams = new VideoUploadParams
             {
-                File = new FileDescription(file.FileName, stream)
+                File = new FileDescription(safeFileName, stream)
             };
 
             if (!string.IsNullOrWhiteSpace(_uploadPreset))
@@ -263,7 +279,16 @@ public class CloudinaryUploadService : IFileUploadService
         {
             if (file == null || file.Length == 0) return null;
             await using var stream = file.OpenReadStream();
-            var uploadParams = new CloudinaryDotNet.Actions.RawUploadParams { File = new CloudinaryDotNet.FileDescription(file.FileName, stream) };
+            
+            if (!CourseMarketplaceBE.Share.Helpers.FileValidationHelper.IsValidFile(stream, file.FileName))
+            {
+                _logger.LogWarning("⚠️ Raw file validation failed for {file}", file.FileName);
+                return null;
+            }
+
+            var safeFileName = Guid.NewGuid().ToString("N") + System.IO.Path.GetExtension(file.FileName);
+
+            var uploadParams = new CloudinaryDotNet.Actions.RawUploadParams { File = new CloudinaryDotNet.FileDescription(safeFileName, stream) };
             var result = await _cloudinary.UploadAsync(uploadParams);
             return result?.SecureUrl?.ToString();
         }

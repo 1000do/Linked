@@ -97,10 +97,15 @@
     async function handleGoogleLogin(response) {
         const idToken = response.credential;
 
+        // Extract Anti-Forgery Token from the hidden input in the form
+        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+        const token = tokenElement ? tokenElement.value : '';
+
         const res = await fetch("/Account/GoogleLogin", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "RequestVerificationToken": token
             },
             body: JSON.stringify({ idToken: idToken })
         });

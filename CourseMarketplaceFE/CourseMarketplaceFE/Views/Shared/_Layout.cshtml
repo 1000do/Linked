@@ -148,9 +148,33 @@
     </script>
 
     @await RenderSectionAsync("Styles", required: false)
+    <script>
+        // Global Fetch Interceptor for Anti-Forgery Token
+        const originalFetch = window.fetch;
+        window.fetch = async function () {
+            let [resource, config] = arguments;
+            if (config && config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
+                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenElement) {
+                    config.headers = config.headers || {};
+                    if (config.headers instanceof Headers) {
+                        if (!config.headers.has('RequestVerificationToken')) {
+                            config.headers.append('RequestVerificationToken', tokenElement.value);
+                        }
+                    } else {
+                        if (!config.headers['RequestVerificationToken']) {
+                            config.headers['RequestVerificationToken'] = tokenElement.value;
+                        }
+                    }
+                }
+            }
+            return originalFetch(resource, config);
+        };
+    </script>
 </head>
 
 <body class="bg-surface font-body text-on-surface antialiased">
+    @Html.AntiForgeryToken()
 
     <!-- HEADER -->
     @await Html.PartialAsync("_Header")
@@ -750,11 +774,22 @@
         function getAccountIdFromJwt(jwt) {
             try {
                 if (!jwt) return 0;
-                const payload = JSON.parse(atob(jwt.split('.')[1]));
+                let base64Url = jwt.split('.')[1];
+                let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4 !== 0) {
+                    base64 += '=';
+                }
+                let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const payload = JSON.parse(jsonPayload);
                 const sid = payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
-                         ?? payload['sub'] ?? payload['nameid'] ?? 0;
+                         ?? payload['sub'] ?? payload['nameid'] ?? payload['AccountId'] ?? 0;
                 return parseInt(sid, 10) || 0;
-            } catch(e) { return 0; }
+            } catch(e) {
+                console.error("JWT Decode Error:", e);
+                return 0;
+            }
         }
 
         const cookieUserId = parseInt(`@Html.Raw(Context.Request.Cookies["UserId"] ?? "0")`.trim(), 10) || 0;
