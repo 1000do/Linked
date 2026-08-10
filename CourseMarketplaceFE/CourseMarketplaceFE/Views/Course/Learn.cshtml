@@ -160,7 +160,7 @@
                             </div>
                             <h3 class="text-lg font-bold text-slate-800 mb-2">Attached Resource</h3>
                             <p class="text-sm text-slate-500 mb-6">This file format is not supported for direct viewing in the browser. Please download to view.</p>
-                            <a id="doc-download-btn" href="@(!isFirstVideo ? firstMaterial?.MaterialUrl : "#")" target="_blank" download class="bg-[#006a62] text-white px-6 py-2.5 rounded-full font-bold hover:bg-[#00544e] transition-colors flex items-center justify-center gap-2">
+                            <a id="doc-download-btn" href="@(!isFirstVideo && firstMaterial != null ? $"/Course/StreamMaterial?materialId={firstMaterial.MaterialId}&download=true" : "#")" target="_blank" download class="bg-[#006a62] text-white px-6 py-2.5 rounded-full font-bold hover:bg-[#00544e] transition-colors flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined text-[20px]">download</span>
                                 Download Resource
                             </a>
@@ -1353,12 +1353,25 @@
                         .then(buffer => {
                             const decoder = new TextDecoder('utf-8');
                             txtContent.textContent = decoder.decode(buffer);
+                            
+                            // Check if scrollable
+                            setTimeout(() => {
+                                if (txtViewer.scrollHeight <= txtViewer.clientHeight + 10) {
+                                    // Not scrollable (too short), mark complete immediately
+                                    markAsCompleted(materialId);
+                                } else {
+                                    txtViewer.onscroll = () => {
+                                        if (txtViewer.scrollTop + txtViewer.clientHeight >= txtViewer.scrollHeight - 10) {
+                                            markAsCompleted(materialId);
+                                            txtViewer.onscroll = null; // Unbind after marking
+                                        }
+                                    };
+                                }
+                            }, 200);
                         })
                         .catch(err => {
                             txtContent.textContent = 'Error loading file: ' + err.message;
                         });
-                    
-                    markAsCompleted(materialId); // Mark text as completed immediately on view
                 } else {
                     if (docIframe) {
                         docIframe.src = '';
@@ -1369,10 +1382,7 @@
 
                     if (docDownloadFallback) docDownloadFallback.classList.remove('hidden');
                     
-                    let downloadUrl = url;
-                    if (url.includes('cloudinary.com') && !url.includes('fl_attachment')) {
-                        downloadUrl = url.replace(/\/upload\//, '/upload/fl_attachment/');
-                    }
+                    let downloadUrl = `/Course/StreamMaterial?materialId=${materialId}&download=true`;
                     if (docDownloadBtn) {
                         docDownloadBtn.href = downloadUrl;
                         docDownloadBtn.onclick = () => markAsCompleted(materialId); // Mark when downloaded

@@ -2707,9 +2707,12 @@
             if (autoSaveEl) { autoSaveEl.classList.remove('hidden'); }
             if (statusEl) statusEl.textContent = 'Saving...';
             
+            const customTitle = document.getElementById('video-title-input')?.value.trim();
+            const finalTitle = customTitle ? customTitle : (title + " Video");
+            
             const fd = new FormData();
             fd.append('lessonId', lessonId);
-            fd.append('title', title + " Video");
+            fd.append('title', finalTitle);
             if(description && description !== '<p><br></p>') fd.append('description', description);
             fd.append('materialUrl', materialUrl);
             fd.append('type', 'video');

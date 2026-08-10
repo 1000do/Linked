@@ -51,11 +51,14 @@ fe_ctrl -> be_ctrl++: GET /api/public/courses?sort=price_asc
 be_ctrl -> sv++: Call GetPublishedCoursesPagedAsync(sort)
 
 sv -> repo++: Call GetAllPublishedCoursesPagedAsync(sort)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch published courses
+repo -> ctx++: Query published courses from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return entities and totalCount
 repo -->> sv--: Return (courses, totalCount)
+
+sv -> sv++: Check course list presence
+sv--
 
 alt courses is empty
     sv -->> be_ctrl: Return empty list

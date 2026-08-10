@@ -543,14 +543,17 @@
         @{
             var firstVideo = Model.Lessons
                 .SelectMany(l => l.LearningMaterials)
-                .FirstOrDefault(m => !string.IsNullOrEmpty(m.MaterialUrl) && (m.MaterialMetadata?.FileType?.ToLower() == "video" || m.MaterialUrl.Contains(".mp4")));
+                .FirstOrDefault(m => !string.IsNullOrEmpty(m.MaterialUrl) && (m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true || m.MaterialUrl.Contains(".mp4") || m.MaterialUrl == "PROXY_STREAM"));
         }
         @if (firstVideo != null && !string.IsNullOrEmpty(firstVideo.MaterialUrl))
         {
             <video id="previewVideo" class="w-full h-full" controls controlsList="nodownload">
                 @{
                     var previewUrl = firstVideo.MaterialUrl;
-                    if (!string.IsNullOrEmpty(previewUrl) && previewUrl.Contains("cloudinary.com")) {
+                    if (previewUrl == "PROXY_STREAM") {
+                        previewUrl = $"/Course/StreamMaterial?materialId={firstVideo.MaterialId}";
+                    }
+                    else if (!string.IsNullOrEmpty(previewUrl) && previewUrl.Contains("cloudinary.com")) {
                         previewUrl = previewUrl.Replace("/video/upload/", "/video/upload/f_auto,q_auto/");
                     }
                 }

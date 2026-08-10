@@ -41,6 +41,8 @@ participant "QuizController" as be_ctrl <<backend controller>>
 participant ":QuizService" as sv
 participant ":QuizSummaryResponse" as res
 participant ":IQuizRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
 
 act ++
 act -> view++: Access quiz list page
@@ -51,6 +53,10 @@ fe_ctrl -> be_ctrl++: GET /api/quizzes
 be_ctrl -> sv++: Call GetMyQuizzesAsync(instructorId)
 
 sv -> repo++: Call GetByInstructorAsync(instructorId)
+repo -> ctx++: Query quizzes by instructor from DbSet
+ctx -> db++: Execute query
+db -->> ctx--: Return query results
+ctx -->> repo--: Return List<Quiz>
 repo -->> sv--: Return List<Quiz>
 
 loop For each Quiz in list

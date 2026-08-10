@@ -72,14 +72,22 @@ else Valid actor's authentication and authorization
     sv -> redis++: Call GetCacheAsync(cacheKey)
     redis -->> sv--: Return cachedResponse
     
+
+    sv -> sv++: Check condition: cachedResponse == null
+    sv--
+
     alt cachedResponse == null
         sv -> repo++: Call GetCourseWithDetailsAsync(id)
-        repo -> ctx++: Execute query
-        ctx -> db++: Fetch course details
+        repo -> ctx++: Query data from DbSet
+        ctx -> db++: Execute query
         db -->> ctx--: Return query results
         ctx -->> repo--: Return course entity
         repo -->> sv--: Return course entity
         
+
+        sv -> sv++: Check condition: Course Not Found
+        sv--
+
         alt Course Not Found
             sv -->> be_ctrl: throw KeyNotFoundException
             be_ctrl -->> fe_ctrl: Return statusCode 404
@@ -87,10 +95,12 @@ else Valid actor's authentication and authorization
             view -->> act: Display course not found message
         else Course Found
 
+            sv -> sv++: Check condition: InstructorId HasValue
+            sv--
             opt InstructorId HasValue
                 sv -> inst_repo++: Call GetStatsAsync(InstructorId)
-                inst_repo -> ctx++: Execute query
-                ctx -> db++: Fetch instructor stats
+                inst_repo -> ctx++: Query data from DbSet
+                ctx -> db++: Execute query
                 db -->> ctx--: Return query results
                 ctx -->> inst_repo--: Return instructor stats
                 inst_repo -->> sv--: Return instructor stats
@@ -108,22 +118,32 @@ else Valid actor's authentication and authorization
     end
     
     sv -> cart_repo++: Call IsCourseInAnyCartAsync(id)
-    cart_repo -> ctx++: Execute query
-    ctx -> db++: Check cart status
+    cart_repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> cart_repo--: Return IsInAnyCart flag
     cart_repo -->> sv--: Return IsInAnyCart flag
     
+
+    sv -> sv++: Check condition: userId HasValue
+    sv--
+
     opt userId HasValue
         sv -> repo++: Call IsEnrolledAsync(userId, courseId)
-        repo -> ctx++: Execute query
-        ctx -> db++: Check enrollment
+        repo -> ctx++: Query data from DbSet
+        ctx -> db++: Execute query
         db -->> ctx--: Return query results
         ctx -->> repo--: Return IsEnrolled flag
         repo -->> sv--: Return IsEnrolled flag
     end
     
+    sv -> sv++: Validate course status and access permissions
+    sv--
+
     alt Course Status != Published
+        sv -> sv++: Check access permissions
+        sv--
+        
         alt Unauthorized Access (Not Owner and Not Admin/Staff)
             sv -->> be_ctrl: throw UnauthorizedAccessException
             be_ctrl -->> fe_ctrl: Return statusCode 403

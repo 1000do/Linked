@@ -52,11 +52,15 @@ fe_ctrl -> be_ctrl++: GET /api/quiz-attempts/start/{quizId}
 be_ctrl -> sv++: Call GetQuizForStudentAsync(quizId, userId)
 
 sv -> repo++: Call GetQuizWithQuestionsAsync(quizId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch quiz and questions
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return quiz entity
 repo -->> sv--: Return quiz entity
+
+
+sv -> sv++: Check condition: Quiz Not Found
+sv--
 
 alt Quiz Not Found
     sv -->> be_ctrl: throw KeyNotFoundException
@@ -80,9 +84,13 @@ else Quiz Found
         ett -->> sv--: Return QuizAttempt entity
         
         sv -> repo++: Create new QuizAttempt record
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Insert QuizAttempt
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
+
+        db -> db++: Check condition: Database Save Failure
+        db--
+
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

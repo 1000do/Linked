@@ -52,11 +52,15 @@ be_ctrl -> sv++: Call UpdateCourseStatusAsync(id, "hidden", instructorId)
 
 
 sv -> repo++: Call GetByIdAsync(id)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch course
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return course entity
 repo -->> sv--: Return course entity
+
+
+sv -> sv++: Check condition: Course Not Found
+sv--
 
 alt Course Not Found
     sv -->> be_ctrl: throw Exception
@@ -77,9 +81,13 @@ else Course Found
         sv--
         
         sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Update Course Status
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
+
+        db -> db++: Check condition: Database Save Failure
+        db--
+
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException
