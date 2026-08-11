@@ -870,23 +870,23 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (metrics.AccountFlagCount >= 3)
             {
-                rejectReason = "your account having multiple flags";
+                rejectReason = $"your account having {metrics.AccountFlagCount} warning flags (limit: 3)";
             }
             else if (metrics.RefundRequestsLast14DaysCount >= 3)
             {
-                rejectReason = "having requested too many refunds within the refund period";
+                rejectReason = $"having requested {metrics.RefundRequestsLast14DaysCount} refunds within the last 14 days (limit: 3)";
             }
             else if (metrics.PastRefundedCountForCourse >= 1)
             {
-                rejectReason = "previous refund history for this course";
+                rejectReason = $"previous refund history for this course ({metrics.PastRefundedCountForCourse} previous refund)";
             }
             else if (metrics.CourseTotalDurationHours < 4.0 && metrics.StudentProgressPercentage > 15.0)
             {
-                rejectReason = "learning progress exceeding the limit for short courses";
+                rejectReason = $"learning progress of {metrics.StudentProgressPercentage:F1}% exceeding the 15% limit for short courses";
             }
             else if (metrics.CourseTotalDurationHours >= 4.0 && metrics.CompletedVideoDurationHours > 1.0)
             {
-                rejectReason = "video watch time exceeding the limit allowed for long courses";
+                rejectReason = $"video watch time of {metrics.CompletedVideoDurationHours:F1} hours exceeding the 1.0 hour limit allowed for long courses";
             }
 
             if (rejectReason != null)

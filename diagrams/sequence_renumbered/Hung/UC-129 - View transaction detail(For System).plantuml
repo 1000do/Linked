@@ -84,7 +84,8 @@ else Valid transactionId
         ctx -> db++:3.3.2.2.2. Execute query
         db -->> ctx--:3.3.2.2.3. Return query result
         
-        ctx -> ctx:3.3.2.2.4. Check if query result is null
+        ctx -> ctx++:3.3.2.2.4. Check if query result is null
+        ctx--
         
 alt Database Query Failure
             ctx -->> repo:3.3.2.2.4.1. Return null

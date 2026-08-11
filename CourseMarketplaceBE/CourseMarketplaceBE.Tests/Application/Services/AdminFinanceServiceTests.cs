@@ -1078,9 +1078,9 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             result.IsAutoRejected.Should().BeTrue();
-            result.RejectReason.Should().Be("your account having multiple flags");
+            result.RejectReason.Should().Be("your account having 3 warning flags (limit: 3)");
             txn.TransactionExt.Should().NotBeNull();
-            txn.TransactionExt!.RefundAdminNote.Should().Be("Auto-rejected: your account having multiple flags");
+            txn.TransactionExt!.RefundAdminNote.Should().Be("Auto-rejected: your account having 3 warning flags (limit: 3)");
             await _mockRepo.Received(1).SaveChangesAsync();
         }
 
@@ -1324,7 +1324,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
             
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
-            result.RejectReason.Should().Be("having requested too many refunds within the refund period");
+            result.RejectReason.Should().Be("having requested 3 refunds within the last 14 days (limit: 3)");
         }
 
         [Fact]
@@ -1336,7 +1336,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
             
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
-            result.RejectReason.Should().Be("previous refund history for this course");
+            result.RejectReason.Should().Be("previous refund history for this course (1 previous refund)");
         }
 
         [Fact]
@@ -1348,7 +1348,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
             
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
-            result.RejectReason.Should().Be("learning progress exceeding the limit for short courses");
+            result.RejectReason.Should().Be("learning progress of 16.0% exceeding the 15% limit for short courses");
         }
 
         [Fact]
@@ -1360,7 +1360,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
             
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
-            result.RejectReason.Should().Be("video watch time exceeding the limit allowed for long courses");
+            result.RejectReason.Should().Be("video watch time of 2.0 hours exceeding the 1.0 hour limit allowed for long courses");
         }
 
         [Fact]
