@@ -718,7 +718,7 @@
                     <div class="flex items-center gap-4">
                         <h2 class="font-bold text-slate-800">Quiz Results: ${quizData.title}</h2>
                     </div>
-                    <a href="${isPreviewMode ? '/Quiz/Editor/' + quizData.quizId : 'javascript:window.close()'}" class="px-6 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">
+                    <a href="javascript:void(0)" onclick="${isPreviewMode ? `window.location.href='/Quiz/Editor/${quizData.quizId}'` : 'closeQuizWindow()'}" class="px-6 py-2 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors">
                         ${isPreviewMode ? 'Close Preview' : 'Close Window'}
                     </a>
                 </div>
@@ -755,6 +755,10 @@
                 </div>
             `;
             document.getElementById('quiz-app').innerHTML = html;
+        }
+
+        function closeQuizWindow() {
+            window.location.href = '/QuizAttempt/Take/' + quizData.quizId;
         }
 
         document.addEventListener("DOMContentLoaded", initApp);

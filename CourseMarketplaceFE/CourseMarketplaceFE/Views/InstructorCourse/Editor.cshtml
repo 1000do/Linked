@@ -1957,7 +1957,11 @@
                         }
                         
                         const type = (metadata?.file_type || metadata?.FileType || metadata?.fileType || 'video').toLowerCase();
-                        const mUrl = material.materialUrl || material.MaterialUrl;
+                        const mId = material.materialId || material.MaterialId;
+                        let mUrl = material.materialUrl || material.MaterialUrl;
+                        if (mUrl === 'PROXY_STREAM') {
+                            mUrl = `/Course/StreamMaterial?materialId=${mId}`;
+                        }
                         const mDesc = material.description || material.Description;
                         const mTitle = material.title || material.Title;
                         const mLearningStatus = (material.learningStatus || material.LearningStatus || '').toLowerCase();
@@ -2902,7 +2906,11 @@
             const emptyState = resourcesList.querySelector('.text-slate-500.italic');
             if (emptyState) emptyState.remove();
 
-            const mUrl = material.materialUrl || material.MaterialUrl;
+            let mUrl = material.materialUrl || material.MaterialUrl;
+            if (mUrl === 'PROXY_STREAM') {
+                const mId = material.materialId || material.MaterialId;
+                mUrl = `/Course/StreamMaterial?materialId=${mId}&download=true`;
+            }
             const mId = material.materialId || material.MaterialId;
             const mTitle = material.title || material.Title || "Resource File";
             const mDesc = material.description || material.Description;

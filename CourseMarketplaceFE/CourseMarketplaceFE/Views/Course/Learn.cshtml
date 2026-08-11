@@ -37,7 +37,9 @@
     var userRole = (Context.Request.Cookies["UserRole"] ?? "").ToLower();
     var isStaffOrAdmin = userRole == "admin" || userRole == "staff" || User.IsInRole("admin") || User.IsInRole("staff");
     var isCourseOwner = Model.IsOwner;
-    var canSkipVideoServer = isStaffOrAdmin || isCourseOwner;
+     // --- CÔNG TẮC BẬT/TẮT CHỨC NĂNG SKIP NHANH ---
+    var enableGlobalSkip = false; // Đổi thành false nếu muốn bật lại chức năng chặn skip
+    var canSkipVideoServer = enableGlobalSkip || isStaffOrAdmin || isCourseOwner;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -1316,7 +1318,9 @@
                 if (docDownloadFallback) docDownloadFallback.classList.add('hidden');
 
                 let optimizedUrl = url;
-                if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
+                if (url === 'PROXY_STREAM') {
+                    optimizedUrl = `/Course/StreamMaterial?materialId=${materialId}`;
+                } else if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
                     optimizedUrl = url.replace('/video/upload/', '/video/upload/f_auto,q_auto/');
                 }
 
@@ -1335,8 +1339,9 @@
                 docViewer.classList.remove('hidden');
                 docTitle.textContent = title;
                 
-                var lowerUrl = url.toLowerCase();
-                if (lowerUrl.endsWith('.txt')) {
+                var lowerTitle = title.toLowerCase();
+                var lowerType = (type || '').toLowerCase();
+                if (lowerTitle.endsWith('.txt') || lowerType === 'text/plain') {
                     if (docIframe) {
                         docIframe.src = '';
                         docIframe.classList.add('hidden');
@@ -1348,7 +1353,12 @@
                     if (txtViewer) txtViewer.classList.remove('hidden');
                     if (txtContent) txtContent.textContent = 'Loading content...';
 
-                    fetch(url)
+                    let fetchUrl = url;
+                    if (url === 'PROXY_STREAM') {
+                        fetchUrl = `/Course/StreamMaterial?materialId=${materialId}`;
+                    }
+                    
+                    fetch(fetchUrl)
                         .then(res => res.arrayBuffer())
                         .then(buffer => {
                             const decoder = new TextDecoder('utf-8');

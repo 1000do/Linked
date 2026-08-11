@@ -233,7 +233,7 @@ public class CourseQueryService : ICourseQueryService
             response.IsOwner = false;
         }
 
-        if (!response.IsOwner && !response.IsEnrolled && response.Lessons != null)
+        if (response.Lessons != null)
         {
             bool hasAllowedPreview = false;
             foreach (var lesson in response.Lessons.OrderBy(l => l.LessonId))
@@ -242,14 +242,21 @@ public class CourseQueryService : ICourseQueryService
                 {
                     foreach (var m in lesson.LearningMaterials.OrderBy(m => m.MaterialId))
                     {
-                        if (!hasAllowedPreview && m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true)
+                        if (!response.IsOwner && !response.IsEnrolled)
                         {
-                            m.MaterialUrl = "PROXY_STREAM";
-                            hasAllowedPreview = true;
+                            if (!hasAllowedPreview && m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true)
+                            {
+                                m.MaterialUrl = "PROXY_STREAM";
+                                hasAllowedPreview = true;
+                            }
+                            else
+                            {
+                                m.MaterialUrl = null;
+                            }
                         }
                         else
                         {
-                            m.MaterialUrl = null;
+                            m.MaterialUrl = "PROXY_STREAM";
                         }
                     }
                 }
