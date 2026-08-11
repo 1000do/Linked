@@ -257,14 +257,6 @@
                         @{
                             var profileHref = isStaffOrAdmin ? "/AdminProfile" : "/Account/Profile";
                         }
-                        <a href="@profileHref" class="hover:scale-105 transition-all" title="Profile">
-                            @await Html.PartialAsync("_UserAvatar", new { 
-                                Url = avatarUrl, 
-                                Role = userRole, 
-                                Name = userName, 
-                                Size = "md"
-                            })
-                        </a>
                         <div class="flex flex-col items-start lg:items-end order-2 lg:order-1">
                             <span class="text-sm lg:text-xs font-bold text-slate-700">Hi, @userName</span>
                             @* POST logout to revoke refresh token on BE (more secure than GET) *@
@@ -273,6 +265,14 @@
                                 <button type="submit" class="text-xs lg:text-[10px] text-red-500 hover:underline font-medium bg-transparent border-none p-0 cursor-pointer">Logout</button>
                             </form>
                         </div>
+                        <a href="@profileHref" class="hover:scale-105 transition-all order-1 lg:order-2" title="Profile">
+                            @await Html.PartialAsync("_UserAvatar", new { 
+                                Url = avatarUrl, 
+                                Role = userRole, 
+                                Name = userName, 
+                                Size = "md"
+                            })
+                        </a>
                     </div>
 
                    

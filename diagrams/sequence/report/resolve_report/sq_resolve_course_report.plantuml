@@ -42,15 +42,14 @@ participant "AdminModerationController" as fe_ctrl <<frontend controller>>
 participant "AdminModerationController" as be_ctrl <<backend controller>>
 participant ":IReportModerationService" as sv
 participant ":IReportRepository" as repo
-participant ":IRedisService" as redis
+' participant ":IRedisService" as redis
 participant ":AppDbContext" as ctx
 database Database as db
 
 act ++
 act -> view++: Click "Moderate" on a course report row
-view -->> act: Display Moderate Report popup
-act -> view: Enter moderation details
-act -> view: Click "Submit Decision"
+view -->> act--: Display Moderate Report popup
+act -> view++: Enter moderation details,\n click "Submit Decision"
 
 view -> view++: Validate form input
 view--
@@ -102,19 +101,17 @@ else Valid actor's authentication and authorization
         sv -> sv++: Update course report fields
         sv--
 
-    opt Report is accepted
-        sv -> sv++: Call ApplyCoursePenaltyAsync()
-        sv--
-    end
-
     sv -> repo++: UpdateCourseReport(report)
+    repo -> ctx++: Update()
+    ctx-->>repo--: Return result
     repo -->> sv--: Return result
 
     sv -> sv++: SaveReportChangesAsync()
     sv -> repo++: SaveChangesAsync()
     repo -> ctx++: Call SaveChangesAsync()
     ctx -> db++: Save changes to database
-
+    db -> db++: Check database\n operation status
+    db--
     alt Database Save Failure
         db -->> ctx: Throw DbUpdateException
         ctx -->> repo: Throw DbUpdateException
@@ -129,11 +126,7 @@ else Valid actor's authentication and authorization
         repo -->> sv--: Return numberOfRowsAffected
         sv--
 
-        opt Report is accepted and Course is Flagged
-            sv -> redis++: RemoveCacheAsync(cacheKey)
-            redis -->> sv--: Return result
-        end
-
+       
         sv -> sv++: Call SendResolutionNotificationsAsync()
         sv--
 

@@ -36,6 +36,8 @@ mainframe Delete Question
 
 actor Instructor as act
 participant "QuestionBankPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "QuestionBankController" as fe_ctrl <<frontend controller>>
 participant "QuestionBankController" as be_ctrl <<backend controller>>
 participant ":QuestionBankService" as sv
@@ -48,41 +50,60 @@ act ++
 act -> view++: Confirm delete question
 view -> fe_ctrl++: DELETE /QuestionBank/DeleteQuestion?qId={qId}
 
-fe_ctrl -> be_ctrl++: DELETE /api/QuestionBank/questions/{questionId}
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
 
-be_ctrl -> sv++: Call DeleteQuestionAsync(questionId, instructorId)
-
-sv -> repo++: Call GetQuestionByIdAsync(questionId)
-repo -->> sv--: Return QuizQuestion entity
-
-alt Question Not Found
-    sv -->> be_ctrl: throw KeyNotFoundException
-    be_ctrl -->> fe_ctrl: Return statusCode 404
-    fe_ctrl -->> view: Return JSON (success=false)
-    view -->> act: Display not found error message
-else Question Found
-    sv -> course_repo++: Call GetByIdAsync(courseId)
-    course_repo -->> sv--: Return course entity
-
-    sv -> sv++: Validate Course Ownership
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act--: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: DELETE /api/QuestionBank/questions/{questionId}
+    
+    be_ctrl -> sv++: Call DeleteQuestionAsync(questionId, instructorId)
+    
+    sv -> repo++: Call GetQuestionByIdAsync(questionId)
+    repo -> ctx++: Query question from DbSet
+    ctx -> db++: Execute query
+    db -->> ctx--: Return question data
+    ctx -->> repo--: Return QuizQuestion entity
+    repo -->> sv--: Return QuizQuestion entity
+    
+    sv -> sv++: Check if question exists
     sv--
     
-    alt Course Not Found Or Unauthorized
-        sv -->> be_ctrl: throw UnauthorizedAccessException
-        be_ctrl -->> fe_ctrl: Return statusCode 403
+    alt Question Not Found
+        sv -->> be_ctrl: throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl: Return statusCode 404
         fe_ctrl -->> view: Return JSON (success=false)
-        view -->> act: Display unauthorized error message
-    else Authorized
-        sv -> repo++: Call DeleteQuestionAsync(questionId)
+        view -->> act: Display not found error message
+    else Question Found
+        sv -> course_repo++: Call GetByIdAsync(courseId)
+        course_repo -> ctx++: Query course from DbSet
+        ctx -> db++: Execute query
+        db -->> ctx--: Return course data
+        ctx -->> course_repo--: Return course entity
+        course_repo -->> sv--: Return course entity
+    
+        sv -> sv++: Validate Course Ownership
+        sv--
         
-        repo -> ctx++: Call FindAsync(questionId)
-        ctx -> db++: Query database
-        db -->> ctx--: Return record
-        
-        alt Question Exists in Context
-            repo -> ctx: Call Remove(question)
-            repo -> ctx: Call SaveChangesAsync()
-            ctx -> db++: Delete record from database
+        alt Course Not Found Or Unauthorized
+            sv -->> be_ctrl: throw UnauthorizedAccessException
+            be_ctrl -->> fe_ctrl: Return statusCode 403
+            fe_ctrl -->> view: Return JSON (success=false)
+            view -->> act: Display unauthorized error message
+        else Authorized
+            sv -> repo++: Call DeleteQuestionAsync(questionId)
+            repo -> ctx++: Call SaveChangesAsync()
+            ctx -> db++: Save changes to database
+            
+            db -> db++: Check database constraints
+            db--
             
             alt Database Delete Failure
                 db -->> ctx: throw DbUpdateException
@@ -94,17 +115,14 @@ else Question Found
                 view -->> act: Display server error message
             else Database Delete Success
                 db -->> ctx--: Return returnCode
-                ctx -->> repo: Return numberOfRowsAffected
+                ctx -->> repo--: Return numberOfRowsAffected
+                repo -->> sv--: Return result
             end
-        else Question Not In Context
-            repo -> repo: Return
+            
+            sv -->> be_ctrl--: Return result
+            be_ctrl -->> fe_ctrl--: Return statusCode 204
+            fe_ctrl -->> view--: Return JSON (success=true)
+            view -->> act--: Display question deleted successfully
         end
-        
-        repo -->> sv--: Return result
-        
-        sv -->> be_ctrl--: Return result
-        be_ctrl -->> fe_ctrl--: Return statusCode 204
-        fe_ctrl -->> view--: Return JSON (success=true)
-        view -->> act--: Display question deleted successfully
     end
 end

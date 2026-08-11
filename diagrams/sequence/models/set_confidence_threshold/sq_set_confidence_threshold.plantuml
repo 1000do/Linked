@@ -95,7 +95,8 @@ else Valid actor's authentication and authorization
     
     repo -> ctx++: Call SaveChangesAsync()
     ctx -> db++: Save changes to Database
-    
+    db -> db++: Check database\noperation status
+    db--
     alt Database Save Failure
         db -->> ctx: Throw DbUpdateException
         ctx -->> repo: Throw DbUpdateException

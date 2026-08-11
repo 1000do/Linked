@@ -13,10 +13,12 @@ namespace CourseMarketplaceBE.Presentation.Controllers;
 public class LessonController : ControllerBase
 {
     private readonly ILessonService _lessonService;
+    private readonly IMaterialStreamService _streamService;
 
-    public LessonController(ILessonService lessonService)
+    public LessonController(ILessonService lessonService, IMaterialStreamService streamService)
     {
         _lessonService = lessonService;
+        _streamService = streamService;
     }
 
     private int GetInstructorId()
@@ -226,6 +228,63 @@ public class LessonController : ControllerBase
         catch (UnauthorizedAccessException ex)
         {
             return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+    }
+
+    [HttpGet("materials/{materialId}/stream")]
+    [Authorize]
+    public async Task<IActionResult> StreamMaterial(int materialId)
+    {
+        try
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out var userId))
+                return Unauthorized(ApiResponse<object>.ErrorResponse("Invalid user token."));
+
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+            var rangeHeader = Request.Headers["Range"].ToString();
+
+            var result = await _streamService.GetMaterialStreamAsync(materialId, userId, userRole, rangeHeader);
+
+            if (!string.IsNullOrEmpty(result.ContentRangeHeader))
+            {
+                Response.Headers["Accept-Ranges"] = "bytes";
+                Response.Headers["Content-Range"] = result.ContentRangeHeader;
+            }
+
+            if (result.ContentLength.HasValue)
+            {
+                Response.ContentLength = result.ContentLength.Value;
+            }
+
+            if (!string.IsNullOrEmpty(result.FileName))
+            {
+                var contentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment") 
+                { 
+                    FileName = "\"" + result.FileName + "\"",
+                    FileNameStar = result.FileName
+                };
+                Response.Headers["Content-Disposition"] = contentDisposition.ToString();
+            }
+
+            Response.StatusCode = result.StatusCode;
+            return File(result.Stream, result.ContentType);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<object>.ErrorResponse(ex.Message));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
         }
         catch (InvalidOperationException ex)
         {

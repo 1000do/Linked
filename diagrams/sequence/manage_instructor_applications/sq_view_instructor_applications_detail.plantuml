@@ -75,6 +75,9 @@ db -->> ctx--: Return instructor application
 ctx -->> repo--: Return instructor application
 repo -->> sv--: Return instructor application
 
+    sv -> sv++: Validate application existence
+    sv--
+
     alt application == null
         sv -->> be_ctrl: Return null
         be_ctrl -->> fe_ctrl: Return statusCode 404
@@ -87,9 +90,11 @@ repo -->> sv--: Return instructor application
         be_ctrl -->> fe_ctrl--: Return statusCode 200
         
         fe_ctrl -->> detail_view++: Return Detail View with model
-        deactivate index_view
-        detail_view -->> act--: Display instructor application detail
         deactivate fe_ctrl
+        
+        detail_view -->> act--: Display instructor application detail
+        deactivate detail_view
+        deactivate index_view
     end
 end
 

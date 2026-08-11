@@ -4,11 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
-using CourseMarketplaceBE.Application.Exceptions;
 using FluentAssertions;
 using NSubstitute;
 using Xunit;
@@ -175,7 +175,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.ReviewBlockedReason.Should().BeNull();
             result.HasReviewed.Should().BeTrue();
         }
-        
+
         [Fact]
         public async Task GetEnrollmentStatusAsync_NotOwnerAndEnrolled_WithZeroTotalMaterials_ReturnsZeroProgress()
         {
@@ -215,7 +215,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             int userId = 1;
             int courseId = 2;
             var request = new ReviewRequest { CourseId = courseId, Rating = 5, Comment = "Great" };
-            
+
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(true);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns((Enrollment)null);
@@ -236,7 +236,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             int userId = 1;
             int courseId = 2;
             var request = new ReviewRequest { CourseId = courseId, Rating = 5, Comment = "Great" };
-            
+
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(true);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns((Enrollment)null);
@@ -263,10 +263,34 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         {
             _lockoutRepoMock.GetActiveLockoutAsync(1, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(1, 2).Returns(false);
-            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(1, 2).Returns(new Enrollment { IsCompleted = false });
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(1, 2).Returns(new Enrollment { IsCompleted = null });
 
             Func<Task> act = async () => await _sut.SubmitReviewAsync(1, new ReviewRequest { CourseId = 2 }, true);
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("You need to complete the course before writing a review on the detail page.");
+        }
+
+        [Fact]
+        public async Task SubmitReviewAsync_AlreadyReviewedCourse_ThrowsBadRequestException()
+        {
+            _lockoutRepoMock.GetActiveLockoutAsync(1, "review").Returns((Lockout)null);
+            _courseRepoMock.IsOwnerAsync(1, 2).Returns(false);
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(1, 2).Returns(new Enrollment { EnrollmentId = 1, IsCompleted = true });
+            _reviewRepoMock.GetCourseReviewByEnrollmentAsync(1).Returns(new CourseReview());
+
+            Func<Task> act = async () => await _sut.SubmitReviewAsync(1, new ReviewRequest { CourseId = 2 }, true);
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("You have already reviewed this course.");
+        }
+
+        [Fact]
+        public async Task SubmitReviewAsync_AlreadyReviewedLesson_ThrowsBadRequestException()
+        {
+            _lockoutRepoMock.GetActiveLockoutAsync(1, "review").Returns((Lockout)null);
+            _courseRepoMock.IsOwnerAsync(1, 2).Returns(false);
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(1, 2).Returns(new Enrollment { EnrollmentId = 1, IsCompleted = true });
+            _reviewRepoMock.GetLessonReviewByEnrollmentAsync(1, 3).Returns(new LessonReview());
+
+            Func<Task> act = async () => await _sut.SubmitReviewAsync(1, new ReviewRequest { CourseId = 2, LessonId = 3 }, true);
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("You have already reviewed this lesson.");
         }
 
         [Fact]
@@ -300,38 +324,145 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task SubmitReviewAsync_NotOwner_SubmitsLessonReviewAndSendsNotification()
         {
+            //Arrange 1
             int userId = 1;
             int courseId = 2;
             int lessonId = 3;
             var request = new ReviewRequest { CourseId = courseId, LessonId = lessonId, Rating = 4, Comment = "Good lesson" };
-            
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
+
+            //Arrange 2
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10, IsCompleted = true });
             _enrollmentRepoMock.IsLessonCompletedAsync(10, lessonId).Returns(true);
             _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId, Title = "Course", InstructorId = 99 });
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
 
+            //Act
             await _sut.SubmitReviewAsync(userId, request, false);
 
+            //Assert
             await _enrollmentRepoMock.Received(1).GetCompletedMaterialCountAsync(10);
             await _reviewRepoMock.Received(1).AddLessonReviewAsync(Arg.Is<LessonReview>(r => r.Rating == 4 && r.LessonId == lessonId));
+            await _moderationRecordRepoMock.Received(1).AddLessonReviewModerationRecordAsync(Arg.Any<LessonReviewModerationRecord>());
+            capturedWorkItem.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task SubmitReviewAsync_OwnerLessonReview_CreatesModerationRecord_QueuesBackgroundTask()
+        {
+            //Arrange 1
+            int userId = 1;
+            int courseId = 2;
+            int lessonId = 3;
+            var request = new ReviewRequest { CourseId = courseId, LessonId = lessonId, Rating = 5, Comment = "Owner lesson review" };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
+
+            //Arrange 2
+            _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
+            _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(true);
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10, CourseId = courseId });
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
+            await _sut.SubmitReviewAsync(userId, request, false);
+
+            //Assert
+            await _moderationRecordRepoMock.Received(1).AddLessonReviewModerationRecordAsync(Arg.Any<LessonReviewModerationRecord>());
+            capturedWorkItem.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task SubmitReviewAsync_OwnerCourseReview_CreatesModerationRecord_QueuesBackgroundTask()
+        {
+            //Arrange 1
+            int userId = 1;
+            int courseId = 2;
+            var request = new ReviewRequest { CourseId = courseId, LessonId = null, Rating = 5, Comment = "Owner course review" };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
+
+            //Arrange 2
+            _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
+            _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(true);
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns((Enrollment)null);
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId, Title = "Title" });
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
+            await _sut.SubmitReviewAsync(userId, request, false);
+
+            //Assert
+            await _moderationRecordRepoMock.Received(1).AddCourseReviewModerationRecordAsync(Arg.Any<CourseReviewModerationRecord>());
+            capturedWorkItem.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task SubmitReviewAsync_BackgroundTask_AiModerationThrows_LogsError()
+        {
+            //Arrange 1
+            int userId = 1;
+            int courseId = 2;
+            var request = new ReviewRequest { CourseId = courseId, Rating = 5, Comment = "Test comment" };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
+
+            //Arrange 2
+            _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
+            _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
+            _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10 });
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
+            await _sut.SubmitReviewAsync(userId, request, false);
+
+            var aiModMock = Substitute.For<IReviewAiModerationService>();
+            var exception = Task.FromException<ReviewAiModerationResponse>(new Exception("AI Failure"));
+            aiModMock.HandleReviewAiModerationAsync(Arg.Any<TempReviewDto>()).Returns(exception);
+            Func<Task> actLambda = async () => await capturedWorkItem!(aiModMock, CancellationToken.None);
+
+            //Assert
+            await actLambda.Should().NotThrowAsync();
         }
 
         [Fact]
         public async Task SubmitReviewAsync_NotOwner_LessonIncomplete_ThrowsInvalidOperationException()
         {
+            //Arrange 1
             int userId = 1;
             int courseId = 2;
             int lessonId = 3;
             var request = new ReviewRequest { CourseId = courseId, LessonId = lessonId, Rating = 4, Comment = "Good lesson" };
-            
+
+            //Arrange 2
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10, IsCompleted = true });
             _enrollmentRepoMock.IsLessonCompletedAsync(10, lessonId).Returns(false);
 
+            //Act
             Func<Task> act = async () => await _sut.SubmitReviewAsync(userId, request, false);
 
+            //Assert
             await act.Should().ThrowAsync<InvalidOperationException>()
                 .WithMessage("You need to complete all materials in this lesson before writing a review.");
         }
@@ -339,34 +470,42 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task SubmitReviewAsync_NotOwner_SubmitsCourseReviewAndSendsNotification()
         {
+            //Arrange 1
             int userId = 1;
             int courseId = 2;
             var request = new ReviewRequest { CourseId = courseId, Rating = 4, Comment = "Good course" };
-            
+
+            //Arrange 2
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10 });
             _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId, Title = "Course", InstructorId = 99 });
 
+            //Act
             await _sut.SubmitReviewAsync(userId, request, false);
 
+            //Assert
             await _reviewRepoMock.Received(1).AddCourseReviewAsync(Arg.Is<CourseReview>(r => r.Rating == 4));
         }
-        
+
         [Fact]
         public async Task SubmitReviewAsync_NotOwner_InstructorIsNull_SubmitsButNoNotification()
         {
+            //Arrange 1
             int userId = 1;
             int courseId = 2;
             var request = new ReviewRequest { CourseId = courseId, Rating = 4, Comment = "Good course" };
-            
+
+            //Arrange 2
             _lockoutRepoMock.GetActiveLockoutAsync(userId, "review").Returns((Lockout)null);
             _courseRepoMock.IsOwnerAsync(userId, courseId).Returns(false);
             _enrollmentRepoMock.GetEnrollmentWithProgressAsync(userId, courseId).Returns(new Enrollment { EnrollmentId = 10 });
             _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId, Title = "Course", InstructorId = null });
 
+            //Act
             await _sut.SubmitReviewAsync(userId, request, false);
 
+            //Assert
             await _reviewRepoMock.Received(1).AddCourseReviewAsync(Arg.Is<CourseReview>(r => r.Rating == 4));
             await _notifMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
         }
@@ -378,23 +517,28 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task GetCourseReviewsAsync_WithRemovedAndNormalReviews_MapsCorrectly()
         {
+            //Arrange 1
             int courseId = 2;
             var course = new Course { CourseId = courseId, InstructorId = 99 };
             var reviews = new List<CourseReview>
             {
-                new CourseReview { CourseReviewId = 1, Rating = 5, Comment = "Awesome", IsRemoved = false, CourseReviewStatus = "ok", Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A" } } },
-                new CourseReview { CourseReviewId = 2, Rating = 4, Comment = "Bad", IsRemoved = true, CourseReviewStatus = "violating", Enrollment = new Enrollment { UserId = 2 } },
-                new CourseReview { CourseReviewId = 3, Rating = 3, Comment = "Whatever", IsRemoved = true, CourseReviewStatus = "removed", Enrollment = new Enrollment { UserId = 99 } } // Instructor review
+                new CourseReview { CourseReviewId = 1, Rating = 5, Comment = "Awesome", IsRemoved = false, CourseReviewStatus = "ok", CreatedAt = new DateTime(2023, 1, 1), Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A", UserNavigation = new Account { AvatarUrl = "url" } } } },
+                new CourseReview { CourseReviewId = 2, Rating = 4, Comment = "Bad", IsRemoved = true, CourseReviewStatus = "violating", CreatedAt = null, Enrollment = new Enrollment { UserId = 2, User = new User { FullName = "B", UserNavigation = null } } },
+                new CourseReview { CourseReviewId = 3, Rating = 3, Comment = "Whatever", IsRemoved = true, CourseReviewStatus = "removed", CreatedAt = DateTime.UtcNow, Enrollment = new Enrollment { UserId = 99, User = new User { FullName = "Instructor" } } },
+                new CourseReview { CourseReviewId = 4, Rating = 1, Comment = "Normal", IsRemoved = false, CourseReviewStatus = "ok", Enrollment = new Enrollment { UserId = 4, User = new User { FullName = "D" } } }
             };
 
+            //Arrange 2
             _courseRepoMock.GetByIdAsync(courseId).Returns(course);
-            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 3));
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 4));
 
+            //Act
             var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
 
+            //Assert
             var items = result.Items.ToList();
-            items.Should().HaveCount(3);
-            
+            items.Should().HaveCount(4);
+
             // Normal review
             items[0].Rating.Should().Be(5);
             items[0].Comment.Should().Be("Awesome");
@@ -414,41 +558,152 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseReviewsAsync_CourseIsNull_ReturnsMappedReviews()
+        public async Task GetCourseReviewsAsync_NullEnrollment_ThrowsInvalidOperationException()
         {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview> { new CourseReview { CourseReviewId = 1, Enrollment = null } };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            Func<Task> act = async () => await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Review enrollment not found.");
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_NullEnrolledUser_ThrowsInvalidOperationException()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview> { new CourseReview { CourseReviewId = 1, Enrollment = new Enrollment { UserId = 1, User = null } } };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            Func<Task> act = async () => await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Enrolled user not found.");
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_NullUserNavigation_AvatarUrlIsNull()
+        {
+            //Arrange 1
             int courseId = 2;
             var reviews = new List<CourseReview>
             {
-                new CourseReview { CourseReviewId = 1, Rating = 5, Comment = "Awesome" }
+                new CourseReview { CourseReviewId = 1, Rating = 5, Comment = "Ok", Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name", UserNavigation = null } } }
             };
 
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            result.Items.First().UserAvatarUrl.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_NullCreatedAt_DefaultsToNow()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>
+            {
+                new CourseReview { CourseReviewId = 1, Rating = 5, Comment = "Ok", CreatedAt = null, Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name" } } }
+            };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            result.Items.First().CreatedAt.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_LessonIsNull_ReturnsMappedReviews()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>
+            {
+                new LessonReview { LessonReviewId = 1, Rating = 5, Comment = null, LessonReviewStatus = null, Lesson = null, Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A" } } }
+            };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            var items = result.Items.ToList();
+            items.First().IsInstructor.Should().BeFalse();
+            items.First().Comment.Should().Be("");
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_CourseIsNull_ReturnsMappedReviews()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>
+            {
+                new CourseReview { CourseReviewId = 1, Rating = 5, Comment = null, CourseReviewStatus = null, Enrollment = new Enrollment { UserId = 2, User = new User { FullName = "B" } } }
+            };
+
+            //Arrange 2
             _courseRepoMock.GetByIdAsync(courseId).Returns((Course)null);
             _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
 
+            //Act
             var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
             var items = result.Items.ToList();
             items.First().IsInstructor.Should().BeFalse();
+            items.First().Comment.Should().Be("");
         }
 
         [Fact]
         public async Task GetLessonReviewsAsync_WithRemovedAndNormalReviews_MapsCorrectly()
         {
+            //Arrange 1
             int lessonId = 5;
             var lesson = new Lesson { LessonId = lessonId, Course = new Course { InstructorId = 99 }, Title = "Lesson Title" };
             var reviews = new List<LessonReview>
             {
                 new LessonReview { LessonReviewId = 1, LessonId = lessonId, Lesson = lesson, Rating = 5, Comment = "Awesome", IsRemoved = false, LessonReviewStatus = "ok", Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A", UserNavigation = new Account { AvatarUrl = "url" } } } },
-                new LessonReview { LessonReviewId = 2, LessonId = lessonId, Lesson = lesson, Rating = 4, Comment = "Bad", IsRemoved = true, LessonReviewStatus = "violating", Enrollment = new Enrollment { UserId = 2 } },
-                new LessonReview { LessonReviewId = 3, LessonId = lessonId, Lesson = lesson, Rating = 3, Comment = "Whatever", IsRemoved = true, LessonReviewStatus = "removed", Enrollment = new Enrollment { UserId = 99 } }
+                new LessonReview { LessonReviewId = 2, LessonId = lessonId, Lesson = lesson, Rating = 4, Comment = "Bad", IsRemoved = true, LessonReviewStatus = "violating", Enrollment = new Enrollment { UserId = 2, User = new User { FullName = "B" } } },
+                new LessonReview { LessonReviewId = 3, LessonId = lessonId, Lesson = lesson, Rating = 3, Comment = "Whatever", IsRemoved = true, LessonReviewStatus = "removed", Enrollment = new Enrollment { UserId = 99, User = new User { FullName = "Instructor" } } },
+                new LessonReview { LessonReviewId = 4, LessonId = lessonId, Lesson = lesson, Rating = 1, Comment = "Normal", IsRemoved = false, LessonReviewStatus = "ok", Enrollment = new Enrollment { UserId = 4, User = new User { FullName = "D" } } }
             };
 
-            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 3));
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 4));
 
+            //Act
             var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
 
+            //Assert
             var items = result.Items.ToList();
-            items.Should().HaveCount(3);
-            
+            items.Should().HaveCount(4);
+
             // Normal
             items[0].Rating.Should().Be(5);
             items[0].Comment.Should().Be("Awesome");
@@ -466,20 +721,92 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetLessonReviewsAsync_LessonIsNull_ReturnsMappedReviews()
+        public async Task GetLessonReviewsAsync_NullEnrollment_ThrowsInvalidOperationException()
         {
+            //Arrange 1
             int lessonId = 5;
-            var reviews = new List<LessonReview>
-            {
-                new LessonReview { LessonReviewId = 1, Lesson = null }
-            };
+            var reviews = new List<LessonReview> { new LessonReview { LessonReviewId = 1, Enrollment = null } };
 
+            //Arrange 2
             _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
 
-            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
-            var items = result.Items.ToList();
-            items.First().LessonTitle.Should().BeNull();
+            //Act
+            Func<Task> act = async () => await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Review enrollment not found.");
         }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_NullEnrolledUser_ThrowsInvalidOperationException()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview> { new LessonReview { LessonReviewId = 1, Enrollment = new Enrollment { UserId = 1, User = null } } };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            Func<Task> act = async () => await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Enrolled user not found.");
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_FirstReviewNullLesson_InstructorIdIsNull()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview> { new LessonReview { LessonReviewId = 1, Lesson = null, Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A" } } } };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.First().IsInstructor.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_FirstReviewNullCourse_InstructorIdIsNull()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var lesson = new Lesson { LessonId = lessonId, Course = null };
+            var reviews = new List<LessonReview> { new LessonReview { LessonReviewId = 1, Lesson = lesson, Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A" } } } };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.First().IsInstructor.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_NullLessonOnReview_LessonTitleIsNull()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview> { new LessonReview { LessonReviewId = 1, Lesson = null, Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "A" } } } };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.First().LessonTitle.Should().BeNull();
+        }
+
+
 
         // ----------------------------------------------------
         // Stats Calculation Tests
@@ -551,6 +878,10 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var request = new UpdateReviewRequest { Rating = 6, Comment = "Good" };
             Func<Task> act = async () => await _sut.UpdateReviewAsync(1, request);
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Rating must be between 1 and 5 stars.");
+
+            var requestZero = new UpdateReviewRequest { Rating = 0, Comment = "Good" };
+            Func<Task> actZero = async () => await _sut.UpdateReviewAsync(1, requestZero);
+            await actZero.Should().ThrowAsync<InvalidOperationException>().WithMessage("Rating must be between 1 and 5 stars.");
         }
 
         [Fact]
@@ -580,6 +911,15 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task UpdateReviewAsync_LessonReviewNullEnrollment_ThrowsUnauthorizedAccessException()
+        {
+            var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "lesson" };
+            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(new LessonReview { Enrollment = null });
+            Func<Task> act = async () => await _sut.UpdateReviewAsync(1, request);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You can only edit your own reviews.");
+        }
+
+        [Fact]
         public async Task UpdateReviewAsync_LessonReviewRemoved_ThrowsInvalidOperationException()
         {
             var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "lesson" };
@@ -591,53 +931,168 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task UpdateReviewAsync_LessonReviewValid_UpdatesReview()
         {
+            //Arrange 1
             var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Updated", Type = "lesson" };
-            var review = new LessonReview { Enrollment = new Enrollment { UserId = 1 }, IsRemoved = false };
-            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(review);
+            var review = new LessonReview { Enrollment = new Enrollment { UserId = 1 }, Lesson = new Lesson { CourseId = 99 }, IsRemoved = false };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
 
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(review);
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
             await _sut.UpdateReviewAsync(1, request);
 
-            _reviewRepoMock.Received(1).UpdateLessonReview(review);
-            await _reviewRepoMock.Received(1).SaveChangesAsync();
+            //Assert
+            await _moderationRecordRepoMock.Received(1).AddLessonReviewModerationRecordAsync(Arg.Any<LessonReviewModerationRecord>());
+            capturedWorkItem.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task UpdateReviewAsync_LessonReviewNullLesson_UpdatesReview()
+        {
+            //Arrange 1
+            var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Updated", Type = "lesson" };
+            var review = new LessonReview { Enrollment = new Enrollment { UserId = 1 }, Lesson = null, IsRemoved = false };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(review);
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
+            await _sut.UpdateReviewAsync(1, request);
+
+            //Assert
+            await _moderationRecordRepoMock.Received(1).AddLessonReviewModerationRecordAsync(Arg.Any<LessonReviewModerationRecord>());
+            capturedWorkItem.Should().NotBeNull();
         }
 
         [Fact]
         public async Task UpdateReviewAsync_CourseReviewNotFound_ThrowsInvalidOperationException()
         {
+            //Arrange 1
             var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "course" };
+
+            //Arrange 2
             _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns((CourseReview)null);
+
+            //Act
             Func<Task> act = async () => await _sut.UpdateReviewAsync(1, request);
+
+            //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Review not found.");
         }
-        
+
         [Fact]
         public async Task UpdateReviewAsync_CourseReviewNullType_DefaultsToCourse_UpdatesReview()
         {
+            //Arrange 1
             var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = null };
-            var review = new CourseReview { Enrollment = new Enrollment { UserId = 1 }, IsRemoved = false };
-            _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(review);
+            var review = new CourseReview { Enrollment = new Enrollment { UserId = 1, CourseId = 99 }, IsRemoved = false };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
 
+            //Arrange 2
+            _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(review);
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
             await _sut.UpdateReviewAsync(1, request);
 
-            _reviewRepoMock.Received(1).UpdateCourseReview(review);
-            await _reviewRepoMock.Received(1).SaveChangesAsync();
+            //Assert
+            await _moderationRecordRepoMock.Received(1).AddCourseReviewModerationRecordAsync(Arg.Any<CourseReviewModerationRecord>());
+            capturedWorkItem.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task UpdateReviewAsync_BackgroundTask_AiModerationThrows_LogsError()
+        {
+            //Arrange 1
+            var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "course" };
+            var review = new CourseReview { Enrollment = new Enrollment { UserId = 1, CourseId = 99 }, IsRemoved = false };
+            Func<IReviewAiModerationService, CancellationToken, ValueTask>? capturedWorkItem = null;
+
+            //Arrange 2
+            _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(review);
+            _taskQueueMock.QueueBackgroundWorkItemAsync<IReviewAiModerationService>(Arg.Any<Func<IReviewAiModerationService, CancellationToken, ValueTask>>())
+                .Returns(callInfo =>
+                {
+                    capturedWorkItem = callInfo.Arg<Func<IReviewAiModerationService, CancellationToken, ValueTask>>();
+                    return ValueTask.CompletedTask;
+                });
+
+            //Act
+            await _sut.UpdateReviewAsync(1, request);
+
+            var aiModMock = Substitute.For<IReviewAiModerationService>();
+            var exception = Task.FromException<ReviewAiModerationResponse>(new Exception("AI failure on update"));
+            aiModMock.HandleReviewAiModerationAsync(Arg.Any<TempReviewDto>()).Returns(exception);
+            Func<Task> actLambda = async () => await capturedWorkItem!(aiModMock, CancellationToken.None);
+
+            //Assert
+            await actLambda.Should().NotThrowAsync();
         }
 
         [Fact]
         public async Task UpdateReviewAsync_CourseReviewUnauthorized_ThrowsUnauthorizedAccessException()
         {
+            //Arrange 1
             var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "course" };
+
+            //Arrange 2
             _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(new CourseReview { Enrollment = new Enrollment { UserId = 2 } });
+
+            //Act
             Func<Task> act = async () => await _sut.UpdateReviewAsync(1, request);
+
+            //Assert
             await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You can only edit your own reviews.");
+        }
+
+        [Fact]
+        public async Task UpdateReviewAsync_CourseReviewNullEnrollment_ThrowsInvalidOperationException()
+        {
+            //Arrange 1
+            var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "course" };
+
+            //Arrange 2
+            _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(new CourseReview { Enrollment = null });
+
+            //Act
+            Func<Task> act = async () => await _sut.UpdateReviewAsync(1, request);
+
+            //Assert
+            await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Review enrollment not found.");
         }
 
         [Fact]
         public async Task UpdateReviewAsync_CourseReviewRemoved_ThrowsInvalidOperationException()
         {
+            //Arrange 1
             var request = new UpdateReviewRequest { ReviewId = 1, Rating = 5, Comment = "Good", Type = "course" };
+
+            //Arrange 2
             _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(new CourseReview { Enrollment = new Enrollment { UserId = 1 }, IsRemoved = true });
+
+            //Act
             Func<Task> act = async () => await _sut.UpdateReviewAsync(1, request);
+
+            //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This review has been removed and cannot be edited.");
         }
 
@@ -664,12 +1119,21 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task DeleteReviewAsync_LessonReviewNullEnrollment_ThrowsUnauthorizedAccessException()
+        {
+            var request = new DeleteReviewRequest { ReviewId = 1, Type = "lesson" };
+            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(new LessonReview { Enrollment = null });
+            Func<Task> act = async () => await _sut.DeleteReviewAsync(1, request);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You can only delete your own reviews.");
+        }
+
+        [Fact]
         public async Task DeleteReviewAsync_LessonReviewHasPendingReports_ThrowsInvalidOperationException()
         {
             var request = new DeleteReviewRequest { ReviewId = 1, Type = "lesson" };
             _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(new LessonReview { Enrollment = new Enrollment { UserId = 1 } });
             _reviewRepoMock.HasPendingLessonReviewReportsAsync(1).Returns(true);
-            
+
             Func<Task> act = async () => await _sut.DeleteReviewAsync(1, request);
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This review is currently under moderation review and cannot be deleted.");
         }
@@ -681,7 +1145,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var review = new LessonReview { Enrollment = new Enrollment { UserId = 1 } };
             _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(review);
             _reviewRepoMock.HasPendingLessonReviewReportsAsync(1).Returns(false);
-            
+
             await _sut.DeleteReviewAsync(1, request);
 
             review.IsRemoved.Should().BeTrue();
@@ -689,7 +1153,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _reviewRepoMock.Received(1).UpdateLessonReview(review);
             await _reviewRepoMock.Received(1).SaveChangesAsync();
         }
-        
+
         [Fact]
         public async Task DeleteReviewAsync_CourseReviewNotFound_ThrowsInvalidOperationException()
         {
@@ -709,16 +1173,34 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task DeleteReviewAsync_CourseReviewUnauthorized_ThrowsUnauthorizedAccessException()
+        {
+            var request = new DeleteReviewRequest { ReviewId = 1, Type = "course" };
+            _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(new CourseReview { Enrollment = new Enrollment { UserId = 2 } });
+            Func<Task> act = async () => await _sut.DeleteReviewAsync(1, request);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You can only delete your own reviews.");
+        }
+
+        [Fact]
+        public async Task DeleteReviewAsync_CourseReviewNullEnrollment_ThrowsUnauthorizedAccessException()
+        {
+            var request = new DeleteReviewRequest { ReviewId = 1, Type = "course" };
+            _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(new CourseReview { Enrollment = null });
+            Func<Task> act = async () => await _sut.DeleteReviewAsync(1, request);
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You can only delete your own reviews.");
+        }
+
+        [Fact]
         public async Task DeleteReviewAsync_CourseReviewHasPendingReports_ThrowsInvalidOperationException()
         {
             var request = new DeleteReviewRequest { ReviewId = 1, Type = "course" };
             _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(new CourseReview { Enrollment = new Enrollment { UserId = 1 } });
             _reviewRepoMock.HasPendingCourseReviewReportsAsync(1).Returns(true);
-            
+
             Func<Task> act = async () => await _sut.DeleteReviewAsync(1, request);
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This review is currently under moderation review and cannot be deleted.");
         }
-        
+
         [Fact]
         public async Task DeleteReviewAsync_CourseReviewValid_SoftDeletesReview()
         {
@@ -726,7 +1208,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var review = new CourseReview { Enrollment = new Enrollment { UserId = 1 } };
             _reviewRepoMock.GetCourseReviewByIdAsync(1).Returns(review);
             _reviewRepoMock.HasPendingCourseReviewReportsAsync(1).Returns(false);
-            
+
             await _sut.DeleteReviewAsync(1, request);
 
             review.IsRemoved.Should().BeTrue();
@@ -766,5 +1248,351 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _sut.ReportReviewAsync(1, 10, "lesson", null);
             await _reportServiceMock.Received(1).CreateLessonReviewReportAsync(1, Arg.Is<CreateLessonReviewReportRequest>(r => r.LessonReviewId == 10 && r.Reason == "Violates community standards"));
         }
-    }
+
+        [Fact]
+        public async Task UpdateReviewInDatabaseAsync_LessonReviewExists_UpdatesAndSaves()
+        {
+            //Arrange 1
+            var tempDto = new TempReviewDto { ReviewId = 1, LessonId = 5, Rating = 4, ReviewComment = "Test" };
+            var review = new LessonReview { LessonReviewId = 1, Rating = 1, Comment = "Old" };
+            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns(review);
+            
+            //Act
+            var result = await _sut.UpdateReviewInDatabaseAsync(tempDto, "approved");
+            
+            //Assert
+            Assert.True(result);
+            Assert.Equal(4, review.Rating);
+            Assert.Equal("Test", review.Comment);
+            Assert.Equal("approved", review.LessonReviewStatus);
+            _reviewRepoMock.Received(1).UpdateLessonReview(review);
+            await _reviewRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task UpdateReviewInDatabaseAsync_LessonReviewDoesNotExist_SkipsUpdateAndSaves()
+        {
+            //Arrange 1
+            var tempDto = new TempReviewDto { ReviewId = 1, LessonId = 5, Rating = 4, ReviewComment = "Test" };
+            _reviewRepoMock.GetLessonReviewByIdAsync(1).Returns((LessonReview)null!);
+            
+            //Act
+            var result = await _sut.UpdateReviewInDatabaseAsync(tempDto, "approved");
+            
+            //Assert
+            Assert.True(result);
+            _reviewRepoMock.DidNotReceive().UpdateLessonReview(Arg.Any<LessonReview>());
+            await _reviewRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task UpdateReviewInDatabaseAsync_CourseReviewExists_UpdatesAndSaves()
+        {
+            //Arrange 1
+            var tempDto = new TempReviewDto { ReviewId = 2, LessonId = null, Rating = 5, ReviewComment = "Course Test" };
+            var review = new CourseReview { CourseReviewId = 2, Rating = 3, Comment = "Old" };
+            _reviewRepoMock.GetCourseReviewByIdAsync(2).Returns(review);
+            
+            //Act
+            var result = await _sut.UpdateReviewInDatabaseAsync(tempDto, "approved");
+            
+            //Assert
+            Assert.True(result);
+            Assert.Equal(5, review.Rating);
+            Assert.Equal("Course Test", review.Comment);
+            Assert.Equal("approved", review.CourseReviewStatus);
+            _reviewRepoMock.Received(1).UpdateCourseReview(review);
+            await _reviewRepoMock.Received(1).SaveChangesAsync();
+        }
+
+        [Fact]
+        public async Task UpdateReviewInDatabaseAsync_CourseReviewDoesNotExist_SkipsUpdateAndSaves()
+        {
+            //Arrange 1
+            var tempDto = new TempReviewDto { ReviewId = 2, LessonId = null, Rating = 5, ReviewComment = "Course Test" };
+            _reviewRepoMock.GetCourseReviewByIdAsync(2).Returns((CourseReview)null!);
+            
+            //Act
+            var result = await _sut.UpdateReviewInDatabaseAsync(tempDto, "approved");
+            
+            //Assert
+            Assert.True(result);
+            _reviewRepoMock.DidNotReceive().UpdateCourseReview(Arg.Any<CourseReview>());
+            await _reviewRepoMock.Received(1).SaveChangesAsync();
+        }
+    
+        [Fact]
+        public async Task GetCourseReviewsAsync_EmptyReviews_ReturnsEmptyResult()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>();
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 0));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            result.Items.Should().BeEmpty();
+            result.TotalCount.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_NullRatingAndComment_DefaultsToZeroAndEmpty()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>
+            {
+                new CourseReview 
+                { 
+                    CourseReviewId = 1, 
+                    Rating = null, 
+                    Comment = null, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            var item = result.Items.First();
+            item.Rating.Should().Be(0);
+            item.Comment.Should().Be("");
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_ReviewRemoved_StatusNull_FallbackToDeleted()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>
+            {
+                new CourseReview 
+                { 
+                    CourseReviewId = 1, 
+                    IsRemoved = true, 
+                    CourseReviewStatus = null!, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            var item = result.Items.First();
+            item.Rating.Should().Be(0);
+            item.Comment.Should().Be("[deleted]");
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_EnrollmentUserIdNull_DefaultsToZero()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>
+            {
+                new CourseReview 
+                { 
+                    CourseReviewId = 1, 
+                    Enrollment = new Enrollment { UserId = null, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            result.Items.First().UserId.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetCourseReviewsAsync_EnrolledUserFullNameNull_DefaultsToAnonymous()
+        {
+            //Arrange 1
+            int courseId = 2;
+            var reviews = new List<CourseReview>
+            {
+                new CourseReview 
+                { 
+                    CourseReviewId = 1, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = null } } 
+                }
+            };
+
+            //Arrange 2
+            _courseRepoMock.GetByIdAsync(courseId).Returns(new Course { CourseId = courseId });
+            _reviewRepoMock.GetCourseReviewsWithDetailsAsync(courseId, 1, 10, null).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetCourseReviewsAsync(courseId, 1, 10, null);
+
+            //Assert
+            result.Items.First().UserFullName.Should().Be("Anonymous");
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_EmptyReviews_ReturnsEmptyResult()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>();
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 0));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.Should().BeEmpty();
+            result.TotalCount.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_NullRatingAndComment_DefaultsToZeroAndEmpty()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>
+            {
+                new LessonReview 
+                { 
+                    LessonReviewId = 1, 
+                    Rating = null, 
+                    Comment = null, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            var item = result.Items.First();
+            item.Rating.Should().Be(0);
+            item.Comment.Should().Be("");
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_ReviewRemoved_StatusNull_FallbackToDeleted()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>
+            {
+                new LessonReview 
+                { 
+                    LessonReviewId = 1, 
+                    IsRemoved = true, 
+                    LessonReviewStatus = null!, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            var item = result.Items.First();
+            item.Rating.Should().Be(0);
+            item.Comment.Should().Be("[deleted]");
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_EnrollmentUserIdNull_DefaultsToZero()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>
+            {
+                new LessonReview 
+                { 
+                    LessonReviewId = 1, 
+                    Enrollment = new Enrollment { UserId = null, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.First().UserId.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_EnrolledUserFullNameNull_DefaultsToAnonymous()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>
+            {
+                new LessonReview 
+                { 
+                    LessonReviewId = 1, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = null } } 
+                }
+            };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.First().UserFullName.Should().Be("Anonymous");
+        }
+
+        [Fact]
+        public async Task GetLessonReviewsAsync_LessonNull_LessonTitleNull()
+        {
+            //Arrange 1
+            int lessonId = 5;
+            var reviews = new List<LessonReview>
+            {
+                new LessonReview 
+                { 
+                    LessonReviewId = 1, 
+                    Lesson = null, 
+                    Enrollment = new Enrollment { UserId = 1, User = new User { FullName = "Name" } } 
+                }
+            };
+
+            //Arrange 2
+            _reviewRepoMock.GetLessonReviewsWithDetailsAsync(lessonId, 1, 10).Returns((reviews, 1));
+
+            //Act
+            var result = await _sut.GetLessonReviewsAsync(lessonId, 1, 10);
+
+            //Assert
+            result.Items.First().LessonTitle.Should().BeNull();
+        }}
 }
+

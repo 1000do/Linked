@@ -53,7 +53,14 @@ be_ctrl -> sv++: Call UpdateMaterialDetailsAsync(materialId, request, instructor
 sv -> sv++: Sanitize HTML Description
 sv--
 
-sv -> sv++: Retrieve material and its lesson
+sv -> repo++: Call GetByIdAsync(materialId)
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
+db -->> ctx--: Return query results
+ctx -->> repo--: Return material entity
+repo -->> sv--: Return material entity
+    
+sv -> sv++: Check condition: Material Not Found OR Lesson Not Found
 sv--
 
 alt Material Not Found OR Lesson Not Found
@@ -80,9 +87,13 @@ else Found
         end
         
         sv -> repo++: Call SaveChangesAsync()
-        repo -> ctx++: Save changes to database
-        ctx -> db++: Update Material
+        repo -> ctx++: Call SaveChangesAsync()
+        ctx -> db++: Save changes to database
         
+
+        db -> db++: Check condition: Database Save Failure
+        db--
+
         alt Database Save Failure
             db -->> ctx: throw DbUpdateException
             ctx -->> repo: throw DbUpdateException

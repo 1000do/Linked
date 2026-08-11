@@ -56,12 +56,14 @@ database Database as db
 
 act++
 
-alt Send Message in Existing Chat
-    act->view++: Enter message text
-    act->view: Select files (Optional)
-    act->view: Click "Send" button (or press Enter)
-    
-    opt With Attachments
+act->view++: Enter message text
+act->view: Select files (Optional)
+act->view: Click "Send" button (or press Enter)
+
+view -> view++: Check attachment selection
+view--
+
+opt With Attachments
     loop for each selected file f
         view->fe_ctrl++: POST /Chat/UploadAttachment
         
@@ -117,6 +119,9 @@ else Valid Permissions
     sv->msg_ett++: Call Message(dto)
     msg_ett-->>sv--: Return Message object
     
+    sv -> sv++: Check attachment option and content
+    sv--
+    
     opt EnableAttachments == true && dto.Attachments is not empty
         sv->msg_att_ett++: Call MessageAttachment()
         msg_att_ett-->>sv--: Return MessageAttachments list
@@ -135,6 +140,9 @@ else Valid Permissions
     sv->repo++: Call SaveChangesAsync()
     repo->ctx++: Call SaveChangesAsync()
     ctx->db++: Save changes (Execute INSERT & UPDATE statements)
+    
+    db -> db++: Check database save status
+    db--
     
     alt Database Save Failure
         db-->>ctx: Throw DbUpdateException

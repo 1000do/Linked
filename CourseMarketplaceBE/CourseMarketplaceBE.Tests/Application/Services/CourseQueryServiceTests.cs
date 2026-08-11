@@ -99,6 +99,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task GetPublishedCoursesPagedAsync_StatsMissing_DefaultsToZero()
+        {
+            //Arrange 1
+            var courses = new List<Course> { new Course { CourseId = 1, InstructorId = 2 } };
+            int totalCount = 1;
+            
+            //Arrange 2
+            _courseRepoMock.GetAllPublishedCoursesPagedAsync(Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>()).Returns((courses, totalCount));
+            _courseRepoMock.GetCourseStatsAsync(Arg.Any<IEnumerable<int>>()).Returns(new List<CourseStats>());
+            _mapperMock.Map<List<CourseResponse>>(courses).Returns(new List<CourseResponse> { new CourseResponse { CourseId = 1, InstructorId = 2 } });
+
+            //Act
+            var result = await _sut.GetPublishedCoursesPagedAsync(null, null, null, null, null, null, null, null);
+
+            //Assert
+            result.Items.First().TotalStudents.Should().Be(0);
+            result.Items.First().RatingAverage.Should().Be(0);
+            result.Items.First().TotalReviews.Should().Be(0);
+        }
+
+        [Fact]
         public async Task GetCourseWithDetailsAsync_ReturnsCourseDetail_WhenCourseExists()
         {
             //Arrange 1
@@ -142,6 +163,32 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             await _redisServiceMock.Received(1).SetCacheAsync(Arg.Any<string>(), Arg.Any<CourseDetailResponse>(), Arg.Any<TimeSpan>());
             await _cartRepoMock.Received(1).IsCourseInAnyCartAsync(courseId);
             await _courseRepoMock.Received(1).IsEnrolledAsync(userId, courseId);
+        }
+
+        [Fact]
+        public async Task GetCourseWithDetailsAsync_CourseStatsNull_DefaultsToZero()
+        {
+            //Arrange 1
+            int courseId = 100;
+            var courseEntity = new Course { CourseId = courseId, InstructorId = 2, CourseStatus = CourseStatus.Published.ToValue() };
+            var mappedResponse = new CourseDetailResponse { CourseId = courseId, InstructorId = 2, CourseStatus = CourseStatus.Published.ToValue() };
+
+            //Arrange 2
+            _redisServiceMock.GetCacheAsync<CourseDetailResponse>(Arg.Any<string>()).Returns((CourseDetailResponse?)null);
+            _courseRepoMock.GetCourseWithDetailsAsync(courseId).Returns(courseEntity);
+            _courseRepoMock.GetCourseStatsAsync(courseId).Returns((CourseStats?)null);
+            _instructorRepoMock.GetStatsAsync(2).Returns(new InstructorStats());
+            _mapperMock.Map<CourseDetailResponse>(courseEntity).Returns(mappedResponse);
+            _cartRepoMock.IsCourseInAnyCartAsync(courseId).Returns(false);
+            _courseRepoMock.IsEnrolledAsync(Arg.Any<int>(), courseId).Returns(false);
+
+            //Act
+            var result = await _sut.GetCourseWithDetailsAsync(courseId);
+
+            //Assert
+            result.TotalStudents.Should().Be(0);
+            result.RatingAverage.Should().Be(0);
+            result.TotalReviews.Should().Be(0);
         }
 
         [Fact]
@@ -398,6 +445,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
+        public async Task GetInstructorCoursesAsync_StatsMissing_DefaultsToZero()
+        {
+            //Arrange 1
+            int instructorId = 2;
+            var courses = new List<Course> { new Course { CourseId = 1, InstructorId = instructorId } };
+            
+            //Arrange 2
+            _courseRepoMock.GetInstructorCoursesAsync(instructorId).Returns(courses);
+            _courseRepoMock.GetCourseStatsAsync(Arg.Any<List<int>>()).Returns(new List<CourseStats>());
+            _mapperMock.Map<List<CourseResponse>>(courses).Returns(new List<CourseResponse> { new CourseResponse { CourseId = 1, InstructorId = instructorId } });
+
+            //Act
+            var result = await _sut.GetInstructorCoursesAsync(instructorId);
+
+            //Assert
+            result.First().TotalStudents.Should().Be(0);
+            result.First().RatingAverage.Should().Be(0);
+            result.First().TotalReviews.Should().Be(0);
+        }
+
+        [Fact]
         public async Task GetInstructorCoursesPagedAsync_NullPageAndPageSize_UsesDefaultPagination()
         {
             //Arrange 1
@@ -420,6 +488,27 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             result.PageSize.Should().Be(6);
 
             await _courseRepoMock.Received(1).GetInstructorCoursesPagedAsync(instructorId, null, null, null, null);
+        }
+
+        [Fact]
+        public async Task GetInstructorCoursesPagedAsync_StatsMissing_DefaultsToZero()
+        {
+            //Arrange 1
+            int instructorId = 2;
+            var courses = new List<Course> { new Course { CourseId = 1, InstructorId = instructorId } };
+            
+            //Arrange 2
+            _courseRepoMock.GetInstructorCoursesPagedAsync(instructorId, Arg.Any<string?>(), Arg.Any<string?>(), Arg.Any<int?>(), Arg.Any<int?>()).Returns((courses, 1));
+            _courseRepoMock.GetCourseStatsAsync(Arg.Any<List<int>>()).Returns(new List<CourseStats>());
+            _mapperMock.Map<List<CourseResponse>>(courses).Returns(new List<CourseResponse> { new CourseResponse { CourseId = 1, InstructorId = instructorId } });
+
+            //Act
+            var result = await _sut.GetInstructorCoursesPagedAsync(instructorId, null, null, 1, 10);
+
+            //Assert
+            result.Items.First().TotalStudents.Should().Be(0);
+            result.Items.First().RatingAverage.Should().Be(0);
+            result.Items.First().TotalReviews.Should().Be(0);
         }
 
         [Fact]
@@ -576,6 +665,29 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             //Assert
             var ex = await act.Should().ThrowAsync<UnauthorizedAccessException>();
             ex.WithMessage("You do not have permission to view this course.");
+        }
+
+        [Fact]
+        public async Task GetCourseWithDetailsAsync_CourseNotPublished_UserRoleNull_ThrowsUnauthorizedAccessException()
+        {
+            //Arrange 1
+            int courseId = 100;
+            int userId = 1;
+            string? userRole = null;
+            var courseEntity = new Course { CourseId = courseId, InstructorId = 2, CourseStatus = "draft" };
+            var mappedResponse = new CourseDetailResponse { CourseId = courseId, InstructorId = 2, CourseStatus = "draft" };
+
+            //Arrange 2
+            _redisServiceMock.GetCacheAsync<CourseDetailResponse>(Arg.Any<string>()).Returns((CourseDetailResponse?)null);
+            _courseRepoMock.GetCourseWithDetailsAsync(courseId).Returns(courseEntity);
+            _mapperMock.Map<CourseDetailResponse>(courseEntity).Returns(mappedResponse);
+            _courseRepoMock.IsEnrolledAsync(userId, courseId).Returns(false);
+
+            //Act
+            Func<Task> act = async () => await _sut.GetCourseWithDetailsAsync(courseId, userId, userRole);
+
+            //Assert
+            await act.Should().ThrowAsync<UnauthorizedAccessException>().WithMessage("You do not have permission to view this course.");
         }
 
         [Fact]

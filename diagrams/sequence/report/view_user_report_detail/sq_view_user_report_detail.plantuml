@@ -1,7 +1,7 @@
 @startuml 
 <style>
     sequenceDiagram{
-        FontSize 16
+        FontSize 12
 
         arrow {
             ' Set the maximum width of the text on arrows
@@ -73,21 +73,14 @@ else Valid actor's authentication and authorization
     fe_ctrl--
     
     fe_ctrl -->> view--: Return View(model)
-    
+    view -> view++: Validate report's existence
+    view--
     alt Empty Report List
         view -->> act: Display empty state message
     else Reports Exist
-        view -->> act: Display list of pending course reports by default
+        view -->> act: Display list of user reports
         
-        act -> view: Click on a report row
-        
-        view -> view++: Retrieve selected report details from local state
-        view--
-        
-        opt Report contains resolution details (Resolved/Rejected)
-            view -> view++: Append Resolution Details (Moderator, Resolved At, Note)
-            view--
-        end
+        act -> view: Click on a report entry
         
         view -->> act--: Display popup containing report details
     end

@@ -52,8 +52,8 @@ fe_ctrl -> be_ctrl++: GET /api/quiz-attempts/history/{quizId}
 be_ctrl -> sv++: Call GetMyQuizAttemptsAsync(quizId, userId, request)
 
 sv -> repo++: Call GetAttemptsByQuizAndUserAsync(quizId, userId, request.Page, request.PageSize)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch user quiz attempts
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return attempts and totalCount
 repo -->> sv--: Return (attempts, totalCount)

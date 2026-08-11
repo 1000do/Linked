@@ -36,6 +36,8 @@ mainframe View Learning Progress
 
 actor User as act
 participant "CourseLearnSidebar" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
 participant "CourseController" as fe_ctrl <<frontend controller>>
 participant "EnrollmentController" as be_ctrl <<backend controller>>
 participant ":EnrollmentService" as sv
@@ -48,23 +50,40 @@ database Database as db
 act ++
 act -> view++: View learning progress
 view -> fe_ctrl++: GET /Course/Learn/{id}
-fe_ctrl -> be_ctrl++: GET /api/enrollment/progress/{courseId}
-be_ctrl -> sv++: Call GetProgressAsync(userId, courseId)
+
+fe_ctrl -> fe_ctrl++: Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view: Redirect to LoginPage
+    activate login_view
+    login_view -->> act: Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view: Redirect to ErrorPage
+    activate error_view
+    error_view -->> act: Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_ctrl++: GET /api/enrollment/progress/{courseId}
+    be_ctrl -> sv++: Call GetProgressAsync(userId, courseId)
 
 sv -> repo++: Call GetEnrollmentAsync(userId, courseId)
-repo -> ctx++: Execute query
-ctx -> db++: Fetch enrollment
+repo -> ctx++: Query data from DbSet
+ctx -> db++: Execute query
 db -->> ctx--: Return query results
 ctx -->> repo--: Return enrollment entity
 repo -->> sv--: Return enrollment entity
+
+
+sv -> sv++: Check condition: Enrollment == null
+sv--
 
 alt Enrollment == null
     sv -> sv++: Check Instructor Bypass
     sv--
     alt Is Instructor
         sv -> course_repo++: Call GetCourseStatsAsync(courseId)
-        course_repo -> ctx++: Execute query
-        ctx -> db++: Fetch course stats
+        course_repo -> ctx++: Query data from DbSet
+        ctx -> db++: Execute query
         db -->> ctx--: Return query results
         ctx -->> course_repo--: Return course stats
         course_repo -->> sv--: Return course stats
@@ -77,30 +96,33 @@ alt Enrollment == null
     end
 else Enrollment != null
     sv -> course_repo++: Call GetCourseStatsAsync(courseId)
-    course_repo -> ctx++: Execute query
-    ctx -> db++: Fetch course stats
+    course_repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> course_repo--: Return course stats
     course_repo -->> sv--: Return course stats
 
     sv -> repo++: Call GetCompletedMaterialCountAsync(enrollmentId)
-    repo -> ctx++: Execute query
-    ctx -> db++: Fetch completed count
+    repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> repo--: Return completed count
     repo -->> sv--: Return completed count
     
     sv -> repo++: Call GetCompletedMaterialIdsAsync(enrollmentId)
-    repo -> ctx++: Execute query
-    ctx -> db++: Fetch completed ids
+    repo -> ctx++: Query data from DbSet
+    ctx -> db++: Execute query
     db -->> ctx--: Return query results
     ctx -->> repo--: Return completed ids
     repo -->> sv--: Return completed material ids
     
     sv -> res++: Call ProgressResponse()
     res -->> sv--: Return ProgressResponse object
-    sv -->> be_ctrl: Return ProgressResponse object
+    sv -->> be_ctrl--: Return ProgressResponse object
 end
+
+be_ctrl -> be_ctrl++: Check condition: Progress == null
+be_ctrl--
 
 alt Progress == null
     be_ctrl -->> fe_ctrl: Return statusCode 404
@@ -110,4 +132,6 @@ else Progress != null
     be_ctrl -->> fe_ctrl--: Return statusCode 200
     fe_ctrl -->> view--: Return JSON (success=true)
     view -->> act--: Display learning progress
+end
+
 end

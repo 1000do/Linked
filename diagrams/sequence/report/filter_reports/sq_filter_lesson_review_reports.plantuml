@@ -70,7 +70,8 @@ else Valid actor's authentication and authorization
     sv -> repo++: GetAllLessonReviewReportsAsync(status, page, pageSize)
     repo -> ctx++: Query filtered lesson review reports from database
     ctx -> db++: Query filtered lesson review reports from database
-    
+    db -> db++: Check database\n operation status
+    db--
     alt Empty Filter Result
         db -->> ctx: Return empty list, totalCount = 0
         ctx -->> repo: Return empty list, totalCount = 0
