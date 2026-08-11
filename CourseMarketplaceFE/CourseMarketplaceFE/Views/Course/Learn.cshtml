@@ -1402,6 +1402,9 @@
                         docDownloadBtn.href = downloadUrl;
                         docDownloadBtn.onclick = () => markAsCompleted(materialId); // Mark when downloaded
                     }
+                    
+                    // Trigger download automatically
+                    window.location.href = downloadUrl;
                 }
             }
             // If reviews tab is active, reload reviews and stats for the new lesson
