@@ -122,9 +122,14 @@
                     </div>
                 </div>
 
-                <!-- Video Player -->
                 <video id="main-video" class="w-full h-full @(isFirstVideo && !isFirstPending ? "" : "hidden")" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
-                    <source id="video-source" src="@(firstMaterial?.MaterialUrl ?? "")" type="video/mp4">
+                    @{
+                        string videoSrc = firstMaterial?.MaterialUrl ?? "";
+                        if (videoSrc == "PROXY_STREAM" && firstMaterial != null) {
+                            videoSrc = $"/Course/StreamMaterial?materialId={firstMaterial.MaterialId}";
+                        }
+                    }
+                    <source id="video-source" src="@videoSrc" type="video/mp4">
                 </video>
                 
                 <!-- Quiz Viewer -->
