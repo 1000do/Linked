@@ -161,11 +161,11 @@ public class AdminFinanceController : ControllerBase
     // UC-124: Mark Payout Paid — Chỉ Admin
     [HttpPost("payouts/{payoutId:int}/mark-paid")]
     [CustomAuthorize(requireAuth: true, "admin")]
-    public async Task<IActionResult> MarkPayoutAsPaid(int payoutId)
+    public async Task<IActionResult> MarkPayoutAsPaid(int payoutId, [FromQuery] bool confirm = false)
     {
         try
         {
-            await _financeService.MarkPayoutAsPaidAsync(payoutId);
+            await _financeService.MarkPayoutAsPaidAsync(payoutId, confirm);
             return Ok(ApiResponse<string>.SuccessResponse("Marked this payment as Paid.", "Success."));
         }
         catch (InvalidOperationException ex)
@@ -185,11 +185,11 @@ public class AdminFinanceController : ControllerBase
     // UC-124: Stripe Transfer (Pay Instructor) — Chỉ Admin
     [HttpPost("payouts/{payoutId:int}/stripe-transfer")]
     [CustomAuthorize(requireAuth: true, "admin")]
-    public async Task<IActionResult> TransferViaStripe(int payoutId)
+    public async Task<IActionResult> TransferViaStripe(int payoutId, [FromQuery] bool confirm = false)
     {
         try
         {
-            var transferId = await _financeService.PerformStripeTransferAsync(payoutId);
+            var transferId = await _financeService.PerformStripeTransferAsync(payoutId, confirm);
             return Ok(ApiResponse<string>.SuccessResponse(transferId, "Funds transferred successfully via Stripe."));
         }
         catch (InvalidOperationException ex)

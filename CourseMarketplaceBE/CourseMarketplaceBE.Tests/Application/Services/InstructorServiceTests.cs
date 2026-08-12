@@ -491,7 +491,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Arrange 2
             _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
-            _stripeConnectMock.SetupExpressAccountAsync(userId, "test@test.com", "SG", Arg.Any<string>(), Arg.Any<string>(), null).Returns(setupResult);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "test@test.com", "US", Arg.Any<string>(), Arg.Any<string>(), null).Returns(setupResult);
 
             //Act
             var result = await _sut.SetupStripePayoutAsync(userId);
@@ -1263,7 +1263,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Arrange 2
             _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
-            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "SG", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "US", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
 
             //Act
             var result = await _sut.SetupStripePayoutAsync(userId);
@@ -1288,7 +1288,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Arrange 2
             _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
-            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "SG", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "US", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
 
             //Act
             var result = await _sut.SetupStripePayoutAsync(userId);

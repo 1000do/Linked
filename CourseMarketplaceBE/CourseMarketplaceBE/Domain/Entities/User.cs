@@ -31,4 +31,7 @@ public partial class User
     public virtual ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
 
     public virtual ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
+    
+    public virtual ICollection<CheckoutSession> CheckoutSessions { get; set; } = new List<CheckoutSession>();
 }
+

@@ -322,10 +322,34 @@ public class CartController : Controller
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "user,instructor")]
-    public async Task<IActionResult> Checkout()
+    public async Task<IActionResult> Checkout(string? sessionId)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Redirect("/Account/Login");
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            TempData["CartError"] = "Invalid checkout session. Please initiate checkout from your cart.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Validate the checkout session with Backend
+        var sessionValidationResponse = await _api.GetAsync($"checkout/session/{Uri.EscapeDataString(sessionId)}");
+        if (!sessionValidationResponse.IsSuccessStatusCode)
+        {
+            var errJson = await sessionValidationResponse.Content.ReadAsStringAsync();
+            string errorMsg = "Checkout session is invalid or has expired.";
+            try
+            {
+                using var doc = JsonDocument.Parse(errJson);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorMsg = m.GetString() ?? errorMsg;
+            }
+            catch { }
+            
+            TempData["CartError"] = errorMsg;
+            return RedirectToAction(nameof(Index));
+        }
 
         // 6.1 Lấy thông tin giỏ hàng hiện tại
         var couponMap = GetCouponMapFromCookie();
@@ -395,6 +419,7 @@ public class CartController : Controller
             PublishableKey = publishableKey,
             ClientSecret = clientSecret,
             PaymentIntentId = paymentIntentId,
+            SessionId = sessionId,
             Email = userEmail,
             Cart = cartModel
         };
@@ -405,14 +430,15 @@ public class CartController : Controller
     // ─── 6.25. DYNAMIC PAYMENT INTENT CREATION VIA AJAX ───────────────────
     [HttpPost]
     [Authorize(Roles = "user,instructor")]
-    public async Task<IActionResult> CreatePaymentIntentAjax(string? couponCode)
+    public async Task<IActionResult> CreatePaymentIntentAjax(string? couponCode, string sessionId)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Unauthorized(new { message = "Unauthorized" });
 
         var response = await _api.PostJsonAsync("checkout/create-intent", new
         {
-            couponCode = couponCode
+            couponCode = couponCode,
+            checkoutSessionId = sessionId
         });
 
         var json = await response.Content.ReadAsStringAsync();
@@ -424,7 +450,26 @@ public class CartController : Controller
         return Content(json, "application/json");
     }
 
-    // ─── 6.5. DIRECT CHECKOUT (MUA NGAY KHÔNG QUA GIỎ HÀNG) ──────────────
+    // ─── 6.5. AJAX INIT CHECKOUT SESSION (Tạo ID trước khi sang Checkout) ────────
+    [HttpPost]
+    [Authorize(Roles = "user,instructor")]
+    public async Task<IActionResult> CreateCheckoutSessionAjax()
+    {
+        if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
+            return Unauthorized(new { message = "Unauthorized" });
+
+        var response = await _api.PostAsync("checkout/session");
+        var json = await response.Content.ReadAsStringAsync();
+
+        if (!response.IsSuccessStatusCode)
+        {
+            return BadRequest(json);
+        }
+        
+        return Content(json, "application/json");
+    }
+
+    // ─── 6.75. DIRECT CHECKOUT (MUA NGAY KHÔNG QUA GIỎ HÀNG) ──────────────
     [HttpPost]
     [Authorize(Roles = "user,instructor")]
     public async Task<IActionResult> DirectCheckout(int id)

@@ -1,8 +1,10 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Presentation.Filters;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
@@ -48,6 +50,69 @@ public class CheckoutController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/checkout/session
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("session")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
+    public async Task<IActionResult> CreateCheckoutSession()
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
+
+        try
+        {
+            var sessionId = await _checkoutService.CreateCheckoutSessionAsync(userId.Value);
+            return Ok(ApiResponse<string>.SuccessResponse(sessionId, "Checkout session created."));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/checkout/session/{sessionId}
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("session/{sessionId}")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
+    public async Task<IActionResult> GetCheckoutSession(string sessionId)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        try
+        {
+            var session = await _checkoutService.GetCheckoutSessionAsync(userId.Value, sessionId);
+            return Ok(ApiResponse<CheckoutSessionDto>.SuccessResponse(session, "Session retrieved."));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse("Checkout session not found."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/checkout/process
     // Tạo Order → Gọi Stripe → Trả về Session URL để FE redirect.
     // ═══════════════════════════════════════════════════════════════════════
@@ -77,9 +142,14 @@ public class CheckoutController : ControllerBase
                 userId.Value,
                 request.CouponCode,
                 request.SuccessUrl,
-                request.CancelUrl);
+                request.CancelUrl,
+                request.CheckoutSessionId);
 
             return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Checkout session created."));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (InvalidOperationException ex)
         {
@@ -109,8 +179,12 @@ public class CheckoutController : ControllerBase
 
         try
         {
-            var result = await _checkoutService.InitiatePaymentIntentAsync(userId.Value, request.CouponCode);
+            var result = await _checkoutService.InitiatePaymentIntentAsync(userId.Value, request.CouponCode, request.CheckoutSessionId);
             return Ok(ApiResponse<CheckoutResponse>.SuccessResponse(result, "Payment intent created successfully."));
+        }
+        catch (BadRequestException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
         catch (InvalidOperationException ex)
         {
@@ -163,13 +237,68 @@ public class CheckoutController : ControllerBase
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // POST /api/checkout/gift-session
+    // Khởi tạo Gift Checkout Session (Lưu vào DB)
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpPost("gift-session")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
+    public async Task<IActionResult> CreateGiftCheckoutSession([FromBody] GiftCheckoutSessionRequest request)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        if (!await _authService.IsEmailVerifiedAsync(userId.Value))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Please verify your email address."));
+
+        if (string.IsNullOrWhiteSpace(request.RecipientEmail))
+            return BadRequest(ApiResponse<string>.ErrorResponse("Recipient email is required."));
+
+        try
+        {
+            var sessionId = await _giftCheckoutService.CreateGiftCheckoutSessionAsync(userId.Value, request);
+            return Ok(ApiResponse<string>.SuccessResponse(sessionId, "Gift checkout session created."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ApiResponse<string>.ErrorResponse($"Server error: {ex.Message}"));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GET /api/checkout/gift-session/{sessionId}
+    // Lấy thông tin Gift Checkout Session
+    // ═══════════════════════════════════════════════════════════════════════
+    [HttpGet("gift-session/{sessionId}")]
+    [CustomAuthorize(requireAuth: true, "user", "instructor")]
+    public async Task<IActionResult> GetGiftCheckoutSession(string sessionId)
+    {
+        var userId = GetUserId();
+        if (userId == null)
+            return Unauthorized(ApiResponse<string>.ErrorResponse("Invalid login session."));
+
+        try
+        {
+            var session = await _giftCheckoutService.GetGiftCheckoutSessionAsync(userId.Value, sessionId);
+            return Ok(ApiResponse<GiftCheckoutSessionDto>.SuccessResponse(session, "Gift session retrieved."));
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(ApiResponse<string>.ErrorResponse("Gift checkout session not found."));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // POST /api/checkout/gift
     // Khởi tạo thanh toán Stripe Checkout cho Quà Tặng (UC-17)
     // ═══════════════════════════════════════════════════════════════════════
-    // UC-17/18: Gift Courses & Pay for Gift — User/Instructor tặng khóa học
     [HttpPost("gift")]
     [CustomAuthorize(requireAuth: true, "user", "instructor")]
-    public async Task<IActionResult> GiftCheckout([FromBody] GiftCheckoutRequest request)
+    public async Task<IActionResult> GiftCheckout([FromBody] ProcessGiftCheckoutRequest request)
     {
         var userId = GetUserId();
         if (userId == null)
@@ -203,7 +332,7 @@ public class CheckoutController : ControllerBase
     // UC-18: Pay for Gift (PaymentIntent flow) — User/Instructor tặng khóa học
     [HttpPost("gift-intent")]
     [CustomAuthorize(requireAuth: true, "user", "instructor")]
-    public async Task<IActionResult> GiftCreateIntent([FromBody] GiftCheckoutRequest request)
+    public async Task<IActionResult> GiftCreateIntent([FromBody] ProcessGiftCheckoutRequest request)
     {
         var userId = GetUserId();
         if (userId == null)

@@ -27,6 +27,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ICourseRepository _mockCourseRepo;
         private readonly IStripeConnectService _mockStripeConnect;
         private readonly IGiftRepository _mockGiftRepo;
+        private readonly ILockoutRepository _mockLockoutRepo;
+        private readonly IUserRepository _mockUserRepo;
 
         private readonly AdminFinanceService _financeService;
 
@@ -42,6 +44,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockCourseRepo = Substitute.For<ICourseRepository>();
             _mockStripeConnect = Substitute.For<IStripeConnectService>();
             _mockGiftRepo = Substitute.For<IGiftRepository>();
+            _mockLockoutRepo = Substitute.For<ILockoutRepository>();
+            _mockUserRepo = Substitute.For<IUserRepository>();
 
             _financeService = new AdminFinanceService(
                 _mockRepo,
@@ -53,7 +57,9 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _mockConfigRepo,
                 _mockCourseRepo,
                 _mockStripeConnect,
-                _mockGiftRepo
+                _mockGiftRepo,
+                _mockLockoutRepo,
+                _mockUserRepo
             );
         }
 
@@ -491,7 +497,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task GetPayoutDaysConfigAsync_NullConfig_ReturnsDefault15()
         {
             //Arrange 1
-            _mockConfigRepo.GetValueAsync("PayoutDays").Returns(Task.FromResult<string?>(null));
+            _mockConfigRepo.GetValueAsync("PayoutDay").Returns(Task.FromResult<string?>(null));
 
             //Act
             var result = await _financeService.GetPayoutDaysConfigAsync();
@@ -504,7 +510,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         public async Task GetPayoutDaysConfigAsync_HasConfig_ReturnsConfigValue()
         {
             //Arrange 1
-            _mockConfigRepo.GetValueAsync("PayoutDays").Returns(Task.FromResult<string?>("15,20"));
+            _mockConfigRepo.GetValueAsync("PayoutDay").Returns(Task.FromResult<string?>("15,20"));
 
             //Act
             var result = await _financeService.GetPayoutDaysConfigAsync();
@@ -553,13 +559,13 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             string input = "15, 20";
 
             //Arrange 2
-            _mockConfigRepo.UpsertConfigAsync("PayoutDays", input, Arg.Any<string>()).Returns(Task.FromResult(1));
+            _mockConfigRepo.UpsertConfigAsync("PayoutDay", input, Arg.Any<string>()).Returns(Task.FromResult(1));
 
             //Act
             await _financeService.SetPayoutDaysConfigAsync(input);
 
             //Assert
-            await _mockConfigRepo.Received(1).UpsertConfigAsync("PayoutDays", input, Arg.Any<string>());
+            await _mockConfigRepo.Received(1).UpsertConfigAsync("PayoutDay", input, Arg.Any<string>());
         }
 
         [Fact]
@@ -1364,7 +1370,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mockRepo.GetRefundEligibilityMetricsAsync(1, 1, 1).Returns(Task.FromResult(metrics));
             
             var result = await _financeService.RequestRefundAsync(1, 1, "Reason");
-            result.RejectReason.Should().Be("having requested too many refunds within the refund period");
+            result.RejectReason.Should().Be("having requested 3 refunds within the last 14 days (limit: 3)");
             result.IsAutoRejected.Should().BeTrue();
         }
 
@@ -1799,7 +1805,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         [Fact]
         public async Task GetPayoutDaysConfigAsync_ConfigNotFound_CreatesDefault()
         {
-            _mockConfigRepo.GetValueAsync("PayoutDays").Returns(Task.FromResult<string?>(null));
+            _mockConfigRepo.GetValueAsync("PayoutDay").Returns(Task.FromResult<string?>(null));
             
             var days = await _financeService.GetPayoutDaysConfigAsync();
             days.Should().Be("15"); // DefaultPayoutProcessingDays

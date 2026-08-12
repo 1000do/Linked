@@ -178,7 +178,7 @@ namespace CourseMarketplaceBE.Application.Services
     private async Task NotifyManagersAsync(string title, string content, string? linkAction)
             {
                 var managerIds = await _userRepo.GetAllManagerIdsAsync();
-                if (managerIds.Any())
+                if (managerIds != null && managerIds.Any())
                 {
                     var dtos = managerIds.Select(id => new NotificationBulkDto
                     {

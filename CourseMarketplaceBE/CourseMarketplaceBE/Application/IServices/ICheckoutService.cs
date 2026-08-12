@@ -9,6 +9,16 @@ namespace CourseMarketplaceBE.Application.IServices;
 public interface ICheckoutService
 {
     /// <summary>
+    /// Tạo CheckoutSession từ Cart hiện tại.
+    /// </summary>
+    Task<string> CreateCheckoutSessionAsync(int userId);
+
+    /// <summary>
+    /// Lấy thông tin CheckoutSession (sử dụng trên Payment Page).
+    /// </summary>
+    Task<CheckoutSessionDto> GetCheckoutSessionAsync(int userId, string sessionId);
+
+    /// <summary>
     /// Bước 1: Tạo Order → Gọi Payment Gateway → Tạo Transaction.
     /// Toàn bộ nằm trong 1 DB transaction (Unit of Work).
     /// </summary>
@@ -21,7 +31,8 @@ public interface ICheckoutService
         int userId,
         string? couponCode,
         string successUrl,
-        string cancelUrl);
+        string cancelUrl,
+        string? checkoutSessionId);
 
     /// <summary>
     /// Tạo Order trực tiếp cho 1 khóa học (không qua giỏ hàng) sử dụng Destination Charges.
@@ -54,7 +65,8 @@ public interface ICheckoutService
     /// <returns>Client Secret của PaymentIntent.</returns>
     Task<CheckoutResponse> InitiatePaymentIntentAsync(
         int userId,
-        string? couponCode);
+        string? couponCode,
+        string? checkoutSessionId);
 
     /// <summary>
     /// Xử lý lưu DB (tạo Order, OrderItems, Transaction, Enrollment, Payout...) sau khi Stripe Elements thanh toán thành công.
