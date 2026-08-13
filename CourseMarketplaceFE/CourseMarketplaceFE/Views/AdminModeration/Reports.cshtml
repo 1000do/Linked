@@ -959,9 +959,9 @@
         clearTimeout(reportUpdateTimeout);
         reportUpdateTimeout = setTimeout(() => {
             if (typeof refreshStats === 'function') refreshStats();
-            if (activeTab === 'course') {
+            if (activeTab === 'course-reports') {
                 if (typeof loadCourseReports === 'function') loadCourseReports(1);
-            } else if (activeTab === 'review') {
+            } else if (activeTab === 'review-reports') {
                 if (typeof loadReviewReports === 'function') loadReviewReports(1);
             }
         }, 300);
