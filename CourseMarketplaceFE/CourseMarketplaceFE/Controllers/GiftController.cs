@@ -113,7 +113,8 @@ public class GiftController : Controller
             return View(model);
         }
 
-        return RedirectToAction("Checkout", new
+        // Gọi API Backend để khởi tạo Session quà tặng
+        var sessionResponse = await _api.PostJsonAsync("checkout/gift-session", new
         {
             courseId = model.CourseId,
             recipientEmail = model.RecipientEmail,
@@ -121,6 +122,48 @@ public class GiftController : Controller
             giftMessage = model.GiftMessage,
             cardTheme = model.CardTheme
         });
+
+        if (!sessionResponse.IsSuccessStatusCode)
+        {
+            var errJson = await sessionResponse.Content.ReadAsStringAsync();
+            string errorMsg = "Could not create gift checkout session.";
+            try
+            {
+                using var doc = JsonDocument.Parse(errJson);
+                if (doc.RootElement.TryGetProperty("message", out var m))
+                    errorMsg = m.GetString() ?? errorMsg;
+            }
+            catch { }
+            ModelState.AddModelError("", errorMsg);
+
+            // Load lại thông tin khóa học nếu error
+            var courseResponse = await _api.GetAsync($"gift/course/{model.CourseId}");
+            if (courseResponse.IsSuccessStatusCode)
+            {
+                var json = await courseResponse.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                {
+                    ViewBag.Course = JsonSerializer.Deserialize<PublicCourseViewModel>(dataEl.GetRawText(), new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+            }
+            return View(model);
+        }
+
+        var sessionJson = await sessionResponse.Content.ReadAsStringAsync();
+        string sessionId = "";
+        using (var doc = JsonDocument.Parse(sessionJson))
+        {
+            if (doc.RootElement.TryGetProperty("data", out var dataProp))
+            {
+                sessionId = dataProp.GetString() ?? "";
+            }
+        }
+
+        return RedirectToAction("Checkout", new { sessionId });
     }
 
     // UC-17: Check Recipient AJAX — User và Instructor
@@ -149,16 +192,44 @@ public class GiftController : Controller
     // UC-18: Pay for Gift (Review page trước khi thanh toán) — User và Instructor
     [HttpGet]
     [Authorize(Roles = "user,instructor")]
-    public async Task<IActionResult> Checkout(
-        int courseId,
-        string recipientEmail,
-        string? recipientName,
-        string? giftMessage,
-        string cardTheme)
+    public async Task<IActionResult> Checkout(string sessionId)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
         {
-            return Redirect($"/Account/Login?returnUrl=/Gift/Setup?courseId={courseId}");
+            return Redirect($"/Account/Login?returnUrl=/Gift/Checkout?sessionId={sessionId}");
+        }
+
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            TempData["Error"] = "Missing session ID.";
+            return Redirect("/");
+        }
+
+        // Lấy thông tin session từ Backend (Backend tự check quyền userId)
+        var sessionResp = await _api.GetAsync($"checkout/gift-session/{sessionId}");
+        if (!sessionResp.IsSuccessStatusCode)
+        {
+            TempData["Error"] = "Invalid, expired, or unauthorized gift checkout session.";
+            return Redirect("/");
+        }
+
+        var sessionJsonStr = await sessionResp.Content.ReadAsStringAsync();
+        int courseId = 0;
+        string recipientEmail = "";
+        string? recipientName = null;
+        string? giftMessage = null;
+        string cardTheme = "classic";
+
+        using (var doc = JsonDocument.Parse(sessionJsonStr))
+        {
+            if (doc.RootElement.TryGetProperty("data", out var sData))
+            {
+                courseId = sData.TryGetProperty("courseId", out var cId) ? cId.GetInt32() : 0;
+                recipientEmail = sData.TryGetProperty("recipientEmail", out var rE) ? rE.GetString() ?? "" : "";
+                recipientName = sData.TryGetProperty("recipientName", out var rN) ? rN.GetString() : null;
+                giftMessage = sData.TryGetProperty("giftMessage", out var gM) ? gM.GetString() : null;
+                cardTheme = sData.TryGetProperty("cardTheme", out var cT) ? cT.GetString() ?? "classic" : "classic";
+            }
         }
 
         // Lấy thông tin khóa học
@@ -238,6 +309,7 @@ public class GiftController : Controller
             Cart = cartModel
         };
 
+        ViewBag.SessionId = sessionId;
         ViewBag.RecipientName = recipientName;
         ViewBag.RecipientEmail = recipientEmail;
         ViewBag.GiftMessage = giftMessage;
@@ -249,12 +321,7 @@ public class GiftController : Controller
     // UC-18: Tạo Gift Payment Intent (AJAX) — User và Instructor
     [HttpPost]
     [Authorize(Roles = "user,instructor")]
-    public async Task<IActionResult> CreateGiftPaymentIntentAjax(
-        int courseId,
-        string recipientEmail,
-        string? recipientName,
-        string? giftMessage,
-        string cardTheme)
+    public async Task<IActionResult> CreateGiftPaymentIntentAjax(string sessionId)
     {
         if (!HttpContext.Request.Cookies.ContainsKey("AccessToken"))
             return Unauthorized(new { message = "Unauthorized" });
@@ -268,11 +335,7 @@ public class GiftController : Controller
         var baseUrl = $"{scheme}://{host}";
         var response = await _api.PostJsonAsync("checkout/gift-intent", new
         {
-            courseId = courseId,
-            recipientEmail = recipientEmail,
-            recipientName = recipientName,
-            giftMessage = giftMessage,
-            cardTheme = cardTheme,
+            checkoutSessionId = sessionId,
             successUrl = $"{baseUrl}/Gift/CheckoutSuccess?session_id={{CHECKOUT_SESSION_ID}}",
             cancelUrl = $"{baseUrl}/Gift/CheckoutCancel"
         });

@@ -1,6 +1,8 @@
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Domain.Entities;
+using CourseMarketplaceBE.Domain.Exceptions;
 using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
@@ -24,6 +26,7 @@ namespace CourseMarketplaceBE.Application.Services;
 /// </summary>
 public class CheckoutService : ICheckoutService
 {
+    private readonly ICheckoutSessionRepository _sessionRepo;
     private readonly ICheckoutRepository _repo;
     private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly IPaymentGatewayService _paymentGateway;
@@ -38,6 +41,7 @@ public class CheckoutService : ICheckoutService
     private readonly IWishlistService _wishlistService;
 
     public CheckoutService(
+        ICheckoutSessionRepository sessionRepo,
         ICheckoutRepository repo,
         IEnrollmentRepository enrollmentRepo,
         IPaymentGatewayService paymentGateway,
@@ -51,6 +55,7 @@ public class CheckoutService : ICheckoutService
         IConfiguration configuration,
         IWishlistService wishlistService)
     {
+        _sessionRepo = sessionRepo;
         _repo = repo;
         _enrollmentRepo = enrollmentRepo;
         _paymentGateway = paymentGateway;
@@ -66,14 +71,100 @@ public class CheckoutService : ICheckoutService
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // QUẢN LÝ CHECKOUT SESSION
+    // ═══════════════════════════════════════════════════════════════════════════
+    
+    private async Task SaveCheckoutSessionChangesAsync(Func<Task<int>> saveFunc)
+    {
+        try
+        {
+            await saveFunc();
+        }
+        catch (CheckoutSessionException ex)
+        {
+            _logger.LogError(ex, "Failed to save CheckoutSession.");
+            throw new BadRequestException(ex.Message);
+        }
+    }
+
+    public async Task<string> CreateCheckoutSessionAsync(int userId)
+    {
+        // Guard Clauses
+        var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
+        if (!cartItems.Any())
+            throw new BadRequestException("Cart is empty. Cannot checkout.");
+
+        foreach (var item in cartItems)
+        {
+            await ValidateCourseForPurchaseAsync(item.Course, userId, item.CourseId ?? 0, true);
+        }
+
+        // Tính tổng tiền
+        decimal totalAmount = 0;
+        foreach (var cartItem in cartItems)
+        {
+            totalAmount += cartItem.Price ?? cartItem.Course?.Price ?? 0m;
+        }
+
+        var session = new CheckoutSession
+        {
+            CheckoutSessionId = Guid.NewGuid().ToString("N"),
+            UserId = userId,
+            TotalAmount = totalAmount,
+            Status = "Pending",
+            ExpiresAt = DateTime.UtcNow.AddMinutes(30)
+        };
+
+        await SaveCheckoutSessionChangesAsync(() => _sessionRepo.CreateSessionAsync(session));
+
+        return session.CheckoutSessionId;
+    }
+
+    public async Task<CheckoutSessionDto> GetCheckoutSessionAsync(int userId, string sessionId)
+    {
+        var session = await _sessionRepo.GetSessionByIdAsync(sessionId);
+        if (session == null)
+            throw new KeyNotFoundException("Checkout session not found.");
+
+        if (session.UserId != userId)
+            throw new UnauthorizedAccessException("You do not have permission to access this checkout session.");
+
+        if (session.ExpiresAt < DateTime.UtcNow && session.Status == "Pending")
+        {
+            session.Status = "Expired";
+            await SaveCheckoutSessionChangesAsync(() => _sessionRepo.UpdateSessionAsync(session));
+            throw new BadRequestException("This checkout session has expired.");
+        }
+
+        if (session.Status != "Pending")
+        {
+            throw new BadRequestException($"This checkout session is no longer valid (Status: {session.Status}).");
+        }
+
+        return new CheckoutSessionDto
+        {
+            CheckoutSessionId = session.CheckoutSessionId,
+            Status = session.Status,
+            TotalAmount = session.TotalAmount,
+            ExpiresAt = session.ExpiresAt
+        };
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // BƯỚC 1: INITIATE CHECKOUT
     // ═══════════════════════════════════════════════════════════════════════════
     public async Task<CheckoutResponse> InitiateCheckoutAsync(
         int userId,
         string? couponCode,
         string successUrl,
-        string cancelUrl)
+        string cancelUrl,
+        string? checkoutSessionId)
     {
+        if (!string.IsNullOrEmpty(checkoutSessionId))
+        {
+            await GetCheckoutSessionAsync(userId, checkoutSessionId);
+        }
+
         var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
         if (!cartItems.Any())
             throw new InvalidOperationException("Cart is empty. Cannot checkout.");
@@ -119,6 +210,11 @@ public class CheckoutService : ICheckoutService
             { "checkoutType", "cart" },
             { "courseIds", string.Join(",", cartItems.Select(c => c.CourseId)) }
         };
+
+        if (!string.IsNullOrEmpty(checkoutSessionId))
+        {
+            metadata.Add("checkoutSessionId", checkoutSessionId);
+        }
 
         var paymentResult = await _paymentGateway.CreateCheckoutSessionAsync(
             paymentLineItems,
@@ -240,8 +336,14 @@ public class CheckoutService : ICheckoutService
     // ═══════════════════════════════════════════════════════════════════════════
     public async Task<CheckoutResponse> InitiatePaymentIntentAsync(
         int userId,
-        string? couponCode)
+        string? couponCode,
+        string? checkoutSessionId)
     {
+        if (!string.IsNullOrEmpty(checkoutSessionId))
+        {
+            await GetCheckoutSessionAsync(userId, checkoutSessionId);
+        }
+
         var cartItems = await _repo.GetCartItemsWithCourseAndInstructorAsync(userId);
         if (!cartItems.Any())
             throw new InvalidOperationException("Cart is empty. Cannot checkout.");
@@ -276,6 +378,11 @@ public class CheckoutService : ICheckoutService
             { "checkoutType", "cart" },
             { "courseIds", string.Join(",", cartItems.Select(c => c.CourseId)) }
         };
+
+        if (!string.IsNullOrEmpty(checkoutSessionId))
+        {
+            metadata.Add("checkoutSessionId", checkoutSessionId);
+        }
 
         var (clientSecret, paymentIntentId) = await _paymentGateway.CreatePaymentIntentAsync(
             totalAmount,
@@ -318,6 +425,17 @@ public class CheckoutService : ICheckoutService
         string couponCode = metadata.TryGetValue("couponCode", out var cc) ? cc : "";
         string checkoutType = metadata.TryGetValue("checkoutType", out var ct) ? ct : "cart";
         string courseIdsStr = metadata.TryGetValue("courseIds", out var cids) ? cids : "";
+        string checkoutSessionId = metadata.TryGetValue("checkoutSessionId", out var csi) ? csi : "";
+
+        if (!string.IsNullOrEmpty(checkoutSessionId))
+        {
+            var session = await _sessionRepo.GetSessionByIdAsync(checkoutSessionId);
+            if (session != null && session.Status == "Pending")
+            {
+                session.Status = "Completed";
+                await SaveCheckoutSessionChangesAsync(() => _sessionRepo.UpdateSessionAsync(session));
+            }
+        }
 
         if (string.IsNullOrEmpty(courseIdsStr))
             throw new InvalidOperationException($"Valid Course ID list was not found in the Stripe {sessionOrIntentType}.");

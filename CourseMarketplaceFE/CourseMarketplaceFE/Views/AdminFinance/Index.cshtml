@@ -1397,29 +1397,61 @@
             }
         }
 
-        async function handleStripePaySubmit(event) {
+        async function handleStripePaySubmit(event, confirm = false) {
             event.preventDefault();
             const form = event.target;
 
-            const confirmResult = await Swal.fire({
-                title: 'Confirm Stripe Connect Transfer',
-                text: 'Are you absolutely sure you want to execute a REAL-MONEY bank transfer via the Stripe Connected Account API to this Instructor?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#ef4444',
-                confirmButtonText: 'Execute Payout',
-                cancelButtonText: 'Cancel',
-                background: '#ffffff',
-                customClass: {
-                    popup: 'rounded-2xl border border-slate-100 shadow-xl',
-                    confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm',
-                    cancelButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
-                }
-            });
+            if (!confirm) {
+                const confirmResult = await Swal.fire({
+                    title: 'Confirm Stripe Connect Transfer',
+                    text: 'Are you absolutely sure you want to execute a REAL-MONEY bank transfer via the Stripe Connected Account API to this Instructor?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#ef4444',
+                    confirmButtonText: 'Execute Payout',
+                    cancelButtonText: 'Cancel',
+                    background: '#ffffff',
+                    customClass: {
+                        popup: 'rounded-2xl border border-slate-100 shadow-xl',
+                        confirmButton: 'px-6 py-2.5 font-bold rounded-xl text-sm',
+                        cancelButton: 'px-6 py-2.5 font-bold rounded-xl text-sm'
+                    }
+                });
 
-            if (confirmResult.isConfirmed) {
-                form.submit();
+                if (!confirmResult.isConfirmed) return;
+            }
+
+            const formData = new FormData(form);
+            formData.append('confirm', confirm);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    await Swal.fire('Success', result.message, 'success');
+                    window.location.reload();
+                } else if (result.warning) {
+                    const warningResult = await Swal.fire({
+                        title: 'Warning',
+                        text: result.message,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Proceed Anyway',
+                        cancelButtonText: 'Cancel'
+                    });
+                    if (warningResult.isConfirmed) {
+                        handleStripePaySubmit(event, true);
+                    }
+                } else {
+                    Swal.fire('Error', result.message, 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'An unexpected error occurred.', 'error');
             }
         }
 
