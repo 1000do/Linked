@@ -59,8 +59,32 @@
         .fill-1 { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .learn-review-menu-container.menu-open { opacity: 1 !important; }
     </style>
+    <script>
+        // Global Fetch Interceptor for Anti-Forgery Token
+        const originalFetch = window.fetch;
+        window.fetch = async function () {
+            let [resource, config] = arguments;
+            if (config && config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
+                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenElement) {
+                    config.headers = config.headers || {};
+                    if (config.headers instanceof Headers) {
+                        if (!config.headers.has('RequestVerificationToken')) {
+                            config.headers.append('RequestVerificationToken', tokenElement.value);
+                        }
+                    } else {
+                        if (!config.headers['RequestVerificationToken']) {
+                            config.headers['RequestVerificationToken'] = tokenElement.value;
+                        }
+                    }
+                }
+            }
+            return originalFetch(resource, config);
+        };
+    </script>
 </head>
 <body class="bg-[#f0fcfb] text-[#191c1b] h-screen flex flex-col overflow-hidden">
+    @Html.AntiForgeryToken()
 
     @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
     {
