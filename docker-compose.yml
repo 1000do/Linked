@@ -70,7 +70,7 @@ services:
   #     - "8001:8000"
   #   depends_on:
   #     redis:
-  #       condition: service_started
+  #       condition: service_healthy
   #   restart: unless-stopped
   #   healthcheck:
   #     test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -111,7 +111,7 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "5207:80"
     restart: unless-stopped
@@ -137,7 +137,7 @@ services:
       - "5208:80"
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
