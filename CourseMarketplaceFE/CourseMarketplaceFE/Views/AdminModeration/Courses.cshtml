@@ -74,7 +74,7 @@
                     <option value="published" selected="@(ViewBag.Status == "published")">Approved</option>
                     <option value="rejected" selected="@(ViewBag.Status == "rejected")">Rejected</option>
                     <option value="archived" selected="@(ViewBag.Status == "archived")">Archived</option>
-                    <option value="permanently_locked" selected="@(ViewBag.Status == "permanently_locked")">Permanently Locked</option>
+                    <option value="discontinued" selected="@(ViewBag.Status == "discontinued")">Discontinued</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 bottom-3 text-slate-400 pointer-events-none">arrow_drop_down</span>
             </div>
@@ -238,7 +238,7 @@
                                         "rejected" => "Rejected",
                                         "archived" => "Archived",
                                         "pending" => "Pending",
-                                        "permanently_locked" => "Permanently Locked",
+                                        "discontinued" => "Discontinued",
                                         _ => item.CourseStatus
                                     };
                                     var statusColor = item.CourseStatus?.ToLower() switch {
@@ -246,7 +246,7 @@
                                         "rejected" => "bg-red-500 text-white",
                                         "archived" => "bg-slate-500 text-white",
                                         "pending" => "bg-amber-500 text-white",
-                                        "permanently_locked" => "bg-red-800 text-white shadow-lg shadow-red-900/20",
+                                        "discontinued" => "bg-red-800 text-white shadow-lg shadow-red-900/20",
                                         _ => "bg-slate-100 text-slate-600"
                                     };
                                 }
@@ -277,7 +277,7 @@
                                                 <span class="material-symbols-outlined text-[18px]">done</span> Approve
                                             </button>
                                         }
-                                        else if (statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked")
+                                        else if (statusStr == "rejected" || statusStr == "archived" || statusStr == "discontinued")
                                         {
                                             <button onclick="approveCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95">
                                                 <span class="material-symbols-outlined text-[18px]">settings_backup_restore</span> Re-approve
@@ -301,7 +301,7 @@
                                             </button>
                                         }
 
-                                        @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived" || statusStr == "permanently_locked") && item.FlagCount > 0)
+                                        @if ((statusStr == "pending" || statusStr == "published" || statusStr == "rejected" || statusStr == "archived" || statusStr == "discontinued") && item.FlagCount > 0)
                                         {
                                             <button onclick="unflagCourse(@item.CourseId)" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95" title="Unflag course">
                                                 <span class="material-symbols-outlined text-[18px]">undo</span> Unflag

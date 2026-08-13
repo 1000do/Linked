@@ -561,7 +561,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             course.CourseStatus.Should().Be(CourseStatus.Archived.ToValue());
             _courseRepoMock.Received(2).Update(course); // Once for flag, once for archive
             await _courseRepoMock.Received(2).SaveChangesAsync(); // Once for flag, once for archive
-            await _notifMock.Received(1).SendNotificationAsync(2, "Permanent Course Discontinuation Notice (3rd Time)", Arg.Any<string>(), Arg.Any<string>());
+            await _notifMock.Received(1).SendNotificationAsync(2, "Course Discontinuation Notice (3rd Time)", Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -1152,7 +1152,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             //Assert
             result.Should().BeTrue();
             course.CourseStatus.Should().Be(CourseStatus.Archived.ToValue());
-            await _notifMock.Received(1).SendNotificationAsync(2, "Permanent Course Discontinuation Notice (3rd Time)", Arg.Any<string>(), Arg.Any<string>());
+            await _notifMock.Received(1).SendNotificationAsync(2, "Course Discontinuation Notice (3rd Time)", Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]

@@ -64,7 +64,7 @@ namespace CourseMarketplaceBE.Domain.Constants
         Removed,
         Rejected,
         Archived,
-        PermanentlyLocked
+        Discontinued
     }
 
     public static class CourseStatusExtensions
@@ -79,7 +79,7 @@ namespace CourseMarketplaceBE.Domain.Constants
                 CourseStatus.Removed => "removed",
                 CourseStatus.Rejected => "rejected",
                 CourseStatus.Archived => "archived",
-                CourseStatus.PermanentlyLocked => "permanently_locked",
+                CourseStatus.Discontinued => "discontinued",
                 _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Invalid course status")
             };
         }

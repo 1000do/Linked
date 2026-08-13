@@ -64,8 +64,9 @@
 
     @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
     {
+        var displayStatus = (Model.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase) && Model.FlagCount >= 3) ? "DISCONTINUED" : Model.CourseStatus.ToUpper();
         <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[40]">
-            WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
+            WARNING: This course is currently in @displayStatus state.
         </div>
     }
     <!-- Header -->

@@ -210,7 +210,7 @@ public class CourseCommandService : ICourseCommandService
 
         if (string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("This course has been permanently discontinued due to policy violations and cannot be edited.");
+            throw new BadRequestException("This course has been discontinued until further notice due to policy violations and cannot be edited.");
         }
 
         if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))
@@ -387,7 +387,7 @@ public class CourseCommandService : ICourseCommandService
 
         if (string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("This course has been permanently discontinued due to policy violations and its status cannot be changed.");
+            throw new BadRequestException("This course has been discontinued until further notice due to policy violations and its status cannot be changed.");
         }
 
         if (status.Equals(CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
@@ -483,7 +483,7 @@ public class CourseCommandService : ICourseCommandService
 
         if (string.Equals(course.CourseStatus, CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
         {
-            throw new BadRequestException("This course has been permanently discontinued due to policy violations and cannot be deleted by the instructor.");
+            throw new BadRequestException("This course has been discontinued until further notice due to policy violations and cannot be deleted by the instructor.");
         }
 
         if (CourseStatus.Pending.ToValue().Equals(course.CourseStatus, StringComparison.OrdinalIgnoreCase))

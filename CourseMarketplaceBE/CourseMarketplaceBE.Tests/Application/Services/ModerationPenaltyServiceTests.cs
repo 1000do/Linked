@@ -135,8 +135,8 @@ public class ModerationPenaltyServiceTests
         // It's verified below in that method's tests, but we also ensure notification is sent to instructor.
         await _notificationServiceMock.Received(1).SendNotificationAsync(
             2,
-            "Permanent Course Discontinuation Notice",
-            Arg.Is<string>(s => s.Contains("Strike 3") && s.Contains("archived")),
+            "Course Discontinuation Notice",
+            Arg.Is<string>(s => s.Contains("Strike 3") && s.Contains("discontinued")),
             "/Course/Details/1"
         );
     }
@@ -364,7 +364,7 @@ public class ModerationPenaltyServiceTests
         await _lockoutRepoMock.Received(1).AddAsync(Arg.Any<Lockout>());
         await _notificationServiceMock.Received(1).SendNotificationAsync(
             2,
-            "Permanent Course Discontinuation Notice",
+            "Course Discontinuation Notice",
             Arg.Any<string>(),
             "/Course/Details/1"
         );
@@ -443,7 +443,7 @@ public class ModerationPenaltyServiceTests
         await _lockoutRepoMock.DidNotReceive().AddAsync(Arg.Any<Lockout>());
         await _notificationServiceMock.Received(1).SendNotificationAsync(
             2,
-            "Permanent Course Discontinuation Notice",
+            "Course Discontinuation Notice",
             Arg.Any<string>(),
             "/Course/Details/1"
         );
