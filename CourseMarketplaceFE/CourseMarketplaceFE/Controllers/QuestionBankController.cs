@@ -31,6 +31,29 @@ namespace CourseMarketplaceFE.Controllers
                 return;
             }
 
+            // Check Lockout
+            try
+            {
+                var response = await _api.GetAsync("instructor/dashboard");
+                if (response.IsSuccessStatusCode)
+                {
+                    var json = await response.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("data", out var dataEl))
+                    {
+                        if (dataEl.TryGetProperty("lockoutEnd", out var lockoutEl) && lockoutEl.ValueKind != JsonValueKind.Null)
+                        {
+                            var lockoutEnd = lockoutEl.GetDateTime();
+                            if (lockoutEnd > DateTime.UtcNow)
+                            {
+                                ViewBag.LockoutEnd = lockoutEnd;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception) { /* ignore network error, rely on backend block */ }
+
             await next();
         }
 

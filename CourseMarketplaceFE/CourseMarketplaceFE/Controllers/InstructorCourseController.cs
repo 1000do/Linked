@@ -58,6 +58,23 @@ namespace CourseMarketplaceFE.Controllers
                             }
                         }
 
+                        // Check lockoutEnd
+                        if (dataEl.TryGetProperty("lockoutEnd", out var lockoutEl) && lockoutEl.ValueKind != JsonValueKind.Null)
+                        {
+                            var lockoutEnd = lockoutEl.GetDateTime();
+                            if (lockoutEnd > DateTime.UtcNow)
+                            {
+                                ViewBag.LockoutEnd = lockoutEnd;
+                                var actionName = context.ActionDescriptor.RouteValues["action"];
+                                if (actionName == "Create" || actionName == "Editor")
+                                {
+                                    TempData["Error"] = $"Your account is locked until {lockoutEnd:yyyy-MM-dd HH:mm} due to policy violations. You cannot access this page.";
+                                    context.Result = RedirectToAction("Index");
+                                    return;
+                                }
+                            }
+                        }
+
                         // Cập nhật lại Cookie cho lần sau
                         var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
                         Response.Cookies.Append("InstructorApprovalStatus", status ?? "None", statusCookieOpts);
@@ -341,6 +358,10 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         var status = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : "Draft";
                         var flagCount = data.TryGetProperty("flagCount", out var fc) ? fc.GetInt32() : 0;
+                        var isRemoved = data.TryGetProperty("isRemoved", out var ir) && ir.ValueKind != JsonValueKind.Null && ir.GetBoolean();
+                        
+                        ViewBag.IsRemoved = isRemoved || status?.Equals("removed", StringComparison.OrdinalIgnoreCase) == true;
+
                         if (status?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && flagCount >= 3)
                         {
                             TempData["Error"] = "This course is permanently locked due to severe policy violations.";

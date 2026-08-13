@@ -106,7 +106,12 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                     ChargesEnabled         = i.ChargesEnabled ?? false,
                     StripeCountry          = i.StripeCountry,
                     FullName               = i.InstructorNavigation!.FullName,
-                    Email                  = i.InstructorNavigation.UserNavigation!.Email
+                    Email                  = i.InstructorNavigation.UserNavigation!.Email,
+                    LockoutEnd             = i.InstructorNavigation.UserNavigation.Lockouts
+                                                .Where(l => l.LockoutType == "instructor" && l.LockoutEnd > DateTime.UtcNow)
+                                                .OrderByDescending(l => l.LockoutEnd)
+                                                .Select(l => l.LockoutEnd)
+                                                .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync();
 

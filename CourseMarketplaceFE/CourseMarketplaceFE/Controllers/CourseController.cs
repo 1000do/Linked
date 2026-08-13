@@ -125,15 +125,16 @@ namespace CourseMarketplaceFE.Controllers
         }
         
         [HttpGet]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> StreamMaterial(int materialId, [FromQuery] bool download = false)
         {
             var token = Request.Cookies["AccessToken"];
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized();
 
             var httpClient = _httpClientFactory.CreateClient("BackendApi");
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            if (!string.IsNullOrEmpty(token))
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
 
             // Forward the Range header
             var rangeHeader = Request.Headers["Range"].ToString();

@@ -240,14 +240,17 @@ public class LessonController : ControllerBase
     }
 
     [HttpGet("materials/{materialId}/stream")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> StreamMaterial(int materialId)
     {
         try
         {
+            int userId = 0;
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdStr, out var userId))
-                return Unauthorized(ApiResponse<object>.ErrorResponse("Invalid user token."));
+            if (!string.IsNullOrEmpty(userIdStr))
+            {
+                int.TryParse(userIdStr, out userId);
+            }
 
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
             var rangeHeader = Request.Headers["Range"].ToString();

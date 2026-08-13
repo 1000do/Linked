@@ -19,20 +19,24 @@ public class QuizService : IQuizService
     private readonly IQuestionBankRepository _questionBankRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly IRedisService _redisService;
+    private readonly ILockoutRepository _lockoutRepo;
 
-    public QuizService(IQuizRepository quizRepo, IEnrollmentRepository enrollmentRepo, IQuestionBankRepository questionBankRepository, ICourseRepository courseRepository, IRedisService redisService)
+    public QuizService(IQuizRepository quizRepo, IEnrollmentRepository enrollmentRepo, IQuestionBankRepository questionBankRepository, ICourseRepository courseRepository, IRedisService redisService, ILockoutRepository lockoutRepo)
     {
         _quizRepo = quizRepo;
         _enrollmentRepo = enrollmentRepo;
         _questionBankRepository = questionBankRepository;
         _courseRepository = courseRepository;
         _redisService = redisService;
+        _lockoutRepo = lockoutRepo;
     }
 
     // ── Instructor: Quản lý Quiz ──────────────────────────────────────────────
 
     public async Task<QuizDetailResponse> CreateQuizAsync(QuizCreateRequest request, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "create quizzes");
+
         if (!await _quizRepo.IsTitleUniqueAsync(request.Title, instructorId))
             throw new ArgumentException("You already have a quiz with this title. Please choose a unique title.");
             
@@ -63,6 +67,8 @@ public class QuizService : IQuizService
 
     public async Task<QuizDetailResponse> UpdateQuizSettingsAsync(int quizId, QuizUpdateRequest request, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "update quiz settings");
+
         if (!await _quizRepo.IsTitleUniqueAsync(request.Title, instructorId, quizId))
             throw new ArgumentException("You already have another quiz with this title. Please choose a unique title.");
             
@@ -143,6 +149,8 @@ public class QuizService : IQuizService
 
     public async Task SoftDeleteQuizAsync(int quizId, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "delete quizzes");
+
         var quiz = await _quizRepo.GetByIdAsync(quizId)
             ?? throw new KeyNotFoundException($"Quiz {quizId} does not exist.");
 
@@ -159,6 +167,8 @@ public class QuizService : IQuizService
 
     public async Task SetQuizHiddenAsync(int quizId, bool isHidden, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "change quiz visibility");
+
         var quiz = await _quizRepo.GetByIdAsync(quizId)
             ?? throw new KeyNotFoundException($"Quiz {quizId} does not exist.");
 
@@ -174,6 +184,8 @@ public class QuizService : IQuizService
 
     public async Task<CourseQuizResponse> AddQuizToCourseAsync(AddQuizToCourseRequest request, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "add quizzes to courses");
+
         await EnsureCourseNotPendingAsync(request.CourseId);
 
         var quiz = await _quizRepo.GetByIdWithQuestionsAsync(request.QuizId)
@@ -205,6 +217,8 @@ public class QuizService : IQuizService
 
     public async Task RemoveQuizFromCourseAsync(int courseId, int quizId, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "remove quizzes from courses");
+
         await EnsureCourseNotPendingAsync(courseId);
 
         var quiz = await _quizRepo.GetByIdAsync(quizId)
@@ -224,6 +238,8 @@ public class QuizService : IQuizService
 
     public async Task SetCourseQuizHiddenAsync(int courseId, int quizId, bool isHidden, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "change course quiz visibility");
+
         await EnsureCourseNotPendingAsync(courseId);
 
         var quiz = await _quizRepo.GetByIdAsync(quizId)
@@ -536,6 +552,15 @@ public class QuizService : IQuizService
     {
         if (quiz.InstructorId != instructorId)
             throw new UnauthorizedAccessException("You are not the owner of this quiz.");
+    }
+
+    private async Task EnsureNotLockedOutAsync(int instructorId, string actionMessage)
+    {
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot {actionMessage}.");
+        }
     }
 
     private async Task EnsureCourseNotPendingAsync(int courseId)

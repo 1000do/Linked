@@ -19,7 +19,9 @@
             <div id="course-status-badge-container">
                 @{
                     var courseStatus = ViewBag.CourseStatus as string ?? "Draft";
-                    if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
+                    if (ViewBag.IsRemoved == true || courseStatus.Equals("Removed", StringComparison.OrdinalIgnoreCase)) {
+                        <span class="px-2 py-1 bg-red-100 text-red-700 border border-red-300 rounded text-[10px] font-bold uppercase tracking-wider">Removed</span>
+                    } else if (courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase)) {
                         <span class="px-2 py-1 bg-primary-container/20 text-primary border border-primary-container rounded text-[10px] font-bold uppercase tracking-wider">Published</span>
                     } else if (courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
                         <span class="px-2 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded text-[10px] font-bold uppercase tracking-wider">Pending Review</span>
@@ -36,7 +38,7 @@
                 <span class="material-symbols-outlined text-[18px]">visibility</span> Preview
             </a>
             <div id="submit-course-btn-container">
-                @if (!courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
+                @if (ViewBag.IsRemoved != true && !courseStatus.Equals("Removed", StringComparison.OrdinalIgnoreCase) && !courseStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase)) {
                     <button id="submit-course-btn" class="px-5 py-2 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 flex items-center gap-2" onclick="submitCourseForReview()">
                         <span class="material-symbols-outlined text-[18px]">send</span> 
                         @(courseStatus.Equals("Published", StringComparison.OrdinalIgnoreCase) ? "Submit Changes" : "Submit for Review")
@@ -64,7 +66,19 @@
         </div>
     }
 
-    <div class="flex gap-8 h-full overflow-hidden">
+    <div class="flex gap-8 h-full overflow-hidden relative">
+        @if (ViewBag.IsRemoved == true || courseStatus.Equals("Removed", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="absolute inset-0 z-[100] bg-slate-100/50 backdrop-blur-[2px] rounded-2xl flex items-center justify-center cursor-not-allowed">
+                <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md text-center border border-slate-200 cursor-default">
+                    <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <span class="material-symbols-outlined text-4xl">block</span>
+                    </div>
+                    <h3 class="text-xl font-headline font-extrabold text-slate-900 mb-2">Read-Only Mode</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed">This course has been removed and is now locked. You can browse its content but cannot make any changes or submit it for review.</p>
+                </div>
+            </div>
+        }
         <!-- LEFT: Course Structure -->
         <div class="w-80 flex-shrink-0 flex flex-col gap-4 overflow-hidden">
             <div class="flex border-b border-slate-200 mb-2">
@@ -1018,6 +1032,23 @@
 
 @section Scripts {
     <script>
+        const instructorLockoutEndStr = '@(ViewBag.LockoutEnd?.ToString("o") ?? "")';
+        function isInstructorLockedOut() {
+            if (instructorLockoutEndStr) {
+                const lockoutDate = new Date(instructorLockoutEndStr);
+                if (lockoutDate > new Date()) {
+                    Swal.fire({
+                        title: 'Account Locked',
+                        text: 'Your instructor rights are locked due to policy violations. You cannot perform this action.',
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         // --- GLOBAL FUNCTIONS AT THE TOP ---
         function formatDuration(totalSeconds) {
             totalSeconds = Math.round(totalSeconds || 0);
@@ -1057,6 +1088,7 @@
         let isSubmitting = false;
 
         window.addNewLesson = function() {
+            if (isInstructorLockedOut()) return;
             // console.log("Add New Lesson clicked");
             const modal = document.getElementById('add-lesson-modal');
             const input = document.getElementById('new-lesson-title');
@@ -1157,6 +1189,7 @@
         };
 
         window.saveCourseDetails = function() {
+            if (isInstructorLockedOut()) return;
             const title = document.getElementById('course-title-input').value;
             const price = document.getElementById('course-price-input').value;
             const catId = document.getElementById('course-category-input').value;
@@ -1710,6 +1743,7 @@
         let filteredQuizzes = [];
         
         window.openAddQuizModal = async function() {
+            if (isInstructorLockedOut()) return;
             const modal = document.getElementById('add-quiz-modal');
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -1807,6 +1841,7 @@
         };
 
         window.removeQuizFromCourse = async function(cId, qId) {
+            if (isInstructorLockedOut()) return;
             const resConfirm = await Swal.fire({
                 title: 'Remove Quiz?',
                 text: 'Are you sure you want to remove this quiz from the course?',
@@ -1839,12 +1874,15 @@
         }
 
         window.toggleQuizVisibility = async function(cId, qId, checkbox) {
+            if (isInstructorLockedOut()) {
+                checkbox.checked = !checkbox.checked;
+                return;
+            }
             const hide = !checkbox.checked;
             try {
-                const res = await fetch(`/Quiz/ToggleHidden`, { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ quizId: qId, isHidden: hide })
+                const res = await fetch(`/CourseQuiz/Hide?courseId=${cId}&quizId=${qId}&hide=${hide}`, { 
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 const result = await res.json();
                 if(!result.success) {
@@ -2083,6 +2121,7 @@
 
 
         window.updateLessonTitleInline = function(newTitle) {
+            if (isInstructorLockedOut()) return;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2128,6 +2167,7 @@
         };
 
         window.updateLessonInline = function(lId, field, el) {
+            if (isInstructorLockedOut()) return;
             const lesson = lessonsData.find(x => (x.lessonId || x.LessonId) == lId);
             if (!lesson) return;
             
@@ -2180,6 +2220,7 @@
         };
 
         window.submitVideoEdit = function() {
+            if (isInstructorLockedOut()) return;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2248,6 +2289,7 @@
         };
 
         window.updateResourceInline = function(matId, field, el) {
+            if (isInstructorLockedOut()) return;
             const newValue = el.value;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
@@ -2358,6 +2400,7 @@
         };
 
         window.submitResourceEdit = function() {
+            if (isInstructorLockedOut()) return;
             const mId = document.getElementById('editing-resource-id').value;
             if (!mId) return;
             
@@ -2422,6 +2465,7 @@
         };
 
         window.submitNewLesson = function() {
+            if (isInstructorLockedOut()) return;
             const input = document.getElementById('new-lesson-title');
             const title = input.value;
             const btn = document.getElementById('submit-lesson-btn');
@@ -2484,6 +2528,7 @@
 
 
         window.removeLesson = function(event, lessonId) {
+            if (isInstructorLockedOut()) return;
             event.stopPropagation();
             Swal.fire({
                 title: 'Remove Lesson?',
@@ -2557,6 +2602,7 @@
         videoDropArea.addEventListener('drop', e => handleVideoUpload(e.dataTransfer.files), false);
 
         async function handleVideoUpload(files) {
+            if (isInstructorLockedOut()) return;
             if (!files.length) return;
             const file = files[0];
             if (!file.type.startsWith('video/')) { 
@@ -2686,6 +2732,7 @@
 
         // ─── Auto-Save Video Material ───
         window.saveVideoMaterial = function(isAutoSave = false) {
+            if (isInstructorLockedOut()) return;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2777,6 +2824,7 @@
         };
 
         window.saveResourceMaterial = function(resourceUrl, resourceName, fileSize, fileExtension) {
+            if (isInstructorLockedOut()) return;
             // console.log(`Saving resource material...\nURL:${resourceUrl}\nTitle:${resourceName}\nSize:${fileSize}\nFormat(extension):${fileExtension}`);
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
@@ -2840,6 +2888,7 @@
 
         // ─── Remove Material (soft-delete) ───
         window.removeMaterial = function(materialId, btn) {
+            if (isInstructorLockedOut()) return;
             Swal.fire({
                 title: 'Remove this file?',
                 text: 'The file will be marked as removed. You can re-upload it later.',
@@ -2991,6 +3040,7 @@
         }
 
         window.submitCourseForReview = function() {
+            if (isInstructorLockedOut()) return;
             // --- VALIDATION BEFORE SUBMIT ---
             const title = document.getElementById('course-title-input').value;
             const desc = window.courseDescQuill.root.innerHTML;

@@ -75,6 +75,7 @@ public class InstructorDashboardDto
     public decimal TotalRevenue { get; set; }
     public double EnrollmentGrowthPercentage { get; set; }
     public int InstructorRankPercentage { get; set; }
+    public DateTime? LockoutEnd { get; set; }
 }
 
 public class InstructorPayoutDto
