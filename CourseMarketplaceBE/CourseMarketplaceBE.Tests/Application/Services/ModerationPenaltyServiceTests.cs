@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Constants;
@@ -323,6 +325,7 @@ public class ModerationPenaltyServiceTests
         _courseRepoMock.GetInstructorCoursesAsync(instructorId).Returns(courses);
         _enrollmentRepoMock.GetEnrolledUserIdsAsync(10).Returns(studentsCourse10);
         _enrollmentRepoMock.GetEnrolledUserIdsAsync(20).Returns(studentsCourse20);
+        _notificationServiceMock.SendBulkNotificationsAsync(Arg.Any<IEnumerable<NotificationBulkDto>>()).Returns(true);
 
         // Act
         var result = await _sut.NotifyStudentsAboutInstructorSuspensionAsync(instructorId);
@@ -335,9 +338,12 @@ public class ModerationPenaltyServiceTests
         await _enrollmentRepoMock.Received(1).GetEnrolledUserIdsAsync(20);
 
         // User 101 should only be notified once despite being in both courses
-        await _notificationServiceMock.Received(1).SendNotificationAsync(100, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _notificationServiceMock.Received(1).SendNotificationAsync(101, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _notificationServiceMock.Received(1).SendNotificationAsync(102, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<IEnumerable<NotificationBulkDto>>(dtos => 
+            dtos.Count() == 3 &&
+            dtos.Any(d => d.ReceiverId == 100 && d.LinkAction == "/Course/Details/10" && d.Title == "Instructor Temporarily Suspended") &&
+            dtos.Any(d => d.ReceiverId == 101 && d.LinkAction == "/Course/Details/10" && d.Title == "Instructor Temporarily Suspended") &&
+            dtos.Any(d => d.ReceiverId == 102 && d.LinkAction == "/Course/Details/20" && d.Title == "Instructor Temporarily Suspended")
+        ));
     }
 
     [Fact]
@@ -579,6 +585,6 @@ public class ModerationPenaltyServiceTests
         await _instructorRepoMock.Received(1).GetByIdAsync(instructorId);
         await _courseRepoMock.Received(1).GetInstructorCoursesAsync(instructorId);
         await _enrollmentRepoMock.Received(1).GetEnrolledUserIdsAsync(10);
-        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _notificationServiceMock.DidNotReceive().SendBulkNotificationsAsync(Arg.Any<IEnumerable<NotificationBulkDto>>());
     }
 }
