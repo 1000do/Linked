@@ -27,7 +27,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _repoMock.GetCartItemsWithCourseAndInstructorAsync(userId).Returns(new List<CartItem>());
 
             //Act
-            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, null);
+            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, null, null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Cart is empty. Cannot checkout.");
@@ -45,7 +45,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _repoMock.GetCartItemsWithCourseAndInstructorAsync(userId).Returns(cartItems);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, null);
+            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, null, null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"The course \"{course.Title}\" is not published and cannot be purchased.");
@@ -64,7 +64,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _courseRepoMock.IsEnrolledAsync(userId, 1).Returns(true);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, null);
+            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, null, null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"You have already purchased the course \"{course.Title}\". Please remove it from the cart.");
@@ -85,7 +85,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _couponRepoMock.GetByCodeAsync(couponCode).Returns((Coupon?)null);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, couponCode);
+            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, couponCode, null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This coupon does not exist.");
@@ -107,7 +107,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _couponRepoMock.GetByCodeAsync(couponCode).Returns(coupon);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, couponCode);
+            Func<Task> act = async () => await _sut.InitiatePaymentIntentAsync(userId, couponCode, null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This coupon has expired or run out of usage.");
@@ -133,7 +133,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 .Returns(paymentResult);
 
             //Act
-            var result = await _sut.InitiatePaymentIntentAsync(userId, couponCode);
+            var result = await _sut.InitiatePaymentIntentAsync(userId, couponCode, null);
 
             //Assert
             result.Should().BeEquivalentTo(expectedResponse);
@@ -161,7 +161,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 .Returns(paymentResult);
 
             //Act
-            var result = await _sut.InitiatePaymentIntentAsync(userId, couponCode);
+            var result = await _sut.InitiatePaymentIntentAsync(userId, couponCode, null);
 
             //Assert
             result.Should().BeEquivalentTo(expectedResponse);
@@ -185,7 +185,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 .Returns(paymentResult);
 
             //Act
-            var result = await _sut.InitiatePaymentIntentAsync(userId, null);
+            var result = await _sut.InitiatePaymentIntentAsync(userId, null, null);
 
             //Assert
             result.Should().BeEquivalentTo(expectedResponse);

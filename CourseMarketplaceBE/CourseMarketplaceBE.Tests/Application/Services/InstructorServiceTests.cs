@@ -24,6 +24,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IUserRepository _userRepoMock;
         private readonly IStripeConnectService _stripeConnectMock;
         private readonly ICourseRepository _courseRepoMock;
+        private readonly INotificationService _notificationServiceMock;
         private readonly InstructorService _sut;
 
         public InstructorServiceTests()
@@ -34,6 +35,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _userRepoMock = Substitute.For<IUserRepository>();
             _stripeConnectMock = Substitute.For<IStripeConnectService>();
             _courseRepoMock = Substitute.For<ICourseRepository>();
+            _notificationServiceMock = Substitute.For<INotificationService>();
 
             _sut = new InstructorService(
                 _repoMock,
@@ -41,7 +43,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _financeRepoMock,
                 _userRepoMock,
                 _stripeConnectMock,
-                _courseRepoMock
+                _courseRepoMock,
+                _notificationServiceMock
             );
         }
 
@@ -488,7 +491,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Arrange 2
             _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
-            _stripeConnectMock.SetupExpressAccountAsync(userId, "test@test.com", "SG", Arg.Any<string>(), Arg.Any<string>(), null).Returns(setupResult);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "test@test.com", "US", Arg.Any<string>(), Arg.Any<string>(), null).Returns(setupResult);
 
             //Act
             var result = await _sut.SetupStripePayoutAsync(userId);
@@ -1260,7 +1263,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Arrange 2
             _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
-            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "SG", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "US", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
 
             //Act
             var result = await _sut.SetupStripePayoutAsync(userId);
@@ -1285,7 +1288,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Arrange 2
             _repoMock.GetByIdWithNavigationAsync(userId).Returns(instructor);
-            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "SG", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
+            _stripeConnectMock.SetupExpressAccountAsync(userId, "", "US", Arg.Any<string>(), Arg.Any<string>(), "acct_old").Returns(setupResult);
 
             //Act
             var result = await _sut.SetupStripePayoutAsync(userId);

@@ -1,5 +1,14 @@
 namespace CourseMarketplaceBE.Application.DTOs;
 
+public class CheckoutSessionDto
+{
+    public string CheckoutSessionId { get; set; } = null!;
+    public string Status { get; set; } = null!;
+    public decimal TotalAmount { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+}
+
 /// <summary>
 /// Request để khởi tạo checkout — couponCode tùy chọn.
 /// </summary>
@@ -7,6 +16,8 @@ public class CheckoutRequest
 {
     /// <summary>Mã giảm giá (null = không áp dụng).</summary>
     public string? CouponCode { get; set; }
+
+    public string? CheckoutSessionId { get; set; }
 
     /// <summary>URL redirect khi thanh toán thành công.</summary>
     public string SuccessUrl { get; set; } = string.Empty;

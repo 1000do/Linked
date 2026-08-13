@@ -1176,3 +1176,32 @@ SELECT setval('courses_course_id_seq', COALESCE((SELECT MAX(course_id)+1 FROM co
 SELECT setval('lessons_lesson_id_seq', COALESCE((SELECT MAX(lesson_id)+1 FROM lessons), 1), false);
 SELECT setval('learning_materials_material_id_seq', COALESCE((SELECT MAX(material_id)+1 FROM learning_materials), 1), false);
 SELECT setval('media_embeddings_media_embedding_id_seq', COALESCE((SELECT MAX(media_embedding_id)+1 FROM media_embeddings), 1), false);
+
+-- ==============================================================================
+-- Bảng checkout_sessions
+-- ==============================================================================
+CREATE TABLE checkout_sessions (
+    checkout_session_id VARCHAR(50) PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending', -- Pending, Completed, Expired, Cancelled
+    total_amount NUMERIC(10, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);
+
+-- ==============================================================================
+-- Bảng gift_checkout_sessions
+-- ==============================================================================
+CREATE TABLE gift_checkout_sessions (
+    gift_session_id VARCHAR(50) PRIMARY KEY,
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    course_id INT NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+    recipient_email VARCHAR(255) NOT NULL,
+    recipient_name VARCHAR(255),
+    gift_message TEXT,
+    card_theme VARCHAR(50),
+    total_amount NUMERIC(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'Pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL
+);

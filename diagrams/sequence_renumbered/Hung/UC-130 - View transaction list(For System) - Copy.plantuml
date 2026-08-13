@@ -84,12 +84,15 @@ else Valid actor's authentication and authorization
     
     be_ctrl -->> fe_ctrl--:5.3.11. Return statusCode 200
     
+    fe_ctrl -> fe_ctrl++:5.3.12. Check if the returned transactions list is empty
+    fe_ctrl--
+    
 alt Empty List (No transactions exist)
-        fe_ctrl -->> view:5.3.11.1. Return View with empty Transactions list
-        view -->> act:5.3.11.1.1. Display empty state
+        fe_ctrl -->> view:5.3.12.1. Return View with empty Transactions list
+        view -->> act:5.3.12.1.1. Display empty state
 else Transactions Found
-        fe_ctrl -->> view--:5.3.11.2. Return View with populated Transactions list
-        view -->> act--:5.3.11.2.1. Display transaction table (ID, Stripe Tx ID, Course, Purchased By, Instructor, Amount, Date, Status)
+        fe_ctrl -->> view--:5.3.12.2. Return View with populated Transactions list
+        view -->> act--:5.3.12.2.1. Display transaction table (ID, Stripe Tx ID, Course, Purchased By, Instructor, Amount, Date, Status)
 end
 end
 
