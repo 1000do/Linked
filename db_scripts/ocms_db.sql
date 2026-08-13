@@ -1032,7 +1032,7 @@ END $$;
 INSERT INTO 
 ai_models (model_name,model_type,model_provider,model_version, model_path, model_status,description, process_type)
 VALUES
-('harmful_text_classifier','classifier','local','1.0.0','/app/models/spam_1/,/app/models/toxic_3/','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
+('harmful_text_classifier','classifier','local','1.0.0','ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier','active','an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased','text'),
 ('clip','embedding_generator','openai','1.0.0','openai/clip-vit-base-patch32','active','a multimodal model that was used to generate embeddings','media'),
 ('distilbert','embedding_generator','hugging_face','1.0.0','distilbert-base-multilingual-cased','active','a language model that was used to generate embeddings','text'),
 ('paraphrase-multilingual-MiniLM-L12-v2','embedding_generator','hugging_face','1.0.0','sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2','active','a multilingual language model that was used to generate embeddings','text');
@@ -1040,10 +1040,10 @@ VALUES
 INSERT INTO
 system_configs(config_key,config_value,description)
 VALUES
-('course_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of course_harmful_text_classifier'),
+('course_harmful_text_classifier','ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier','system config of course_harmful_text_classifier'),
 ('course_text_embedding_generator', 'distilbert-base-multilingual-cased','system config of course_text_embedding_generator'),
 ('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator'),
-('review_harmful_text_classifier','/app/models/spam_1/,/app/models/toxic_3/','system config of review_harmful_text_classifier');
+('review_harmful_text_classifier','ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier','system config of review_harmful_text_classifier');
 
 INSERT INTO
 system_configs(config_key,config_value,description)

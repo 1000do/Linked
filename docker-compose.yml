@@ -63,7 +63,6 @@ services:
   #     MEDIA_EMBEDDING_DIM: ${MEDIA_EMBEDDING_DIM}
   #     TEXT_EMBEDDING_DIM: ${TEXT_EMBEDDING_DIM}
   #   volumes:
-  #     - ./ai_models:/app/models
   #     - hf_cache:/root/.cache/huggingface
   #     - easyocr_cache:/root/.EasyOCR
   #   ports:
@@ -133,15 +132,19 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       Stripe__PublishableKey: ${STRIPE_PUBLISHABLE_KEY}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      AllowedOrigins: ${ALLOWED_ORIGINS}
       ASPNETCORE_URLS: "http://+:80"
     ports:
       - "5208:80"
     depends_on:
       backend:
         condition: service_healthy
+    volumes:
+      - frontend_keys:/root/.aspnet/DataProtection-Keys
     restart: unless-stopped
 
 volumes:
+  frontend_keys:
   db_data:
   db_backup:
   # hf_cache:

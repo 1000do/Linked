@@ -149,28 +149,9 @@
 
     @await RenderSectionAsync("Styles", required: false)
     <script>
-        // Global Fetch Interceptor for Anti-Forgery Token
-        const originalFetch = window.fetch;
-        window.fetch = async function () {
-            let [resource, config] = arguments;
-            if (config && config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
-                const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
-                if (tokenElement) {
-                    config.headers = config.headers || {};
-                    if (config.headers instanceof Headers) {
-                        if (!config.headers.has('RequestVerificationToken')) {
-                            config.headers.append('RequestVerificationToken', tokenElement.value);
-                        }
-                    } else {
-                        if (!config.headers['RequestVerificationToken']) {
-                            config.headers['RequestVerificationToken'] = tokenElement.value;
-                        }
-                    }
-                }
-            }
-            return originalFetch(resource, config);
-        };
+        window.APP_ALLOWED_ORIGINS = '@(Context.RequestServices.GetService<Microsoft.Extensions.Configuration.IConfiguration>()?["AllowedOrigins"] ?? "")';
     </script>
+    <script src="~/js/fetch-interceptor.js"></script>
 </head>
 
 <body class="bg-surface font-body text-on-surface antialiased">

@@ -47,7 +47,7 @@ COPY public.accounts (account_id, email, username, password_hash, phone_number, 
 --
 
 COPY public.ai_models (model_id, model_name, model_type, model_provider, model_version, model_status, description, model_created_at, model_updated_at, model_path, process_type) FROM stdin;
-1	harmful_text_classifier	classifier	local	1	active	an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased	2026-06-23 10:17:41.417404	2026-06-23 10:17:41.417404	/app/models/spam_1/,/app/models/toxic_3/	text
+1	harmful_text_classifier	classifier	local	1	active	an ensemble of spam and toxic text classifier that was fine-tuned from distilbert multilingual cased	2026-06-23 10:17:41.417404	2026-06-23 10:17:41.417404	ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier	text
 2	clip	embedding_generator	openai	1	active	a multimodal model that was used to generate embeddings	2026-06-23 10:17:41.417404	2026-06-23 10:17:41.417404	openai/clip-vit-base-patch32	media
 3	distilbert	embedding_generator	hugging_face	1	active	a language model that was used to generate embeddings	2026-06-23 10:17:41.417404	2026-06-23 10:17:41.417404	distilbert-base-multilingual-cased	text
 \.
@@ -1382,10 +1382,10 @@ COPY public.system_configs (config_id, manager_id, config_key, config_value, des
 1	\N	TransferRate	80	Phần trăm (%) giảng viên nhận được từ mỗi giao dịch. VD: 80 = GV nhận 80%, Sàn giữ 20%.	2026-06-23 10:17:41.401238
 2	\N	PayoutDay	15	Ngày trong tháng thực hiện chia tiền cho giảng viên. VD: 15 = ngày 15 hàng tháng.	2026-06-23 10:17:41.402938
 3	\N	StripeCountries	[\r\n    {"code":"US","name":"United States"},{"code":"GB","name":"United Kingdom"}\r\n]	Danh sách quốc gia mà Stripe Connect hỗ trợ đăng ký tài khoản Express. Giảng viên chọn 1 trong số này khi đăng ký Stripe.	2026-06-23 10:17:41.403711
-4	\N	course_harmful_text_classifier	/app/models/spam_1/,/app/models/toxic_3/	system config of course_harmful_text_classifier	2026-06-23 10:17:41.418487
+4	\N	course_harmful_text_classifier	ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier	system config of course_harmful_text_classifier	2026-06-23 10:17:41.418487
 5	\N	course_text_embedding_generator	distilbert-base-multilingual-cased	system config of course_text_embedding_generator	2026-06-23 10:17:41.418487
 6	\N	course_media_embedding_generator	openai/clip-vit-base-patch32	system config of course_media_embedding_generator	2026-06-23 10:17:41.418487
-7	\N	review_harmful_text_classifier	/app/models/spam_1/,/app/models/toxic_3/	system config of review_harmful_text_classifier	2026-06-23 10:17:41.418487
+7	\N	review_harmful_text_classifier	ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier	system config of review_harmful_text_classifier	2026-06-23 10:17:41.418487
 8	\N	moderation_threshold	{"similarity": 0.85,"spam": 0.85,"toxic": 0.85}	system config of AI moderation threshold	2026-06-23 10:17:41.419345
 \.
 

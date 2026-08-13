@@ -74,10 +74,10 @@ class StandaloneTextClassifier:
 
         # Resolve model paths
         self.spam_model_path = self._resolve_model_path(
-            spam_model_path, "SPAM_MODEL_PATH", ["ai_models/spam_1", "../ai_models/spam_1", "app/models/spam_1", "models/spam_1"]
+            spam_model_path, "SPAM_MODEL_PATH", ["ai_models/spam_1", "../ai_models/spam_1", "ki4n-4nt/spam_text_classifier", "models/spam_1"]
         )
         self.toxic_model_path = self._resolve_model_path(
-            toxic_model_path, "TOXIC_MODEL_PATH", ["ai_models/toxic_3", "../ai_models/toxic_3", "app/models/toxic_3", "models/toxic_3"]
+            toxic_model_path, "TOXIC_MODEL_PATH", ["ai_models/toxic_3", "../ai_models/toxic_3", "ki4n-4nt/toxic_text_classifier", "models/toxic_3"]
         )
 
         logger.info(f"Resolved Spam Model Path: {self.spam_model_path}")
