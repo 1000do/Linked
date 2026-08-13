@@ -25,6 +25,7 @@ public class ModerationPenaltyServiceTests
     private readonly IHubContext<NotificationHub> _hubContextMock;
     private readonly IHubClients _hubClientsMock;
     private readonly IClientProxy _clientProxyMock;
+    private readonly IRedisService _redisServiceMock;
     private readonly ModerationPenaltyService _sut;
 
     public ModerationPenaltyServiceTests()
@@ -38,6 +39,7 @@ public class ModerationPenaltyServiceTests
         _hubContextMock = Substitute.For<IHubContext<NotificationHub>>();
         _hubClientsMock = Substitute.For<IHubClients>();
         _clientProxyMock = Substitute.For<IClientProxy>();
+        _redisServiceMock = Substitute.For<IRedisService>();
         
         _hubContextMock.Clients.Returns(_hubClientsMock);
         _hubClientsMock.User(Arg.Any<string>()).Returns(_clientProxyMock);
@@ -49,7 +51,8 @@ public class ModerationPenaltyServiceTests
             _userRepoMock,
             _notificationServiceMock,
             _enrollmentRepoMock,
-            _hubContextMock
+            _hubContextMock,
+            _redisServiceMock
         );
     }
 
