@@ -307,22 +307,6 @@ public class Program
                 {
                     return HealthCheckResult.Unhealthy(exception: ex);
                 }
-            })
-            .AddAsyncCheck("AI_Moderation", async (cancellationToken) =>
-            {
-                try
-                {
-                    using var client = new HttpClient();
-                    client.Timeout = TimeSpan.FromSeconds(5);
-                    var aiHost = Environment.GetEnvironmentVariable("AI_HOST") ?? "localhost";
-                    var aiPort = Environment.GetEnvironmentVariable("AI_PORT") ?? "8000";
-                    var response = await client.GetAsync($"http://{aiHost}:{aiPort}/health", cancellationToken);
-                    return response.IsSuccessStatusCode ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy();
-                }
-                catch (Exception ex)
-                {
-                    return HealthCheckResult.Unhealthy(exception: ex);
-                }
             });
 
         // 🔥 Rate Limiting
