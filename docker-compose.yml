@@ -89,6 +89,7 @@ services:
       FrontendBaseUrl: ${FRONTEND_BASE_URL:-http://localhost:5208}
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:80"
+      TZ: Asia/Ho_Chi_Minh
       JWT_KEY: ${JWT_KEY}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}

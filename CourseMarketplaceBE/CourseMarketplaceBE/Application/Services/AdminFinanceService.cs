@@ -37,6 +37,8 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly ICourseRepository _courseRepo;
         private readonly IStripeConnectService _stripeConnect;
         private readonly IGiftRepository _giftRepo;
+        private readonly ILockoutRepository _lockoutRepo;
+        private readonly IUserRepository _userRepo;
 
         // Key trong bảng system_configs
         private const string TransferRateKey = "TransferRate";
@@ -52,7 +54,9 @@ namespace CourseMarketplaceBE.Application.Services
             ISystemConfigRepository configRepo,
             ICourseRepository courseRepo,
             IStripeConnectService stripeConnect,
-            IGiftRepository giftRepo)
+            IGiftRepository giftRepo,
+            ILockoutRepository lockoutRepo,
+            IUserRepository userRepo)
         {
             _repo = repo;
             _paymentGateway = paymentGateway;
@@ -64,6 +68,8 @@ namespace CourseMarketplaceBE.Application.Services
             _courseRepo = courseRepo;
             _stripeConnect = stripeConnect;
             _giftRepo = giftRepo;
+            _lockoutRepo = lockoutRepo;
+            _userRepo = userRepo;
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -241,7 +247,7 @@ namespace CourseMarketplaceBE.Application.Services
 
         public async Task<string> GetPayoutDaysConfigAsync()
         {
-            var days = await _configRepo.GetValueAsync("PayoutDays");
+            var days = await _configRepo.GetValueAsync("PayoutDay");
             return string.IsNullOrWhiteSpace(days) ? "15" : days;
         }
 
@@ -260,17 +266,26 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
 
-            await _configRepo.UpsertConfigAsync("PayoutDays", payoutDays, "Automated payout trigger days of the month (comma-separated, e.g., '15' or '5,20').");
+            await _configRepo.UpsertConfigAsync("PayoutDay", payoutDays, "Automated payout trigger days of the month (comma-separated, e.g., '15' or '5,20').");
         }
 
         // ═══════════════════════════════════════════════════════════════════════
         // MARK PAYOUT AS PAID (Manual payout confirmation)
         // ═══════════════════════════════════════════════════════════════════════
-        public async Task MarkPayoutAsPaidAsync(int payoutId)
+        public async Task MarkPayoutAsPaidAsync(int payoutId, bool confirm = false)
         {
             var payout = await _repo.GetPayoutByIdAsync(payoutId);
             if (payout == null)
                 throw new InvalidOperationException("This payment was not found.");
+
+            if (payout.InstructorId.HasValue && !confirm)
+            {
+                var lockout = await _lockoutRepo.GetActiveLockoutAsync(payout.InstructorId.Value, "instructor");
+                if (lockout != null)
+                {
+                    throw new InvalidOperationException("WARNING_LOCKED_OUT: This instructor is currently locked out. Are you sure you want to proceed with the payout?");
+                }
+            }
 
             if (payout.IsPaid)
                 throw new InvalidOperationException("This payment has already been marked as Paid.");
@@ -297,11 +312,20 @@ namespace CourseMarketplaceBE.Application.Services
             }
         }
 
-        public async Task<string> PerformStripeTransferAsync(int payoutId)
+        public async Task<string> PerformStripeTransferAsync(int payoutId, bool confirm = false)
         {
             var payout = await _repo.GetPayoutByIdAsync(payoutId);
             if (payout == null)
                 throw new InvalidOperationException("Payment not found.");
+
+            if (payout.InstructorId.HasValue && !confirm)
+            {
+                var lockout = await _lockoutRepo.GetActiveLockoutAsync(payout.InstructorId.Value, "instructor");
+                if (lockout != null)
+                {
+                    throw new InvalidOperationException("WARNING_LOCKED_OUT: This instructor is currently locked out. Are you sure you want to proceed with the payout?");
+                }
+            }
 
             if (payout.IsPaid)
                 throw new InvalidOperationException("This payment was previously paid.");
@@ -403,10 +427,43 @@ namespace CourseMarketplaceBE.Application.Services
 
             var result = new BulkPayoutResult { TotalProcessed = toProcess.Count };
 
+            // Fetch admin users to notify them about skipped payouts
+            var adminIds = await _userRepo.GetAllAdminIdsAsync();
+            
             foreach (var p in toProcess)
             {
                 try
                 {
+                    // Check if instructor is locked out
+                    var lockout = await _lockoutRepo.GetActiveLockoutAsync(p.InstructorId, "instructor");
+                    if (lockout != null)
+                    {
+                        result.FailCount++;
+                        result.Errors.Add($"Payout #{p.PayoutId} (Instructor: {p.InstructorName}) skipped because instructor is locked out.");
+                        
+                        // Notify instructor
+                        await _notiService.SendNotificationAsync(
+                            p.InstructorId,
+                            "Payout Skipped",
+                            $"Your scheduled payout of ${p.TotalAmount} was skipped because your instructor account is currently locked out.",
+                            "/Transaction/Instructor"
+                        );
+                        
+                        // Notify admins
+                        foreach (var adminId in adminIds)
+                        {
+                            await _notiService.SendNotificationAsync(
+                                adminId,
+                                "Payout Skipped (Instructor Locked Out)",
+                                $"Scheduled payout #{p.PayoutId} of ${p.TotalAmount} for instructor {p.InstructorName} was skipped because their account is locked out.",
+                                "/AdminFinance"
+                            );
+                        }
+
+                        _logger.LogWarning("Payout #{PayoutId} skipped due to instructor {InstructorId} being locked out.", p.PayoutId, p.InstructorId);
+                        continue;
+                    }
+
                     await PerformStripeTransferAsync(p.PayoutId);
                     result.SuccessCount++;
                 }
@@ -870,23 +927,23 @@ namespace CourseMarketplaceBE.Application.Services
 
             if (metrics.AccountFlagCount >= 3)
             {
-                rejectReason = "your account having multiple flags";
+                rejectReason = $"your account having {metrics.AccountFlagCount} warning flags (limit: 3)";
             }
             else if (metrics.RefundRequestsLast14DaysCount >= 3)
             {
-                rejectReason = "having requested too many refunds within the refund period";
+                rejectReason = $"having requested {metrics.RefundRequestsLast14DaysCount} refunds within the last 14 days (limit: 3)";
             }
             else if (metrics.PastRefundedCountForCourse >= 1)
             {
-                rejectReason = "previous refund history for this course";
+                rejectReason = $"previous refund history for this course ({metrics.PastRefundedCountForCourse} previous refund)";
             }
             else if (metrics.CourseTotalDurationHours < 4.0 && metrics.StudentProgressPercentage > 15.0)
             {
-                rejectReason = "learning progress exceeding the limit for short courses";
+                rejectReason = $"learning progress of {metrics.StudentProgressPercentage:F1}% exceeding the 15% limit for short courses";
             }
             else if (metrics.CourseTotalDurationHours >= 4.0 && metrics.CompletedVideoDurationHours > 1.0)
             {
-                rejectReason = "video watch time exceeding the limit allowed for long courses";
+                rejectReason = $"video watch time of {metrics.CompletedVideoDurationHours:F1} hours exceeding the 1.0 hour limit allowed for long courses";
             }
 
             if (rejectReason != null)

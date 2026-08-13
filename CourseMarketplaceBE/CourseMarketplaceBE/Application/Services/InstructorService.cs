@@ -23,6 +23,7 @@ namespace CourseMarketplaceBE.Application.Services
         private readonly IUserRepository _userRepo;
         private readonly IStripeConnectService _stripeConnect;
         private readonly ICourseRepository _courseRepo;
+        private readonly INotificationService _notificationService;
 
         public InstructorService(
             IInstructorRepository repo,
@@ -30,7 +31,8 @@ namespace CourseMarketplaceBE.Application.Services
             IAdminFinanceRepository financeRepo,
             IUserRepository userRepo,
             IStripeConnectService stripeConnect,
-            ICourseRepository courseRepo)
+            ICourseRepository courseRepo,
+            INotificationService notificationService)
         {
             _repo = repo;
             _uploadService = uploadService;
@@ -38,6 +40,7 @@ namespace CourseMarketplaceBE.Application.Services
             _userRepo = userRepo;
             _stripeConnect = stripeConnect;
             _courseRepo = courseRepo;
+            _notificationService = notificationService;
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -115,6 +118,13 @@ namespace CourseMarketplaceBE.Application.Services
 
                 int rowsResubmit = await _repo.SaveChangesAsync();
                 /* zero rows exception removed */
+                
+                await NotifyManagersAsync(
+                    "Instructor Application Resubmitted",
+                    $"User {account.Email} (ID: {userId}) has resubmitted their instructor application.",
+                    "/AdminApproval"
+                );
+
                 return "Your application has been resubmitted. Please wait for admin approval.";
             }
 
@@ -156,8 +166,38 @@ namespace CourseMarketplaceBE.Application.Services
             int rowsSubmit = await _repo.SaveChangesAsync();
             /* zero rows exception removed */
 
+            await NotifyManagersAsync(
+                "New Instructor Application",
+                $"User {account.Email} (ID: {userId}) has submitted a new instructor application.",
+                "/AdminApproval"
+            );
+
             return "Your application has been submitted. Please wait for admin approval.";
         }
+
+    private async Task NotifyManagersAsync(string title, string content, string? linkAction)
+            {
+                var managerIds = await _userRepo.GetAllManagerIdsAsync();
+                if (managerIds != null && managerIds.Any())
+                {
+                    var dtos = managerIds.Select(id => new NotificationBulkDto
+                    {
+                        ReceiverId = id,
+                        Title = title,
+                        Content = content,
+                        LinkAction = linkAction
+                    }).ToList();
+
+                    await _notificationService.SendBulkNotificationsAsync(dtos);
+                }
+            }
+
+
+
+
+
+
+
 
         // ═══════════════════════════════════════════════════════════════════════
         // 2. APPROVE APPLICATION — Admin duyệt đơn
@@ -197,7 +237,7 @@ namespace CourseMarketplaceBE.Application.Services
             // Lấy quốc gia mà giảng viên đã chọn khi đăng ký (từ DB)
             var country = !string.IsNullOrEmpty(instructor.StripeCountry)
                 ? instructor.StripeCountry
-                : "SG"; // Fallback mặc định nếu chưa chọn
+                : "US"; // Fallback mặc định nếu chưa chọn
 
             // Gọi Stripe Connect setup service
             var setupResult = await _stripeConnect.SetupExpressAccountAsync(

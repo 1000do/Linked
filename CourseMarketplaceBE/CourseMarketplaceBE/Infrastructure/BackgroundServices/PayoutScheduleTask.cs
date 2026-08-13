@@ -52,7 +52,7 @@ namespace CourseMarketplaceBE.Infrastructure.BackgroundServices
             var configRepo = scope.ServiceProvider.GetRequiredService<ISystemConfigRepository>();
 
             // 1. Lấy cấu hình ngày thanh toán (Mặc định là ngày 15 hàng tháng nếu DB trống)
-            var payoutDaysStr = await configRepo.GetValueAsync("PayoutDays") ?? "15";
+            var payoutDaysStr = await configRepo.GetValueAsync("PayoutDay") ?? "15";
             if (string.IsNullOrWhiteSpace(payoutDaysStr)) payoutDaysStr = "15";
 
             var today = DateTime.Today.Day;
@@ -83,6 +83,11 @@ namespace CourseMarketplaceBE.Infrastructure.BackgroundServices
                 
                 _logger.LogInformation("Bulk payout finished. Success: {Success}, Fail: {Fail}", 
                     result.SuccessCount, result.FailCount);
+                    
+                foreach (var err in result.Errors)
+                {
+                    _logger.LogError("Payout Error: {Error}", err);
+                }
             }
         }
     }

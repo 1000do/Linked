@@ -259,21 +259,20 @@ public class AdminFinanceController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = "admin")]
-    public async Task<IActionResult> PayViaStripe(int payoutId)
+    public async Task<IActionResult> PayViaStripe(int payoutId, bool confirm = false)
     {
-        var response = await _api.PostAsync($"admin/finance/payouts/{payoutId}/stripe-transfer");
+        var response = await _api.PostAsync($"admin/finance/payouts/{payoutId}/stripe-transfer?confirm={confirm}");
 
         if (response.IsSuccessStatusCode)
         {
             var json = await response.Content.ReadAsStringAsync();
             using var doc = JsonDocument.Parse(json);
             var transferId = doc.RootElement.GetProperty("data").GetString();
-            TempData["FinanceSuccess"] = $"✅ Money transferred successfully via Stripe! (TX ID: {transferId})";
+            return Json(new { success = true, message = $"✅ Money transferred successfully via Stripe! (TX ID: {transferId})" });
         }
         else
         {
             var errorBody = await response.Content.ReadAsStringAsync();
-            // Parse lỗi nếu là JSON ApiResponse
             try
             {
                 using var doc = JsonDocument.Parse(errorBody);
@@ -282,10 +281,13 @@ public class AdminFinanceController : Controller
             }
             catch { }
             
-            TempData["FinanceError"] = $"❌ Stripe Error: {errorBody}";
-        }
+            if (errorBody != null && errorBody.StartsWith("WARNING_LOCKED_OUT:"))
+            {
+                 return Json(new { success = false, warning = true, message = errorBody });
+            }
 
-        return RedirectToAction(nameof(Index));
+            return Json(new { success = false, message = $"❌ Stripe Error: {errorBody}" });
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════

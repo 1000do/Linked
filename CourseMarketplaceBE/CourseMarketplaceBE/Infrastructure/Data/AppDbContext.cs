@@ -58,6 +58,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<CourseQuiz> CourseQuizzes { get; set; } = null!;
     public virtual DbSet<QuizAttempt> QuizAttempts { get; set; } = null!;
     public virtual DbSet<QuizLessonDistribution> QuizLessonDistributions { get; set; } = null!;
+    public virtual DbSet<GiftCheckoutSession> GiftCheckoutSessions { get; set; }
     public virtual DbSet<SystemConfig> SystemConfigs { get; set; }
     public virtual DbSet<Transaction> Transactions { get; set; }
     public virtual DbSet<TransactionExt> TransactionExts { get; set; }
@@ -75,6 +76,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<PlatformWithdrawal> PlatformWithdrawals { get; set; }
     public virtual DbSet<Gift> Gifts { get; set; }
+    public virtual DbSet<CheckoutSession> CheckoutSessions { get; set; }
 
     // ─── Report Tables ────────────────────────────────────────────────────────
     public virtual DbSet<CourseReport> CourseReports { get; set; }
@@ -97,6 +99,64 @@ public partial class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasPostgresExtension("vector");
+
+        // ── checkout_sessions ─────────────────────────────────────────────────
+        modelBuilder.Entity<CheckoutSession>(entity =>
+        {
+            entity.HasKey(e => e.CheckoutSessionId).HasName("checkout_sessions_pkey");
+            entity.ToTable("checkout_sessions");
+
+            entity.Property(e => e.CheckoutSessionId).HasColumnName("checkout_session_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending").HasColumnName("status");
+            entity.Property(e => e.TotalAmount).HasPrecision(10, 2).HasColumnName("total_amount");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("expires_at");
+
+            entity.HasOne(d => d.User).WithMany(p => p.CheckoutSessions)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("checkout_sessions_user_id_fkey");
+        });
+
+        // ── gift_checkout_sessions ─────────────────────────────────────────────
+        modelBuilder.Entity<GiftCheckoutSession>(entity =>
+        {
+            entity.HasKey(e => e.GiftCheckoutSessionId).HasName("gift_checkout_sessions_pkey");
+            entity.ToTable("gift_checkout_sessions");
+
+            entity.Property(e => e.GiftCheckoutSessionId).HasColumnName("gift_session_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.CourseId).HasColumnName("course_id");
+            entity.Property(e => e.RecipientEmail).HasColumnName("recipient_email");
+            entity.Property(e => e.RecipientName).HasColumnName("recipient_name");
+            entity.Property(e => e.GiftMessage).HasColumnName("gift_message");
+            entity.Property(e => e.CardTheme).HasColumnName("card_theme");
+            entity.Property(e => e.Status).HasMaxLength(50).HasDefaultValue("Pending").HasColumnName("status");
+            entity.Property(e => e.TotalAmount).HasPrecision(10, 2).HasColumnName("total_amount");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.ExpiresAt)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("expires_at");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("gift_checkout_sessions_user_id_fkey");
+
+            entity.HasOne(d => d.Course).WithMany()
+                .HasForeignKey(d => d.CourseId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("gift_checkout_sessions_course_id_fkey");
+        });
 
         // ── accounts ──────────────────────────────────────────────────────────
         modelBuilder.Entity<Account>(entity =>

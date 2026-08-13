@@ -212,6 +212,8 @@ public class Program
 
         // 💳 Checkout & Payment (UC-19)
         builder.Services.AddScoped<ICheckoutRepository, CheckoutRepository>();
+        builder.Services.AddScoped<ICheckoutSessionRepository, CheckoutSessionRepository>();
+        builder.Services.AddScoped<IGiftCheckoutSessionRepository, GiftCheckoutSessionRepository>();
         builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
         builder.Services.AddScoped<ICheckoutService, CourseMarketplaceBE.Application.Services.CheckoutService>();
         builder.Services.AddScoped<CourseMarketplaceBE.Application.IServices.IGiftCheckoutService, CourseMarketplaceBE.Application.Services.GiftCheckoutService>();
@@ -269,7 +271,7 @@ public class Program
         builder.Services.AddHostedService<PayoutScheduleTask>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CloudinaryCleanupService>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.CouponExpirationTask>();
-        
+
         builder.Services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
         builder.Services.AddHostedService<CourseMarketplaceBE.Infrastructure.BackgroundServices.QueuedHostedService>();
 
@@ -390,9 +392,9 @@ public class Program
                     // 2. Nếu là SignalR, nó thường gửi token qua query string "access_token"
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrEmpty(accessToken) && 
-                        (path.StartsWithSegments("/notificationHub") || 
-                         path.StartsWithSegments("/chatHub") || 
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        (path.StartsWithSegments("/notificationHub") ||
+                         path.StartsWithSegments("/chatHub") ||
                          path.StartsWithSegments("/financeHub") ||
                          path.StartsWithSegments("/courseModerationHub") ||
                          path.StartsWithSegments("/reportModerationHub") ||

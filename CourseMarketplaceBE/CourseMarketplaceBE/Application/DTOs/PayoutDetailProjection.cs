@@ -6,6 +6,7 @@ namespace CourseMarketplaceBE.Application.DTOs
     {
         public int PayoutId { get; set; }
         public int TransactionId { get; set; }
+        public int InstructorId { get; set; }
         public string InstructorName { get; set; } = string.Empty;
         public string InstructorEmail { get; set; } = string.Empty;
         public string CourseTitle { get; set; } = string.Empty;

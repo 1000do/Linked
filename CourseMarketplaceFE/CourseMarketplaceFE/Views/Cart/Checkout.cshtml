@@ -362,7 +362,8 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         },
                         body: new URLSearchParams({
-                            couponCode: "@Model.Cart.AppliedCouponCode"
+                            couponCode: "@Model.Cart.AppliedCouponCode",
+                            sessionId: "@Model.SessionId"
                         })
                     });
 

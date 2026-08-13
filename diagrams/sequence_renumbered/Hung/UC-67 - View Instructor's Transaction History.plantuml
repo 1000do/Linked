@@ -75,8 +75,8 @@ alt Status != "Approved"
 else Status == "Approved"
         
         fe_ctrl -> be_ctrl ++:3.3.2. GET /api/transactions/instructor?page=1&pageSize=20
-        be_ctrl -> sv ++:3.3.2.1. GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month)
-        sv -> repo ++:3.3.2.2. GetInstructorTransactionsAsync(instructorId, page, pageSize, keyword, sortBy, status, year, month)
+        be_ctrl -> sv ++:3.3.2.1. GetInstructorTransactionsAsync()
+        sv -> repo ++:3.3.2.2. GetInstructorTransactionsAsync()
         
         repo -> repo ++:3.3.2.3. Apply default sorting (date_desc) and pagination
         repo --
@@ -98,10 +98,13 @@ else Status == "Approved"
         
         fe_ctrl -->> view --:3.3.2.15. Return View(vm)
         
+        view -> view ++:3.3.2.16. Check vm.Transactions.Items.Count
+        view --
+        
 alt vm.Transactions.Items.Count == 0
-            view -->> act :3.3.2.15.1. Display empty message "No purchases recorded for this period."
+            view -->> act:3.3.2.16.1. Display empty message "No purchases recorded for this period."
 else vm.Transactions.Items.Count > 0
-            view -->> act --:3.3.2.15.2. Display list of transactions
+            view -->> act --:3.3.2.16.2. Display list of transactions
 end
 end
 end

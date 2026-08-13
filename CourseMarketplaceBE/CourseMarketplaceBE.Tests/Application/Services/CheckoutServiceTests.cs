@@ -21,6 +21,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 {
     public partial class CheckoutServiceTests
     {
+        private readonly ICheckoutSessionRepository _sessionRepoMock;
         private readonly ICheckoutRepository _repoMock;
         private readonly IEnrollmentRepository _enrollmentRepoMock;
         private readonly IPaymentGatewayService _paymentGatewayMock;
@@ -37,6 +38,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
         public CheckoutServiceTests()
         {
+            _sessionRepoMock = Substitute.For<ICheckoutSessionRepository>();
             _repoMock = Substitute.For<ICheckoutRepository>();
             _enrollmentRepoMock = Substitute.For<IEnrollmentRepository>();
             _paymentGatewayMock = Substitute.For<IPaymentGatewayService>();
@@ -51,6 +53,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _wishlistServiceMock = Substitute.For<IWishlistService>();
 
             _sut = new CheckoutService(
+                _sessionRepoMock,
                 _repoMock,
                 _enrollmentRepoMock,
                 _paymentGatewayMock,
@@ -79,7 +82,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _repoMock.GetCartItemsWithCourseAndInstructorAsync(userId).Returns(new List<CartItem>());
 
             //Act
-            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel");
+            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel", null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Cart is empty. Cannot checkout.");
@@ -99,7 +102,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _adminFinanceServiceMock.GetCurrentTransferRateAsync().Returns(80m);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel");
+            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel", null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"The course \"{course.Title}\" is not published and cannot be purchased.");
@@ -119,7 +122,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _adminFinanceServiceMock.GetCurrentTransferRateAsync().Returns(80m);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel");
+            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel", null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"You cannot purchase your own course \"{course.Title}\".");
@@ -139,7 +142,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _courseRepoMock.IsEnrolledAsync(userId, 1).Returns(true);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel");
+            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel", null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage($"You have already purchased the course \"{course.Title}\". Please remove it from the cart.");
@@ -162,7 +165,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _couponRepoMock.GetByCodeAsync(couponCode).Returns((Coupon?)null);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel");
+            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel", null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This coupon does not exist.");
@@ -186,7 +189,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _couponRepoMock.GetByCodeAsync(couponCode).Returns(coupon);
 
             //Act
-            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel");
+            Func<Task> act = async () => await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel", null);
 
             //Assert
             await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("This coupon has expired or run out of usage.");
@@ -216,7 +219,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 .Returns(paymentResult);
 
             //Act
-            var result = await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel");
+            var result = await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel", null);
 
             //Assert
             result.Should().BeEquivalentTo(expectedResponse);
@@ -249,7 +252,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 .Returns(paymentResult);
 
             //Act
-            var result = await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel");
+            var result = await _sut.InitiateCheckoutAsync(userId, couponCode, "success", "cancel", null);
 
             //Assert
             result.Should().BeEquivalentTo(expectedResponse);
@@ -278,7 +281,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 .Returns(paymentResult);
 
             //Act
-            var result = await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel");
+            var result = await _sut.InitiateCheckoutAsync(userId, null, "success", "cancel", null);
 
             //Assert
             result.Should().BeEquivalentTo(expectedResponse);
