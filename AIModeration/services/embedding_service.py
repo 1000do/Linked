@@ -97,6 +97,26 @@ class EmbeddingService(BaseService):
             logger.error(f"Text embedding failed: {e}")
             raise EmbeddingException("text", str(e))
     
+    def _generate_clip_embedding(self, image: Image.Image) -> List[float]:
+        """Generate CLIP embedding from a PIL Image."""
+        processor, model = self.model_provider.get_clip_model()
+        
+        inputs = processor(images=image, return_tensors="pt", padding=True)
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        
+        with torch.no_grad():
+            outputs = model.get_image_features(**inputs)
+            if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
+                embedding = outputs.pooler_output.cpu().numpy()[0]
+            elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:
+                embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()[0]
+            elif isinstance(outputs, torch.Tensor):
+                embedding = outputs.cpu().numpy()[0]
+            else:
+                embedding = outputs[0].cpu().numpy()[0]
+                
+        return embedding.tolist()
+
     async def embed_image(self, image_bytes: bytes) -> List[float]:
         """
         Generate embedding for image using CLIP.
@@ -112,32 +132,53 @@ class EmbeddingService(BaseService):
         
         try:
             with self.time_operation("embed_image", image_size=len(image_bytes)):
-                processor, model = self.model_provider.get_clip_model()
                 # Load image
                 image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-                
-                # Process with CLIP
-                inputs = processor(images=image, return_tensors="pt", padding=True)
-                inputs = {k: v.to(self.device) for k, v in inputs.items()}
-                
-                # Get image features
-                with torch.no_grad():
-                    outputs = model.get_image_features(**inputs)
-                    if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
-                        embedding = outputs.pooler_output.cpu().numpy()[0]
-                    elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:
-                        embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()[0]
-                    elif isinstance(outputs, torch.Tensor):
-                        embedding = outputs.cpu().numpy()[0]
-                    else:
-                        embedding = outputs[0].cpu().numpy()[0]
-                
-                return embedding.tolist()
+                return self._generate_clip_embedding(image)
         
         except Exception as e:
             logger.error(f"Image embedding failed: {e}")
             raise EmbeddingException("image", str(e))
     
+    def _extract_frames_with_opencv(self, tmp_path: str, sample_every_n_frames: int) -> List[List[float]]:
+        """Extract and embed frames using OpenCV."""
+        embeddings = []
+        cap = cv2.VideoCapture(tmp_path, cv2.CAP_ANY, [cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATION_NONE])
+        if not cap.isOpened():
+            cap = cv2.VideoCapture(tmp_path)
+            
+        if cap.isOpened():
+            frame_idx = 0
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                
+                if frame_idx % sample_every_n_frames == 0:
+                    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frame_image = Image.fromarray(rgb_frame)
+                    embeddings.append(self._generate_clip_embedding(frame_image))
+                
+                frame_idx += 1
+            
+            cap.release()
+        return embeddings
+
+    def _extract_frames_with_imageio(self, tmp_path: str, sample_every_n_frames: int) -> List[List[float]]:
+        """Extract and embed frames using imageio fallback."""
+        embeddings = []
+        import imageio
+        try:
+            reader = imageio.get_reader(tmp_path, 'ffmpeg')
+            for frame_idx, frame in enumerate(reader):
+                if frame_idx % sample_every_n_frames == 0:
+                    frame_image = Image.fromarray(frame)
+                    embeddings.append(self._generate_clip_embedding(frame_image))
+            reader.close()
+        except Exception as e:
+            logger.error(f"Imageio fallback failed: {e}")
+        return embeddings
+
     async def embed_video_frame(self, video_bytes: bytes, sample_every_n_frames: int = 30) -> List[float]:
         """
         Generate embedding for video by sampling and averaging frames.
@@ -163,43 +204,12 @@ class EmbeddingService(BaseService):
                     tmp_path = tmp.name
                 
                 try:
-                    cap = cv2.VideoCapture(tmp_path)
-                    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    embeddings = self._extract_frames_with_opencv(tmp_path, sample_every_n_frames)
                     
-                    embeddings = []
-                    frame_idx = 0
-                    
-                    while True:
-                        ret, frame = cap.read()
-                        if not ret:
-                            break
-                        
-                        if frame_idx % sample_every_n_frames == 0:
-                            # Convert BGR to RGB and encode as bytes
-                            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                            frame_image = Image.fromarray(rgb_frame)
-                            
-                            processor, model = self.model_provider.get_clip_model()
-                            
-                            # Get embedding
-                            inputs = processor(images=frame_image, return_tensors="pt", padding=True)
-                            inputs = {k: v.to(self.device) for k, v in inputs.items()}
-                            
-                            with torch.no_grad():
-                                outputs = model.get_image_features(**inputs)
-                                if hasattr(outputs, "pooler_output") and outputs.pooler_output is not None:
-                                    embedding = outputs.pooler_output.cpu().numpy()[0]
-                                elif hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None:
-                                    embedding = outputs.last_hidden_state.mean(dim=1).cpu().numpy()[0]
-                                elif isinstance(outputs, torch.Tensor):
-                                    embedding = outputs.cpu().numpy()[0]
-                                else:
-                                    embedding = outputs[0].cpu().numpy()[0]
-                                embeddings.append(embedding)
-                        
-                        frame_idx += 1
-                    
-                    cap.release()
+                    # Fallback to imageio if OpenCV failed to extract frames
+                    if not embeddings:
+                        logger.warning("OpenCV failed to extract frames. Falling back to imageio...")
+                        embeddings = self._extract_frames_with_imageio(tmp_path, sample_every_n_frames)
                     
                     if not embeddings:
                         raise EmbeddingException("video", "No frames extracted from video")
@@ -214,6 +224,29 @@ class EmbeddingService(BaseService):
         except Exception as e:
             logger.error(f"Video embedding failed: {e}")
             raise EmbeddingException("video", str(e))
+
+    async def _embed_document(self, content: bytes, material_type: str) -> List[float]:
+        """Extract text from a document and generate embeddings."""
+        embeddings_list = []
+        chunk_count = 0
+        
+        doc_type = self.text_extraction_service.get_file_type_for_text_extraction(material_type)
+        async for text_chunk, conf, log in self.text_extraction_service.extract_generic_stream(content, doc_type):
+            if text_chunk and text_chunk.strip():
+                chunk_emb = await self.embed_text(text_chunk)
+                embeddings_list.append(chunk_emb)
+                chunk_count += 1
+            
+            source = log.get("source", "")
+            if "ocr" in source and chunk_count >= 5:
+                logger.info(f"Early exit for OCR stream at chunk {chunk_count}")
+                break
+                
+        if embeddings_list:
+            avg_embedding = np.mean(embeddings_list, axis=0)
+            return avg_embedding.tolist()
+            
+        return await self.embed_text(f"Empty {doc_type} document")
 
     async def embed_generic(self, command: EmbeddingGenerationCommand) -> EmbeddingGenerationResult:
         """
@@ -231,27 +264,8 @@ class EmbeddingService(BaseService):
                 text_repr = f"Binary content {len(content)} bytes"
                 emb = await self.embed_text(text_repr)
                 
-        elif material_type in ["pdf", "word","powerpoint", "excel"]:
-            embeddings_list = []
-            chunk_count = 0
-            
-            material_type = self.text_extraction_service.get_file_type_for_text_extraction(material_type)
-            async for text_chunk, conf, log in self.text_extraction_service.extract_generic_stream(content, material_type):
-                if text_chunk and text_chunk.strip():
-                    chunk_emb = await self.embed_text(text_chunk)
-                    embeddings_list.append(chunk_emb)
-                    chunk_count += 1
-                
-                source = log.get("source", "")
-                if "ocr" in source and chunk_count >= 5:
-                    logger.info(f"Early exit for OCR stream at chunk {chunk_count}")
-                    break
-                    
-            if embeddings_list:
-                avg_embedding = np.mean(embeddings_list, axis=0)
-                emb = avg_embedding.tolist()
-            else:
-                emb = await self.embed_text(f"Empty {material_type} document")
+        elif material_type in ["pdf", "word", "powerpoint", "excel"]:
+            emb = await self._embed_document(content, material_type)
         
         elif material_type in ["image"]:
             emb = await self.embed_image(content)

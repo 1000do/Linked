@@ -37,9 +37,8 @@
     var userRole = (Context.Request.Cookies["UserRole"] ?? "").ToLower();
     var isStaffOrAdmin = userRole == "admin" || userRole == "staff" || User.IsInRole("admin") || User.IsInRole("staff");
     var isCourseOwner = Model.IsOwner;
-     // --- CÔNG TẮC BẬT/TẮT CHỨC NĂNG SKIP NHANH ---
-    var enableGlobalSkip = false; // Đổi thành false nếu muốn bật lại chức năng chặn skip
-    var canSkipVideoServer = enableGlobalSkip || isStaffOrAdmin || isCourseOwner;
+    
+    var canSkipVideoServer = isStaffOrAdmin || isCourseOwner;
 }
 <!DOCTYPE html>
 <html lang="en">

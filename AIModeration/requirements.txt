@@ -1,40 +1,42 @@
 # Web Framework
-fastapi
-uvicorn[standard]
-pydantic
-pydantic-settings
+fastapi==0.141.1
+uvicorn[standard]==0.52.3
+pydantic==2.13.4
+pydantic-settings==2.15.0
 
 # ML/Deep Learning
 
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch
-transformers
-scikit-learn
-numpy
+torch==2.13.0+cpu
+transformers==5.15.0
+scikit-learn==1.9.0
+numpy==2.5.2
 
 # Cache & Data
-redis
-python-multipart
+redis==8.1.0
+python-multipart==0.0.32
 
 # File Processing
-pillow
-opencv-python
-easyocr
-pdf2image
-PyMuPDF
-python-pptx
-openpyxl
-python-docx
-scenedetect
+pillow==12.3.0
+opencv-python==5.0.0.93
+easyocr==1.7.2
+pdf2image==1.17.0
+PyMuPDF==1.28.2
+python-pptx==1.0.2
+openpyxl==3.1.5
+python-docx==1.2.0
+scenedetect==0.7.1
+imageio==2.37.4
+imageio-ffmpeg==0.6.0
 
 # Audio
 
-faster-whisper
+faster-whisper==1.2.1
 
 
 # Utilities
-requests
-python-dotenv
+requests==2.34.2
+python-dotenv==1.2.2
 
 # Logging
-python-json-logger
+python-json-logger==4.1.0
