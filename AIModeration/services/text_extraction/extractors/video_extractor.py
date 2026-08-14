@@ -27,7 +27,10 @@ class VideoTextExtractor(ITextExtractor):
             scene_list = scenedetect.detect(video_path, ContentDetector(threshold=27.0), show_progress=False)
             logger.info(f"Scenes detected: {len(scene_list)}")
             
-            cap = cv2.VideoCapture(video_path)
+            cap = cv2.VideoCapture(video_path, cv2.CAP_ANY, [cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATION_NONE])
+            if not cap.isOpened():
+                cap = cv2.VideoCapture(video_path)
+                
             fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             cap.release()
@@ -57,6 +60,50 @@ class VideoTextExtractor(ITextExtractor):
         except Exception as e:
             logger.error(f"Scene detection failed: {e}")
             return [], 0
+
+    def _extract_frames_gen(self, video_path: str, target_frames: List[int]):
+        """Generator that yields (frame_idx, BGR_frame) using OpenCV with fallback to imageio."""
+        if not target_frames:
+            return
+            
+        cap = cv2.VideoCapture(video_path, cv2.CAP_ANY, [cv2.CAP_PROP_HW_ACCELERATION, cv2.VIDEO_ACCELERATION_NONE])
+        if not cap.isOpened():
+            cap = cv2.VideoCapture(video_path)
+            
+        use_imageio = False
+        if cap.isOpened():
+            # Test first frame
+            cap.set(cv2.CAP_PROP_POS_FRAMES, target_frames[0])
+            ret, _ = cap.read()
+            if not ret:
+                use_imageio = True
+                
+        if not use_imageio:
+            for frame_idx in target_frames:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                ret, frame = cap.read()
+                if ret:
+                    yield frame_idx, frame
+            cap.release()
+            return
+
+        cap.release()
+        logger.warning("OpenCV failed to read frames. Falling back to imageio...")
+        import imageio
+        try:
+            reader = imageio.get_reader(video_path, 'ffmpeg')
+            for frame_idx in target_frames:
+                try:
+                    frame = reader.get_data(frame_idx)
+                    bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                    yield frame_idx, bgr_frame
+                except IndexError:
+                    pass
+                except Exception as e:
+                    logger.error(f"Failed to read frame {frame_idx} via imageio: {e}")
+            reader.close()
+        except Exception as e:
+            logger.error(f"Imageio fallback failed: {e}")
 
     def _process_frame_ocr(self, frame: np.ndarray, join_char: str = " ") -> Tuple[str, float]:
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -145,15 +192,9 @@ class VideoTextExtractor(ITextExtractor):
             try:
                 target_frames, frame_count = self._detect_target_frames(tmp_path, max_frames, sample_interval_seconds)
                 
-                cap = cv2.VideoCapture(tmp_path)
                 last_text = ""
                 
-                for frame_idx in target_frames:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-                    ret, frame = cap.read()
-                    if not ret:
-                        continue
-                        
+                for frame_idx, frame in self._extract_frames_gen(tmp_path, target_frames):
                     text, frame_conf = self._process_frame_ocr(frame, join_char=" ")
                     
                     if text:
@@ -165,7 +206,6 @@ class VideoTextExtractor(ITextExtractor):
                             last_text = text
                     
                     frames_processed += 1
-                cap.release()
                 
             except Exception as e:
                 logger.error(f"OCR text extraction failed: {e}")
@@ -215,16 +255,10 @@ class VideoTextExtractor(ITextExtractor):
                 
             try:
                 target_frames, frame_count = self._detect_target_frames(tmp_path, max_frames, sample_interval_seconds)
-                cap = cv2.VideoCapture(tmp_path)
                 last_text = ""
                 last_frame = 0
                 
-                for frame_idx in target_frames:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-                    ret, frame = cap.read()
-                    if not ret:
-                        continue
-                        
+                for frame_idx, frame in self._extract_frames_gen(tmp_path, target_frames):
                     text, frame_conf = self._process_frame_ocr(frame, join_char=" ")
                     
                     if text:
@@ -241,7 +275,6 @@ class VideoTextExtractor(ITextExtractor):
                                 "total_frames": frame_count,
                                 "text_length": len(text),
                             }
-                cap.release()
             except Exception as e:
                 logger.error(f"OCR text extraction failed: {e}")
                 
