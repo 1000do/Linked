@@ -29,6 +29,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly ILogger<LessonService> _loggerMock;
         private readonly ILockoutRepository _lockoutRepoMock;
         private readonly IHtmlTextManipulationService _htmlServiceMock;
+        private readonly IMaterialExtRepository _materialExtRepoMock;
 
         private readonly LessonService _sut;
 
@@ -43,6 +44,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _loggerMock = Substitute.For<ILogger<LessonService>>();
             _lockoutRepoMock = Substitute.For<ILockoutRepository>();
             _htmlServiceMock = Substitute.For<IHtmlTextManipulationService>();
+            _materialExtRepoMock = Substitute.For<IMaterialExtRepository>();
 
             _sut = new LessonService(
                 _lessonRepoMock,
@@ -53,7 +55,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _instructorRepoMock,
                 _loggerMock,
                 _lockoutRepoMock,
-                _htmlServiceMock
+                _htmlServiceMock,
+                _materialExtRepoMock
             );
         }
 

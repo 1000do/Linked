@@ -45,6 +45,21 @@ public class CourseController : ControllerBase
         return instructorId;
     }
 
+    [HttpGet("check-thumbnail-hash")]
+    [Authorize(Roles = "instructor")]
+    public async Task<IActionResult> CheckThumbnailHash([FromQuery] string hash, [FromQuery] int? excludeCourseId = null)
+    {
+        try
+        {
+            var isDuplicate = await _courseQueryService.CheckThumbnailDuplicateAsync(hash, excludeCourseId);
+            return Ok(new CourseMarketplaceBE.Application.DTOs.ApiResponse<bool> { Success = true, Data = isDuplicate });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new CourseMarketplaceBE.Application.DTOs.ApiResponse<bool> { Success = false, Message = ex.Message });
+        }
+    }
+
     [HttpGet("my-courses")]
     [Authorize(Roles = "instructor")]
     public async Task<IActionResult> GetMyCourses(

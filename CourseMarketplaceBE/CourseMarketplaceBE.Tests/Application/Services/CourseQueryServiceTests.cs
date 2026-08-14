@@ -25,6 +25,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IMapper _mapperMock;
         private readonly ICartRepository _cartRepoMock;
         private readonly ILogger<CourseQueryService> _loggerMock;
+        private readonly ICourseExtRepository _courseExtRepoMock;
         private readonly CourseQueryService _sut;
 
         public CourseQueryServiceTests()
@@ -36,6 +37,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _mapperMock = Substitute.For<IMapper>();
             _cartRepoMock = Substitute.For<ICartRepository>();
             _loggerMock = Substitute.For<ILogger<CourseQueryService>>();
+            _courseExtRepoMock = Substitute.For<ICourseExtRepository>();
 
             _sut = new CourseQueryService(
                 _courseRepoMock,
@@ -44,7 +46,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
                 _aiRepoMock,
                 _mapperMock,
                 _cartRepoMock,
-                _loggerMock
+                _loggerMock,
+                _courseExtRepoMock
             );
         }
 

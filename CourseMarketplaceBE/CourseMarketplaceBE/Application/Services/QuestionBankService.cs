@@ -171,7 +171,7 @@ public class QuestionBankService : IQuestionBankService
         var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
         if (activeLockout != null)
         {
-            throw new CourseMarketplaceBE.Application.DTOs.Common.BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot {actionMessage}.");
+            throw new CourseMarketplaceBE.Application.Exceptions.BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot {actionMessage}.");
         }
     }
 

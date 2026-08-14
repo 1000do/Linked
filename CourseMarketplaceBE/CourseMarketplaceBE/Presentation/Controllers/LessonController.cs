@@ -31,6 +31,21 @@ public class LessonController : ControllerBase
         return instructorId;
     }
 
+    [HttpGet("check-material-hash")]
+    [Authorize(Roles = "instructor")]
+    public async Task<IActionResult> CheckMaterialHash([FromQuery] string hash)
+    {
+        try
+        {
+            var isDuplicate = await _lessonService.CheckMaterialDuplicateAsync(hash);
+            return Ok(new CourseMarketplaceBE.Application.DTOs.ApiResponse<bool> { Success = true, Data = isDuplicate });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new CourseMarketplaceBE.Application.DTOs.ApiResponse<bool> { Success = false, Message = ex.Message });
+        }
+    }
+
     [HttpPost]
     [Authorize(Roles = "instructor")]
     public async Task<IActionResult> CreateLesson([FromForm] LessonCreateRequest request)

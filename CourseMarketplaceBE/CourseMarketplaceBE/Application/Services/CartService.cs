@@ -53,6 +53,9 @@ public class CartService : ICartService
         if (course == null || course.CourseStatus != CourseStatus.Published.ToValue())
             throw new InvalidOperationException("Course does not exist or is not published.");
 
+        if (course.IsRemoved)
+            throw new InvalidOperationException("This course is no longer available.");
+
         if (course.InstructorId == userId)
             throw new InvalidOperationException("You cannot add your own course to the cart.");
 

@@ -38,5 +38,10 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         /// Get all course hashes.
         /// </summary>
         Task<List<CourseExt>> GetAllAsync();
+
+        /// <summary>
+        /// Check if a thumbnail hash already exists.
+        /// </summary>
+        Task<bool> IsThumbnailHashExistsAsync(string hash, int? excludeCourseId = null);
     }
 }

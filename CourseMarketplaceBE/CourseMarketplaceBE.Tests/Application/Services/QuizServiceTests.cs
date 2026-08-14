@@ -23,6 +23,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         private readonly IQuestionBankRepository _questionBankRepoMock;
         private readonly ICourseRepository _courseRepoMock;
         private readonly IRedisService _redisServiceMock;
+        private readonly ILockoutRepository _lockoutRepoMock;
         private readonly QuizService _sut;
 
         public QuizServiceTests()
@@ -32,13 +33,15 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _questionBankRepoMock = Substitute.For<IQuestionBankRepository>();
             _courseRepoMock = Substitute.For<ICourseRepository>();
             _redisServiceMock = Substitute.For<IRedisService>();
+            _lockoutRepoMock = Substitute.For<ILockoutRepository>();
 
             _sut = new QuizService(
                 _quizRepoMock,
                 _enrollmentRepoMock,
                 _questionBankRepoMock,
                 _courseRepoMock,
-                _redisServiceMock
+                _redisServiceMock,
+                _lockoutRepoMock
             );
         }
 

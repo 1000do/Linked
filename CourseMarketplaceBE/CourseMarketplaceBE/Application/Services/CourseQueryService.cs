@@ -21,6 +21,7 @@ public class CourseQueryService : ICourseQueryService
     private readonly IMapper _mapper;
     private readonly ICartRepository _cartRepository;
     private readonly ILogger<CourseQueryService> _logger;
+    private readonly ICourseExtRepository _courseExtRepository;
 
     public CourseQueryService(
         ICourseRepository courseRepository,
@@ -29,7 +30,8 @@ public class CourseQueryService : ICourseQueryService
         ICourseAiIntegrationRepository aiIntegrationRepository,
         IMapper mapper,
         ICartRepository cartRepository,
-        ILogger<CourseQueryService> logger)
+        ILogger<CourseQueryService> logger,
+        ICourseExtRepository courseExtRepository)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -38,6 +40,12 @@ public class CourseQueryService : ICourseQueryService
         _mapper = mapper;
         _cartRepository = cartRepository;
         _logger = logger;
+        _courseExtRepository = courseExtRepository;
+    }
+
+    public async Task<bool> CheckThumbnailDuplicateAsync(string hash, int? excludeCourseId = null)
+    {
+        return await _courseExtRepository.IsThumbnailHashExistsAsync(hash, excludeCourseId);
     }
 
     public async Task<IEnumerable<CourseResponse>> GetAllPublishedCoursesAsync(int? userId = null)

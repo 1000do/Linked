@@ -54,17 +54,21 @@ public class CourseRepository : ICourseRepository
         var statusFilter = string.IsNullOrEmpty(status) ? "all" : status.ToLower();
         if (statusFilter != "all")
         {
-            if (statusFilter == CourseStatus.PermanentlyLocked.ToValue())
+            if (statusFilter == "removed")
             {
-                queryable = queryable.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3);
+                queryable = queryable.Where(c => c.IsRemoved);
+            }
+            else if (statusFilter == CourseStatus.PermanentlyLocked.ToValue())
+            {
+                queryable = queryable.Where(c => !c.IsRemoved && c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3);
             }
             else if (statusFilter == "archived")
             {
-                queryable = queryable.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && (c.CourseFlagCount == null || c.CourseFlagCount < 3));
+                queryable = queryable.Where(c => !c.IsRemoved && c.CourseStatus == CourseStatus.Archived.ToValue() && (c.CourseFlagCount == null || c.CourseFlagCount < 3));
             }
             else
             {
-                queryable = queryable.Where(c => c.CourseStatus == statusFilter);
+                queryable = queryable.Where(c => !c.IsRemoved && c.CourseStatus == statusFilter);
             }
         }
 
@@ -89,7 +93,7 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
-            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
+            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue() && !c.IsRemoved)
             .OrderByDescending(c => c.CreatedAt)
             .AsNoTracking()
             .ToListAsync();
@@ -108,7 +112,7 @@ public class CourseRepository : ICourseRepository
             .Include(c => c.Category)
             .Include(c => c.Instructor)
                 .ThenInclude(i => i!.InstructorNavigation)
-            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue())
+            .Where(c => c.CourseStatus == CourseStatus.Published.ToValue() && !c.IsRemoved)
             .AsNoTracking();
 
         // 0.1. Filtering by price
@@ -311,7 +315,7 @@ public class CourseRepository : ICourseRepository
 
     public async Task<int> GetTotalPublishedCoursesCountAsync()
     {
-        return await _context.Courses.CountAsync(c => c.CourseStatus == CourseStatus.Published.ToValue());
+        return await _context.Courses.CountAsync(c => c.CourseStatus == CourseStatus.Published.ToValue() && !c.IsRemoved);
     }
 
     public async Task<decimal> GetAveragePlatformRatingAsync()

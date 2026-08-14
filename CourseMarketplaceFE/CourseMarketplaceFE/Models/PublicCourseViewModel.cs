@@ -30,6 +30,7 @@ namespace CourseMarketplaceFE.Models
         public int TotalReviews { get; set; }
         public DateTime? LastApprovedAt { get; set; }
         public string? CourseStatus { get; set; }
+        public bool IsRemoved { get; set; }
     }
 
     public class CourseDetailViewModel : PublicCourseViewModel

@@ -26,6 +26,7 @@ public interface ICourseQueryService
     Task<CourseDetailResponse> GetCourseWithDetailsAsync(int courseId, int? userId = null, string? userRole = null);
 
     Task<bool> IsEnrolledAsync(int userId, int courseId);
+    Task<bool> CheckThumbnailDuplicateAsync(string hash, int? excludeCourseId = null);
     Task<IEnumerable<CategoryResponse>> GetCategoriesAsync();
     Task<CourseAiIntegrationResponse> GetByModelAndCourseAsync(int modelId, int courseId);
 }

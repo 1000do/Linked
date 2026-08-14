@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.DTOs.Common;
 using CourseMarketplaceBE.Application.IServices;
+using CourseMarketplaceBE.Application.Exceptions;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.Enums;
 using CourseMarketplaceBE.Domain.IRepositories;

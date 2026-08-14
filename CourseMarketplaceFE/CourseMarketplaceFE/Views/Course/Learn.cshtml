@@ -64,7 +64,14 @@
 </head>
 <body class="bg-[#f0fcfb] text-[#191c1b] h-screen flex flex-col overflow-hidden">
 
-    @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+    @if (Model.IsRemoved)
+    {
+        <div class="w-full bg-amber-100 text-amber-900 border-b border-amber-200 font-medium text-sm text-center py-3 px-4 shadow-sm shrink-0 z-[40] flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">warning</span>
+            This course has been removed by the instructor. You retain access to the materials as an enrolled student, but interactions are disabled.
+        </div>
+    }
+    else if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
     {
         <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[40]">
             WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.

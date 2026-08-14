@@ -12,6 +12,7 @@ public interface ILessonService
     Task<MaterialResponse> AddMaterialToLessonAsync(int lessonId, MaterialCreateRequest request, int instructorId);
     Task<MaterialResponse> UpdateMaterialDetailsAsync(int materialId, MaterialUpdateRequest request, int instructorId);
     Task RemoveMaterialAsync(int materialId, int instructorId);
+    Task<bool> CheckMaterialDuplicateAsync(string hash);
     Task DeleteLessonAsync(int lessonId, int instructorId);
     Task<IEnumerable<MaterialTrashResponse>> GetTrashMaterialsAsync(int instructorId);
     Task PermanentDeleteMaterialAsync(int materialId, int instructorId);

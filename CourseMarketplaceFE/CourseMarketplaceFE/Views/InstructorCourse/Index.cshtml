@@ -499,18 +499,29 @@
                 return;
             }
 
-            const { isConfirmed } = await Swal.fire({
+            const { value: typedName } = await Swal.fire({
                 title: 'Delete Course',
-                text: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+                html: `
+                    <p class="mb-4">Are you sure you want to delete <strong class="text-slate-900">"${name}"</strong>?</p>
+                    <p class="text-sm text-red-600 font-bold mb-2">This action CANNOT be undone!</p>
+                    <p class="text-sm text-slate-600 mb-2">Please type exactly <strong>${name}</strong> to confirm.</p>
+                `,
+                input: 'text',
+                inputPlaceholder: 'Type course name here...',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
                 cancelButtonColor: '#64748b',
                 confirmButtonText: 'Delete',
-                cancelButtonText: 'Cancel'
+                cancelButtonText: 'Cancel',
+                inputValidator: (value) => {
+                    if (value !== name) {
+                        return 'The course name does not match!';
+                    }
+                }
             });
 
-            if (isConfirmed) {
+            if (typedName === name) {
                 try {
                     const resp = await fetch('/InstructorCourse/Delete?id=' + id, { method: 'POST' });
                     const result = await resp.json();
