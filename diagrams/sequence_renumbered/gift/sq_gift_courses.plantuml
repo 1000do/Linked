@@ -104,6 +104,9 @@ else Valid ModelState
         ctx -->> user_repo--:5.3.2.6. Return Account entity or null
         user_repo -->> sv--:5.3.2.7. Return Account entity or null
     
+        sv -> sv++:5.3.2.7.1. Check recipient account existence
+        sv--
+    
 opt Account found
             sv -> repo++:5.3.2.7.2. IsEnrolledAsync(accountId, courseId)
             repo -> ctx++:5.3.2.7.2.1. Check enrollment existence in database

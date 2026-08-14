@@ -8,6 +8,7 @@ namespace CourseMarketplaceFE.Models
         public string PublishableKey { get; set; } = string.Empty;
         public string ClientSecret { get; set; } = string.Empty;
         public string PaymentIntentId { get; set; } = string.Empty;
+        public string SessionId { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public CartViewModel Cart { get; set; } = new();
     }

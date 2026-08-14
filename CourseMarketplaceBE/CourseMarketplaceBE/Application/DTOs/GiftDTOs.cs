@@ -56,3 +56,44 @@ public class GiftCheckoutRequest
     [Required(ErrorMessage = "Cancel URL is required.")]
     public string CancelUrl { get; set; } = null!;
 }
+
+public class GiftCheckoutSessionRequest
+{
+    [Required]
+    public int CourseId { get; set; }
+
+    [Required]
+    [EmailAddress]
+    public string RecipientEmail { get; set; } = null!;
+
+    public string? RecipientName { get; set; }
+
+    [MaxLength(1000)]
+    public string? GiftMessage { get; set; }
+
+    public string CardTheme { get; set; } = "classic";
+}
+
+public class ProcessGiftCheckoutRequest
+{
+    [Required]
+    public string CheckoutSessionId { get; set; } = null!;
+
+    [Required]
+    public string SuccessUrl { get; set; } = null!;
+
+    [Required]
+    public string CancelUrl { get; set; } = null!;
+}
+
+public class GiftCheckoutSessionDto
+{
+    public string GiftCheckoutSessionId { get; set; } = null!;
+    public int CourseId { get; set; }
+    public string CourseTitle { get; set; } = null!;
+    public decimal TotalAmount { get; set; }
+    public string Status { get; set; } = null!;
+    public string RecipientEmail { get; set; } = null!;
+    public DateTime CreatedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+}

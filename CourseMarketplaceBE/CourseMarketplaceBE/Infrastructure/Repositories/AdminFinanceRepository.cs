@@ -216,6 +216,7 @@ public class AdminFinanceRepository : IAdminFinanceRepository
             {
                 PayoutId = p.PayoutId,
                 TransactionId = p.TransactionId ?? 0,
+                InstructorId = p.InstructorId ?? 0,
                 InstructorName = p.Instructor != null && p.Instructor.InstructorNavigation != null
                     ? p.Instructor.InstructorNavigation.FullName ?? "N/A"
                     : "N/A",
