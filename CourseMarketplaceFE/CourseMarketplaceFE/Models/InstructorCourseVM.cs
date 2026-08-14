@@ -28,6 +28,7 @@ namespace CourseMarketplaceFE.Models
         public int CategoryId { get; set; }
 
         public string CourseThumbnailUrl { get; set; } = null!;
+        public string? ThumbnailHash { get; set; }
 
         public string Description { get; set; } = null!;
 
@@ -97,6 +98,7 @@ namespace CourseMarketplaceFE.Models
         public int? Duration { get; set; }
         public long? FileSize { get; set; }
         public string? FileExtension { get; set; }
+        public string? FileHash { get; set; }
     }
 
     public class UpdateCourseDetailsViewModel

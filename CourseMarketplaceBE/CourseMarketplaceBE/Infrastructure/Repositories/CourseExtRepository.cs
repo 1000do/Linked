@@ -80,5 +80,17 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .AsNoTracking()
                 .ToListAsync();
         }
+
+        public async Task<bool> IsThumbnailHashExistsAsync(string hash, int? excludeCourseId = null)
+        {
+            var query = _context.CourseExts.AsQueryable();
+            
+            if (excludeCourseId.HasValue)
+            {
+                query = query.Where(ce => ce.CourseId != excludeCourseId.Value);
+            }
+            
+            return await query.AnyAsync(ce => ce.ThumbnailHash == hash);
+        }
     }
 }

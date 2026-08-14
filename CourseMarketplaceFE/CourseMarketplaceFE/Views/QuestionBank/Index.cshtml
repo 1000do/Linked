@@ -107,6 +107,23 @@
 
 @section Scripts {
     <script>
+        const instructorLockoutEndStr = '@(ViewBag.LockoutEnd?.ToString("o") ?? "")';
+        function isInstructorLockedOut() {
+            if (instructorLockoutEndStr) {
+                const lockoutDate = new Date(instructorLockoutEndStr);
+                if (lockoutDate > new Date()) {
+                    Swal.fire({
+                        title: 'Account Locked',
+                        text: 'Your instructor rights are locked due to policy violations. You cannot perform this action.',
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // State
         let state = {
             view: 'courses', // courses, lessons, questions, form
@@ -339,6 +356,7 @@
         // --- Form Logic (No Popup) ---
 
         function openQuestionForm(qId = 0) {
+            if (isInstructorLockedOut()) return;
             const isEdit = qId > 0;
             document.getElementById('formTitle').innerText = isEdit ? 'Edit Question' : 'Add Question';
             document.getElementById('editingQuestionId').value = qId;
@@ -503,6 +521,7 @@
         }
 
         async function deleteQuestion(qId) {
+            if (isInstructorLockedOut()) return;
             const res = await Swal.fire({
                 title: 'Delete this question?',
                 text: "You won't be able to revert this!",

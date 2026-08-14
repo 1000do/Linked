@@ -31,6 +31,21 @@ public class LessonController : ControllerBase
         return instructorId;
     }
 
+    [HttpGet("check-material-hash")]
+    [Authorize(Roles = "instructor")]
+    public async Task<IActionResult> CheckMaterialHash([FromQuery] string hash)
+    {
+        try
+        {
+            var isDuplicate = await _lessonService.CheckMaterialDuplicateAsync(hash);
+            return Ok(new CourseMarketplaceBE.Application.DTOs.ApiResponse<bool> { Success = true, Data = isDuplicate });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new CourseMarketplaceBE.Application.DTOs.ApiResponse<bool> { Success = false, Message = ex.Message });
+        }
+    }
+
     [HttpPost]
     [Authorize(Roles = "instructor")]
     public async Task<IActionResult> CreateLesson([FromForm] LessonCreateRequest request)
@@ -240,14 +255,17 @@ public class LessonController : ControllerBase
     }
 
     [HttpGet("materials/{materialId}/stream")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> StreamMaterial(int materialId)
     {
         try
         {
+            int userId = 0;
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdStr, out var userId))
-                return Unauthorized(ApiResponse<object>.ErrorResponse("Invalid user token."));
+            if (!string.IsNullOrEmpty(userIdStr))
+            {
+                int.TryParse(userIdStr, out userId);
+            }
 
             var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
             var rangeHeader = Request.Headers["Range"].ToString();

@@ -43,11 +43,34 @@ public class MaterialStreamService : IMaterialStreamService
         if (lesson == null || lesson.Course == null)
             throw new KeyNotFoundException("Lesson or course not found.");
 
-        bool isOwner = lesson.Course.InstructorId == userId;
+        bool isOwner = userId > 0 && lesson.Course.InstructorId == userId;
         bool isStaffOrAdmin = userRole != null && (userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || userRole.Equals("staff", StringComparison.OrdinalIgnoreCase));
-        bool isEnrolled = isOwner || await _courseRepository.IsEnrolledAsync(userId, lesson.Course.CourseId);
+        bool isEnrolled = userId > 0 && (isOwner || await _courseRepository.IsEnrolledAsync(userId, lesson.Course.CourseId));
 
-        if (!isOwner && !isEnrolled && !isStaffOrAdmin)
+        bool isAllowed = isOwner || isEnrolled || isStaffOrAdmin;
+
+        if (!isAllowed)
+        {
+            // Check if it is the preview material (first video of the course)
+            var courseLessons = await _lessonRepository.GetByCourseIdAsync(lesson.Course.CourseId);
+            var firstLessonWithVideo = courseLessons.OrderBy(l => l.LessonId)
+                .FirstOrDefault(l => l.LearningMaterials != null && 
+                                     l.LearningMaterials.Any(m => m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true));
+                                     
+            if (firstLessonWithVideo != null)
+            {
+                var firstVideo = firstLessonWithVideo.LearningMaterials
+                    .OrderBy(m => m.MaterialId)
+                    .FirstOrDefault(m => m.MaterialMetadata?.FileType?.StartsWith("video", StringComparison.OrdinalIgnoreCase) == true);
+                    
+                if (firstVideo != null && firstVideo.MaterialId == materialId)
+                {
+                    isAllowed = true;
+                }
+            }
+        }
+
+        if (!isAllowed)
         {
             throw new UnauthorizedAccessException("You do not have permission to view this material.");
         }

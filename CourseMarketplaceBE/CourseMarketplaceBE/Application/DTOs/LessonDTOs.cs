@@ -21,6 +21,7 @@ public class MaterialCreateRequest
     public string? MaterialUrl { get; set; }
     public MaterialMetadata? MaterialMetadata { get; set; }
     public IFormFile? MaterialFile { get; set; }
+    public string? FileHash { get; set; }
 }
 
 public class LessonResponse

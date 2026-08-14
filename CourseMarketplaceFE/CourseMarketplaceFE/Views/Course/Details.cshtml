@@ -146,13 +146,24 @@
                         }
                     </div>
                     <div id="enrollment-actions" class="flex flex-col gap-3">
+                        @if (Model.IsRemoved)
+                        {
+                            <div class="bg-red-50 border border-red-200 p-4 rounded-lg flex items-start gap-3 shadow-sm">
+                                <span class="material-symbols-outlined text-red-600 mt-0.5">error</span>
+                                <div>
+                                    <h4 class="text-sm font-bold text-red-900 mb-1">Course Removed</h4>
+                                    <p class="text-sm text-red-800 leading-relaxed">This course is no longer available for new enrollments.</p>
+                                </div>
+                            </div>
+                        }
+
                         @if (Model.IsEnrolled && !Model.IsOwner)
                         {
                             <a href="/Course/Learn/@Model.CourseId" class="w-full bg-slate-900 text-white text-center font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
                                 <span class="material-symbols-outlined">play_circle</span>
                                 Go to learning
                             </a>
-                            @if (Model.Price > 0)
+                            @if (Model.Price > 0 && !Model.IsRemoved)
                             {
                                 <a href="/Gift/Setup?courseId=@Model.CourseId" class="w-full border-2 border-primary text-primary font-bold py-3 rounded-lg hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-center decoration-none">
                                     <span class="material-symbols-outlined text-[20px]">redeem</span>
@@ -167,26 +178,29 @@
                                 @(Model.IsOwner ? "Preview your course" : "Preview course")
                             </a>
                         }
-                        else if (Model.Price == 0)
+                        else if (!Model.IsRemoved)
                         {
-                            <button onclick="enrollFree(@Model.CourseId)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined">person_add</span>
-                                Enroll Now
-                            </button>
-                        }
-                        else
-                        {
-                            <button onclick="addToCart(@Model.CourseId, this)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
-                                Add to cart
-                            </button>
-                            <a href="/Gift/Setup?courseId=@Model.CourseId" class="w-full border-2 border-primary text-primary font-bold py-3 rounded-lg hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-center decoration-none">
-                                <span class="material-symbols-outlined text-[20px]">redeem</span>
-                                Gift this course
-                            </a>
+                            @if (Model.Price == 0)
+                            {
+                                <button onclick="enrollFree(@Model.CourseId)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">person_add</span>
+                                    Enroll Now
+                                </button>
+                            }
+                            else
+                            {
+                                <button onclick="addToCart(@Model.CourseId, this)" class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+                                    Add to cart
+                                </button>
+                                <a href="/Gift/Setup?courseId=@Model.CourseId" class="w-full border-2 border-primary text-primary font-bold py-3 rounded-lg hover:bg-primary/5 transition-all flex items-center justify-center gap-2 text-center decoration-none">
+                                    <span class="material-symbols-outlined text-[20px]">redeem</span>
+                                    Gift this course
+                                </a>
+                            }
                         }
                         
-                        @if (!Model.IsOwner && !isManager)
+                        @if (!Model.IsOwner && !isManager && !Model.IsRemoved)
                         {
                             <button type="button" 
                                     onclick="toggleWishlist(this, @Model.CourseId);"
@@ -194,11 +208,9 @@
                                 <span class="material-symbols-outlined @(Model.IsInWishlist ? "text-red-500" : "text-slate-400")" style='font-variation-settings: "FILL" @(Model.IsInWishlist ? "1" : "0");'>favorite</span>
                                 <span class="wishlist-text">@(Model.IsInWishlist ? "Saved to Wishlist" : "Add to Wishlist")</span>
                             </button>
-
-
                         }
                     </div>
-                    @if (!Model.IsOwner && !isManager)
+                    @if (!Model.IsOwner && !isManager && !Model.IsRemoved)
                     {
                         <p class="text-[11px] text-slate-500 text-center mt-4">14-Day Money-Back Guarantee</p>
                     }

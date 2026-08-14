@@ -1018,6 +1018,23 @@
 
 @section Scripts {
     <script>
+        const instructorLockoutEndStr = '@(ViewBag.LockoutEnd?.ToString("o") ?? "")';
+        function isInstructorLockedOut() {
+            if (instructorLockoutEndStr) {
+                const lockoutDate = new Date(instructorLockoutEndStr);
+                if (lockoutDate > new Date()) {
+                    Swal.fire({
+                        title: 'Account Locked',
+                        text: 'Your instructor rights are locked due to policy violations. You cannot perform this action.',
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         // --- GLOBAL FUNCTIONS AT THE TOP ---
         function formatDuration(totalSeconds) {
             totalSeconds = Math.round(totalSeconds || 0);
@@ -1057,6 +1074,7 @@
         let isSubmitting = false;
 
         window.addNewLesson = function() {
+            if (isInstructorLockedOut()) return;
             // console.log("Add New Lesson clicked");
             const modal = document.getElementById('add-lesson-modal');
             const input = document.getElementById('new-lesson-title');
@@ -1157,10 +1175,12 @@
         };
 
         window.saveCourseDetails = function() {
+            if (isInstructorLockedOut()) return;
             const title = document.getElementById('course-title-input').value;
             const price = document.getElementById('course-price-input').value;
             const catId = document.getElementById('course-category-input').value;
             const thumb = document.getElementById('course-thumbnail-input').value;
+            const thumbHash = document.getElementById('course-thumbnail-input').dataset.thumbnailHash || '';
             
             const desc = window.courseDescQuill ? window.courseDescQuill.root.innerHTML : '';
             
@@ -1195,6 +1215,7 @@
             fd.append('price', price);
             fd.append('categoryId', catId);
             fd.append('thumbnailUrl', thumb);
+            if(thumbHash) fd.append('thumbnailHash', thumbHash);
             fd.append('whatYouWillLearn', learn);
             fd.append('requirements', req);
 
@@ -1317,6 +1338,36 @@
 
             thumbProgress.classList.remove('hidden');
             
+            const fileReader = new FileReader();
+            const spark = new SparkMD5.ArrayBuffer();
+            fileReader.onload = function(e) {
+                spark.append(e.target.result);
+                const md5Hash = spark.end();
+                
+                fetch(`/InstructorCourse/CheckThumbnailHash?hash=${encodeURIComponent(md5Hash)}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success && res.data === true) {
+                            thumbProgress.classList.add('hidden');
+                            Swal.fire({
+                                title: 'Duplicate Image Detected',
+                                text: 'This image has already been used in another course thumbnail. Please select a different image.',
+                                icon: 'error',
+                                confirmButtonColor: '#006a62'
+                            });
+                            thumbInput.value = '';
+                        } else {
+                            startThumbCloudinaryUpload(file, md5Hash);
+                        }
+                    })
+                    .catch(err => {
+                        startThumbCloudinaryUpload(file, md5Hash);
+                    });
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        function startThumbCloudinaryUpload(file, md5Hash) {
             const CLOUD_NAME = 'df8i0azc5';
             const UPLOAD_PRESET = 'course_marketplace_preset';
             const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
@@ -1330,25 +1381,26 @@
                 .then(data => {
                     if (data.secure_url) {
                         thumbUrlInput.value = data.secure_url;
+                        thumbUrlInput.dataset.thumbnailHash = md5Hash;
                         thumbPreview.src = data.secure_url;
                         saveCourseDetails().then(isSaved => {
                             if (isSaved) {
-                                Swal.fire({ 
-                                    icon: 'success', 
-                                    title: 'Image Uploaded', 
-                                    text: 'Thumbnail updated successfully.', 
-                                    timer: 1500,
-                                    showConfirmButton: false
+                                thumbProgress.classList.add('hidden');
+                                Swal.fire({
+                                    title: 'Thumbnail Updated!',
+                                    icon: 'success',
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 3000
                                 });
                             }
                         });
                     }
                 })
                 .catch(err => {
-                    Swal.fire('Upload Failed', 'Error uploading image to server.', 'error');
-                })
-                .finally(() => {
                     thumbProgress.classList.add('hidden');
+                    Swal.fire('Upload Failed', 'There was an error uploading your thumbnail.', 'error');
                 });
         }
 
@@ -1488,7 +1540,7 @@
         const progressText = document.getElementById('progress-text');
         const uploadedFilenameDisplay = document.getElementById('uploaded-filename-display');
         const materialUrlInput = document.getElementById('MaterialUrl');
-        let currentXHR = null;
+        window.activeUploads = {}; // { [lessonId]: { xhr, file, progress, status, errorMessage } }
 
         // Remove unused resource references to avoid null errors
         function renderCourseStructure() {
@@ -1710,6 +1762,7 @@
         let filteredQuizzes = [];
         
         window.openAddQuizModal = async function() {
+            if (isInstructorLockedOut()) return;
             const modal = document.getElementById('add-quiz-modal');
             modal.classList.remove('hidden');
             setTimeout(() => {
@@ -1807,6 +1860,7 @@
         };
 
         window.removeQuizFromCourse = async function(cId, qId) {
+            if (isInstructorLockedOut()) return;
             const resConfirm = await Swal.fire({
                 title: 'Remove Quiz?',
                 text: 'Are you sure you want to remove this quiz from the course?',
@@ -1839,12 +1893,15 @@
         }
 
         window.toggleQuizVisibility = async function(cId, qId, checkbox) {
+            if (isInstructorLockedOut()) {
+                checkbox.checked = !checkbox.checked;
+                return;
+            }
             const hide = !checkbox.checked;
             try {
-                const res = await fetch(`/Quiz/ToggleHidden`, { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ quizId: qId, isHidden: hide })
+                const res = await fetch(`/CourseQuiz/Hide?courseId=${cId}&quizId=${qId}&hide=${hide}`, { 
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 const result = await res.json();
                 if(!result.success) {
@@ -1858,6 +1915,17 @@
         }
 
         window.selectLesson = function(el) {
+            // Resource uploads still block switching since they are quick
+            if (typeof isResourceUploading !== 'undefined' && isResourceUploading) {
+                Swal.fire({
+                    title: 'Upload in Progress',
+                    text: 'A resource upload is currently in progress. Please wait for it to complete before switching lessons.',
+                    icon: 'warning',
+                    confirmButtonColor: '#006a62'
+                });
+                return;
+            }
+
             // Show editor, hide empty state
             const emptyState = document.getElementById('lesson-editor-empty');
             const editor = document.getElementById('lesson-editor-active');
@@ -1937,7 +2005,19 @@
             document.getElementById('ResourceUrl').value = '';
             document.getElementById('resource-title-input').value = '';
             document.getElementById('resource-file-name').textContent = 'No file chosen';
-            resetVideoUpload();
+            
+            // Render video upload state
+            const uploadState = window.activeUploads[lessonId];
+            if (uploadState) {
+                document.getElementById('video-drop-area').classList.add('hidden');
+                document.getElementById('video-success').classList.add('hidden');
+                document.getElementById('video-upload-progress').classList.remove('hidden');
+                document.getElementById('upload-filename-display').textContent = uploadState.file ? `Uploading "${uploadState.file.name}"` : 'Uploading...';
+                document.getElementById('progress-bar-fill').style.width = (uploadState.progress || 0) + '%';
+                document.getElementById('progress-text').textContent = (uploadState.progress || 0);
+            } else {
+                clearVideoUploadUI();
+            }
             
             const resourcesList = document.getElementById('resources-list');
             resourcesList.innerHTML = '';
@@ -1957,7 +2037,11 @@
                         }
                         
                         const type = (metadata?.file_type || metadata?.FileType || metadata?.fileType || 'video').toLowerCase();
-                        const mUrl = material.materialUrl || material.MaterialUrl;
+                        const mId = material.materialId || material.MaterialId;
+                        let mUrl = material.materialUrl || material.MaterialUrl;
+                        if (mUrl === 'PROXY_STREAM') {
+                            mUrl = `/Course/StreamMaterial?materialId=${mId}`;
+                        }
                         const mDesc = material.description || material.Description;
                         const mTitle = material.title || material.Title;
                         const mLearningStatus = (material.learningStatus || material.LearningStatus || '').toLowerCase();
@@ -1971,10 +2055,16 @@
                             // Populate video UI
                             if (mUrl) {
                                 document.getElementById('MaterialUrl').value = mUrl;
-                                document.getElementById('video-drop-area').classList.add('hidden');
-                                document.getElementById('video-success').classList.remove('hidden');
+                                
+                                if (!uploadState) {
+                                    document.getElementById('video-drop-area').classList.add('hidden');
+                                    document.getElementById('video-success').classList.remove('hidden');
+                                    document.getElementById('video-upload-progress').classList.add('hidden');
+                                }
+                                
                                 const displayEl = document.getElementById('uploaded-filename-display');
-                                if (displayEl) displayEl.textContent = mTitle || "Lesson Video Content";
+                                // Only override display filename if no upload is happening
+                                if (displayEl && !uploadState) displayEl.textContent = mTitle || "Lesson Video Content";
                                 const inputEl = document.getElementById('video-title-input');
                                 if (inputEl) inputEl.value = mTitle || "Lesson Video Content";
                                 
@@ -2079,6 +2169,7 @@
 
 
         window.updateLessonTitleInline = function(newTitle) {
+            if (isInstructorLockedOut()) return;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2124,6 +2215,7 @@
         };
 
         window.updateLessonInline = function(lId, field, el) {
+            if (isInstructorLockedOut()) return;
             const lesson = lessonsData.find(x => (x.lessonId || x.LessonId) == lId);
             if (!lesson) return;
             
@@ -2176,6 +2268,7 @@
         };
 
         window.submitVideoEdit = function() {
+            if (isInstructorLockedOut()) return;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2244,6 +2337,7 @@
         };
 
         window.updateResourceInline = function(matId, field, el) {
+            if (isInstructorLockedOut()) return;
             const newValue = el.value;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
@@ -2354,6 +2448,7 @@
         };
 
         window.submitResourceEdit = function() {
+            if (isInstructorLockedOut()) return;
             const mId = document.getElementById('editing-resource-id').value;
             if (!mId) return;
             
@@ -2418,6 +2513,7 @@
         };
 
         window.submitNewLesson = function() {
+            if (isInstructorLockedOut()) return;
             const input = document.getElementById('new-lesson-title');
             const title = input.value;
             const btn = document.getElementById('submit-lesson-btn');
@@ -2480,6 +2576,7 @@
 
 
         window.removeLesson = function(event, lessonId) {
+            if (isInstructorLockedOut()) return;
             event.stopPropagation();
             Swal.fire({
                 title: 'Remove Lesson?',
@@ -2553,7 +2650,16 @@
         videoDropArea.addEventListener('drop', e => handleVideoUpload(e.dataTransfer.files), false);
 
         async function handleVideoUpload(files) {
+            if (isInstructorLockedOut()) return;
             if (!files.length) return;
+            
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) {
+                Swal.fire('Error', 'No lesson selected.', 'error');
+                return;
+            }
+            const targetLessonId = lessonIdEl.dataset.lessonId;
+
             const file = files[0];
             if (!file.type.startsWith('video/')) { 
                 Swal.fire('Invalid File', 'Please upload a video file.', 'warning');
@@ -2562,109 +2668,221 @@
             
             // Analyze file size and show tip if heavy
             const sizeInMB = file.size / (1024 * 1024);
-            if (sizeInMB > 50) {
-                const proceed = await Swal.fire({
-                    title: 'Large File Detected',
-                    text: `This video is ${sizeInMB.toFixed(1)}MB. Large files take longer to upload and might lag for students. We recommend compressing it below 20MB using a tool like "MP4 Converter" before uploading. Proceed anyway?`,
-                    icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, upload anyway',
-                    cancelButtonText: 'I will compress it first'
-                });
-                if (!proceed.isConfirmed) { videoInput.value = ''; return; }
+            
+            // Cloudinary Free Tier Limit for Videos
+            if (file.size > 104857600) {
+                Swal.fire('File Too Large', `This video is ${sizeInMB.toFixed(1)}MB. The maximum allowed video size is 100MB. Please compress your video before uploading.`, 'error');
+                videoInput.value = '';
+                return;
+            }
+
+            // Auto-fill video title from file name
+            const titleInput = document.getElementById('video-title-input');
+            if (titleInput) {
+                let baseName = file.name;
+                const lastDot = baseName.lastIndexOf('.');
+                if (lastDot !== -1) {
+                    baseName = baseName.substring(0, lastDot);
+                }
+                titleInput.value = baseName;
             }
 
             videoDropArea.classList.add('hidden');
             uiProgress.classList.remove('hidden');
             uiSuccess.classList.add('hidden');
-            document.getElementById('upload-filename-display').textContent = `Uploading "${file.name}"`;
+            document.getElementById('upload-filename-display').textContent = `Validating "${file.name}"...`;
             progressBarFill.style.width = '0%'; progressText.textContent = '0';
 
+            window.activeUploads[targetLessonId] = {
+                file: file,
+                progress: 0,
+                status: 'validating'
+            };
+
+            const spark = new SparkMD5.ArrayBuffer();
+            const chunkSizeHash = 2097152; // 2MB
+            const chunksHash = Math.ceil(file.size / chunkSizeHash);
+            let currentChunkHash = 0;
+            const fileReader = new FileReader();
+
+            fileReader.onload = function(e) {
+                spark.append(e.target.result);
+                currentChunkHash++;
+                if (currentChunkHash < chunksHash) {
+                    loadNextHash();
+                } else {
+                    const md5Hash = spark.end();
+                    fetch(`/InstructorCourse/CheckMaterialHash?hash=${encodeURIComponent(md5Hash)}`)
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.success && res.data === true) {
+                                delete window.activeUploads[targetLessonId];
+                                uiProgress.classList.add('hidden');
+                                Swal.fire({ title: 'Duplicate Video Detected', text: 'This video has already been used in another material. Please select a different one.', icon: 'error', confirmButtonColor: '#006a62' });
+                                restoreVideoUploadUI();
+                            } else {
+                                startVideoCloudinaryUpload(file, md5Hash, targetLessonId);
+                            }
+                        })
+                        .catch(() => startVideoCloudinaryUpload(file, md5Hash, targetLessonId));
+                }
+            };
+            fileReader.onerror = function() { handleUploadError('Error validating file.'); };
+            function loadNextHash() {
+                const start = currentChunkHash * chunkSizeHash;
+                const end = ((start + chunkSizeHash) >= file.size) ? file.size : start + chunkSizeHash;
+                fileReader.readAsArrayBuffer(file.slice(start, end));
+            }
+            loadNextHash();
+        }
+
+        async function startVideoCloudinaryUpload(file, fileHash, targetLessonId) {
+            if (document.querySelector('.lesson-item.border-primary')?.dataset.lessonId === targetLessonId) {
+                document.getElementById('upload-filename-display').textContent = `Uploading "${file.name}"`;
+            }
             const CLOUD_NAME = 'df8i0azc5';
             const UPLOAD_PRESET = 'course_marketplace_preset';
             
-            // Use Chunked Upload for stability
-            const chunkSize = 6 * 1024 * 1024; // 6MB chunks
-            const totalChunks = Math.ceil(file.size / chunkSize);
-            const uniqueUploadId = 'vid_' + Date.now() + '_' + Math.random().toString(36).substring(7);
+            const fd = new FormData();
+            fd.append('upload_preset', UPLOAD_PRESET);
+            fd.append('file', file);
+            
+            const xhr = new XMLHttpRequest();
+            if (!window.activeUploads[targetLessonId]) window.activeUploads[targetLessonId] = {};
+            window.activeUploads[targetLessonId].xhr = xhr;
+            window.activeUploads[targetLessonId].status = 'uploading';
+            
+            const promise = new Promise((resolve, reject) => {
+                xhr.upload.addEventListener('progress', e => {
+                    if (e.lengthComputable) {
+                        const totalPct = Math.round((e.loaded / e.total) * 100);
+                        window.activeUploads[targetLessonId].progress = totalPct;
+                        
+                        // Only update UI if the current lesson is the one being uploaded to
+                        const currentLessonIdEl = document.querySelector('.lesson-item.border-primary');
+                        if (currentLessonIdEl && currentLessonIdEl.dataset.lessonId === targetLessonId) {
+                            progressBarFill.style.width = totalPct + '%';
+                            progressText.textContent = totalPct;
+                        }
+                    }
+                });
+                
+                xhr.addEventListener('load', () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve(JSON.parse(xhr.responseText));
+                    } else {
+                        let errorDetail = xhr.statusText;
+                        try {
+                            const parsedError = JSON.parse(xhr.responseText);
+                            if (parsedError.error && parsedError.error.message) {
+                                errorDetail = parsedError.error.message;
+                            } else {
+                                errorDetail = xhr.responseText;
+                            }
+                        } catch(e) {}
+                        reject('Video upload failed: ' + errorDetail);
+                    }
+                });
+                xhr.addEventListener('error', () => reject('Network error.'));
+                xhr.addEventListener('abort', () => reject('Aborted'));
+            });
             
             try {
-                for (let i = 0; i < totalChunks; i++) {
-                    const start = i * chunkSize;
-                    const end = Math.min(start + chunkSize, file.size);
-                    const chunk = file.slice(start, end);
-                    
-                    const fd = new FormData();
-                    fd.append('upload_preset', UPLOAD_PRESET);
-                    fd.append('file', chunk);
-                    
-                    const xhr = new XMLHttpRequest();
-                    currentXHR = xhr;
-                    
-                    const promise = new Promise((resolve, reject) => {
-                        xhr.upload.addEventListener('progress', e => {
-                            if (e.lengthComputable) {
-                                const currentUploaded = start + e.loaded;
-                                const totalPct = Math.round((currentUploaded / file.size) * 100);
-                                progressBarFill.style.width = totalPct + '%';
-                                progressText.textContent = totalPct;
-                            }
-                        });
-                        
-                        xhr.addEventListener('load', () => {
-                            if (xhr.status >= 200 && xhr.status < 300) {
-                                resolve(JSON.parse(xhr.responseText));
-                            } else {
-                                reject('Chunk upload failed: ' + xhr.statusText);
-                            }
-                        });
-                        xhr.addEventListener('error', () => reject('Network error.'));
-                        xhr.addEventListener('abort', () => reject('Aborted'));
-                    });
-                    
-                    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, true);
-                    xhr.setRequestHeader('X-Unique-Upload-Id', uniqueUploadId);
-                    xhr.setRequestHeader('Content-Range', `bytes ${start}-${end - 1}/${file.size}`);
-                    xhr.send(fd);
-                    
-                    const result = await promise;
-                    if (i === totalChunks - 1) {
-                        // Last chunk — finalize
-                        setTimeout(() => {
-                            uiProgress.classList.add('hidden');
-                            uiSuccess.classList.remove('hidden');
-                            if (uploadedFilenameDisplay) uploadedFilenameDisplay.textContent = file.name;
-                            const titleInput = document.getElementById('video-title-input');
-                            if (titleInput) titleInput.value = file.name.split('.').slice(0, -1).join('.') || file.name;
+                xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/video/upload`, true);
+                xhr.send(fd);
+                
+                const result = await promise;
+                setTimeout(() => {
+                    // Save metadata in activeUploads so it survives tab switching
+                    window.activeUploads[targetLessonId].materialUrl = result.secure_url;
+                    window.activeUploads[targetLessonId].duration = Math.round(result.duration || 0);
+                    window.activeUploads[targetLessonId].fileSize = result.bytes || 0;
+                    window.activeUploads[targetLessonId].format = result.format || '';
+                    window.activeUploads[targetLessonId].fileHash = fileHash;
+
+                    window.activeUploads[targetLessonId].status = 'saving';
+                    const currentLessonIdEl = document.querySelector('.lesson-item.border-primary');
+                    if (currentLessonIdEl && currentLessonIdEl.dataset.lessonId === targetLessonId) {
+                        const materialUrlInput = document.getElementById('MaterialUrl');
+                        if (materialUrlInput) {
                             materialUrlInput.value = result.secure_url;
-                            // Capture metadata for the database
                             materialUrlInput.dataset.duration = Math.round(result.duration || 0);
                             materialUrlInput.dataset.fileSize = result.bytes || 0;
                             materialUrlInput.dataset.format = result.format || '';
-                            // Auto-save immediately after upload
-                            saveVideoMaterial();
-                        }, 400);
+                            materialUrlInput.dataset.fileHash = fileHash;
+                        }
+                        uiProgress.classList.add('hidden');
+                        uiSuccess.classList.remove('hidden');
+                        document.getElementById('video-save-status').textContent = 'Processing...';
                     }
-                }
-            } catch (err) {
-                if (err !== 'Aborted') handleUploadError(err);
+
+                    // Auto-save the material!
+                    saveVideoMaterial(false, targetLessonId);
+                }, 500);
+            } catch (error) {
+                delete window.activeUploads[targetLessonId];
+                handleUploadError(error, targetLessonId);
             }
         }
 
-        document.getElementById('cancel-upload').addEventListener('click', () => { if(currentXHR) currentXHR.abort(); });
-        function handleUploadError(msg) { 
-            Swal.fire('Upload Failed', msg, 'error');
-            resetVideoUpload(); 
+        document.getElementById('cancel-upload').addEventListener('click', () => { 
+            const lessonIdEl = document.querySelector('.lesson-item.border-primary');
+            if (!lessonIdEl) return;
+            const targetLessonId = lessonIdEl.dataset.lessonId;
+            const activeUpload = window.activeUploads[targetLessonId];
+            if(activeUpload && activeUpload.xhr) activeUpload.xhr.abort(); 
+        });
+
+        function handleUploadError(errorDetail, targetLessonId) {
+            // Check if user is viewing this lesson
+            const currentLessonIdEl = document.querySelector('.lesson-item.border-primary');
+            const isActive = currentLessonIdEl && currentLessonIdEl.dataset.lessonId === targetLessonId;
+
+            if (isActive) {
+                uiProgress.classList.add('hidden');
+                uiSuccess.classList.add('hidden');
+                videoDropArea.classList.remove('hidden');
+                videoInput.value = '';
+                Swal.fire({
+                    title: 'Upload Failed',
+                    text: errorDetail,
+                    icon: 'error',
+                    confirmButtonColor: '#006a62'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Upload Failed',
+                    text: `Upload failed for one of your lessons: ${errorDetail}`,
+                    icon: 'error',
+                    toast: true,
+                    position: 'bottom-end',
+                    showConfirmButton: false,
+                    timer: 5000
+                });
+            }
+            if (targetLessonId && window.activeUploads[targetLessonId]) {
+                delete window.activeUploads[targetLessonId];
+            }
         }
-        function resetVideoUpload() { 
-            videoDropArea.classList.remove('hidden'); 
-            uiProgress.classList.add('hidden'); 
-            uiSuccess.classList.add('hidden'); 
-            videoInput.value=''; 
-            materialUrlInput.value=''; 
+
+        function clearVideoUploadUI(keepTitle = false) { 
+            const videoDropArea = document.getElementById('video-drop-area');
+            const uiProgress = document.getElementById('video-upload-progress');
+            const uiSuccess = document.getElementById('video-success');
+            const videoInput = document.getElementById('video-input');
+            const materialUrlInput = document.getElementById('MaterialUrl');
+            
+            if (videoDropArea) videoDropArea.classList.remove('hidden'); 
+            if (uiProgress) uiProgress.classList.add('hidden'); 
+            if (uiSuccess) uiSuccess.classList.add('hidden'); 
+            if (videoInput) videoInput.value=''; 
+            if (materialUrlInput) materialUrlInput.value=''; 
             document.querySelectorAll('#tab-video .bg-red-50.border-red-200').forEach(el => el.remove()); 
-            const titleInput = document.getElementById('video-title-input');
-            if (titleInput) titleInput.value = '';
+            
+            if (!keepTitle) {
+                const titleInput = document.getElementById('video-title-input');
+                if (titleInput) titleInput.value = '';
+            }
             const displayEl = document.getElementById('uploaded-filename-display');
             if (displayEl) displayEl.textContent = 'Lesson Video Content';
             
@@ -2678,50 +2896,133 @@
                 playerWrapper.classList.add('hidden');
             }
         }
-        window.resetVideoUpload = resetVideoUpload;
 
-        // ─── Auto-Save Video Material ───
-        window.saveVideoMaterial = function(isAutoSave = false) {
+        function restoreVideoUploadUI() {
+            clearVideoUploadUI(true); // Keep title intact
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
-            const lessonId = lessonIdEl.dataset.lessonId;
-            const title = lessonIdEl.dataset.title;
-            const description = window.videoQuill.root.innerHTML;
+            const lessonId = parseInt(lessonIdEl.dataset.lessonId);
+            const lesson = typeof lessonsData !== 'undefined' ? lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId) : null;
+            if (!lesson) return;
             
-            // If it's an auto-save of description, we might not have a NEW materialUrl
-            // In that case, backend logic for "string.IsNullOrEmpty(materialUrl)" will update existing video
-            let materialUrl = document.getElementById('MaterialUrl').value;
+            const materials = lesson.learningMaterials || lesson.LearningMaterials || lesson.learning_materials || [];
+            const activeVideo = materials.find(m => {
+                let metadata = m.materialMetadata || m.MaterialMetadata;
+                if (typeof metadata === 'string') {
+                    try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
+                }
+                const type = (metadata?.file_type || metadata?.FileType || metadata?.fileType || 'video').toLowerCase();
+                const status = (m.learningStatus || m.LearningStatus || '').toLowerCase();
+                return type === 'video' && status !== 'removed';
+            });
             
-            // If we are just updating the description, we should send empty MaterialUrl 
-            // to hit the backend update logic instead of the "swap" logic
-            if (isAutoSave && materialUrl) {
-                // If we have a materialUrl but it's already the active one, we should send empty to just update desc
-                // Actually, let's just always send empty if we are just updating metadata
-                materialUrl = ""; 
+            if (activeVideo) {
+                const mUrl = activeVideo.materialUrl || activeVideo.MaterialUrl;
+                const mTitle = activeVideo.title || activeVideo.Title;
+                
+                const materialUrlInput = document.getElementById('MaterialUrl');
+                if (materialUrlInput) materialUrlInput.value = mUrl;
+                
+                document.getElementById('video-drop-area')?.classList.add('hidden');
+                document.getElementById('video-upload-progress')?.classList.add('hidden');
+                document.getElementById('video-success')?.classList.remove('hidden');
+                
+                const displayEl = document.getElementById('uploaded-filename-display');
+                if (displayEl) displayEl.textContent = mTitle || "Lesson Video Content";
+                
+                const previewPlayer = document.getElementById('video-preview-player');
+                const playerWrapper = document.getElementById('video-preview-player-wrapper');
+                const placeholder = document.getElementById('video-preview-placeholder');
+                if (previewPlayer && playerWrapper && placeholder && mUrl) {
+                    if (mUrl === 'PROXY_STREAM') {
+                        const mId = activeVideo.materialId || activeVideo.MaterialId;
+                        previewPlayer.src = `/Course/StreamMaterial?materialId=${mId}`;
+                    } else {
+                        previewPlayer.src = mUrl;
+                    }
+                    previewPlayer.load();
+                    placeholder.classList.add('hidden');
+                    playerWrapper.classList.remove('hidden');
+                }
+            }
+        }
+        
+        window.clearVideoUploadUI = clearVideoUploadUI;
+        window.resetVideoUpload = clearVideoUploadUI;
+
+        // ─── Auto-Save Video Material ───
+        window.saveVideoMaterial = function(isAutoSave = false, targetLessonId = null) {
+            if (isInstructorLockedOut()) return;
+            
+            let lessonId = targetLessonId;
+            const activeLessonEl = document.querySelector('.lesson-item.border-primary');
+            const activeLessonId = activeLessonEl ? activeLessonEl.dataset.lessonId : null;
+            
+            if (!lessonId) {
+                if (!activeLessonId) return;
+                lessonId = activeLessonId;
+            }
+            
+            const isTargetActive = (activeLessonId === lessonId);
+            const lessonData = lessonsData.find(l => (l.lessonId || l.LessonId) == lessonId);
+            const title = lessonData ? (lessonData.title || lessonData.Title) : "Lesson";
+            
+            let description = "";
+            if (isTargetActive && window.videoQuill) {
+                description = window.videoQuill.root.innerHTML;
+            }
+
+            let materialUrl = "";
+            let duration = 0, fileSize = 0, format = "", fileHash = "";
+
+            if (!isAutoSave) {
+                const uploadData = window.activeUploads[lessonId];
+                if (uploadData && uploadData.materialUrl) {
+                    materialUrl = uploadData.materialUrl;
+                    duration = uploadData.duration;
+                    fileSize = uploadData.fileSize;
+                    format = uploadData.format;
+                    fileHash = uploadData.fileHash;
+                } else if (isTargetActive) {
+                    const matUrlInput = document.getElementById('MaterialUrl');
+                    materialUrl = matUrlInput.value;
+                    duration = matUrlInput.dataset.duration;
+                    fileSize = matUrlInput.dataset.fileSize;
+                    format = matUrlInput.dataset.format;
+                    fileHash = matUrlInput.dataset.fileHash;
+                }
             }
 
             if (!isAutoSave && !materialUrl) return;
 
-            const statusEl = document.getElementById('video-save-status');
-            const autoSaveEl = document.getElementById('video-autosave-status');
-            if (autoSaveEl) { autoSaveEl.classList.remove('hidden'); }
-            if (statusEl) statusEl.textContent = 'Saving...';
+            let statusEl = null;
+            let autoSaveEl = null;
             
-            const customTitle = document.getElementById('video-title-input')?.value.trim();
+            if (isTargetActive) {
+                statusEl = document.getElementById('video-save-status');
+                autoSaveEl = document.getElementById('video-autosave-status');
+                if (autoSaveEl) autoSaveEl.classList.remove('hidden');
+                if (statusEl) statusEl.textContent = 'Saving...';
+            }
+            
+            let customTitle = "";
+            if (isTargetActive) {
+                customTitle = document.getElementById('video-title-input')?.value.trim();
+            }
             const finalTitle = customTitle ? customTitle : (title + " Video");
             
             const fd = new FormData();
             fd.append('lessonId', lessonId);
             fd.append('title', finalTitle);
             if(description && description !== '<p><br></p>') fd.append('description', description);
-            fd.append('materialUrl', materialUrl);
+            if(materialUrl) fd.append('materialUrl', materialUrl);
             fd.append('type', 'video');
             
-            const matUrlInput = document.getElementById('MaterialUrl');
             if (!isAutoSave) {
-                if (matUrlInput.dataset.duration) fd.append('duration', matUrlInput.dataset.duration);
-                if (matUrlInput.dataset.fileSize) fd.append('fileSize', matUrlInput.dataset.fileSize);
-                if (matUrlInput.dataset.format) fd.append('fileExtension', matUrlInput.dataset.format);
+                if (duration) fd.append('duration', duration);
+                if (fileSize) fd.append('fileSize', fileSize);
+                if (format) fd.append('fileExtension', format);
+                if (fileHash) fd.append('fileHash', fileHash);
             }
             
             return fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
@@ -2734,46 +3035,98 @@
                         if (statusEl) statusEl.textContent = '✓ Saved automatically';
                         if (json.data) {
                             updateLocalMaterials(lessonId, json.data, 'video');
-                            // Update dynamic duration display
-                            let metadata = json.data.materialMetadata || json.data.MaterialMetadata;
-                            if (typeof metadata === 'string') {
-                                try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
-                            }
-                            const totalSeconds = metadata?.duration || metadata?.Duration || 0;
-                            const durationEl = document.getElementById('editing-lesson-duration');
-                            if (durationEl) durationEl.textContent = formatDuration(totalSeconds);
                             
                             // Re-render course structure to update the total duration counter
                             renderCourseStructure();
 
-                            // Load new video url into preview player
-                            const previewPlayer = document.getElementById('video-preview-player');
-                            const playerWrapper = document.getElementById('video-preview-player-wrapper');
-                            const placeholder = document.getElementById('video-preview-placeholder');
-                            const mUrl = json.data.materialUrl || json.data.MaterialUrl;
-                            if (previewPlayer && playerWrapper && placeholder && mUrl) {
-                                previewPlayer.src = mUrl;
-                                previewPlayer.load();
-                                placeholder.classList.add('hidden');
-                                playerWrapper.classList.remove('hidden');
+                            if (isTargetActive) {
+                                // Update dynamic duration display
+                                let metadata = json.data.materialMetadata || json.data.MaterialMetadata;
+                                if (typeof metadata === 'string') {
+                                    try { metadata = JSON.parse(metadata); } catch(e) { metadata = {}; }
+                                }
+                                const totalSeconds = metadata?.duration || metadata?.Duration || 0;
+                                const durationEl = document.getElementById('editing-lesson-duration');
+                                if (durationEl) durationEl.textContent = formatDuration(totalSeconds);
+
+                                // Load new video url into preview player
+                                const previewPlayer = document.getElementById('video-preview-player');
+                                const playerWrapper = document.getElementById('video-preview-player-wrapper');
+                                const placeholder = document.getElementById('video-preview-placeholder');
+                                const mUrl = json.data.materialUrl || json.data.MaterialUrl;
+                                if (previewPlayer && playerWrapper && placeholder && mUrl) {
+                                    previewPlayer.src = mUrl;
+                                    previewPlayer.load();
+                                    placeholder.classList.add('hidden');
+                                    playerWrapper.classList.remove('hidden');
+                                }
+                                // Update initial video description so subsequent changes check works
+                                initialVideoDesc = window.videoQuill ? window.videoQuill.root.innerHTML : "";
+                            }
+                            
+                            // Clean up upload tracking and notify if background
+                            if (!isAutoSave) {
+                                if (window.activeUploads[lessonId]) {
+                                    delete window.activeUploads[lessonId];
+                                }
+                                if (!isTargetActive) {
+                                    Swal.fire({
+                                        title: 'Upload Complete',
+                                        text: `Video for "${finalTitle}" has been uploaded successfully!`,
+                                        icon: 'success',
+                                        toast: true,
+                                        position: 'bottom-end',
+                                        showConfirmButton: false,
+                                        timer: 4000
+                                    });
+                                }
                             }
                         }
-                        // Update initial video description so subsequent changes check works
-                        initialVideoDesc = window.videoQuill ? window.videoQuill.root.innerHTML : "";
                     } else {
-                        if (statusEl) statusEl.textContent = '✗ ' + (json.message || 'Save failed');
+                        // Extract message if it's raw JSON from backend
+                        let errorMsg = json.message || 'Save failed';
+                        try {
+                            const parsed = JSON.parse(errorMsg);
+                            if (parsed.message) errorMsg = parsed.message;
+                        } catch (e) {}
+
+                        if (!isAutoSave) {
+                            if (statusEl) statusEl.textContent = '';
+                            Swal.fire({
+                                title: 'Failed to Save Video',
+                                text: errorMsg,
+                                icon: 'error',
+                                confirmButtonColor: '#006a62'
+                            });
+                            if (isTargetActive) restoreVideoUploadUI();
+                        } else {
+                            if (statusEl) statusEl.textContent = '✗ ' + errorMsg;
+                        }
+                        if (window.activeUploads[lessonId]) delete window.activeUploads[lessonId];
                     }
                 })
                 .catch(e => {
-                    if (statusEl) statusEl.textContent = '✗ Error saving';
+                    if (!isAutoSave) {
+                        if (statusEl) statusEl.textContent = '';
+                        Swal.fire({
+                            title: 'Failed to Save Video',
+                            text: 'An unexpected error occurred while saving.',
+                            icon: 'error',
+                            confirmButtonColor: '#006a62'
+                        });
+                        if (isTargetActive) restoreVideoUploadUI();
+                    } else {
+                        if (statusEl) statusEl.textContent = '✗ Error saving';
+                    }
+                    if (window.activeUploads[lessonId]) delete window.activeUploads[lessonId];
                 })
                 .finally(() => {
                     if (autoSaveEl) setTimeout(() => autoSaveEl.classList.add('hidden'), 2000);
                 });
         };
 
-        window.saveResourceMaterial = function(resourceUrl, resourceName, fileSize, fileExtension) {
-            // console.log(`Saving resource material...\nURL:${resourceUrl}\nTitle:${resourceName}\nSize:${fileSize}\nFormat(extension):${fileExtension}`);
+        window.saveResourceMaterial = function(resourceUrl, resourceName, fileSize, fileExtension, fileHash) {
+            if (isInstructorLockedOut()) return;
             const lessonIdEl = document.querySelector('.lesson-item.border-primary');
             if (!lessonIdEl) return;
             const lessonId = lessonIdEl.dataset.lessonId;
@@ -2800,6 +3153,7 @@
             fd.append('type', 'document');
             if (fileSize) fd.append('fileSize', fileSize);
             if (fileExtension) fd.append('fileExtension', fileExtension);
+            if (fileHash) fd.append('fileHash', fileHash);
             
             fetch('/InstructorCourse/AddMaterial', { method: 'POST', body: fd })
                 .then(res => {
@@ -2826,16 +3180,29 @@
                         }
                     } else {
                         if (autoSaveEl && autoSaveText) { autoSaveText.textContent = json.message || 'Save failed'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
+                        Swal.fire({
+                            title: 'Failed to Save Resource',
+                            text: json.message || 'Save failed',
+                            icon: 'error',
+                            confirmButtonColor: '#006a62'
+                        });
                     }
                 })
                 .catch(e => {
                     if (autoSaveEl && autoSaveText) { autoSaveText.textContent = 'Error saving'; setTimeout(() => autoSaveEl.classList.add('hidden'), 3000); }
+                    Swal.fire({
+                        title: 'Failed to Save Resource',
+                        text: 'An unexpected error occurred while saving.',
+                        icon: 'error',
+                        confirmButtonColor: '#006a62'
+                    });
                 });
         };
 
 
         // ─── Remove Material (soft-delete) ───
         window.removeMaterial = function(materialId, btn) {
+            if (isInstructorLockedOut()) return;
             Swal.fire({
                 title: 'Remove this file?',
                 text: 'The file will be marked as removed. You can re-upload it later.',
@@ -2873,7 +3240,7 @@
                                         if (type === 'video') {
                                             const durationEl = document.getElementById('editing-lesson-duration');
                                             if (durationEl) durationEl.textContent = '0 mins';
-                                            resetVideoUpload();
+                                            clearVideoUploadUI();
                                         }
                                     }
                                 }
@@ -2902,7 +3269,11 @@
             const emptyState = resourcesList.querySelector('.text-slate-500.italic');
             if (emptyState) emptyState.remove();
 
-            const mUrl = material.materialUrl || material.MaterialUrl;
+            let mUrl = material.materialUrl || material.MaterialUrl;
+            if (mUrl === 'PROXY_STREAM') {
+                const mId = material.materialId || material.MaterialId;
+                mUrl = `/Course/StreamMaterial?materialId=${mId}&download=true`;
+            }
             const mId = material.materialId || material.MaterialId;
             const mTitle = material.title || material.Title || "Resource File";
             const mDesc = material.description || material.Description;
@@ -2983,6 +3354,7 @@
         }
 
         window.submitCourseForReview = function() {
+            if (isInstructorLockedOut()) return;
             // --- VALIDATION BEFORE SUBMIT ---
             const title = document.getElementById('course-title-input').value;
             const desc = window.courseDescQuill.root.innerHTML;
@@ -3370,12 +3742,59 @@
                 resourceProgressEl.classList.remove('hidden');
                 isResourceUploading = true;
                 
-                const CLOUD_NAME = 'df8i0azc5';
-                const UPLOAD_PRESET = 'course_marketplace_preset';
-                const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`;
-                const fd = new FormData(); fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
-                
-                fetch(url, { method: 'POST', body: fd })
+                const spark = new SparkMD5.ArrayBuffer();
+                const chunkSizeHash = 2097152; // 2MB
+                const chunksHash = Math.ceil(file.size / chunkSizeHash);
+                let currentChunkHash = 0;
+                const fileReader = new FileReader();
+
+                fileReader.onload = function(e) {
+                    spark.append(e.target.result);
+                    currentChunkHash++;
+                    if (currentChunkHash < chunksHash) {
+                        loadNextHash();
+                    } else {
+                        const md5Hash = spark.end();
+                        fetch(`/InstructorCourse/CheckMaterialHash?hash=${encodeURIComponent(md5Hash)}`)
+                            .then(r => r.json())
+                            .then(res => {
+                                if (res.success && res.data === true) {
+                                    isResourceUploading = false;
+                                    resourceProgressEl.classList.add('hidden');
+                                    resourceBtnEl.classList.remove('hidden');
+                                    Swal.fire({ title: 'Duplicate Document Detected', text: 'This document has already been used in another material. Please select a different one.', icon: 'error', confirmButtonColor: '#006a62' });
+                                    document.getElementById('resource-input').value = '';
+                                } else {
+                                    startResourceCloudinaryUpload(file, md5Hash);
+                                }
+                            })
+                            .catch(() => startResourceCloudinaryUpload(file, md5Hash));
+                    }
+                };
+                fileReader.onerror = function() { 
+                    isResourceUploading = false;
+                    resourceProgressEl.classList.add('hidden');
+                    resourceBtnEl.classList.remove('hidden');
+                    Swal.fire('Error', 'Error reading file for validation.', 'error');
+                };
+                function loadNextHash() {
+                    const start = currentChunkHash * chunkSizeHash;
+                    const end = ((start + chunkSizeHash) >= file.size) ? file.size : start + chunkSizeHash;
+                    fileReader.readAsArrayBuffer(file.slice(start, end));
+                }
+                loadNextHash();
+            }
+        });
+
+        function startResourceCloudinaryUpload(file, fileHash) {
+            const CLOUD_NAME = 'df8i0azc5';
+            const UPLOAD_PRESET = 'course_marketplace_preset';
+            const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`;
+            const fd = new FormData(); 
+            fd.append('upload_preset', UPLOAD_PRESET); 
+            fd.append('file', file);
+            
+            fetch(url, { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(data => {
                     isResourceUploading = false;
@@ -3412,8 +3831,7 @@
                     resourceBtnEl.classList.remove('hidden');
                     Swal.fire('Resource Upload Failed', 'An error occurred while uploading your resource.', 'error');
                 });
-            }
-        });
+        }
         
         // ─── Disable editing if Pending Review ───
         if (isPendingGlobal) {
@@ -3635,7 +4053,13 @@
                 })
                 .catch(e => console.error("Error fetching realtime course status:", e));
         });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (window.activeUploads && Object.keys(window.activeUploads).length > 0) {
+                var message = "You have active video uploads. If you leave this page, your uploads will be cancelled.";
+                e.returnValue = message;
+                return message;
+            }
+        });
     </script>
 }
-
-

@@ -58,6 +58,23 @@ namespace CourseMarketplaceFE.Controllers
                             }
                         }
 
+                        // Check lockoutEnd
+                        if (dataEl.TryGetProperty("lockoutEnd", out var lockoutEl) && lockoutEl.ValueKind != JsonValueKind.Null)
+                        {
+                            var lockoutEnd = lockoutEl.GetDateTime();
+                            if (lockoutEnd > DateTime.UtcNow)
+                            {
+                                ViewBag.LockoutEnd = lockoutEnd;
+                                var actionName = context.ActionDescriptor.RouteValues["action"];
+                                if (actionName == "Create" || actionName == "Editor")
+                                {
+                                    TempData["Error"] = $"Your account is locked until {lockoutEnd:yyyy-MM-dd HH:mm} due to policy violations. You cannot access this page.";
+                                    context.Result = RedirectToAction("Index");
+                                    return;
+                                }
+                            }
+                        }
+
                         // Cập nhật lại Cookie cho lần sau
                         var statusCookieOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddDays(7), Path = "/" };
                         Response.Cookies.Append("InstructorApprovalStatus", status ?? "None", statusCookieOpts);
@@ -341,6 +358,14 @@ namespace CourseMarketplaceFE.Controllers
                     {
                         var status = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : "Draft";
                         var flagCount = data.TryGetProperty("flagCount", out var fc) ? fc.GetInt32() : 0;
+                        var isRemoved = data.TryGetProperty("isRemoved", out var ir) && ir.ValueKind != JsonValueKind.Null && ir.GetBoolean();
+
+                        if (isRemoved || status?.Equals("removed", StringComparison.OrdinalIgnoreCase) == true)
+                        {
+                            TempData["Error"] = "This course has been removed and can no longer be edited.";
+                            return RedirectToAction("Index");
+                        }
+
                         if (status?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && flagCount >= 3)
                         {
                             TempData["Error"] = "This course has been discontinued due to severe policy violations.";
@@ -427,7 +452,7 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     return Json(new { success = true });
                 }
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -456,7 +481,7 @@ namespace CourseMarketplaceFE.Controllers
                     var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
                     return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -474,7 +499,7 @@ namespace CourseMarketplaceFE.Controllers
                 var resp = await _api.DeleteAsync($"lessons/{lessonId}");
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true });
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -506,6 +531,7 @@ namespace CourseMarketplaceFE.Controllers
                 if (model.Duration.HasValue) formData.Add(new StringContent(model.Duration.Value.ToString()), "MaterialMetadata.Duration");
                 if (model.FileSize.HasValue) formData.Add(new StringContent(model.FileSize.Value.ToString()), "MaterialMetadata.FileSize");
                 if (!string.IsNullOrEmpty(model.FileExtension)) formData.Add(new StringContent(model.FileExtension), "MaterialMetadata.FileExtension");
+                if (!string.IsNullOrEmpty(model.FileHash)) formData.Add(new StringContent(model.FileHash), "FileHash");
 
                 var resp = await _api.PostFormDataAsync($"lessons/{model.LessonId}/materials", formData);
 
@@ -517,7 +543,7 @@ namespace CourseMarketplaceFE.Controllers
                     var newStatus = data.TryGetProperty("courseStatus", out var s) ? s.GetString() : null;
                     return Json(new { success = true, data = data.Clone(), status = newStatus });
                 }
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -535,7 +561,7 @@ namespace CourseMarketplaceFE.Controllers
                 var resp = await _api.PatchAsync($"lessons/materials/{materialId}/remove");
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true });
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -583,7 +609,7 @@ namespace CourseMarketplaceFE.Controllers
                 {
                     return Json(new { success = true });
                 }
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -615,7 +641,7 @@ namespace CourseMarketplaceFE.Controllers
         //                 }
         //                 return Json(new { success = true });
         //             }
-        //             var error = await resp.Content.ReadAsStringAsync();
+        //             var error = await ExtractErrorMessage(resp);
         //             return Json(new { success = false, message = error });
         //         }
         //         else
@@ -628,7 +654,7 @@ namespace CourseMarketplaceFE.Controllers
         //             {
         //                 return Json(new { success = true });
         //             }
-        //             var error = await resp.Content.ReadAsStringAsync();
+        //             var error = await ExtractErrorMessage(resp);
         //             return Json(new { success = false, message = error });
         //         }
         //     }
@@ -686,7 +712,7 @@ namespace CourseMarketplaceFE.Controllers
                 }
                 else
                 {
-                    var error = await resp.Content.ReadAsStringAsync();
+                    var error = await ExtractErrorMessage(resp);
                     string cleanMessage = error;
                     try
                     {
@@ -815,7 +841,7 @@ namespace CourseMarketplaceFE.Controllers
                 var resp = await _api.DeleteAsync($"lessons/materials/{materialId}/permanent");
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true });
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -833,7 +859,7 @@ namespace CourseMarketplaceFE.Controllers
                 var resp = await _api.PostAsync($"lessons/materials/{materialId}/restore");
                 if (resp.IsSuccessStatusCode)
                     return Json(new { success = true });
-                var error = await resp.Content.ReadAsStringAsync();
+                var error = await ExtractErrorMessage(resp);
                 return Json(new { success = false, message = error });
             }
             catch (Exception ex)
@@ -900,6 +926,58 @@ namespace CourseMarketplaceFE.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckThumbnailHash(string hash, int? excludeCourseId = null)
+        {
+            try
+            {
+                var query = $"courses/check-thumbnail-hash?hash={Uri.EscapeDataString(hash)}";
+                if (excludeCourseId.HasValue) query += $"&excludeCourseId={excludeCourseId.Value}";
+                
+                var resp = await _api.GetAsync(query);
+                var content = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode) return Content(content, "application/json");
+                return Json(new { success = false, message = "Failed to check hash" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckMaterialHash(string hash)
+        {
+            try
+            {
+                var resp = await _api.GetAsync($"lessons/check-material-hash?hash={Uri.EscapeDataString(hash)}");
+                var content = await resp.Content.ReadAsStringAsync();
+                
+                if (resp.IsSuccessStatusCode) return Content(content, "application/json");
+                return Json(new { success = false, message = "Failed to check hash" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        private async Task<string> ExtractErrorMessage(HttpResponseMessage resp)
+        {
+            var content = await resp.Content.ReadAsStringAsync();
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                if (doc.RootElement.TryGetProperty("message", out var msg))
+                {
+                    return msg.GetString() ?? content;
+                }
+            }
+            catch { }
+            return content;
         }
     }
 }

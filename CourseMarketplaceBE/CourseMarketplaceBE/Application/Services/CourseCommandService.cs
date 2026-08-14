@@ -136,7 +136,7 @@ public class CourseCommandService : ICourseCommandService
             UpdatedAt = DateTime.UtcNow
         };
 
-        _courseRepository.Add(await AddCourseFingerprintAsync(course));
+        _courseRepository.Add(await AddCourseFingerprintAsync(course, request.ThumbnailHash));
 
         int numRows = await SaveChangesWithFingerprintAsync();
         /* zero rows exception removed */
@@ -258,7 +258,7 @@ public class CourseCommandService : ICourseCommandService
 
         _courseRepository.Update(course);
 
-        await UpdateCourseFingerprintAsync(course);
+        await UpdateCourseFingerprintAsync(course, request.ThumbnailHash);
 
         // Save course updates and hashes together to verify unique constraints before saving
         int rowsUpdate = await SaveChangesWithFingerprintAsync();
@@ -282,13 +282,13 @@ public class CourseCommandService : ICourseCommandService
         return fallbackUrl;
     }
 
-    private async Task<Course> AddCourseFingerprintAsync(Course course)
+    private async Task<Course> AddCourseFingerprintAsync(Course course, string? thumbnailHash = null)
     {
-        course.CourseExt = await CreateCourseExtAsync(course);
+        course.CourseExt = await CreateCourseExtAsync(course, thumbnailHash);
         return course;
     }
 
-    private async Task UpdateCourseFingerprintAsync(Course course)
+    private async Task UpdateCourseFingerprintAsync(Course course, string? thumbnailHash = null)
     {
         var existingExt = await _courseExtRepo.GetByIdAsync(course.CourseId);
 
@@ -298,12 +298,12 @@ public class CourseCommandService : ICourseCommandService
             existingExt.DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? "");
             existingExt.WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? "");
             existingExt.RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? "");
-            existingExt.ThumbnailHash = await ComputeThumbnailHashAsync(course.CourseThumbnailUrl);
+            existingExt.ThumbnailHash = !string.IsNullOrEmpty(thumbnailHash) ? thumbnailHash : await ComputeThumbnailHashAsync(course.CourseThumbnailUrl);
             _courseExtRepo.Update(existingExt);
         }
         else
         {
-            var newExt = await CreateCourseExtAsync(course);
+            var newExt = await CreateCourseExtAsync(course, thumbnailHash);
             await _courseExtRepo.AddAsync(newExt);
         }
     }
@@ -325,7 +325,7 @@ public class CourseCommandService : ICourseCommandService
         }
     }
 
-    private async Task<CourseExt> CreateCourseExtAsync(Course course)
+    private async Task<CourseExt> CreateCourseExtAsync(Course course, string? thumbnailHash = null)
     {
         return new CourseExt
         {
@@ -334,7 +334,7 @@ public class CourseCommandService : ICourseCommandService
             DescriptionHash = await _contentHashService.ComputeCourseHashAsync(course.Description ?? ""),
             WhatYouWillLearnHash = await _contentHashService.ComputeCourseHashAsync(course.WhatYouWillLearn ?? ""),
             RequirementsHash = await _contentHashService.ComputeCourseHashAsync(course.Requirements ?? ""),
-            ThumbnailHash = await ComputeThumbnailHashAsync(course.CourseThumbnailUrl)
+            ThumbnailHash = !string.IsNullOrEmpty(thumbnailHash) ? thumbnailHash : await ComputeThumbnailHashAsync(course.CourseThumbnailUrl)
         };
     }
 

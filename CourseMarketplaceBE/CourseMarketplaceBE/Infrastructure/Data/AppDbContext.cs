@@ -66,6 +66,7 @@ public partial class AppDbContext : DbContext
     public virtual DbSet<UserReport> UserReports { get; set; }
     public virtual DbSet<WishlistItem> WishlistItems { get; set; }
     public virtual DbSet<CourseExt> CourseExts { get; set; }
+    public virtual DbSet<MaterialExt> MaterialExts { get; set; }
     public virtual DbSet<TextEmbedding> TextEmbeddings { get; set; }
     public virtual DbSet<MediaEmbedding> MediaEmbeddings { get; set; }
     public virtual DbSet<InstructorStats> InstructorStats { get; set; }
@@ -1153,6 +1154,22 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey<CourseExt>(d => d.CourseId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("course_exts_course_id_fkey");
+        });
+
+        modelBuilder.Entity<MaterialExt>(entity =>
+        {
+            entity.HasKey(e => e.MaterialId).HasName("material_exts_pkey");
+            entity.ToTable("material_exts");
+
+            entity.Property(e => e.MaterialId).ValueGeneratedNever().HasColumnName("material_id");
+            entity.Property(e => e.FileHash).HasMaxLength(32).IsFixedLength().HasColumnName("file_hash");
+
+            entity.HasIndex(e => e.FileHash, "material_exts_hash_key").IsUnique();
+
+            entity.HasOne(d => d.LearningMaterial).WithOne(p => p.MaterialExt)
+                .HasForeignKey<MaterialExt>(d => d.MaterialId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("material_exts_material_id_fkey");
         });
 
         // ── text_embeddings ───────────────────────────────────────────────────

@@ -37,7 +37,9 @@
     var userRole = (Context.Request.Cookies["UserRole"] ?? "").ToLower();
     var isStaffOrAdmin = userRole == "admin" || userRole == "staff" || User.IsInRole("admin") || User.IsInRole("staff");
     var isCourseOwner = Model.IsOwner;
-    var canSkipVideoServer = isStaffOrAdmin || isCourseOwner;
+     // --- CÔNG TẮC BẬT/TẮT CHỨC NĂNG SKIP NHANH ---
+    var enableGlobalSkip = false; // Đổi thành false nếu muốn bật lại chức năng chặn skip
+    var canSkipVideoServer = enableGlobalSkip || isStaffOrAdmin || isCourseOwner;
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -67,7 +69,14 @@
 <body class="bg-[#f0fcfb] text-[#191c1b] h-screen flex flex-col overflow-hidden">
     @Html.AntiForgeryToken()
 
-    @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
+    @if (Model.IsRemoved)
+    {
+        <div class="w-full bg-amber-100 text-amber-900 border-b border-amber-200 font-medium text-sm text-center py-3 px-4 shadow-sm shrink-0 z-[40] flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-[20px]">warning</span>
+            This course has been removed by the instructor. You retain access to the materials as an enrolled student, but interactions are disabled.
+        </div>
+    }
+    else if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
     {
         var displayStatus = (Model.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase) && Model.FlagCount >= 3) ? "DISCONTINUED" : Model.CourseStatus.ToUpper();
         <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[40]">
@@ -126,9 +135,14 @@
                     </div>
                 </div>
 
-                <!-- Video Player -->
                 <video id="main-video" class="w-full h-full @(isFirstVideo && !isFirstPending ? "" : "hidden")" controls autoplay controlsList="nodownload" oncontextmenu="return false;">
-                    <source id="video-source" src="@(firstMaterial?.MaterialUrl ?? "")" type="video/mp4">
+                    @{
+                        string videoSrc = firstMaterial?.MaterialUrl ?? "";
+                        if (videoSrc == "PROXY_STREAM" && firstMaterial != null) {
+                            videoSrc = $"/Course/StreamMaterial?materialId={firstMaterial.MaterialId}";
+                        }
+                    }
+                    <source id="video-source" src="@videoSrc" type="video/mp4">
                 </video>
                 
                 <!-- Quiz Viewer -->
@@ -1325,7 +1339,9 @@
                 if (docDownloadFallback) docDownloadFallback.classList.add('hidden');
 
                 let optimizedUrl = url;
-                if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
+                if (url === 'PROXY_STREAM') {
+                    optimizedUrl = `/Course/StreamMaterial?materialId=${materialId}`;
+                } else if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
                     optimizedUrl = url.replace('/video/upload/', '/video/upload/f_auto,q_auto/');
                 }
 
@@ -1344,8 +1360,9 @@
                 docViewer.classList.remove('hidden');
                 docTitle.textContent = title;
                 
-                var lowerUrl = url.toLowerCase();
-                if (lowerUrl.endsWith('.txt')) {
+                var lowerTitle = title.toLowerCase();
+                var lowerType = (type || '').toLowerCase();
+                if (lowerTitle.endsWith('.txt') || lowerType === 'text/plain') {
                     if (docIframe) {
                         docIframe.src = '';
                         docIframe.classList.add('hidden');
@@ -1357,7 +1374,12 @@
                     if (txtViewer) txtViewer.classList.remove('hidden');
                     if (txtContent) txtContent.textContent = 'Loading content...';
 
-                    fetch(url)
+                    let fetchUrl = url;
+                    if (url === 'PROXY_STREAM') {
+                        fetchUrl = `/Course/StreamMaterial?materialId=${materialId}`;
+                    }
+                    
+                    fetch(fetchUrl)
                         .then(res => res.arrayBuffer())
                         .then(buffer => {
                             const decoder = new TextDecoder('utf-8');
@@ -1396,6 +1418,9 @@
                         docDownloadBtn.href = downloadUrl;
                         docDownloadBtn.onclick = () => markAsCompleted(materialId); // Mark when downloaded
                     }
+                    
+                    // Trigger download automatically
+                    window.location.href = downloadUrl;
                 }
             }
             // If reviews tab is active, reload reviews and stats for the new lesson

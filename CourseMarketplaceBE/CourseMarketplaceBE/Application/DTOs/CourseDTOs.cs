@@ -14,6 +14,7 @@ public class CourseCreateRequest
     public string? WhatYouWillLearn { get; set; }
     public string? Requirements { get; set; }
     public IFormFile? ThumbnailFile { get; set; }
+    public string? ThumbnailHash { get; set; }
 }
 
 public class CourseUpdateRequest
@@ -26,6 +27,7 @@ public class CourseUpdateRequest
     public string? WhatYouWillLearn { get; set; }
     public string? Requirements { get; set; }
     public IFormFile? ThumbnailFile { get; set; }
+    public string? ThumbnailHash { get; set; }
 }
 
 public class CourseResponse

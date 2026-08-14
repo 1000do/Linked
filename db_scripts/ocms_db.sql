@@ -38,6 +38,7 @@ DROP TABLE IF EXISTS accounts CASCADE;
 DROP TABLE IF EXISTS text_embeddings CASCADE;
 DROP TABLE IF EXISTS media_embeddings CASCADE;
 DROP TABLE IF EXISTS course_exts CASCADE;
+DROP TABLE IF EXISTS material_exts CASCADE;
 DROP TABLE IF EXISTS lesson_reviews CASCADE;
 DROP TABLE IF EXISTS course_ai_usage_logs CASCADE;
 DROP TABLE IF EXISTS message_moderation_logs CASCADE;
@@ -249,6 +250,13 @@ CREATE TABLE course_exts (
     CONSTRAINT uq_what_you_will_learn_hash UNIQUE (what_you_will_learn_hash),
     CONSTRAINT uq_requirements_hash UNIQUE (requirements_hash),
     CONSTRAINT uq_thumbnail_hash UNIQUE (thumbnail_hash)
+);
+
+CREATE TABLE material_exts (
+    material_id INT PRIMARY KEY REFERENCES learning_materials(material_id) ON DELETE CASCADE,
+    file_hash CHAR(32),
+    
+    CONSTRAINT uq_material_file_hash UNIQUE (file_hash)
 );
 
 
