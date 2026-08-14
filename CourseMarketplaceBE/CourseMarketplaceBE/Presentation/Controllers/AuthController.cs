@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using CourseMarketplaceBE.Presentation.Filters;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -24,6 +25,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
     {
         var result = await _authService.RegisterAsync(request);
@@ -38,6 +40,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         try
@@ -90,6 +93,7 @@ public class AuthController : ControllerBase
 
     // ─── REFRESH TOKEN ────────────────────────────────────────────────
     [HttpPost("refresh")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<IActionResult> Refresh()
     {
         // Lấy refresh token từ cookie (ưu tiên) hoặc body
@@ -137,6 +141,7 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: true)]
     [HttpPost("logout")]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<IActionResult> Logout()
     {
         var accountIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -154,6 +159,7 @@ public class AuthController : ControllerBase
     [HttpPost("google-login")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("AuthPolicy")]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequest request)
     {
         try
@@ -182,6 +188,7 @@ public class AuthController : ControllerBase
     [HttpPost("send-otp")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("OtpPolicy")]
     public async Task<IActionResult> SendOtp([FromQuery] string email)
     {
         var result = await _authService.SendOtpAsync(email);
@@ -194,6 +201,7 @@ public class AuthController : ControllerBase
     [HttpPost("verify-email")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("OtpPolicy")]
     public async Task<IActionResult> VerifyEmail([FromBody] VerifyOtpRequest request)
     {
         var result = await _authService.VerifyEmailAsync(request.Email, request.Otp);
@@ -207,6 +215,7 @@ public class AuthController : ControllerBase
     [HttpPost("forgot-password")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("OtpPolicy")]
     public async Task<IActionResult> ForgotPassword([FromQuery] string email)
     {
         var result = await _authService.ForgotPasswordAsync(email);
@@ -220,6 +229,7 @@ public class AuthController : ControllerBase
     [HttpPost("reset-password")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("OtpPolicy")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
     {
         var result = await _authService.ResetPasswordAsync(
@@ -237,6 +247,7 @@ public class AuthController : ControllerBase
     [HttpPost("verify-otp")]
     [AllowAnonymous]
     [CustomAuthorize(requireAuth: false)]
+    [EnableRateLimiting("OtpPolicy")]
     public IActionResult VerifyOtpForReset([FromBody] VerifyOtpRequest request)
     {
         var isValid = _authService.VerifyOtpForReset(request.Email, request.Otp);

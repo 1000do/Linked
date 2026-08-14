@@ -76,7 +76,7 @@
                     <option value="Rejected" selected="@(Model.FilterStatus == "Rejected")">Rejected</option>
                     <option value="Removed" selected="@(Model.FilterStatus == "Removed")">Removed</option>
                     <option value="Archived" selected="@(Model.FilterStatus == "Archived")">Archived</option>
-                    <option value="permanently_locked" selected="@(Model.FilterStatus == "permanently_locked")">Permanently Locked</option>
+                    <option value="discontinued" selected="@(Model.FilterStatus == "discontinued")">Discontinued</option>
                 </select>
                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
             </div>
@@ -218,8 +218,8 @@
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
                 
                 let statusBadge = '';
-                const isPermanentlyLocked = (course.Status.toLowerCase() === 'archived' && course.FlagCount >= 3);
-                const status = isPermanentlyLocked ? 'permanently_locked' : course.Status.toLowerCase();
+                const isDiscontinued = (course.Status.toLowerCase() === 'archived' && course.FlagCount >= 3);
+                const status = isDiscontinued ? 'discontinued' : course.Status.toLowerCase();
                 
                 if (course.IsRemoved) {
                     statusBadge = `<span class="px-3 py-1 bg-red-100 text-red-700 border border-red-300 rounded-full text-xs font-bold">Removed</span>`;
@@ -231,8 +231,8 @@
                     statusBadge = `<span class="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded-full text-xs font-bold">Rejected</span>`;
                 } else if (status === 'draft') {
                     statusBadge = `<span class="px-3 py-1 bg-slate-100 text-slate-600 border border-slate-200 rounded-full text-xs font-bold">Draft</span>`;
-                } else if (status === 'permanently_locked') {
-                    statusBadge = `<span class="px-3 py-1 bg-red-800 text-white shadow-lg shadow-red-900/20 rounded-full text-xs font-bold">Permanently Locked</span>`;
+                } else if (status === 'discontinued') {
+                    statusBadge = `<span class="px-3 py-1 bg-red-800 text-white shadow-lg shadow-red-900/20 rounded-full text-xs font-bold">Discontinued</span>`;
                 } else if (status === 'archived' || status === 'hidden') {
                     statusBadge = `<span class="px-3 py-1 bg-slate-200 text-slate-700 border border-slate-300 rounded-full text-xs font-bold">Archived</span>`;
                 } else {
@@ -275,7 +275,7 @@
                             <span class="material-symbols-outlined text-[18px]">visibility</span>
                         </a>
                     `;
-                } else if (status === 'permanently_locked') {
+                } else if (status === 'discontinued') {
                     actionsHtml = `
                         <a href="/Course/Details/${course.Id}" title="View details" target="_blank" class="w-8 h-8 flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors">
                             <span class="material-symbols-outlined text-[18px]">visibility</span>
@@ -345,8 +345,8 @@
                 const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
                 
                 let statusBadge = '';
-                const isPermanentlyLocked = (course.Status.toLowerCase() === 'archived' && course.FlagCount >= 3);
-                const status = isPermanentlyLocked ? 'permanently_locked' : course.Status.toLowerCase();
+                const isDiscontinued = (course.Status.toLowerCase() === 'archived' && course.FlagCount >= 3);
+                const status = isDiscontinued ? 'discontinued' : course.Status.toLowerCase();
 
                 if (course.IsRemoved) {
                     statusBadge = `<span class="px-2 py-1 bg-red-100 text-red-700 rounded text-[10px] font-bold">Removed</span>`;
@@ -356,8 +356,8 @@
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-amber-600 rounded text-[10px] font-bold">Pending Review</span>`;
                 } else if (status === 'rejected') {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-red-600 rounded text-[10px] font-bold">Rejected</span>`;
-                } else if (status === 'permanently_locked') {
-                    statusBadge = `<span class="px-2 py-1 bg-red-800 text-white rounded text-[10px] font-bold">Permanently Locked</span>`;
+                } else if (status === 'discontinued') {
+                    statusBadge = `<span class="px-2 py-1 bg-red-800 text-white rounded text-[10px] font-bold">Discontinued</span>`;
                 } else {
                     statusBadge = `<span class="px-2 py-1 bg-white/90 text-slate-600 rounded text-[10px] font-bold">${course.Status}</span>`;
                 }
@@ -372,11 +372,11 @@
 
                 const isHidden = status === 'archived' || status === 'hidden';
                 let cardClass = isHidden ? "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block opacity-40 hover:opacity-100 grayscale-[0.5] hover:grayscale-0" : "bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group block";
-                if (course.IsRemoved || status === 'permanently_locked') cardClass += " opacity-50 grayscale hover:opacity-75";
+                if (course.IsRemoved || status === 'discontinued') cardClass += " opacity-50 grayscale hover:opacity-75";
 
-                const courseLink = status === 'permanently_locked' ? `/Course/Details/${course.Id}` : `/InstructorCourse/Editor/${course.Id}`;
+                const courseLink = status === 'discontinued' ? `/Course/Details/${course.Id}` : `/InstructorCourse/Editor/${course.Id}`;
 
-                return `<a href="${courseLink}" ${status === 'permanently_locked' ? 'target="_blank"' : ''} class="${cardClass}">
+                return `<a href="${courseLink}" ${status === 'discontinued' ? 'target="_blank"' : ''} class="${cardClass}">
                     <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
                         ${course.ThumbnailUrl
                             ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />`

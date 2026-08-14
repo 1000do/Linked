@@ -8,9 +8,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -59,65 +59,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  | DFID001 |  |
 
-## Function: `RefreshTokenAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">RefreshTokenAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">RefreshTokenAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">6</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for RefreshTokenAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">4</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">4</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">5</td>
-  </tr>
-</table>
-
-- **Test requirement:** Verify that the refresh token process correctly issues a new token if valid, or returns null if invalid.
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |
-|  |  | Refresh token invalid (account not found) |  | O |  |  |  |
-|  |  | Token found but ExpiryTime is null |  |  | O |  |  |
-|  |  | Token found but ExpiryTime is in the past |  |  |  | O |  |
-|  |  | Valid refresh token |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |
-|  |  | Null |  | O | O | O |  |
-|  |  | `LoginResponse` |  |  |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  |  |  |  |  |
-
 ## Function: `LogoutAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -128,9 +69,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -183,9 +124,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -248,9 +189,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -309,9 +250,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -366,9 +307,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -423,9 +364,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -484,9 +425,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -543,9 +484,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -600,9 +541,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">NgocNN</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">NgocNN</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -646,3 +587,63 @@
 |  | **Passed/Failed** |  |  | P | P |
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  |
+
+
+## Function: `RefreshTokenAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">RefreshTokenAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">RefreshTokenAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">6</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for RefreshTokenAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of RefreshTokenAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |
+|  |  | Account not found |  | O |  |  |  |
+|  |  | RefreshTokenExpiryTime is null |  |  | O |  |  |
+|  |  | RefreshTokenExpiryTime <= DateTime.UtcNow |  |  |  | O |  |
+|  |  | Valid account and token |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |
+|  |  | Returns null |  | O | O | O |  |
+|  |  | Returns LoginResponse |  |  |  |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | N |
+|  | **Passed/Failed** |  |  | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  |  |  |  |  |

@@ -5,6 +5,7 @@ using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -27,6 +28,7 @@ public class CoursePublicController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("SearchPolicy")]
     public async Task<IActionResult> GetAllCourses(
         [FromQuery] string? query = null,
         [FromQuery] string? category = null,

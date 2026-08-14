@@ -36,13 +36,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">15</td>
+    <td colspan="3">16</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Enforce business validation checks, update status, and queue AI moderation for background processing.</td>
+    <td colspan="18">Tests for StartCourseModerationAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -205,7 +205,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Retrieve course details for moderation, prioritizing cache before falling back to the database.</td>
+    <td colspan="18">Tests for GetCourseForModerationAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -365,7 +365,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Update the course status and clear its associated cache.</td>
+    <td colspan="18">Tests for UpdateCourseStatusAndClearCacheAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -478,7 +478,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Extract plain text from HTML content for various fields within the course moderation response.</td>
+    <td colspan="18">Tests for ExtractPlainTextForModerationResponse</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -661,7 +661,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Fetch AI configuration thresholds and return them as a mapped dictionary.</td>
+    <td colspan="18">Tests for GetModerationThresholdsAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -767,7 +767,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Integrate new AI models to a course if they are not already integrated.</td>
+    <td colspan="18">Tests for AssignAIModeratorsToCourseAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -898,7 +898,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Gather all necessary data, settings, and integrations before initiating moderation.</td>
+    <td colspan="18">Tests for PrepareForCourseAIModeration</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1037,7 +1037,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Retrieve the required AI models for course moderation based on config paths or fallback.</td>
+    <td colspan="18">Tests for GetCourseModerationModelsAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1168,7 +1168,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Retrieve the paths from the system configuration.</td>
+    <td colspan="18">Tests for GetModelConfigPathsAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1252,189 +1252,6 @@
     <td class="vertical-text"></td>
   </tr>
 </table>
-<h3>Function: UpdateCourseAIIntegrationsAsync</h3>
-<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">UpdateCourseAIIntegrationsAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">UpdateCourseAIIntegrationsAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">AnHK</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">AnHK</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">28</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Update the existing AI integrations or assign new ones for the course.</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">4</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">4</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">7</td>
-  </tr>
-</table><br/>
-<table>
-  <tr>
-    <th class="empty-th"></th>
-    <th class="empty-th"></th>
-    <th class="empty-th"></th>
-    <th class="empty-th"></th>
-    <th class="utc-header">UTCID01</th>
-    <th class="utc-header">UTCID02</th>
-    <th class="utc-header">UTCID03</th>
-    <th class="utc-header">UTCID04</th>
-  </tr>
-  <tr>
-    <td class="col-category">Condition</td>
-    <td class="subcat-detail subcat-left">Precondition</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Integrations are null</td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Integrations are empty</td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Integrations exist and match</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Integrations exist but don't match</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-  </tr>
-  <tr>
-    <td class="col-category">Confirm</td>
-    <td class="subcat-detail subcat-left">Return</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Calls AssignAIModeratorsToCourseAsync</td>
-    <td class="o-mark">O</td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Updates model and saves changes</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Does not update unmatching models</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-  </tr>
-  <tr>
-    <td class="col-category">Result</td>
-    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell">N</td>
-    <td class="normal-cell">N</td>
-    <td class="normal-cell">N</td>
-    <td class="normal-cell">N</td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left">Passed/Failed</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell">P</td>
-    <td class="normal-cell">P</td>
-    <td class="normal-cell">P</td>
-    <td class="normal-cell">P</td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left">Executed Date</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="vertical-text">17/07/2026</td>
-    <td class="vertical-text">17/07/2026</td>
-    <td class="vertical-text">17/07/2026</td>
-    <td class="vertical-text">17/07/2026</td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left">Defect ID</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="vertical-text"></td>
-    <td class="vertical-text"></td>
-    <td class="vertical-text"></td>
-    <td class="vertical-text"></td>
-  </tr>
-</table>
 <h3>Function: SaveCourseAiIntegrationChangesAsync</h3>
 <table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -1457,7 +1274,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Save changes to AI integrations and wrap exceptions safely.</td>
+    <td colspan="18">Tests for SaveCourseAiIntegrationChangesAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1574,157 +1391,6 @@
     <td class="vertical-text">DFID001</td>
   </tr>
 </table>
-<h3>Function: GetCourseMaterialIdsAsync</h3>
-<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">GetCourseMaterialIdsAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">GetCourseMaterialIdsAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">AnHK</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">AnHK</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">7</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Gather all material IDs connected to a specific course.</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">3</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">4</td>
-  </tr>
-</table><br/>
-<table>
-  <tr>
-    <th class="empty-th"></th>
-    <th class="empty-th"></th>
-    <th class="empty-th"></th>
-    <th class="empty-th"></th>
-    <th class="utc-header">UTCID01</th>
-    <th class="utc-header">UTCID02</th>
-    <th class="utc-header">UTCID03</th>
-  </tr>
-  <tr>
-    <td class="col-category">Condition</td>
-    <td class="subcat-detail subcat-left">Precondition</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Course is null</td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Lessons are null</td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Valid lessons with materials</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-  </tr>
-  <tr>
-    <td class="col-category">Confirm</td>
-    <td class="subcat-detail subcat-left">Return</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Returns empty list</td>
-    <td class="o-mark">O</td>
-    <td class="o-mark">O</td>
-    <td class="normal-cell"></td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left"></td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;">Returns list of material IDs</td>
-    <td class="normal-cell"></td>
-    <td class="normal-cell"></td>
-    <td class="o-mark">O</td>
-  </tr>
-  <tr>
-    <td class="col-category">Result</td>
-    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell">A</td>
-    <td class="normal-cell">A</td>
-    <td class="normal-cell">N</td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left">Passed/Failed</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="normal-cell">P</td>
-    <td class="normal-cell">P</td>
-    <td class="normal-cell">P</td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left">Executed Date</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="vertical-text">17/07/2026</td>
-    <td class="vertical-text">17/07/2026</td>
-    <td class="vertical-text">17/07/2026</td>
-  </tr>
-  <tr>
-    <td class="empty-category"></td>
-    <td class="subcat-detail subcat-left">Defect ID</td>
-    <td class="subcat-detail"></td>
-    <td class="subcat-detail detail-right" style="text-align: right;"></td>
-    <td class="vertical-text"></td>
-    <td class="vertical-text"></td>
-    <td class="vertical-text"></td>
-  </tr>
-</table>
 <h3>Function: ResolveCourseAIModerationResult</h3>
 <table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -1741,13 +1407,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">11</td>
+    <td colspan="3">27</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Conclude AI moderation by updating the course status and notifying managers based on results.</td>
+    <td colspan="18">Tests for ResolveCourseAIModerationResult</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1759,11 +1425,11 @@
   <tr>
     <td colspan="2" style="text-align: center;">1</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table><br/>
 <table>
@@ -1854,13 +1520,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">37</td>
+    <td colspan="3">0</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Convert the AI moderation result stage logs into threat levels and specific feedback strings.</td>
+    <td colspan="18">Tests for EvaluateModerationFeedback</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1872,11 +1538,11 @@
   <tr>
     <td colspan="2" style="text-align: center;">5</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">4</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">6</td>
+    <td colspan="6" style="text-align: center;">5</td>
   </tr>
 </table><br/>
 <table>
@@ -2084,13 +1750,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">49</td>
+    <td colspan="3">50</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Maintain an audit log of all AI usage during the moderation pipeline.</td>
+    <td colspan="18">Tests for LogCourseAiModeration</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -2250,7 +1916,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">The main orchestrator for the AI course moderation pipeline, running through preparation, evaluation, resolving and logging.</td>
+    <td colspan="18">Tests for HandleCourseModerationWithAIAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -2410,7 +2076,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Map the preparation result into concrete requests suitable for the semantic duplication and harmful text APIs.</td>
+    <td colspan="18">Tests for CreateModerationRequests</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -2491,6 +2157,1311 @@
     <td class="subcat-detail subcat-left">Defect ID</td>
     <td class="subcat-detail"></td>
     <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: UpdateCourseAIIntegrationsAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">UpdateCourseAIIntegrationsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">UpdateCourseAIIntegrationsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">28</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for UpdateCourseAIIntegrationsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetCourseMaterialIdsAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetCourseMaterialIdsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetCourseMaterialIdsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetCourseMaterialIdsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns list of ints</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ResolveThreatLevelAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ResolveThreatLevelAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ResolveThreatLevelAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">17</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ResolveThreatLevelAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ResolveDeduplicationResultAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ResolveDeduplicationResultAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ResolveDeduplicationResultAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">12</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ResolveDeduplicationResultAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetDeDuplicationFeedbackText</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetDeDuplicationFeedbackText</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetDeDuplicationFeedbackText</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">18</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetDeDuplicationFeedbackText</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns string</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ResolveClassificationResultAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ResolveClassificationResultAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ResolveClassificationResultAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">6</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ResolveClassificationResultAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: ProcessClassificationFieldsAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ProcessClassificationFieldsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ProcessClassificationFieldsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">29</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ProcessClassificationFieldsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">5</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">6</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetClassificationFeedbackText</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetClassificationFeedbackText</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetClassificationFeedbackText</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetClassificationFeedbackText</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns string</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetIdFromFieldName</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetIdFromFieldName</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetIdFromFieldName</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">13</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetIdFromFieldName</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns int</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: GetNotificationContent</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetNotificationContent</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetNotificationContent</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">12</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetNotificationContent</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Returns string</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: PersistAiFeedbackAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">PersistAiFeedbackAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">PersistAiFeedbackAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">17</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for PersistAiFeedbackAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
+  </tr>
+</table>
+<h3>Function: SaveAiFeedbackChangesAsync</h3>
+<table class="summary-table" border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SaveAiFeedbackChangesAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SaveAiFeedbackChangesAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">8</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SaveAiFeedbackChangesAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table><br/>
+<table>
+  <tr>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="empty-th"></th>
+    <th class="utc-header">UTCID01</th>
+    <th class="utc-header">UTCID02</th>
+  </tr>
+  <tr>
+    <td class="col-category">Condition</td>
+    <td class="subcat-detail subcat-left">Precondition</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">CourseException occurs</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Valid request</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="col-category">Confirm</td>
+    <td class="subcat-detail subcat-left">Return</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">Task Completes</td>
+    <td class="normal-cell"></td>
+    <td class="o-mark">O</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Exception</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell"></td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left"></td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;">BadRequestException</td>
+    <td class="o-mark">O</td>
+    <td class="normal-cell"></td>
+  </tr>
+  <tr>
+    <td class="col-category">Result</td>
+    <td class="subcat-detail subcat-left">Type(N : Normal, A : Abnormal, B : Boundary)</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">A</td>
+    <td class="normal-cell">N</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Passed/Failed</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="normal-cell">P</td>
+    <td class="normal-cell">P</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Executed Date</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text">10/08/2026</td>
+    <td class="vertical-text">10/08/2026</td>
+  </tr>
+  <tr>
+    <td class="empty-category"></td>
+    <td class="subcat-detail subcat-left">Defect ID</td>
+    <td class="subcat-detail"></td>
+    <td class="subcat-detail detail-right" style="text-align: right;"></td>
+    <td class="vertical-text"></td>
     <td class="vertical-text"></td>
   </tr>
 </table>

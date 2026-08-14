@@ -109,9 +109,14 @@
         }
     </style>
     @await RenderSectionAsync("Styles", required: false)
+    <script>
+        window.APP_ALLOWED_ORIGINS = '@(Context.RequestServices.GetService<Microsoft.Extensions.Configuration.IConfiguration>()?["AllowedOrigins"] ?? "")';
+    </script>
+    <script src="~/js/fetch-interceptor.js"></script>
 </head>
 
 <body class="bg-slate-50 font-body text-on-surface antialiased flex h-screen overflow-hidden">
+    @Html.AntiForgeryToken()
 
     <!-- MOBILE OVERLAY -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden md:hidden transition-opacity opacity-0 duration-300" onclick="toggleSidebar()"></div>

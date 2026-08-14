@@ -161,7 +161,7 @@ public class ReportSubmissionService : IReportSubmissionService
             throw new BadRequestException("This course is currently in draft, pending, under review, or rejected and cannot be reported.");
 
         if (course.CourseStatus.Equals(CourseStatus.Archived.ToValue(), StringComparison.OrdinalIgnoreCase) && (course.CourseFlagCount ?? 0) >= 3)
-            throw new BadRequestException("This course is permanently locked and cannot be reported.");
+            throw new BadRequestException("This course has been discontinued and cannot be reported.");
 
         if (course.InstructorId == reporterId)
             throw new BadRequestException("You cannot report your own course.");

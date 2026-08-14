@@ -29,6 +29,7 @@ namespace CourseMarketplaceFE
             {
                 var apiUrl = builder.Configuration.GetValue<string>("BackendApiUrl");
                 client.BaseAddress = new Uri(apiUrl ?? "http://localhost:5207/api/");
+                client.Timeout = TimeSpan.FromSeconds(30);
             })
       .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
       {
@@ -42,7 +43,10 @@ namespace CourseMarketplaceFE
             builder.Services.AddHttpContextAccessor();
 
             // Add services to the container.
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add(new Microsoft.AspNetCore.Mvc.AutoValidateAntiforgeryTokenAttribute());
+            });
 
             // 3. Cấu hình Authentication để [Authorize] hoạt động
             builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

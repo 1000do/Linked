@@ -138,7 +138,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         // --- PUBLIC METHODS ---
 
         [Fact]
-        public async Task StartCourseModerationAsync_ValidRequest_UpdatesStatusQueuesWorkAndReturnsTrue()
+        public async Task StartCourseModerationAsync_ValidRequest_UpdatesStatusQueuesWorkAndReturnsJobId()
         {
             //Arrange 1
             var request = new CourseModerationRequest { CourseId = 1 };
@@ -155,7 +155,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var result = await _sut.StartCourseModerationAsync(request, instructorId);
 
             //Assert
-            result.Should().BeTrue();
+            result.Should().NotBeNullOrEmpty();
             await _courseCommandServiceMock.Received(1).UpdateCourseStatusAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
             await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.CourseModerationDetail.GetKey(request.CourseId));
             
@@ -184,7 +184,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var result = await _sut.StartCourseModerationAsync(request, instructorId);
 
             //Assert
-            result.Should().BeTrue();
+            result.Should().NotBeNullOrEmpty();
             capturedDelegate.Should().NotBeNull();
             var serviceMock = Substitute.For<ICourseAiModerationService>();
             serviceMock.When(x => x.HandleCourseModerationWithAIAsync(request)).Do(x => throw new Exception("Test error"));

@@ -74,10 +74,10 @@ class StandaloneTextClassifier:
 
         # Resolve model paths
         self.spam_model_path = self._resolve_model_path(
-            spam_model_path, "SPAM_MODEL_PATH", ["ai_models/spam_1", "../ai_models/spam_1", "app/models/spam_1", "models/spam_1"]
+            spam_model_path, "SPAM_MODEL_PATH", ["ai_models/spam_1", "../ai_models/spam_1", "ki4n-4nt/spam_text_classifier", "models/spam_1"]
         )
         self.toxic_model_path = self._resolve_model_path(
-            toxic_model_path, "TOXIC_MODEL_PATH", ["ai_models/toxic_3", "../ai_models/toxic_3", "app/models/toxic_3", "models/toxic_3"]
+            toxic_model_path, "TOXIC_MODEL_PATH", ["ai_models/toxic_3", "../ai_models/toxic_3", "ki4n-4nt/toxic_text_classifier", "models/toxic_3"]
         )
 
         logger.info(f"Resolved Spam Model Path: {self.spam_model_path}")
@@ -118,17 +118,19 @@ class StandaloneTextClassifier:
     def load_models(self):
         """Load and cache spam and toxicity tokenizers and models."""
         if self.spam_model is None or self.spam_tokenizer is None:
-            logger.info(f"Loading Spam Model from: {self.spam_model_path}...")
-            self.spam_tokenizer = AutoTokenizer.from_pretrained(self.spam_model_path, local_files_only=True)
-            self.spam_model = AutoModelForSequenceClassification.from_pretrained(self.spam_model_path, local_files_only=True)
+            is_local_spam = os.path.exists(self.spam_model_path)
+            logger.info(f"Loading Spam Model from: {self.spam_model_path} (local={is_local_spam})...")
+            self.spam_tokenizer = AutoTokenizer.from_pretrained(self.spam_model_path, local_files_only=is_local_spam)
+            self.spam_model = AutoModelForSequenceClassification.from_pretrained(self.spam_model_path, local_files_only=is_local_spam)
             self.spam_model.to(self.device)
             self.spam_model.eval()
             logger.info("✓ Spam Model loaded successfully")
 
         if self.toxic_model is None or self.toxic_tokenizer is None:
-            logger.info(f"Loading Toxicity Model from: {self.toxic_model_path}...")
-            self.toxic_tokenizer = AutoTokenizer.from_pretrained(self.toxic_model_path, local_files_only=True)
-            self.toxic_model = AutoModelForSequenceClassification.from_pretrained(self.toxic_model_path, local_files_only=True)
+            is_local_toxic = os.path.exists(self.toxic_model_path)
+            logger.info(f"Loading Toxicity Model from: {self.toxic_model_path} (local={is_local_toxic})...")
+            self.toxic_tokenizer = AutoTokenizer.from_pretrained(self.toxic_model_path, local_files_only=is_local_toxic)
+            self.toxic_model = AutoModelForSequenceClassification.from_pretrained(self.toxic_model_path, local_files_only=is_local_toxic)
             self.toxic_model.to(self.device)
             self.toxic_model.eval()
             logger.info("✓ Toxicity Model loaded successfully")

@@ -90,10 +90,12 @@ namespace CourseMarketplaceBE.Application.Services
             _hubService = hubService;
         }
 
-        public async Task<bool> StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
+        public async Task<string> StartCourseModerationAsync(CourseModerationRequest request, int instructorId)
         {
             // 1. Enforce all business validation checks, lockouts, and reset rejected statuses synchronously
             await UpdateCourseStatusAndClearCacheAsync(request.CourseId, CourseStatus.Pending.ToValue(), instructorId);
+
+            string jobId = Guid.NewGuid().ToString();
 
             // 2. Queue AI moderation for background processing
             await _taskQueue.QueueBackgroundWorkItemAsync<ICourseAiModerationService>(async (moderationService, token) =>
@@ -110,7 +112,7 @@ namespace CourseMarketplaceBE.Application.Services
 
             await _hubService.SendCourseUpdateAsync();
             
-            return true;
+            return jobId;
         }
 
         private async Task<CourseModerationDetailResponse?> GetCourseForModerationAsync(int courseId)
@@ -371,7 +373,7 @@ namespace CourseMarketplaceBE.Application.Services
                 }
             }
             
-            // N-Tier architecture: save changes after all additions are made
+            // Save changes after all additions are made
             await SaveAiFeedbackChangesAsync();
 
             string notificationContent = GetNotificationContent(courseId, moderationStatus, flaggedFields, manualAuditFields);

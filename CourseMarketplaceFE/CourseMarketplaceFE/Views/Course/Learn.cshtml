@@ -59,13 +59,19 @@
         .fill-1 { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .learn-review-menu-container.menu-open { opacity: 1 !important; }
     </style>
+    <script>
+        window.APP_ALLOWED_ORIGINS = '@(Context.RequestServices.GetService<Microsoft.Extensions.Configuration.IConfiguration>()?["AllowedOrigins"] ?? "")';
+    </script>
+    <script src="~/js/fetch-interceptor.js"></script>
 </head>
 <body class="bg-[#f0fcfb] text-[#191c1b] h-screen flex flex-col overflow-hidden">
+    @Html.AntiForgeryToken()
 
     @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
     {
+        var displayStatus = (Model.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase) && Model.FlagCount >= 3) ? "DISCONTINUED" : Model.CourseStatus.ToUpper();
         <div class="w-full bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md shrink-0 z-[40]">
-            WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
+            WARNING: This course is currently in @displayStatus state.
         </div>
     }
     <!-- Header -->
@@ -945,7 +951,10 @@
         function decodeToken(token) {
             try {
                 const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4 !== 0) {
+                    base64 += '=';
+                }
                 const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));

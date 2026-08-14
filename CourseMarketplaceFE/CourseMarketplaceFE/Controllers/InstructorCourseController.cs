@@ -343,7 +343,7 @@ namespace CourseMarketplaceFE.Controllers
                         var flagCount = data.TryGetProperty("flagCount", out var fc) ? fc.GetInt32() : 0;
                         if (status?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && flagCount >= 3)
                         {
-                            TempData["Error"] = "This course is permanently locked due to severe policy violations.";
+                            TempData["Error"] = "This course has been discontinued due to severe policy violations.";
                             return RedirectToAction("Index");
                         }
 

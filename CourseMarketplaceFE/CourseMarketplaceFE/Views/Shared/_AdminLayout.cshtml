@@ -101,9 +101,14 @@
             animation: pageFadeIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
     </style>
+    <script>
+        window.APP_ALLOWED_ORIGINS = '@(Context.RequestServices.GetService<Microsoft.Extensions.Configuration.IConfiguration>()?["AllowedOrigins"] ?? "")';
+    </script>
+    <script src="~/js/fetch-interceptor.js"></script>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden antialiased selection:bg-primary/20 selection:text-primary">
+    @Html.AntiForgeryToken()
 
     <!-- SIDEBAR -->
     <aside id="adminSidebar" class="w-[260px] flex flex-col bg-white shrink-0 z-[70] fixed inset-y-0 left-0 -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 border-r border-slate-100 shadow-[2px_0_16px_rgba(0,0,0,0.02)]">
@@ -482,7 +487,10 @@
             try {
                 if (!window.ADMIN_LAYOUT_TOKEN) return parseInt("@(Context.Request.Cookies["UserId"] ?? "0")", 10) || 0;
                 const base64Url = window.ADMIN_LAYOUT_TOKEN.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                while (base64.length % 4 !== 0) {
+                    base64 += '=';
+                }
                 const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                     return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
                 }).join(''));

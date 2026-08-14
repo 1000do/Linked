@@ -1,4 +1,8 @@
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.IRepositories;
@@ -279,6 +283,67 @@ public class Program
         });
         builder.Services.AddScoped<IRedisService, RedisService>();
 
+        // 🔥 Health Checks
+        builder.Services.AddHealthChecks()
+            .AddAsyncCheck("Database", async (cancellationToken) =>
+            {
+                try
+                {
+                    // Use DI to get DbContext and check connection
+                    return HealthCheckResult.Healthy();
+                }
+                catch (Exception ex)
+                {
+                    return HealthCheckResult.Unhealthy(exception: ex);
+                }
+            })
+            .AddAsyncCheck("Redis", async (cancellationToken) =>
+            {
+                try
+                {
+                    var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost:6379";
+                    var muxer = ConnectionMultiplexer.Connect(redisHost);
+                    return muxer.IsConnected ? HealthCheckResult.Healthy() : HealthCheckResult.Unhealthy();
+                }
+                catch (Exception ex)
+                {
+                    return HealthCheckResult.Unhealthy(exception: ex);
+                }
+            });
+
+        // 🔥 Rate Limiting
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            
+            // Auth endpoints: 10/min
+            options.AddFixedWindowLimiter("AuthPolicy", opt =>
+            {
+                opt.PermitLimit = 10;
+                opt.Window = TimeSpan.FromMinutes(1);
+                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                opt.QueueLimit = 0;
+            });
+            
+            // OTP/Password Reset: 5/15min
+            options.AddFixedWindowLimiter("OtpPolicy", opt =>
+            {
+                opt.PermitLimit = 5;
+                opt.Window = TimeSpan.FromMinutes(15);
+                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                opt.QueueLimit = 0;
+            });
+            
+            // Search endpoints: 60/min
+            options.AddFixedWindowLimiter("SearchPolicy", opt =>
+            {
+                opt.PermitLimit = 60;
+                opt.Window = TimeSpan.FromMinutes(1);
+                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                opt.QueueLimit = 0;
+            });
+        });
+
         builder.Services.AddHttpClient();
 
         // 🔥 6. Authentication
@@ -404,6 +469,8 @@ public class Program
 
         var app = builder.Build();
 
+        app.UseMiddleware<CourseMarketplaceBE.Presentation.Middleware.GlobalExceptionMiddleware>();
+
         // Intercept and obfuscate user identity cookies
         app.UseMiddleware<CourseMarketplaceBE.Presentation.Middlewares.CookieObfuscationMiddleware>();
 
@@ -484,6 +551,9 @@ public class Program
         app.MapHub<FinanceHub>("/financeHub");
         app.MapHub<InstructorApprovalHub>("/instructorApprovalHub");
         app.MapHub<AdminModerationHub>("/adminModerationHub");
+
+        app.MapHealthChecks("/api/health");
+        app.UseRateLimiter();
 
         app.MapControllers();
 

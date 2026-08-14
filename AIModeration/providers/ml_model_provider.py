@@ -57,10 +57,13 @@ class MLModelProvider:
     def get_spam_model(self):
         if not self._spam_model and self.settings:
             device = torch.device(self.settings.DEVICE)
-            spam_path = os.path.abspath(self.settings.SPAM_MODEL_PATH)
-            logger.info(f"Loading spam model from {spam_path}...")
-            self._spam_tokenizer = AutoTokenizer.from_pretrained(spam_path, local_files_only=True)
-            self._spam_model = AutoModelForSequenceClassification.from_pretrained(spam_path, local_files_only=True)
+            spam_path = self.settings.SPAM_MODEL_PATH
+            is_local = os.path.exists(spam_path)
+            if is_local:
+                spam_path = os.path.abspath(spam_path)
+            logger.info(f"Loading spam model from {spam_path} (local={is_local})...")
+            self._spam_tokenizer = AutoTokenizer.from_pretrained(spam_path, local_files_only=is_local)
+            self._spam_model = AutoModelForSequenceClassification.from_pretrained(spam_path, local_files_only=is_local)
             self._spam_model.to(device)
             self._spam_model.eval()
             self._spam_path = spam_path
@@ -70,10 +73,13 @@ class MLModelProvider:
     def get_toxic_model(self):
         if not self._toxic_model and self.settings:
             device = torch.device(self.settings.DEVICE)
-            toxic_path = os.path.abspath(self.settings.TOXIC_MODEL_PATH)
-            logger.info(f"Loading toxicity model from {toxic_path}...")
-            self._toxic_tokenizer = AutoTokenizer.from_pretrained(toxic_path, local_files_only=True)
-            self._toxic_model = AutoModelForSequenceClassification.from_pretrained(toxic_path, local_files_only=True)
+            toxic_path = self.settings.TOXIC_MODEL_PATH
+            is_local = os.path.exists(toxic_path)
+            if is_local:
+                toxic_path = os.path.abspath(toxic_path)
+            logger.info(f"Loading toxicity model from {toxic_path} (local={is_local})...")
+            self._toxic_tokenizer = AutoTokenizer.from_pretrained(toxic_path, local_files_only=is_local)
+            self._toxic_model = AutoModelForSequenceClassification.from_pretrained(toxic_path, local_files_only=is_local)
             self._toxic_model.to(device)
             self._toxic_model.eval()
             self._toxic_path = toxic_path

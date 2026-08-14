@@ -441,7 +441,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             var ex = await act.Should().ThrowAsync<BadRequestException>();
-            ex.WithMessage("This course has been permanently discontinued due to policy violations and cannot be edited.");
+            ex.WithMessage("This course has been discontinued until further notice due to policy violations and cannot be edited.");
         }
 
         [Fact]
@@ -569,7 +569,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             //Assert
             var ex = await act.Should().ThrowAsync<BadRequestException>();
-            ex.WithMessage("This course has been permanently discontinued due to policy violations and its status cannot be changed.");
+            ex.WithMessage("This course has been discontinued until further notice due to policy violations and its status cannot be changed.");
         }
 
         [Fact]
@@ -1176,7 +1176,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _lockoutRepoMock.GetActiveLockoutAsync(2, "instructor").Returns((Lockout)null);
             
             Func<Task> act = async () => await _sut.DeleteCourseAsync(courseId, 2);
-            await act.Should().ThrowAsync<BadRequestException>().WithMessage("This course has been permanently discontinued due to policy violations and cannot be deleted by the instructor.");
+            await act.Should().ThrowAsync<BadRequestException>().WithMessage("This course has been discontinued until further notice due to policy violations and cannot be deleted by the instructor.");
         }
 
         [Fact]
