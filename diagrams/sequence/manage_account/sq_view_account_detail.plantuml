@@ -70,6 +70,9 @@ db-->>ctx--: Return result
 ctx-->>lockout_repo--: Return Lockout
 lockout_repo-->>sv--: Return Lockout
 
+sv->sv++: Check if Account is Staff or Admin
+sv--
+
 opt Account is Staff or Admin
     sv->report_repo++: Call GetResolvedReportsCountAsync(id)
     report_repo->ctx++: Query Reports
@@ -93,6 +96,9 @@ opt Account is Staff or Admin
     chat_repo-->>sv--: Return count
 end
 
+sv->sv++: Check if Account is Student
+sv--
+
 opt Account is Student
     sv->trans_repo++: Call GetTotalSpentAsync(id)
     trans_repo->ctx++: Query Transactions
@@ -107,6 +113,9 @@ opt Account is Student
     db-->>ctx--: Return result
     ctx-->>enroll_repo--: Return enrollments
     enroll_repo-->>sv--: Return enrollments
+    
+    sv->sv++: Check if Account is Instructor
+    sv--
     
     opt Account is Instructor
         sv->trans_repo++: Call GetInstructorTotalRevenueAsync(id)
@@ -155,6 +164,8 @@ summary_dto-->>sv--: Return AccountTransactionSummaryDto object
 sv-->>be_ctrl--: Return AccountTransactionSummaryDto object
 be_ctrl-->>fe_ctrl--: Return statusCode 200
 
+fe_ctrl->fe_ctrl++: Check response status codes
+fe_ctrl--
 
 alt Any request failed
     fe_ctrl-->>view: Return statusCode 302
@@ -169,10 +180,8 @@ else Both requests are successful
     fe_ctrl->vm_page++: Call AdminAccountDetailPageViewModel()
     vm_page-->>fe_ctrl--: Return AdminAccountDetailPageViewModel object
 
-    fe_ctrl-->>view: Return statusCode 200
-    deactivate fe_ctrl
-    view-->>act: Display Account Detail page
-    deactivate view
+    fe_ctrl-->>view--: Return statusCode 200
+    view-->>act--: Display Account Detail page
 end
 deactivate act
 @enduml

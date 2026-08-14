@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using CourseMarketplaceBE.Application.DTOs;
 using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Application.Services;
 using CourseMarketplaceBE.Domain.Constants;
@@ -25,6 +27,7 @@ public class ModerationPenaltyServiceTests
     private readonly IHubContext<NotificationHub> _hubContextMock;
     private readonly IHubClients _hubClientsMock;
     private readonly IClientProxy _clientProxyMock;
+    private readonly IRedisService _redisServiceMock;
     private readonly ModerationPenaltyService _sut;
 
     public ModerationPenaltyServiceTests()
@@ -38,6 +41,7 @@ public class ModerationPenaltyServiceTests
         _hubContextMock = Substitute.For<IHubContext<NotificationHub>>();
         _hubClientsMock = Substitute.For<IHubClients>();
         _clientProxyMock = Substitute.For<IClientProxy>();
+        _redisServiceMock = Substitute.For<IRedisService>();
         
         _hubContextMock.Clients.Returns(_hubClientsMock);
         _hubClientsMock.User(Arg.Any<string>()).Returns(_clientProxyMock);
@@ -49,7 +53,8 @@ public class ModerationPenaltyServiceTests
             _userRepoMock,
             _notificationServiceMock,
             _enrollmentRepoMock,
-            _hubContextMock
+            _hubContextMock,
+            _redisServiceMock
         );
     }
 
@@ -135,8 +140,8 @@ public class ModerationPenaltyServiceTests
         // It's verified below in that method's tests, but we also ensure notification is sent to instructor.
         await _notificationServiceMock.Received(1).SendNotificationAsync(
             2,
-            "Permanent Course Discontinuation Notice",
-            Arg.Is<string>(s => s.Contains("Strike 3") && s.Contains("archived")),
+            "Course Discontinuation Notice",
+            Arg.Is<string>(s => s.Contains("Strike 3") && s.Contains("discontinued")),
             "/Course/Details/1"
         );
     }
@@ -320,6 +325,7 @@ public class ModerationPenaltyServiceTests
         _courseRepoMock.GetInstructorCoursesAsync(instructorId).Returns(courses);
         _enrollmentRepoMock.GetEnrolledUserIdsAsync(10).Returns(studentsCourse10);
         _enrollmentRepoMock.GetEnrolledUserIdsAsync(20).Returns(studentsCourse20);
+        _notificationServiceMock.SendBulkNotificationsAsync(Arg.Any<IEnumerable<NotificationBulkDto>>()).Returns(true);
 
         // Act
         var result = await _sut.NotifyStudentsAboutInstructorSuspensionAsync(instructorId);
@@ -332,9 +338,12 @@ public class ModerationPenaltyServiceTests
         await _enrollmentRepoMock.Received(1).GetEnrolledUserIdsAsync(20);
 
         // User 101 should only be notified once despite being in both courses
-        await _notificationServiceMock.Received(1).SendNotificationAsync(100, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _notificationServiceMock.Received(1).SendNotificationAsync(101, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
-        await _notificationServiceMock.Received(1).SendNotificationAsync(102, Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<IEnumerable<NotificationBulkDto>>(dtos => 
+            dtos.Count() == 3 &&
+            dtos.Any(d => d.ReceiverId == 100 && d.LinkAction == "/Course/Details/10" && d.Title == "Instructor Temporarily Suspended") &&
+            dtos.Any(d => d.ReceiverId == 101 && d.LinkAction == "/Course/Details/10" && d.Title == "Instructor Temporarily Suspended") &&
+            dtos.Any(d => d.ReceiverId == 102 && d.LinkAction == "/Course/Details/20" && d.Title == "Instructor Temporarily Suspended")
+        ));
     }
 
     [Fact]
@@ -364,7 +373,7 @@ public class ModerationPenaltyServiceTests
         await _lockoutRepoMock.Received(1).AddAsync(Arg.Any<Lockout>());
         await _notificationServiceMock.Received(1).SendNotificationAsync(
             2,
-            "Permanent Course Discontinuation Notice",
+            "Course Discontinuation Notice",
             Arg.Any<string>(),
             "/Course/Details/1"
         );
@@ -443,7 +452,7 @@ public class ModerationPenaltyServiceTests
         await _lockoutRepoMock.DidNotReceive().AddAsync(Arg.Any<Lockout>());
         await _notificationServiceMock.Received(1).SendNotificationAsync(
             2,
-            "Permanent Course Discontinuation Notice",
+            "Course Discontinuation Notice",
             Arg.Any<string>(),
             "/Course/Details/1"
         );
@@ -576,6 +585,6 @@ public class ModerationPenaltyServiceTests
         await _instructorRepoMock.Received(1).GetByIdAsync(instructorId);
         await _courseRepoMock.Received(1).GetInstructorCoursesAsync(instructorId);
         await _enrollmentRepoMock.Received(1).GetEnrolledUserIdsAsync(10);
-        await _notificationServiceMock.DidNotReceive().SendNotificationAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _notificationServiceMock.DidNotReceive().SendBulkNotificationsAsync(Arg.Any<IEnumerable<NotificationBulkDto>>());
     }
 }

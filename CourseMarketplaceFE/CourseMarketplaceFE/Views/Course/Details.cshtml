@@ -48,8 +48,9 @@
 <!-- Status Banner -->
 @if (!Model.CourseStatus.Equals("published", StringComparison.OrdinalIgnoreCase))
 {
+    var displayStatus = (Model.CourseStatus.Equals("archived", StringComparison.OrdinalIgnoreCase) && Model.FlagCount >= 3) ? "DISCONTINUED" : Model.CourseStatus.ToUpper();
     <div class="bg-amber-500 text-amber-950 font-bold text-center py-2 shadow-md w-full sticky top-20 z-[40]">
-        WARNING: This course is currently in @Model.CourseStatus.ToUpper() state.
+        WARNING: This course is currently in @displayStatus state.
     </div>
 }
 
@@ -114,11 +115,11 @@
                     <div id="course-report-container">
                         @if (Model.IsEnrolled && !Model.IsOwner && !isManager)
                         {
-                            var isPermanentlyLocked = Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && Model.FlagCount >= 3;
+                            var isDiscontinued = Model.CourseStatus?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && Model.FlagCount >= 3;
                             var hideReportBtn = (Model.CourseStatus?.Equals("pending", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 (Model.CourseStatus?.Equals("draft", StringComparison.OrdinalIgnoreCase) == true) || 
                                                 (Model.CourseStatus?.Equals("rejected", StringComparison.OrdinalIgnoreCase) == true) || 
-                                                isPermanentlyLocked;
+                                                isDiscontinued;
                           
                             if (!hideReportBtn)
                             {
@@ -649,7 +650,10 @@
     function decodeToken(token) {
         try {
             const base64Url = token.split('.')[1];
-            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4 !== 0) {
+                base64 += '=';
+            }
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
                 return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
             }).join(''));

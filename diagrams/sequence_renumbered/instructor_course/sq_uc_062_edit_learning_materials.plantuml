@@ -1,0 +1,119 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Edit Learning Materials
+
+actor Instructor as act
+participant "CourseEditorPage" as view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "LessonController" as be_ctrl <<backend controller>>
+participant ":LessonService" as sv
+participant ":ILessonRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Edit Material and click Save
+view -> fe_ctrl++:2. POST /InstructorCourse/UpdateMaterialDetails (requestBody)
+fe_ctrl -> be_ctrl++:3. PUT /api/lessons/materials/{materialId}
+
+be_ctrl -> sv++:4. Call UpdateMaterialDetailsAsync(materialId, request, instructorId)
+
+sv -> sv++:5. Sanitize HTML Description
+sv--
+
+sv -> repo++:6. Call GetByIdAsync(materialId)
+repo -> ctx++:7. Query data from DbSet
+ctx -> db++:8. Execute query
+db -->> ctx--:9. Return query results
+ctx -->> repo--:10. Return material entity
+repo -->> sv--:11. Return material entity
+    
+sv -> sv++:12. Check condition: Material Not Found OR Lesson Not Found
+sv--
+
+alt Material Not Found OR Lesson Not Found
+    sv -->> be_ctrl:12.1. throw Exception
+    be_ctrl -->> fe_ctrl:12.1.1. Return statusCode 404
+    fe_ctrl -->> view:12.1.2. Return JSON (success=false)
+    view -->> act:12.1.3. Display not found message
+else Found
+    sv -> sv++:12.2. Validate Instructor and Course State
+    sv--
+    
+alt Validation Failed (e.g., Unauthorized)
+        sv -->> be_ctrl:12.2.1. throw Exception
+        be_ctrl -->> fe_ctrl:12.2.1.1. Return statusCode 403
+        fe_ctrl -->> view:12.2.1.2. Return JSON (success=false)
+        view -->> act:12.2.1.3. Display validation error message
+else Valid
+        sv -> sv++:12.2.2. Update material properties
+        sv--
+        
+opt Course is Published
+            sv -> sv++:12.2.2.1. Set course.CourseStatus = "draft"
+            sv--
+end
+        
+        sv -> repo++:12.2.3. Call SaveChangesAsync()
+        repo -> ctx++:12.2.4. Call SaveChangesAsync()
+        ctx -> db++:12.2.5. Save changes to database
+        
+
+        db -> db++:12.2.6. Check condition: Database Save Failure
+        db--
+
+alt Database Save Failure
+            db -->> ctx:12.2.6.1. throw DbUpdateException
+            ctx -->> repo:12.2.6.1.1. throw DbUpdateException
+            repo -->> sv:12.2.6.1.2. throw DbUpdateException
+            sv -->> be_ctrl:12.2.6.1.3. throw DbUpdateException
+            be_ctrl -->> fe_ctrl:12.2.6.1.4. Return statusCode 500
+            fe_ctrl -->> view:12.2.6.1.5. Return JSON (success=false)
+            view -->> act:12.2.6.1.6. Display server error message
+else Database Save Success
+            db -->> ctx--:12.2.6.2. Return returnCode
+            ctx -->> repo--:12.2.6.2.1. Return numberOfRowsAffected
+            repo -->> sv--:12.2.6.2.2. Return numberOfRowsAffected
+            
+            sv -> sv++:12.2.6.2.3. Call Cache Invalidation Logic
+            sv--
+            
+            sv -->> be_ctrl--:12.2.6.2.4. Return MaterialResponse object
+            be_ctrl -->> fe_ctrl--:12.2.6.2.5. Return statusCode 200
+            fe_ctrl -->> view--:12.2.6.2.6. Return JSON (success=true)
+            view -->> act--:12.2.6.2.7. Display material updated successfully
+end
+end
+end

@@ -27,3 +27,11 @@ CREATE TABLE IF NOT EXISTS material_exts (
     
     CONSTRAINT uq_material_file_hash UNIQUE (file_hash)
 );
+-- Update AI models and system configs to use HuggingFace repo IDs instead of local paths
+UPDATE ai_models 
+SET model_path = 'ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier' 
+WHERE model_name = 'harmful_text_classifier';
+
+UPDATE system_configs 
+SET config_value = 'ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier' 
+WHERE config_key IN ('course_harmful_text_classifier', 'review_harmful_text_classifier');

@@ -55,9 +55,10 @@ class BaseHandler:
                             device = torch.device(get_settings().DEVICE)
 
                             
-                            self.logger.info(f"Loading spam model from {req_spam_path}")
-                            spam_tokenizer = AutoTokenizer.from_pretrained(req_spam_path, local_files_only=True)
-                            spam_model = AutoModelForSequenceClassification.from_pretrained(req_spam_path, local_files_only=True)
+                            is_local_spam = os.path.exists(req_spam_path)
+                            self.logger.info(f"Loading spam model from {req_spam_path} (local={is_local_spam})")
+                            spam_tokenizer = AutoTokenizer.from_pretrained(req_spam_path, local_files_only=is_local_spam)
+                            spam_model = AutoModelForSequenceClassification.from_pretrained(req_spam_path, local_files_only=is_local_spam)
                             spam_model.to(device)
                             spam_model.eval()
                             provider._spam_tokenizer = spam_tokenizer
@@ -65,9 +66,10 @@ class BaseHandler:
                             provider._spam_path = req_spam_path
 
                             
-                            self.logger.info(f"Loading toxic model from {req_toxic_path}")
-                            toxic_tokenzier = AutoTokenizer.from_pretrained(req_toxic_path, local_files_only=True)
-                            toxic_model = AutoModelForSequenceClassification.from_pretrained(req_toxic_path, local_files_only=True)
+                            is_local_toxic = os.path.exists(req_toxic_path)
+                            self.logger.info(f"Loading toxic model from {req_toxic_path} (local={is_local_toxic})")
+                            toxic_tokenzier = AutoTokenizer.from_pretrained(req_toxic_path, local_files_only=is_local_toxic)
+                            toxic_model = AutoModelForSequenceClassification.from_pretrained(req_toxic_path, local_files_only=is_local_toxic)
                             toxic_model.to(device)
                             toxic_model.eval()
                             provider._toxic_tokenizer = toxic_tokenzier

@@ -102,12 +102,15 @@ else isInWishlist == false (Toggle to Add)
         
         sv->w_repo++: Call AddAsync(newItem)
         w_repo->ctx++: Add WishlistItem entity
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>w_repo--: Return result
         w_repo-->>sv--: Return result
         
         sv->w_repo++: Call SaveChangesAsync()
         w_repo->ctx++: Commit tracked changes
-        ctx->db++: Execute query
+        ctx->db++: Save changes to database
+        
         db-->>ctx--: Return result
         ctx-->>w_repo--: Return numberOfRowsAffected
         w_repo-->>sv--: Return numberOfRowsAffected

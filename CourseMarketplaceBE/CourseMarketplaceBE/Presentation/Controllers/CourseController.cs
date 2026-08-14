@@ -10,6 +10,7 @@ using CourseMarketplaceBE.Domain.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CourseMarketplaceBE.Presentation.Filters;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace CourseMarketplaceBE.Presentation.Controllers;
 
@@ -62,6 +63,7 @@ public class CourseController : ControllerBase
 
     [HttpGet("my-courses")]
     [Authorize(Roles = "instructor")]
+    [EnableRateLimiting("SearchPolicy")]
     public async Task<IActionResult> GetMyCourses(
         [FromQuery] string? search = null,
         [FromQuery] string? status = null,
@@ -243,9 +245,9 @@ public class CourseController : ControllerBase
             var instructorId = GetInstructorId();
 
             // Delegate to Application Layer Service to orchestrate the synchronous updates and background queueing
-            await _courseAiModerationService.StartCourseModerationAsync(request, instructorId);
+            var jobId = await _courseAiModerationService.StartCourseModerationAsync(request, instructorId);
 
-            return Ok(ApiResponse<object>.SuccessResponse(new { }, "Moderation has been successfully submitted and is processing in the background."));
+            return StatusCode(202, ApiResponse<object>.SuccessResponse(new { JobId = jobId }, "Moderation has been successfully submitted and is processing in the background."));
         }
         catch (KeyNotFoundException ex){
             return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));

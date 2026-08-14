@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", None)
     
     # Model paths
-    SPAM_MODEL_PATH: str = os.getenv("SPAM_MODEL_PATH", "app/models/spam_1")
-    TOXIC_MODEL_PATH: str = os.getenv("TOXIC_MODEL_PATH", "app/models/toxic_3")
+    SPAM_MODEL_PATH: str = os.getenv("SPAM_MODEL_PATH", "ki4n-4nt/spam_text_classifier")
+    TOXIC_MODEL_PATH: str = os.getenv("TOXIC_MODEL_PATH", "ki4n-4nt/toxic_text_classifier")
     CLIP_MODEL_NAME: str = os.getenv("CLIP_MODEL_NAME", "openai/clip-vit-base-patch32")
     TEXT_EMBEDDING_MODEL_NAME: str = os.getenv("TEXT_EMBEDDING_MODEL_NAME", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
     # DISTILBERT_MODEL_NAME: str = os.getenv("DISTILBERT_MODEL_NAME", "distilbert-base-uncased")

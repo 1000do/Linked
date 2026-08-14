@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     poppler-utils \
     ffmpeg \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements
@@ -22,9 +23,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 3. Copy the rest of your code LAST
 COPY AIModeration .
-
-# Create directories for models
-RUN mkdir -p /app/models
 
 # Expose port
 EXPOSE 8000

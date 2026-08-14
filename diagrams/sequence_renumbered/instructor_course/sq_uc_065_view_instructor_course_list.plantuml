@@ -1,0 +1,113 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Instructor Course List
+
+actor Instructor as act
+participant "InstructorDashboardPage" as view
+participant "LoginPage" as login_view
+participant "ErrorPage" as error_view
+participant "InstructorCourseController" as fe_ctrl <<frontend controller>>
+participant "InstructorController" as be_inst_ctrl <<backend controller>>
+participant "CourseController" as be_crs_ctrl <<backend controller>>
+participant ":InstructorService" as inst_sv
+participant ":CourseQueryService" as crs_sv
+participant ":IInstructorRepository" as inst_repo
+participant ":ICourseRepository" as crs_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. View Dashboard/Course tab
+view -> fe_ctrl++:2. GET /InstructorCourse/Index
+
+fe_ctrl -> fe_ctrl++:3. Validate actor's authentication and authorization
+fe_ctrl--
+
+alt Session Invalid
+    fe_ctrl -->> login_view:3.1. Redirect to LoginPage
+    activate login_view
+    login_view -->> act--:3.1.1. Display login form
+else Unauthorized Access
+    fe_ctrl -->> error_view:3.2. Redirect to ErrorPage
+    activate error_view
+    error_view -->> act--:3.2.1. Display error message
+else Valid actor's authentication and authorization
+    fe_ctrl -> be_inst_ctrl++:3.3. GET /api/instructor/dashboard
+    be_inst_ctrl -> inst_sv++:3.3.1. Call GetInstructorDashboardAsync(instructorId)
+    
+    inst_sv -> inst_repo++:3.3.2. Call GetDashboardDtoAsync(instructorId)
+    inst_repo -> ctx++:3.3.3. Query dashboard stats from DbSet
+    ctx -> db++:3.3.4. Execute query
+    db -->> ctx--:3.3.5. Return basic stats
+    ctx -->> inst_repo--:3.3.6. Return basic stats
+    inst_repo -->> inst_sv--:3.3.7. Return basic stats
+    
+    inst_sv -> inst_repo++:3.3.8. Call GetEnrollmentGrowthAsync(instructorId)
+    inst_repo -> ctx++:3.3.9. Query enrollment growth from DbSet
+    ctx -> db++:3.3.10. Execute query
+    db -->> ctx--:3.3.11. Return growth data
+    ctx -->> inst_repo--:3.3.12. Return growth %
+    inst_repo -->> inst_sv--:3.3.13. Return growth %
+    
+    inst_sv -> inst_repo++:3.3.14. Call GetInstructorRankingPercentageAsync(instructorId)
+    inst_repo -> ctx++:3.3.15. Query instructor ranking from DbSet
+    ctx -> db++:3.3.16. Execute query
+    db -->> ctx--:3.3.17. Return ranking data
+    ctx -->> inst_repo--:3.3.18. Return rank %
+    inst_repo -->> inst_sv--:3.3.19. Return rank %
+    
+    inst_sv -->> be_inst_ctrl--:3.3.20. Return InstructorDashboardDto
+    be_inst_ctrl -->> fe_ctrl--:3.3.21. Return statusCode 200
+    
+    fe_ctrl -> be_crs_ctrl++:3.3.22. GET /api/courses/my-courses
+    be_crs_ctrl -> crs_sv++:3.3.23. Call GetInstructorCoursesPagedAsync(instructorId, page, pageSize, search, status)
+    
+    crs_sv -> crs_repo++:3.3.24. Call GetInstructorCoursesPagedAsync(...)
+    crs_repo -> ctx++:3.3.25. Query instructor courses from DbSet
+    ctx -> db++:3.3.26. Execute query
+    db -->> ctx--:3.3.27. Return query results
+    ctx -->> crs_repo--:3.3.28. Return entities and totalCount
+    crs_repo -->> crs_sv--:3.3.29. Return (courses, totalCount)
+    
+    crs_sv -->> be_crs_ctrl--:3.3.30. Return PagedResult<CourseResponse>
+    be_crs_ctrl -->> fe_ctrl--:3.3.31. Return statusCode 200
+    
+    fe_ctrl -> fe_ctrl++:3.3.32. Map to InstructorStudioViewModel
+    fe_ctrl--
+    
+    fe_ctrl -->> view--:3.3.33. Return View(InstructorStudioViewModel)
+    view -->> act--:3.3.34. Display Dashboard & Course list
+end
+@enduml

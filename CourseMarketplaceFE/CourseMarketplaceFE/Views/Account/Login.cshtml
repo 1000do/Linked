@@ -32,7 +32,7 @@
                 <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">person</span>
                     <input asp-for="UsernameOrEmail" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                           placeholder="username or email@gmail.com" />
+                           placeholder="username or email@gmail.com" autofocus tabindex="1" />
                 </div>
                 <span asp-validation-for="UsernameOrEmail" class="text-[10px] text-red-500"></span>
             </div>
@@ -44,15 +44,15 @@
                 </div>
                 <div class="relative">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">lock</span>
-                    <input asp-for="Password" type="password" id="loginPassword" class="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" />
-                    <button type="button" onclick="togglePassword('loginPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center">
+                    <input asp-for="Password" type="password" id="loginPassword" class="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-primary/20 transition-all" placeholder="••••••••" tabindex="2" />
+                    <button type="button" tabindex="-1" onclick="togglePassword('loginPassword', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors flex items-center">
                         <span class="material-symbols-outlined text-xl">visibility</span>
                     </button>
                 </div>
                 <span asp-validation-for="Password" class="text-[10px] text-red-500"></span>
             </div>
 
-            <button class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all active:scale-[0.98]" type="submit">
+            <button tabindex="3" class="w-full py-4 bg-primary text-white font-bold rounded-xl shadow-lg hover:opacity-90 transition-all active:scale-[0.98]" type="submit">
                 Login
             </button>
         </form>
@@ -97,10 +97,15 @@
     async function handleGoogleLogin(response) {
         const idToken = response.credential;
 
+        // Extract Anti-Forgery Token from the hidden input in the form
+        const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+        const token = tokenElement ? tokenElement.value : '';
+
         const res = await fetch("/Account/GoogleLogin", {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "RequestVerificationToken": token
             },
             body: JSON.stringify({ idToken: idToken })
         });

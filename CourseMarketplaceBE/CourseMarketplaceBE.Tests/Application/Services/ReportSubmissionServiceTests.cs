@@ -135,7 +135,7 @@ public class ReportSubmissionServiceTests
         Func<Task> act = async () => await _sut.CreateCourseReportAsync(reporterId, req);
 
         //Assert
-        await act.Should().ThrowAsync<BadRequestException>().WithMessage("This course is permanently locked and cannot be reported.");
+        await act.Should().ThrowAsync<BadRequestException>().WithMessage("This course has been discontinued and cannot be reported.");
         
         await _courseRepoMock.Received(1).GetByIdAsync(req.CourseId);
     }

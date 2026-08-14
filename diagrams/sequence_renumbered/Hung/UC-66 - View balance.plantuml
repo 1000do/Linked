@@ -31,6 +31,7 @@
     }
 </style>
 
+
 hide footbox
 mainframe View Balance
 
@@ -44,10 +45,15 @@ participant "TransactionController" as be_tx_ctrl <<backend controller>>
 participant "InstructorController" as be_inst_ctrl <<backend controller>>
 participant ":ITransactionService" as tx_sv
 participant ":ITransactionRepository" as tx_repo
+participant ":TransactionListDto" as tx_dto
 participant ":IInstructorService" as inst_sv
 participant ":IInstructorRepository" as inst_repo
+participant ":InstructorPayoutDto" as po_dto
 participant ":IAdminFinanceService" as fin_sv
 participant ":IAdminFinanceRepository" as fin_repo
+participant ":InstructorCourseRevenueProjection" as cr_proj
+participant ":InstructorCourseRevenueResponse" as cr_res
+participant ":InstructorFinancePageVM" as vm
 participant ":AppDbContext" as ctx
 database Database as db
 
@@ -88,9 +94,13 @@ par Fetch Transactions
             ctx -> db ++:3.3.2.1.4. Execute query
             db -->> ctx --:3.3.2.1.5. Return database records
             ctx -->> tx_repo --:3.3.2.1.6. Return data
-            tx_repo -->> tx_sv --:3.3.2.1.7. Return TransactionListDto list
-            tx_sv -->> be_tx_ctrl --:3.3.2.1.8. Return PagedResult<TransactionListDto>
-            be_tx_ctrl -->> fe_ctrl --:3.3.2.1.9. Return statusCode 200 (JSON)
+            
+            tx_repo -> tx_dto ++:3.3.2.1.7. Call TransactionListDto()
+            tx_dto -->> tx_repo --:3.3.2.1.8. Return TransactionListDto object
+            
+            tx_repo -->> tx_sv --:3.3.2.1.9. Return list
+            tx_sv -->> be_tx_ctrl --:3.3.2.1.10. Return PagedResult<TransactionListDto>
+            be_tx_ctrl -->> fe_ctrl --:3.3.2.1.11. Return statusCode 200
             
 else Fetch Payouts
             fe_ctrl -> be_inst_ctrl ++:3.3.2.2. GET /api/instructor/payouts
@@ -100,9 +110,13 @@ else Fetch Payouts
             ctx -> db ++:3.3.2.2.4. Execute query
             db -->> ctx --:3.3.2.2.5. Return database records
             ctx -->> inst_repo --:3.3.2.2.6. Return data
-            inst_repo -->> inst_sv --:3.3.2.2.7. Return InstructorPayoutDto list
-            inst_sv -->> be_inst_ctrl --:3.3.2.2.8. Return PagedResult<InstructorPayoutDto>
-            be_inst_ctrl -->> fe_ctrl --:3.3.2.2.9. Return statusCode 200 (JSON)
+            
+            inst_repo -> po_dto ++:3.3.2.2.7. Call InstructorPayoutDto()
+            po_dto -->> inst_repo --:3.3.2.2.8. Return InstructorPayoutDto object
+            
+            inst_repo -->> inst_sv --:3.3.2.2.9. Return list
+            inst_sv -->> be_inst_ctrl --:3.3.2.2.10. Return PagedResult<InstructorPayoutDto>
+            be_inst_ctrl -->> fe_ctrl --:3.3.2.2.11. Return statusCode 200
             
 else Fetch Course Revenues
             fe_ctrl -> be_tx_ctrl ++:3.3.2.3. GET /api/transactions/instructor/course-revenues
@@ -112,22 +126,32 @@ else Fetch Course Revenues
             ctx -> db ++:3.3.2.3.4. Execute query
             db -->> ctx --:3.3.2.3.5. Return database records
             ctx -->> fin_repo --:3.3.2.3.6. Return data
-            fin_repo -->> fin_sv --:3.3.2.3.7. Return projection list
-            fin_sv -->> be_tx_ctrl --:3.3.2.3.8. Return InstructorCourseRevenueResponse list
-            be_tx_ctrl -->> fe_ctrl --:3.3.2.3.9. Return statusCode 200 (JSON)
+            
+            fin_repo -> cr_proj ++:3.3.2.3.7. Call InstructorCourseRevenueProjection()
+            cr_proj -->> fin_repo --:3.3.2.3.8. Return projection list
+            fin_repo -->> fin_sv --:3.3.2.3.9. Return projection list
+            
+            fin_sv -> cr_res ++:3.3.2.3.10. Call InstructorCourseRevenueResponse()
+            cr_res -->> fin_sv --:3.3.2.3.11. Return response list
+            
+            fin_sv -->> be_tx_ctrl --:3.3.2.3.12. Return list
+            be_tx_ctrl -->> fe_ctrl --:3.3.2.3.13. Return statusCode 200
             
 else Fetch Payout Days
             fe_ctrl -> be_inst_ctrl ++:3.3.2.4. GET /api/instructor/payout-days
             be_inst_ctrl -> fin_sv ++:3.3.2.4.1. Call GetPayoutDaysConfigAsync()
             fin_sv -->> be_inst_ctrl --:3.3.2.4.2. Return days config
-            be_inst_ctrl -->> fe_ctrl --:3.3.2.4.3. Return statusCode 200 (JSON)
+            be_inst_ctrl -->> fe_ctrl --:3.3.2.4.3. Return statusCode 200
 end
         
         fe_ctrl -> fe_ctrl ++:3.3.3. Compute Financial Metrics (Gross, Refunded, Net Earnings, Pending, Withdrawn)
         fe_ctrl --
         
-        fe_ctrl -->> view --:3.3.4. Return View(InstructorFinancePageVM)
-        view -->> act --:3.3.5. Display Balance Summary Cards
+        fe_ctrl -> vm ++:3.3.4. Call InstructorFinancePageVM()
+        vm -->> fe_ctrl --:3.3.5. Return InstructorFinancePageVM object
+        
+        fe_ctrl -->> view --:3.3.6. Return View(vm)
+        view -->> act --:3.3.7. Display Balance Summary Cards
 end
 end
 @enduml

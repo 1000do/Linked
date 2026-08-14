@@ -9,6 +9,7 @@ using CourseMarketplaceBE.Domain.IRepositories;
 using CourseMarketplaceBE.Hubs;
 using Microsoft.AspNetCore.SignalR;
 using CourseMarketplaceBE.Application.Exceptions;
+using CourseMarketplaceBE.Application.DTOs;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -21,6 +22,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
     private readonly INotificationService _notificationService;
     private readonly IEnrollmentRepository _enrollmentRepo;
     private readonly IHubContext<NotificationHub> _hubContext;
+    private readonly IRedisService _redisService;
 
     public ModerationPenaltyService(
         ICourseRepository courseRepo,
@@ -29,7 +31,8 @@ public class ModerationPenaltyService : IModerationPenaltyService
         IUserRepository userRepo,
         INotificationService notificationService,
         IEnrollmentRepository enrollmentRepo,
-        IHubContext<NotificationHub> hubContext)
+        IHubContext<NotificationHub> hubContext,
+        IRedisService redisService)
     {
         _courseRepo = courseRepo;
         _instructorRepo = instructorRepo;
@@ -38,6 +41,7 @@ public class ModerationPenaltyService : IModerationPenaltyService
         _notificationService = notificationService;
         _enrollmentRepo = enrollmentRepo;
         _hubContext = hubContext;
+        _redisService = redisService;
     }
 
     public async Task<bool> ProcessCourseStrikeAsync(int courseId, string resolutionNote)
@@ -80,14 +84,36 @@ public class ModerationPenaltyService : IModerationPenaltyService
                         LockoutLevel = "severe",
                         LockoutEnd = DateTime.Now.AddDays(30)
                     });
-                    await _lockoutRepo.SaveChangesAsync();
+                    
+                    var archivedCourseIds = new List<int>();
+                    var instructorCourses = await _courseRepo.GetInstructorCoursesAsync(instructor.InstructorId);
+                    foreach (var c in instructorCourses)
+                    {
+                        if (c.CourseId != courseId && c.CourseStatus != CourseStatus.Archived.ToValue())
+                        {
+                            c.CourseStatus = CourseStatus.Archived.ToValue();
+                            _courseRepo.Update(c);
+                            archivedCourseIds.Add(c.CourseId);
+                        }
+                    }
+
+                    await SaveChangesWithValidationAsync();
+                    
+                    // Remove cache for all archived courses after successful DB commit
+                    foreach (var archivedId in archivedCourseIds)
+                    {
+                        await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(archivedId));
+                    }
+                    // Remove the primary course cache here as well just in case
+                    await _redisService.RemoveCacheAsync(CacheKeys.CourseDetail.GetKey(courseId));
+
                     await NotifyStudentsAboutInstructorSuspensionAsync(course.InstructorId.Value);
                 }
                 
                 await _notificationService.SendNotificationAsync(
                     course.InstructorId.Value,
-                    "Permanent Course Discontinuation Notice",
-                    $"Your course '{course.Title}' has violated our policies.\nIt has been permanently discontinued and archived (Strike {currentFlags}).\nNew enrollments are disabled.\nFurthermore, your instructor rights are locked for 30 days (you cannot create, update, or delete courses, lessons, and materials).",
+                    "Course Discontinuation Notice",
+                    $"Your course '{course.Title}' has violated our policies.\nIt has been discontinued until further notice (Strike {currentFlags}).\nNew enrollments are disabled.\nFurthermore, your instructor rights are locked for 30 days (you cannot create, update, or delete courses, lessons, and materials).",
                     $"/Course/Details/{course.CourseId}"
                 );
             }
@@ -155,7 +181,8 @@ public class ModerationPenaltyService : IModerationPenaltyService
         if (courses == null || !courses.Any()) return false;
 
         var notifiedUserIds = new HashSet<int>();
-        bool sentAny = false;
+        var bulkNotifications = new List<NotificationBulkDto>();
+
         foreach (var c in courses)
         {
             var studentIds = await _enrollmentRepo.GetEnrolledUserIdsAsync(c.CourseId);
@@ -163,16 +190,34 @@ public class ModerationPenaltyService : IModerationPenaltyService
             {
                 if (notifiedUserIds.Add(sId))
                 {
-                    await _notificationService.SendNotificationAsync(
-                        sId,
-                        "Instructor Temporarily Suspended",
-                        "This instructor has been temporarily suspended for 30 days.\nDuring this period, their courses will not receive new updates and you will not be able to contact them.\nWe apologize for any inconvenience.",
-                        $"/Course/Details/{c.CourseId}"
-                    );
-                    sentAny = true;
+                    bulkNotifications.Add(new NotificationBulkDto
+                    {
+                        ReceiverId = sId,
+                        Title = "Instructor Temporarily Suspended",
+                        Content = "This instructor has been temporarily suspended for 30 days.\nDuring this period, their courses will not receive new updates and you will not be able to contact them.\nWe apologize for any inconvenience.",
+                        LinkAction = $"/Course/Details/{c.CourseId}"
+                    });
                 }
             }
         }
-        return sentAny;
+
+        if (bulkNotifications.Any())
+        {
+            return await _notificationService.SendBulkNotificationsAsync(bulkNotifications);
+        }
+
+        return false;
+    }
+
+    private async Task SaveChangesWithValidationAsync()
+    {
+        try
+        {
+            await _courseRepo.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            throw new BadRequestException("Database operation failed due to a constraint violation or data issue while saving changes.");
+        }
     }
 }

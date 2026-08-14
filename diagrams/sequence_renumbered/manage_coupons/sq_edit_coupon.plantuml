@@ -70,18 +70,20 @@ else Valid coupon update request
     
     sv->repo++:12.3.1. Update(coupon)
     repo->ctx++:12.3.2. Mark entity as modified
-    ctx-->>repo--:12.3.3. Return result
-    repo-->>sv--:12.3.4. Return result
+    ctx->db++:12.3.3. Execute query
+    db-->>ctx--:12.3.4. Return result
+    ctx-->>repo--:12.3.5. Return result
+    repo-->>sv--:12.3.6. Return result
     
-    sv->repo++:12.3.5. SaveChangesAsync()
-    repo->ctx++:12.3.6. Commit tracked changes
-    ctx->db++:12.3.7. Save changes to database
-    db-->>ctx--:12.3.8. Return result
-    ctx-->>repo--:12.3.9. Return numberOfRowsAffected
-    repo-->>sv--:12.3.10. Return success
+    sv->repo++:12.3.7. SaveChangesAsync()
+    repo->ctx++:12.3.8. Commit tracked changes
+    ctx->db++:12.3.9. Save changes to database
+    db-->>ctx--:12.3.10. Return result
+    ctx-->>repo--:12.3.11. Return numberOfRowsAffected
+    repo-->>sv--:12.3.12. Return success
     
-    sv-->>be_ctrl--:12.3.11. Return result
-    be_ctrl-->>view--:12.3.12. Return statusCode 200
-    view-->>act--:12.3.13. Display success message
+    sv-->>be_ctrl--:12.3.13. Return result
+    be_ctrl-->>view--:12.3.14. Return statusCode 200
+    view-->>act--:12.3.15. Display success message
 end
 @enduml

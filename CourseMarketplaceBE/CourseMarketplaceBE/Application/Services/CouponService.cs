@@ -178,8 +178,8 @@ public class CouponService : ICouponService
         if (value <= 0)
             throw new ArgumentException("DiscountValue must be greater than 0.");
 
-        if (type == "percentage" && value > 100)
-            throw new ArgumentException("Discount percentage cannot exceed 100%.");
+        if (type == "percentage" && value > 99)
+            throw new ArgumentException("Discount percentage cannot exceed 99%.");
 
         if (end.HasValue && end.Value.Date < DateTime.UtcNow.Date)
             throw new ArgumentException("EndDate cannot be in the past.");

@@ -58,7 +58,7 @@ public class CourseRepository : ICourseRepository
             {
                 queryable = queryable.Where(c => c.IsRemoved);
             }
-            else if (statusFilter == CourseStatus.PermanentlyLocked.ToValue())
+            else if (statusFilter == CourseStatus.Discontinued.ToValue())
             {
                 queryable = queryable.Where(c => !c.IsRemoved && c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3);
             }
@@ -362,7 +362,7 @@ public class CourseRepository : ICourseRepository
         var statusFilter = string.IsNullOrEmpty(filter.Status) ? "all" : filter.Status;
         if (statusFilter != "all")
         {
-            if (statusFilter == CourseStatus.PermanentlyLocked.ToValue())
+            if (statusFilter == CourseStatus.Discontinued.ToValue())
             {
                 query = query.Where(c => c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3);
             }
@@ -460,7 +460,7 @@ public class CourseRepository : ICourseRepository
                 CategoryName = c.Category?.CategoriesName,
                 Price = c.Price,
                 CreatedAt = c.UpdatedAt,
-                CourseStatus = (c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3) ? CourseStatus.PermanentlyLocked.ToValue() : c.CourseStatus,
+                CourseStatus = (c.CourseStatus == CourseStatus.Archived.ToValue() && c.CourseFlagCount >= 3) ? CourseStatus.Discontinued.ToValue() : c.CourseStatus,
                 CourseThumbnailUrl = c.CourseThumbnailUrl,
                 FlagCount = c.CourseFlagCount ?? 0,
                 IsRemoved = c.IsRemoved,

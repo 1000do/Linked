@@ -198,8 +198,8 @@ namespace CourseMarketplaceBE.Application.Services
                 }
                 else
                 {
-                    subject = "Permanent Course Discontinuation Notice (3rd Time)";
-                    message = $"Your course '{course.Title}' has violated policies for the 3rd time. The platform has decided to permanently discontinue this course. You will not be able to edit the content or accept new students, but existing students can still access their purchased content.";
+                    subject = "Course Discontinuation Notice (3rd Time)";
+                    message = $"Your course '{course.Title}' has violated policies for the 3rd time. The platform has decided to discontinue this course until further notice. You will not be able to edit the content or accept new students, but existing students can still access their purchased content.";
 
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);
@@ -528,8 +528,8 @@ namespace CourseMarketplaceBE.Application.Services
                 }
                 else
                 {
-                    subject = "Permanent Course Discontinuation Notice (3rd Time)";
-                    message = $"Your course '{course.Title}' has violated our policy for the 3rd time. Details:\n{detailedReason}\nThe system has decided to permanently discontinue this course. You will not be able to edit content or enroll new students, but existing students can still access their purchased content.";
+                    subject = "Course Discontinuation Notice (3rd Time)";
+                    message = $"Your course '{course.Title}' has violated our policy for the 3rd time. Details:\n{detailedReason}\nThe system has decided to discontinue this course until further notice. You will not be able to edit content or enroll new students, but existing students can still access their purchased content.";
 
                     course.CourseStatus = CourseStatus.Archived.ToValue();
                     _courseRepository.Update(course);

@@ -8,13 +8,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">44</td>
+    <td colspan="3">51</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -72,9 +72,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -131,9 +131,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -193,9 +193,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -215,25 +215,25 @@
     <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
-    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="2" style="text-align: center;">1</td>
     <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
     <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">3</td>
   </tr>
 </table>
 
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 |
-| :--- | :--- | :--- | :--- | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |
-|  |  | Has Enrollments |  | O |  |
-|  |  | Empty Enrollments |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |
-|  |  | Returns Enrolled Courses |  | O |  |
-|  |  | Returns Empty List |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N | N |
-|  | **Passed/Failed** |  |  | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  |  |  |
+- **Test requirement:** Verify the functionality and validation rules of GetMyEnrolledCoursesAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Returns list of EnrolledCourseResponse |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |

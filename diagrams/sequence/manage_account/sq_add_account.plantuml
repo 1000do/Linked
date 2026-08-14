@@ -69,6 +69,9 @@ else Validation passed
     u_repo-->>sv--: Return boolean
     sv-->>be_ctrl--: Return boolean
     
+    be_ctrl->be_ctrl++: Check username availability
+    be_ctrl--
+    
     alt Username already exists
         be_ctrl-->>fe_ctrl: Return statusCode 400
         fe_ctrl-->>view: Return JSON with success = false
@@ -84,10 +87,15 @@ else Validation passed
         
         sv->u_repo++: Call RegisterManagerAsync(newAccount, newManager)
         u_repo->ctx++: Add entities to DbSets
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>u_repo--: Return tracking state
         
         u_repo->ctx++: Call SaveChangesAsync()
         ctx->db++: Save changes to database
+        
+        db->db++: Execute query
+        db--
         
         alt Database save failed
             db-->>ctx: throw DbUpdateException

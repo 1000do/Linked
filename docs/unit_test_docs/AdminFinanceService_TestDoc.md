@@ -8,9 +8,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -63,9 +63,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -127,9 +127,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -182,9 +182,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -239,9 +239,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -301,9 +301,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -360,9 +360,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -419,9 +419,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -479,9 +479,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -547,9 +547,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -602,9 +602,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -647,70 +647,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 |
 |  | **Defect ID** |  |  |  |
 
-## Function: `CreateWithdrawalAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">CreateWithdrawalAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">CreateWithdrawalAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">44</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for CreateWithdrawalAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">5</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">7</td>
-  </tr>
-</table>
-
-- **Test requirement:** Verify the functionality of CreateWithdrawalAsync.
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |
-|  |  | AmountLessThanMin |  | O |  |  |  |  |
-|  |  | AmountGreaterThanAvailable |  |  | O |  |  |  |
-|  |  | ValidRequest |  |  |  | O |  |  |
-|  |  | StripeError |  |  |  |  | O |  |
-|  |  | SignalRError |  |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |
-|  |  | CreatesWithdrawal |  |  |  | O |  |  |
-|  |  | CatchesException |  |  |  |  |  | O |
-|  | **Exception** |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  | O |  |  |  |  |
-|  |  | ThrowsException |  |  | O |  |  |  |
-|  |  | ThrowsException |  |  |  |  | O |  |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | N | A | N |
-|  | **Passed/Failed** |  |  | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  | DFID001 | DFID002 |  | DFID003 |  |
-
 ## Function: `GetWithdrawalHistoryAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -721,9 +657,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -780,9 +716,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -862,9 +798,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -923,90 +859,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  |  |  |  |  |  |  |  |
 
-## Function: `RequestRefundAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">RequestRefundAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">RequestRefundAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">99</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for RequestRefundAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">15</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">7</td>
-    <td colspan="1" style="text-align: center;">8</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">16</td>
-  </tr>
-</table>
-
-- **Test requirement:** Verify the functionality of RequestRefundAsync.
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 | UTCID08 | UTCID09 | UTCID10 | UTCID11 | UTCID12 | UTCID13 | UTCID14 | UTCID15 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | NotSucceeded |  | O |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ValidRequest |  |  | O |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ValidRequest |  |  |  | O |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | TransactionNotFound |  |  |  |  | O |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | WrongStudent |  |  |  |  |  | O |  |  |  |  |  |  |  |  |  |  |
-|  |  | PendingRefund |  |  |  |  |  |  | O |  |  |  |  |  |  |  |  |  |
-|  |  | AlreadyRefunded |  |  |  |  |  |  |  | O |  |  |  |  |  |  |  |  |
-|  |  | Exceeds14Days |  |  |  |  |  |  |  |  | O |  |  |  |  |  |  |  |
-|  |  | GiftClaimed |  |  |  |  |  |  |  |  |  | O |  |  |  |  |  |  |
-|  |  | NoCourseId |  |  |  |  |  |  |  |  |  |  | O |  |  |  |  |  |
-|  |  | AutoReject |  |  |  |  |  |  |  |  |  |  |  | O |  |  |  |  |
-|  |  | AutoReject |  |  |  |  |  |  |  |  |  |  |  |  | O |  |  |  |
-|  |  | AutoReject |  |  |  |  |  |  |  |  |  |  |  |  |  | O |  |  |
-|  |  | AutoReject |  |  |  |  |  |  |  |  |  |  |  |  |  |  | O |  |
-|  |  | ValidRequest |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | AutoRejected |  |  | O |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | PendingApproval |  |  |  | O |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | TooManyRefunds |  |  |  |  |  |  |  |  |  |  |  | O |  |  |  |  |
-|  |  | PastRefunded |  |  |  |  |  |  |  |  |  |  |  |  | O |  |  |  |
-|  |  | ShortCourseExceedsProgress |  |  |  |  |  |  |  |  |  |  |  |  |  | O |  |  |
-|  |  | LongCourseExceedsWatchTime |  |  |  |  |  |  |  |  |  |  |  |  |  |  | O |  |
-|  |  | WithExistingExt |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | O |
-|  | **Exception** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  | O |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  | O |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  |  | O |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  |  |  | O |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  |  |  |  | O |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  |  |  |  |  | O |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  |  |  |  |  |  | O |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  |  |  |  |  |  |  |  | O |  |  |  |  |  |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | N | N | A | A | A | A | A | A | A | N | N | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P | P | P | P | P | P | P | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  | DFID001 |  |  | DFID002 | DFID003 | DFID004 | DFID005 | DFID006 | DFID007 | DFID008 |  |  |  |  |  |
-
 ## Function: `GetPendingRefundRequestsAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -1017,9 +869,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -1062,78 +914,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 |
 |  | **Defect ID** |  |  |  |
 
-## Function: `ApproveRefundAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">ApproveRefundAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">ApproveRefundAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">66</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for ApproveRefundAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">9</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">6</td>
-    <td colspan="1" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">10</td>
-  </tr>
-</table>
-
-- **Test requirement:** Verify the functionality of ApproveRefundAsync.
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 | UTCID08 | UTCID09 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | NotPending |  | O |  |  |  |  |  |  |  |  |
-|  |  | Valid |  |  | O |  |  |  |  |  |  |  |
-|  |  | TransactionNotFound |  |  |  | O |  |  |  |  |  |  |
-|  |  | GiftClaimed |  |  |  |  | O |  |  |  |  |  |
-|  |  | GiftClaimed |  |  |  |  |  | O |  |  |  |  |
-|  |  | Valid |  |  |  |  |  |  | O |  |  |  |
-|  |  | GiftClaimed |  |  |  |  |  |  |  | O |  |  |
-|  |  | Valid |  |  |  |  |  |  |  |  | O |  |
-|  |  | GiftClaimed |  |  |  |  |  |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ApprovesAndRefunds |  |  | O |  |  |  |  |  |  |  |
-|  |  | WithExistingExt |  |  |  |  |  | O |  |  |  |  |
-|  |  | WithExistingExtAndFailingNoti |  |  |  |  |  |  | O |  |  |  |
-|  |  | NoExt_CreatesExtAndRejects |  |  |  |  |  |  |  | O |  |  |
-|  |  | NoExistingExt_CreatesNewExt |  |  |  |  |  |  |  |  | O |  |
-|  |  | WithSignalRError_Catches |  |  |  |  |  |  |  |  |  | O |
-|  | **Exception** |  |  |  |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  | O |  |  |  |  |  |  |  |  |
-|  |  | ThrowsException |  |  |  | O |  |  |  |  |  |  |
-|  |  | RejectsAndThrowsException |  |  |  |  | O |  |  |  |  |  |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | N | A | A | N | N | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  | DFID001 |  | DFID002 | DFID003 |  |  |  |  |  |
-
 ## Function: `RejectRefundAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -1144,9 +924,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -1206,9 +986,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -1261,9 +1041,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">HungPH</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">HungPH</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -1308,3 +1088,202 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  |
 
+
+
+## Function: `CreateWithdrawalAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">CreateWithdrawalAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">CreateWithdrawalAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">44</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for CreateWithdrawalAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of CreateWithdrawalAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |
+|  |  | Amount < 0.50 |  | O |  |  |  |
+|  |  | Amount > Available balance |  |  | O |  |  |
+|  |  | Stripe create withdrawal fails |  |  |  | O |  |
+|  |  | Valid withdrawal amount |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |
+|  |  | Returns WithdrawResponse |  |  |  |  | O |
+|  | **Exception** |  |  |  |  |  |  |
+|  |  | InvalidOperationException: withdrawal amount must be at least $0.50 |  | O |  |  |  |
+|  |  | InvalidOperationException: Insufficient balance |  |  | O |  |  |
+|  |  | InvalidOperationException: Stripe Payout error |  |  |  | O |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | N |
+|  | **Passed/Failed** |  |  | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  | DFID001 | DFID002 | DFID003 |  |
+
+## Function: `RequestRefundAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">RequestRefundAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">RequestRefundAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">99</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for RequestRefundAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">10</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">2</td>
+    <td colspan="1" style="text-align: center;">8</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">10</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of RequestRefundAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 | UTCID08 | UTCID09 | UTCID10 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  | Transaction not found |  | O |  |  |  |  |  |  |  |  |  |
+|  |  | AccountFrom != studentId |  |  | O |  |  |  |  |  |  |  |  |
+|  |  | Transaction status is RefundPending |  |  |  | O |  |  |  |  |  |  |  |
+|  |  | Transaction status is Refunded |  |  |  |  | O |  |  |  |  |  |  |
+|  |  | Transaction status is not Succeeded |  |  |  |  |  | O |  |  |  |  |  |
+|  |  | Past 14-day refund period |  |  |  |  |  |  | O |  |  |  |  |
+|  |  | Gift has already been claimed |  |  |  |  |  |  |  | O |  |  |  |
+|  |  | Course not found for transaction |  |  |  |  |  |  |  |  | O |  |  |
+|  |  | Auto-reject conditions met |  |  |  |  |  |  |  |  |  | O |  |
+|  |  | Valid refund request |  |  |  |  |  |  |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  | Returns IsAutoRejected = true |  |  |  |  |  |  |  |  |  | O |  |
+|  |  | Returns IsAutoRejected = false |  |  |  |  |  |  |  |  |  |  | O |
+|  | **Exception** |  |  |  |  |  |  |  |  |  |  |  |  |
+|  |  | InvalidOperationException: Transaction not found |  | O |  |  |  |  |  |  |  |  |  |
+|  |  | InvalidOperationException: You do not own this transaction |  |  | O |  |  |  |  |  |  |  |  |
+|  |  | InvalidOperationException: pending refund approval |  |  |  | O |  |  |  |  |  |  |  |
+|  |  | InvalidOperationException: already been refunded |  |  |  |  | O |  |  |  |  |  |  |
+|  |  | InvalidOperationException: only allowed for successful transactions |  |  |  |  |  | O |  |  |  |  |  |
+|  |  | InvalidOperationException: exceeded the 14-day refund period |  |  |  |  |  |  | O |  |  |  |  |
+|  |  | InvalidOperationException: gift has already been claimed |  |  |  |  |  |  |  | O |  |  |  |
+|  |  | InvalidOperationException: Course not found |  |  |  |  |  |  |  |  | O |  |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | A | A | A | A | A | N | N |
+|  | **Passed/Failed** |  |  | P | P | P | P | P | P | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  | DFID001 | DFID002 | DFID003 | DFID004 | DFID005 | DFID006 | DFID007 | DFID008 |  |  |
+
+## Function: `ApproveRefundAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ApproveRefundAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ApproveRefundAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">66</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ApproveRefundAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of ApproveRefundAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |
+|  |  | Transaction not found |  | O |  |  |  |
+|  |  | Transaction status is not RefundPending |  |  | O |  |  |
+|  |  | Gift has already been claimed |  |  |  | O |  |
+|  |  | Valid approval request |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |
+|  |  | Refund Transaction successful |  |  |  |  | O |
+|  | **Exception** |  |  |  |  |  |  |
+|  |  | InvalidOperationException: Transaction not found |  | O |  |  |  |
+|  |  | InvalidOperationException: not in pending refund approval status |  |  | O |  |  |
+|  |  | InvalidOperationException: gift has already been claimed |  |  |  | O |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | N |
+|  | **Passed/Failed** |  |  | P | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  | DFID001 | DFID002 | DFID003 |  |

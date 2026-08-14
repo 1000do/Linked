@@ -8,9 +8,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -66,9 +66,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -128,13 +128,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">27</td>
+    <td colspan="3">10</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -186,13 +186,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">12</td>
+    <td colspan="3">20</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -238,70 +238,6 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  |  |  |  |  |
 
-## Function: `SubmitAttemptAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">SubmitAttemptAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">SubmitAttemptAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">57</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Tests for SubmitAttemptAsync</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">7</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">4</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">8</td>
-  </tr>
-</table>
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 | UTCID06 | UTCID07 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |  |  |  |
-|  |  | Attempt Not Found |  | O |  |  |  |  |  |  |
-|  |  | Wrong User |  |  | O |  |  |  |  |  |
-|  |  | Already Submitted |  |  |  | O |  |  |  |  |
-|  |  | Quiz Not Found |  |  |  |  | O |  |  |  |
-|  |  | Missing/Incorrect Answers |  |  |  |  |  | O |  |  |
-|  |  | Zero Questions |  |  |  |  |  |  | O |  |
-|  |  | Valid Request |  |  |  |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |  |  |  |
-|  |  | Throws KeyNotFoundException |  | O |  |  | O |  |  |  |
-|  |  | Throws UnauthorizedAccessException |  |  | O |  |  |  |  |  |
-|  |  | Throws InvalidOperationException |  |  |  | O |  |  |  |  |
-|  |  | Calculates Score (Partial) |  |  |  |  |  | O |  |  |
-|  |  | Score Is Zero |  |  |  |  |  |  | O |  |
-|  |  | Calculates Score And Saves (Full) |  |  |  |  |  |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | A | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
-|  | **Defect ID** |  |  |  |  |  |  |  |  |  |
-
 ## Function: `GetMyQuizzesAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -312,9 +248,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -365,9 +301,9 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
@@ -424,13 +360,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">18</td>
+    <td colspan="3">17</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -483,13 +419,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">16</td>
+    <td colspan="3">8</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -542,13 +478,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">17</td>
+    <td colspan="3">11</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -602,13 +538,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">22</td>
+    <td colspan="3">10</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -662,13 +598,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">7</td>
+    <td colspan="3">4</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -715,13 +651,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">17</td>
+    <td colspan="3">16</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -770,13 +706,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">22</td>
+    <td colspan="3">19</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -827,13 +763,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">70</td>
+    <td colspan="3">93</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -878,6 +814,70 @@
 |  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
 |  | **Defect ID** |  |  |  |  |  |  |  |
 
+## Function: `SubmitAttemptAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SubmitAttemptAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SubmitAttemptAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">46</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SubmitAttemptAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">0</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">4</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of SubmitAttemptAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 | UTCID05 |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |  |  |  |
+|  |  | Attempt not found |  | O |  |  |  |  |
+|  |  | UserId != attempt.UserId |  |  | O |  |  |  |
+|  |  | Attempt already submitted |  |  |  | O |  |  |
+|  |  | Quiz not found |  |  |  |  | O |  |
+|  |  | Valid request |  |  |  |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |  |  |  |
+|  |  | Returns QuizAttemptResultResponse |  |  |  |  |  | O |
+|  | **Exception** |  |  |  |  |  |  |  |
+|  |  | KeyNotFoundException: Attempt does not exist |  | O |  |  |  |  |
+|  |  | UnauthorizedAccessException: No permission |  |  | O |  |  |  |
+|  |  | InvalidOperationException: already submitted |  |  |  | O |  |  |
+|  |  | KeyNotFoundException: Quiz does not exist |  |  |  |  | O |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | A | N |
+|  | **Passed/Failed** |  |  |  |  |  |  |  |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  |  |  |  |  |  |
+
 ## Function: `GetAttemptDetailAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -888,13 +888,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">TaiTP</td>
+    <td colspan="3">AnHK</td>
     <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">TaiTP</td>
+    <td colspan="9">AnHK</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">63</td>
+    <td colspan="3">60</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
@@ -910,28 +910,32 @@
     <th colspan="6" style="text-align: center;">Total Test Cases</th>
   </tr>
   <tr>
-    <td colspan="2" style="text-align: center;">4</td>
+    <td colspan="2" style="text-align: center;">0</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">3</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">5</td>
+    <td colspan="6" style="text-align: center;">0</td>
   </tr>
 </table>
+
+- **Test requirement:** Verify the functionality and validation rules of GetAttemptDetailAsync.
 
 | Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
 | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
 | **Condition** | **Precondition** |  |  |  |  |  |  |
-|  |  | Attempt Not Found |  | O |  |  |  |
-|  |  | Wrong User |  |  | O |  |  |
-|  |  | Quiz Not Found |  |  |  | O |  |
-|  |  | Valid |  |  |  |  | O |
+|  |  | Attempt not found |  | O |  |  |  |
+|  |  | UserId != attempt.UserId && not owner |  |  | O |  |  |
+|  |  | Quiz not found |  |  |  | O |  |
+|  |  | Valid request |  |  |  |  | O |
 | **Confirm** | **Return** |  |  |  |  |  |  |
-|  |  | Throws KeyNotFoundException |  | O |  | O |  |
-|  |  | Throws UnauthorizedAccessException |  |  | O |  |  |
-|  |  | Returns Detail |  |  |  |  | O |
+|  |  | Returns QuizAttemptDetailResponse |  |  |  |  | O |
+|  | **Exception** |  |  |  |  |  |  |
+|  |  | KeyNotFoundException: Attempt not found |  | O |  |  |  |
+|  |  | UnauthorizedAccessException: No permission |  |  | O |  |  |
+|  |  | KeyNotFoundException: Quiz not found |  |  |  | O |  |
 | **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | A | N |
-|  | **Passed/Failed** |  |  | P | P | P | P |
-|  | **Executed Date** |  |  | 19/07/2026 | 19/07/2026 | 19/07/2026 | 19/07/2026 |
+|  | **Passed/Failed** |  |  |  |  |  |  |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 | 10/08/2026 | 10/08/2026 |
 |  | **Defect ID** |  |  |  |  |  |  |

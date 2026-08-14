@@ -30,7 +30,7 @@ mainframe Login
 actor "User/Instructor/Staff/Admin" as act
 
 participant "LoginView" as view
-participant "AdminNotificationView" as admin_view
+participant "AdminDashboardView" as admin_view
 participant "HomeIndexView" as home_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
@@ -88,6 +88,8 @@ else Valid credentials
     else Account is active
         sv->u_repo++: Call UpdateLastLoginAsync(accountId)
         u_repo->ctx++: Update LastLoginDate
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>u_repo--: Return result
         
         u_repo->ctx++: Call SaveChangesAsync()
@@ -108,6 +110,8 @@ else Valid credentials
         
         sv->u_repo++: Call SaveRefreshTokenAsync(accountId, refreshToken)
         u_repo->ctx++: Update RefreshToken
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>u_repo--: Return result
         
         u_repo->ctx++: Call SaveChangesAsync()
@@ -130,10 +134,13 @@ else Valid credentials
         fe_ctrl--
         
         deactivate view
+        fe_ctrl->fe_ctrl++: Check user role
+        fe_ctrl--
+        
         alt role == admin or staff
-            fe_ctrl -->> admin_view--: Redirect to Admin Notification page
+            fe_ctrl -->> admin_view: Redirect to Admin Dashboard page
             activate admin_view
-            admin_view -->> act--: Display Admin Notification page
+            admin_view -->> act--: Display Admin Dashboard page
         else role == user or instructor
             fe_ctrl -->> home_view--: Redirect to Home Index page
             activate home_view

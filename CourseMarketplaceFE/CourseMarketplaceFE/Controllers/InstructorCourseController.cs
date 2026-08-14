@@ -368,7 +368,7 @@ namespace CourseMarketplaceFE.Controllers
 
                         if (status?.Equals("archived", StringComparison.OrdinalIgnoreCase) == true && flagCount >= 3)
                         {
-                            TempData["Error"] = "This course is permanently locked due to severe policy violations.";
+                            TempData["Error"] = "This course has been discontinued due to severe policy violations.";
                             return RedirectToAction("Index");
                         }
 

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: "Times New Roman", Times, serif; color: black; }
+h3 { font-size: 13pt; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
+h4 { font-size: 12pt; font-weight: bold; margin-top: 1.5em; margin-bottom: 0.5em; }
+.req-title { font-size: 12pt; font-weight: bold; margin-top: 1em; margin-bottom: 0.5em; }
+.label { font-size: 12pt; font-weight: bold; }
+.content { font-size: 12pt; font-weight: normal; }
+li { font-size: 12pt; font-weight: normal; margin-bottom: 0.25em; }
+ul { list-style-type: disc; margin-top: 0.5em; margin-bottom: 0.5em; }
+</style>
+</head>
+<body>
+<h2>Non-Functional Requirements (NFR) - Definition & Specifications</h2>
+<h3>5.1 EXTERNAL INTERFACE REQUIREMENTS</h3>
+<h4>5.1.1 User Interfaces</h4>
+<div class="req-title">UI-1: Responsive Design — Viewport Support</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The web application provides responsive layouts for viewport widths from 360 px to 1920 px without horizontal scrolling or loss of access to primary navigation controls.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: All primary navigation controls remain visible and functional across the entire viewport range.</span></li>
+</ul>
+<div class="req-title">UI-2: Consistent Navigation Patterns</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The application maintains consistent navigation and interaction patterns across all major pages for authenticated users.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Navigation layout, button placement, and interaction flows are identical across authenticated sections.</span></li>
+</ul>
+<div class="req-title">UI-3: Keyboard Accessibility & Focus Management</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: All keyboard-accessible interactive controls provide a visible focus state and are reachable using standard keyboard navigation.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Tab key navigates through all interactive elements; focus is always visible; keyboard-only users can complete all tasks.</span></li>
+</ul>
+<h4>5.1.2 Software Interfaces</h4>
+<div class="req-title">SI-1: RESTful API Design</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The MVC frontend communicates with the Web API using RESTful HTTP/HTTPS endpoints and standard HTTP methods (GET, POST, PUT, DELETE, PATCH).</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: All API endpoints follow REST conventions; responses return appropriate HTTP status codes (200, 201, 400, 401, 403, 404, 500, etc.).</span></li>
+</ul>
+<div class="req-title">SI-2: JSON Encoding & Character Set</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: REST API requests and responses use UTF-8 encoded JSON unless another content type is explicitly required.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: All responses include header `Content-Type: application/json; charset=utf-8`; special characters properly encoded.</span></li>
+</ul>
+<div class="req-title">SI-3: Error Response Format & Security</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: API errors return an appropriate HTTP status code and a structured error response without exposing stack traces, database errors, credentials, or internal implementation details.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Error responses use consistent format; no `.cs` filenames, SQL statements, connection strings, or exception stack traces visible to client.</span></li>
+</ul>
+<div class="req-title">SI-4: Real-Time Communication via SignalR</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Real-time communication uses ASP.NET Core SignalR.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: WebSocket connections establish successfully; bi-directional messaging works for notifications, chat, and moderation updates.</span></li>
+</ul>
+<div class="req-title">SI-5: AI Service Timeout Configuration</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The Web API communicates with the Python AI Moderation Service through defined service endpoints.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Request timeout configured; service responds within expected timeframe or fails gracefully.</span></li>
+</ul>
+<div class="req-title">SI-6: Protected Credentials Storage</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: External service credentials are stored exclusively in protected server-side configuration and never exposed to client-side code.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: No credentials in HTML source, JavaScript bundles, or frontend configuration files; all secrets in environment variables or secure vaults.</span></li>
+</ul>
+<h3>5.2 QUALITY ATTRIBUTES</h3>
+<h4>5.2.1 Performance Requirements</h4>
+<div class="req-title">PER-1: API Response Time — 95th Percentile</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: At least 95% of standard Web API requests receive an HTTP response within 500 ms under the defined normal workload (100 concurrent users, 10+ minute test).</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Median response time ≤ 500ms; 95th percentile ≤ 500ms across representative operations (course browse, search, detail, profile access, cart, dashboard).</span></li>
+</ul>
+<div class="req-title">PER-2: API Response Time — 99th Percentile</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: At least 99% of standard Web API requests receive an HTTP response within 2 seconds under normal workload.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 99th percentile latency ≤ 2000ms; no outliers exceeding 3 seconds.</span></li>
+</ul>
+<div class="req-title">PER-3: Frontend Page Load (LCP)</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: At least 95% of standard MVC page loads achieve a Largest Contentful Paint (LCP) of 2.5 seconds or less under normal workload.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: LCP metric measured via browser dev tools or performance APIs; consistent across major pages.</span></li>
+</ul>
+<div class="req-title">PER-4: SignalR Message Delivery Latency</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: At least 95% of messages transmitted through an established SignalR connection are delivered to the intended recipient within 300 ms under normal network conditions.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Message latency (publish to receipt) ≤ 300ms for 95%+ of notifications under load.</span></li>
+</ul>
+<div class="req-title">PER-5: Real-Time Notification Delivery</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: At least 95% of real-time notifications are delivered to connected clients within 300 ms of server-side dispatch.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Notification delivery latency ≤ 300ms for 95%+ of recipients; measured across 10+ concurrent connections.</span></li>
+</ul>
+<div class="req-title">PER-6: Asynchronous AI Operations</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: AI moderation operations expected to require more than 2 seconds execute asynchronously and do not block the originating HTTP request.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: AI moderation job submitted and immediately returns response; actual processing happens in background queue.</span></li>
+</ul>
+<div class="req-title">PER-7: Asynchronous Job Acknowledgement</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: An asynchronous AI submission returns an acknowledgement or job identifier within 1 second for at least 95% of requests.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Async job submission returns 201 Accepted with job ID within 1 second; 95%+ of requests meet this.</span></li>
+</ul>
+<div class="req-title">PER-8: Concurrent AI Operations Support</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Standard API performance requirements remain satisfied while up to 10 AI moderation jobs are processed concurrently.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: PER-1 and PER-2 still met when 10 AI jobs running in parallel.</span></li>
+</ul>
+<h4>5.2.2 Load and Concurrency Requirements</h4>
+<div class="req-title">LOAD-1: Concurrent Authenticated Users</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The Web API supports at least 100 concurrent authenticated users executing representative marketplace operations while satisfying performance requirements (PER-1, PER-2).</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 100 simultaneous connections; 0 connection errors; response times remain within PER-1/PER-2 thresholds.</span></li>
+</ul>
+<div class="req-title">LOAD-2: Simultaneous SignalR Connections</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The system supports at least 50 simultaneous SignalR connections while maintaining 300 ms message-delivery requirement (PER-4).</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 50 WebSocket connections established; all receive notifications within 300ms.</span></li>
+</ul>
+<div class="req-title">LOAD-3: Concurrent AI Moderation Jobs</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The system supports at least 10 concurrent AI moderation jobs without causing standard API requests to exceed performance thresholds.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 10 AI jobs running simultaneously; API still meets PER-1, PER-2.</span></li>
+</ul>
+<div class="req-title">LOAD-4: Database Connection Pool</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The database supports at least 100 concurrent application connections during normal load without connection failures.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Connection pool size ≥ 100; no "connection pool exhaustion" errors under load.</span></li>
+</ul>
+<div class="req-title">LOAD-5: Request Success Rate Under Load</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The system maintains successful request processing for at least 95% of requests during normal-load test.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: (2xx + 3xx responses) / Total requests ≥ 95%; errors are transient (4xx/5xx < 5%).</span></li>
+</ul>
+<div class="req-title">LOAD-Definition: Normal Workload Characteristics</div>
+<ul>
+<li><span class="label">Concurrent Users</span><span class="content">: 100</span></li>
+<li><span class="label">Test Duration</span><span class="content">: Minimum 10 minutes</span></li>
+<li><span class="label">Representative Operations</span><span class="content">:</span></li>
+<ul>
+<li><span class="content">Course browsing and search</span></li>
+<li><span class="content">Course detail retrieval</span></li>
+<li><span class="content">User profile access</span></li>
+<li><span class="content">Shopping cart operations</span></li>
+<li><span class="content">Dashboard access</span></li>
+<li><span class="content">Other typical read/write operations</span></li>
+</ul>
+</ul>
+<h4>5.2.3 Stress and Recovery Requirements</h4>
+<div class="req-title">STR-1: Stress Load Operation</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The system remains operational when subjected to 2x normal concurrent workload (200 concurrent users) for a minimum of 10 minutes.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Process remains running; maintains functionality; response times degrade gracefully; error rate < 5%.</span></li>
+</ul>
+<div class="req-title">STR-2: Data Integrity Under Stress</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Under 200-user stress workload, the system does not terminate unexpectedly, corrupt persistent data, or require manual process termination.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: No unrecovered exceptions; database integrity verified after stress test; no orphaned records.</span></li>
+</ul>
+<div class="req-title">STR-3: Graceful Failure Under Overload</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: When system capacity is exceeded, the application fails gracefully by returning controlled HTTP errors such as 429 Too Many Requests or 503 Service Unavailable, rather than crashing.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Overloaded endpoints return 429/503; process continues; no "500 Internal Server Error" from overload.</span></li>
+</ul>
+<div class="req-title">STR-4: Post-Stress Recovery</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Following stress test termination, the system returns to normal operating conditions within 5 minutes without database restoration or manual intervention.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: After load stops, API responds normally (< 500ms) within 5 minutes; no manual recovery needed.</span></li>
+</ul>
+<h4>5.2.4 Availability Requirements</h4>
+<div class="req-title">AVL-1: Health Check Mechanism</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The Web API exposes a health-check endpoint that identifies the availability of required dependencies (PostgreSQL, Redis, AI Moderation Service).</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: `GET /api/health` returns 200 OK with JSON showing status of each dependency; identifies failures.</span></li>
+</ul>
+<div class="req-title">AVL-2: Non-Critical Dependency Resilience</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Failure of a non-critical external dependency does not cause the Web API process to terminate.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: If Cloudinary/external service fails, API continues; graceful error returned to client; process stays alive.</span></li>
+</ul>
+<div class="req-title">AVL-3: Dependency Timeout Management</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The system returns a controlled error response within 30 seconds when an external dependency becomes unavailable and no retry/fallback succeeds.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: External service timeouts ≤ 30 seconds; client receives error message; API doesn't hang.</span></li>
+</ul>
+<div class="req-title">AVL-4: Critical Failure Logging</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The application logs all detected critical service failures within 5 seconds of detection.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Log entry created ≤ 5 seconds after failure detected; log entry includes timestamp, failure type, and context.</span></li>
+</ul>
+<h4>5.2.5 Recovery and Fault Tolerance Requirements</h4>
+<div class="req-title">REC-1: Database Backup Frequency</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: PostgreSQL is backed up at least once every 24 hours.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Automated backup runs on defined schedule; backup file created daily.</span></li>
+</ul>
+<div class="req-title">REC-2: Backup Restoration Time</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The latest valid PostgreSQL backup is restorable within 4 hours following simulated database loss.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Full database restore from backup completes in ≤ 4 hours.</span></li>
+</ul>
+<div class="req-title">REC-3: AI Moderation Failure Handling</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: If the AI Moderation Service becomes unavailable, uploaded content remains intact and enters a retry or manual-review state within 30 seconds.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Failed moderation job transitions to retry queue or manual review queue within 30 seconds.</span></li>
+</ul>
+<div class="req-title">REC-4: AI Moderation Retry Policy</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The AI Moderation Service automatically retries failed moderation jobs no more than 3 times before transferring to manual-review workflow.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Job retry count ≤ 3; after 3 failures, job status = "manual_review".</span></li>
+</ul>
+<div class="req-title">REC-5: API Recovery from Service Crash</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Recovery of the Web API from a simulated service crash completes within 5 minutes without database restoration.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: After container restart, API accessible and responsive within 5 minutes.</span></li>
+</ul>
+<div class="req-title">REC-6: Idempotent Operations</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Duplicate recovery or retry operations do not create duplicate orders, enrollments, transactions, or other critical records.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Retrying same operation twice produces identical result; only one record created.</span></li>
+</ul>
+<h4>5.2.6 Security - Authentication & Authorization</h4>
+<div class="req-title">SEC-1: Server-Side Authentication Enforcement</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The system enforces server-side authentication and authorization for all protected API endpoints.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: All protected endpoints require valid JWT token; unauthenticated requests return 401 Unauthorized.</span></li>
+</ul>
+<div class="req-title">SEC-2: Role-Based Authorization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Role-based authorization supports exactly the following authenticated application roles:</span></li>
+<ul>
+<li><span class="content">User</span></li>
+<li><span class="content">Instructor</span></li>
+<li><span class="content">Staff</span></li>
+<li><span class="content">Admin</span></li>
+</ul>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Each endpoint validates user role; only authorized roles granted access.</span></li>
+</ul>
+<div class="req-title">SEC-3: Forbidden Resource Access Response</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: An authenticated user lacking permission to access a protected resource receives 403 Forbidden and does not receive protected data.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Unauthorized role/user returns 403; no resource data leaked.</span></li>
+</ul>
+<div class="req-title">SEC-4: Unauthenticated Request Response</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Requests without valid authentication credentials receive 401 Unauthorized for protected endpoints.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Missing or invalid token returns 401; error message doesn't reveal endpoint logic.</span></li>
+</ul>
+<div class="req-title">SEC-5: Token Validation</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Expired, malformed, revoked, or cryptographically invalid authentication tokens are rejected.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Expired tokens return 401; tampered tokens rejected; revoked tokens detected.</span></li>
+</ul>
+<h4>5.2.6 Security - Material-Based Authorization</h4>
+<div class="req-title">SEC-6: Server-Side Material Authorization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Authorization checks for educational materials are enforced server-side based on the authenticated user's relationship to the associated course.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: User cannot access course material without enrollment; check performed server-side.</span></li>
+</ul>
+<div class="req-title">SEC-7: Identifier Manipulation Prevention</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: A user cannot access protected educational material solely by modifying a material ID, lesson ID, course ID, or URL.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Direct material ID requests are authorized; changing URL parameter returns 403.</span></li>
+</ul>
+<div class="req-title">SEC-8: Consistent Authorization Enforcement</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Direct requests for protected materials enforce the same authorization rules as UI-initiated requests.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: API endpoint `/api/lessons/materials/1/stream` and web UI both enforce identical authorization.</span></li>
+</ul>
+<div class="req-title">SEC-9: Information Disclosure Prevention</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Authorization failure for protected material does not reveal whether an unauthorized material ID exists.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Unauthorized user gets same error (403) for both non-existent and inaccessible materials.</span></li>
+</ul>
+<div class="req-title">SEC-10: Instructor Material Ownership</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Instructors can only modify educational materials for courses for which they have ownership or management permission.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Instructor A (course owner) can modify lessons; Instructor B cannot.</span></li>
+</ul>
+<h4>5.2.6 Security - Input Validation & Injection Protection</h4>
+<div class="req-title">SEC-11: Parameterized Queries</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: All user-controlled input used in database operations uses parameterized queries or ORM-generated parameterization.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: No string concatenation in SQL; all queries use parameterized statements or EF Core LINQ.</span></li>
+</ul>
+<div class="req-title">SEC-12: Input Validation</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: User-controlled input is validated for expected type, length, format, and permitted value ranges before processing.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Invalid inputs rejected with 400 Bad Request; validation enforced at API boundary.</span></li>
+</ul>
+<div class="req-title">SEC-13: Sensitive Data Exclusion from Responses</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The application does not return SQL statements, database connection information, stack traces, or internal exception details in production responses.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Error responses contain user-friendly messages only; no technical details exposed.</span></li>
+</ul>
+<h4>5.2.7 Security - File Upload</h4>
+<div class="req-title">FILE-1: File Type Validation — Dual Check</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Uploaded files are validated using both declared file type and server-side file-content/type detection.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: File extension and MIME type checked; malicious extensions rejected.</span></li>
+</ul>
+<div class="req-title">FILE-2: File Size Validation</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Files exceeding the configured maximum upload size are rejected before being persisted.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Oversized files rejected with 400 Bad Request; no partial files stored.</span></li>
+</ul>
+<div class="req-title">FILE-3: Filename Sanitization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Uploaded filenames are sanitized or replaced with server-generated identifiers before storage.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: User-supplied filenames not stored; system-generated IDs used.</span></li>
+</ul>
+<div class="req-title">FILE-4: Storage Directory Isolation</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The application prevents uploaded files from being written outside the designated storage directory.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Path traversal attacks fail; files isolated in storage bucket.</span></li>
+</ul>
+<div class="req-title">FILE-5: Executable File Rejection</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Executable or otherwise prohibited file types are rejected regardless of filename extension.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: `.exe`, `.bat`, `.sh`, `.dll` files rejected; extension spoofing prevented.</span></li>
+</ul>
+<div class="req-title">FILE-6: Non-Executable File Serving</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Uploaded files are not directly executable by the web server.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Files served as static assets (not interpreted); no code execution.</span></li>
+</ul>
+<div class="req-title">FILE-7: Failed Upload Cleanup</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Failed or rejected uploads do not leave partially uploaded files in permanent storage.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Aborted uploads cleaned up automatically; no orphaned files.</span></li>
+</ul>
+<div class="req-title">FILE-8: Protected File Authorization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Access to protected uploaded educational materials requires server-side authorization before file is returned or URL is generated.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Unauthorized users cannot access download URLs; file URLs expire or require re-auth.</span></li>
+</ul>
+<h4>5.2.8 Security - XSS Protection</h4>
+<div class="req-title">XSS-1: HTML Context Encoding</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: User-generated text displayed in HTML pages is contextually encoded before rendering.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: HTML special characters encoded (`<` → `&lt;`, `>` → `&gt;`); scripts appear as text.</span></li>
+</ul>
+<div class="req-title">XSS-2: Context-Aware Sanitization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: User-controlled input is not inserted into HTML, JavaScript, CSS, or URL contexts without appropriate encoding/sanitization.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Event handlers stripped; style injection prevented; URL parameters escaped.</span></li>
+</ul>
+<div class="req-title">XSS-3: Stored XSS Neutralization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: The application rejects or safely neutralizes stored XSS payloads submitted through user-controlled fields.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: `<script>alert(1)</script>` payload stored but displayed as plain text (not executed).</span></li>
+</ul>
+<div class="req-title">XSS-4: API Response Serialization</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: API responses do not contain executable HTML or JavaScript generated from untrusted input.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: JSON responses contain escaped/sanitized text; no script tags in responses.</span></li>
+</ul>
+<h4>5.2.9 Security - CSRF Protection</h4>
+<div class="req-title">CSRF-1: Cookie-Based CSRF Protection</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: State-changing requests authenticated through cookies implement CSRF protection.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: POST/PUT/DELETE requests require CSRF token; token validated server-side.</span></li>
+</ul>
+<div class="req-title">CSRF-2: Invalid Token Rejection</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Requests containing an invalid or missing CSRF token are rejected with 4xx response.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Missing token returns 400; invalid token returns 400; request not processed.</span></li>
+</ul>
+<div class="req-title">CSRF-3: Comprehensive State-Change Protection</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: CSRF protection is applied to all applicable state-changing operations including account updates, course modifications, admin actions, and all POST/PUT/PATCH/DELETE requests.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: All mutation endpoints protected; no exceptions.</span></li>
+</ul>
+<div class="req-title">CSRF-4: SameSite Cookie Policy</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Authentication cookies use an appropriate SameSite policy (Strict/Lax).</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: `Set-Cookie` headers include `SameSite=Strict` or `SameSite=Lax`.</span></li>
+</ul>
+<h4>5.2.10 Security - Rate Limiting & Abuse Protection</h4>
+<div class="req-title">RATE-1: Authentication Endpoint Rate Limiting</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Publicly accessible authentication endpoints are rate-limited to 10 requests per minute per client IP.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: After 10 requests/min from same IP, further requests return 429 Too Many Requests.</span></li>
+</ul>
+<div class="req-title">RATE-2: OTP Request Rate Limiting</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: OTP or verification-code requests are limited to 5 requests per 15 minutes per account and IP.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 6th OTP request within 15 min returns 429; counter reset after 15 min window.</span></li>
+</ul>
+<div class="req-title">RATE-3: Password Reset Rate Limiting</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Password-reset or account-recovery requests are limited to 5 requests per 15 minutes per account and IP.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 6th reset request within 15 min returns 429.</span></li>
+</ul>
+<div class="req-title">RATE-4: Public Search Rate Limiting</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Public search endpoints support a configurable rate limit of at least 60 requests per minute per client IP.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: 61st request/min from same IP returns 429.</span></li>
+</ul>
+<div class="req-title">RATE-5: Rate Limit Response Code</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: When rate limit is exceeded, API returns 429 Too Many Requests and does not process the rejected request.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Rejected requests return 429; operation not executed; state not changed.</span></li>
+</ul>
+<div class="req-title">RATE-6: Rate Limit Error Message Security</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Rate-limited endpoints do not reveal sensitive account information through error message differences or response timing.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Same error message for "account exists" and "rate limited"; no enumeration possible.</span></li>
+</ul>
+<h4>5.2.12 Security - Privacy & Data Protection</h4>
+<div class="req-title">PR-1: PII Access Control</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Access to personally identifiable information is restricted according to user role and resource authorization.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: User A cannot access User B's email, phone, or personal data.</span></li>
+</ul>
+<div class="req-title">PR-2: Minimal PII Exposure</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: API responses expose only the personal information required for the requested operation.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Profile endpoint returns: name, avatar (excludes: payment methods, login history, IP logs).</span></li>
+</ul>
+<div class="req-title">PR-3: Sensitive Data Logging Prohibition</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Passwords, authentication tokens, payment credentials, and API secrets are not included in application logs.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Log grep for passwords/tokens returns 0 results.</span></li>
+</ul>
+<div class="req-title">PR-4: PII Logging Restriction</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Personally identifiable information is not logged unless explicitly required for security, auditing, or diagnosis.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: PII logged only for audit trails (e.g., account ID in login attempt, not password).</span></li>
+</ul>
+<div class="req-title">PR-5: Encrypted Data Transmission</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Personal data transmitted between client and server uses HTTPS with TLS 1.2 or higher.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Production deployment enforces HTTPS; TLS version ≥ 1.2.</span></li>
+</ul>
+<div class="req-title">PR-6: User Profile Data Isolation</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Users cannot retrieve another user's private profile information by modifying account ID in request.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: User A tries to GET `/api/profile/[User-B-ID]` → 403 Forbidden.</span></li>
+</ul>
+<div class="req-title">PR-7: Protected Information Access Control</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Protected chat messages, reports, and personal information are only accessible to authorized users and administrative roles.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: Non-moderator cannot access pending reports; chat messages visible only to participants.</span></li>
+</ul>
+<div class="req-title">PR-8: Payment Card Non-Storage</div>
+<ul>
+<li><span class="label">Definition</span><span class="content">: Payment card information is not stored in the PostgreSQL database.</span></li>
+<li><span class="label">Acceptance Criteria</span><span class="content">: No credit card numbers, CVV, or full PAN in database; Stripe handles all card processing.</span></li>
+</ul>
+</body>
+</html>

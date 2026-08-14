@@ -18,13 +18,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">15</td>
+    <td colspan="3">16</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Enforce business validation checks, update status, and queue AI moderation for background processing.</td>
+    <td colspan="18">Tests for StartCourseModerationAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -86,7 +86,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Retrieve course details for moderation, prioritizing cache before falling back to the database.</td>
+    <td colspan="18">Tests for GetCourseForModerationAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -146,7 +146,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Update the course status and clear its associated cache.</td>
+    <td colspan="18">Tests for UpdateCourseStatusAndClearCacheAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -203,7 +203,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Extract plain text from HTML content for various fields within the course moderation response.</td>
+    <td colspan="18">Tests for ExtractPlainTextForModerationResponse</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -264,7 +264,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Fetch AI configuration thresholds and return them as a mapped dictionary.</td>
+    <td colspan="18">Tests for GetModerationThresholdsAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -320,7 +320,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Integrate new AI models to a course if they are not already integrated.</td>
+    <td colspan="18">Tests for AssignAIModeratorsToCourseAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -378,7 +378,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Gather all necessary data, settings, and integrations before initiating moderation.</td>
+    <td colspan="18">Tests for PrepareForCourseAIModeration</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -437,7 +437,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Retrieve the required AI models for course moderation based on config paths or fallback.</td>
+    <td colspan="18">Tests for GetCourseModerationModelsAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -495,7 +495,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Retrieve the paths from the system configuration.</td>
+    <td colspan="18">Tests for GetModelConfigPathsAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -529,67 +529,6 @@
 
 ---
 
-## Function: `UpdateCourseAIIntegrationsAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">UpdateCourseAIIntegrationsAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">UpdateCourseAIIntegrationsAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">AnHK</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">AnHK</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">28</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Update the existing AI integrations or assign new ones for the course.</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">4</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">3</td>
-    <td colspan="1" style="text-align: center;">4</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">7</td>
-  </tr>
-</table>
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 | UTCID04 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |  |
-|  |  | Integrations are null |  | O |  |  |  |
-|  |  | Integrations are empty |  |  | O |  |  |
-|  |  | Integrations exist and match |  |  |  | O |  |
-|  |  | Integrations exist but don't match |  |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |  |
-|  |  | Calls AssignAIModeratorsToCourseAsync |  | O | O |  |  |
-|  |  | Updates model and saves changes |  |  |  | O |  |
-|  |  | Does not update unmatching models |  |  |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N | N | N | N |
-|  | **Passed/Failed** |  |  | P | P | P | P |
-|  | **Executed Date** |  |  | 17/07/2026 | 17/07/2026 | 17/07/2026 | 17/07/2026 |
-|  | **Defect ID** |  |  |  |  |  |  |
-
-
----
-
 ## Function: `SaveCourseAiIntegrationChangesAsync`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -612,7 +551,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Save changes to AI integrations and wrap exceptions safely.</td>
+    <td colspan="18">Tests for SaveCourseAiIntegrationChangesAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -649,65 +588,6 @@
 
 ---
 
-## Function: `GetCourseMaterialIdsAsync`
-<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
-  <tr>
-    <td colspan="2"><strong>Function Code</strong></td>
-    <td colspan="3">GetCourseMaterialIdsAsync</td>
-    <td colspan="6"><strong>Function Name</strong></td>
-    <td colspan="9">GetCourseMaterialIdsAsync</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Created By</strong></td>
-    <td colspan="3">AnHK</td>
-    <td colspan="6"><strong>Executed By</strong></td>
-    <td colspan="9">AnHK</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">7</td>
-    <td colspan="6"><strong>Lack of test cases</strong></td>
-    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
-  </tr>
-  <tr>
-    <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Gather all material IDs connected to a specific course.</td>
-  </tr>
-  <tr>
-    <th colspan="2" style="text-align: center;">Passed</th>
-    <th colspan="3" style="text-align: center;">Failed</th>
-    <th colspan="6" style="text-align: center;">Untested</th>
-    <th colspan="3" style="text-align: center;">N/A/B</th>
-    <th colspan="6" style="text-align: center;">Total Test Cases</th>
-  </tr>
-  <tr>
-    <td colspan="2" style="text-align: center;">3</td>
-    <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">1</td>
-    <td colspan="1" style="text-align: center;">2</td>
-    <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">4</td>
-  </tr>
-</table>
-
-| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 | UTCID03 |
-| :--- | :--- | :--- | :--- | :---: | :---: | :---: |
-| **Condition** | **Precondition** |  |  |  |  |  |
-|  |  | Course is null |  | O |  |  |
-|  |  | Lessons are null |  |  | O |  |
-|  |  | Valid lessons with materials |  |  |  | O |
-| **Confirm** | **Return** |  |  |  |  |  |
-|  |  | Returns empty list |  | O | O |  |
-|  |  | Returns list of material IDs |  |  |  | O |
-| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | A | N |
-|  | **Passed/Failed** |  |  | P | P | P |
-|  | **Executed Date** |  |  | 17/07/2026 | 17/07/2026 | 17/07/2026 |
-|  | **Defect ID** |  |  |  |  |  |
-
-
----
-
 ## Function: `ResolveCourseAIModerationResult`
 <table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
   <tr>
@@ -724,13 +604,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">11</td>
+    <td colspan="3">27</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Conclude AI moderation by updating the course status and notifying managers based on results.</td>
+    <td colspan="18">Tests for ResolveCourseAIModerationResult</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -742,11 +622,11 @@
   <tr>
     <td colspan="2" style="text-align: center;">1</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">2</td>
   </tr>
 </table>
 
@@ -781,13 +661,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">37</td>
+    <td colspan="3">0</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Convert the AI moderation result stage logs into threat levels and specific feedback strings.</td>
+    <td colspan="18">Tests for EvaluateModerationFeedback</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -799,11 +679,11 @@
   <tr>
     <td colspan="2" style="text-align: center;">5</td>
     <td colspan="3" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">1</td>
+    <td colspan="6" style="text-align: center;">0</td>
     <td colspan="1" style="text-align: center;">4</td>
     <td colspan="1" style="text-align: center;">1</td>
     <td colspan="1" style="text-align: center;">0</td>
-    <td colspan="6" style="text-align: center;">6</td>
+    <td colspan="6" style="text-align: center;">5</td>
   </tr>
 </table>
 
@@ -845,13 +725,13 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Lines of code</strong></td>
-    <td colspan="3">49</td>
+    <td colspan="3">50</td>
     <td colspan="6"><strong>Lack of test cases</strong></td>
     <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Maintain an audit log of all AI usage during the moderation pipeline.</td>
+    <td colspan="18">Tests for LogCourseAiModeration</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -911,7 +791,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">The main orchestrator for the AI course moderation pipeline, running through preparation, evaluation, resolving and logging.</td>
+    <td colspan="18">Tests for HandleCourseModerationWithAIAsync</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -971,7 +851,7 @@
   </tr>
   <tr>
     <td colspan="2"><strong>Test requirement</strong></td>
-    <td colspan="18">Map the preparation result into concrete requests suitable for the semantic duplication and harmful text APIs.</td>
+    <td colspan="18">Tests for CreateModerationRequests</td>
   </tr>
   <tr>
     <th colspan="2" style="text-align: center;">Passed</th>
@@ -1001,3 +881,667 @@
 |  | **Passed/Failed** |  |  | P |
 |  | **Executed Date** |  |  | 17/07/2026 |
 |  | **Defect ID** |  |  |  |
+
+
+## Function: `UpdateCourseAIIntegrationsAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">UpdateCourseAIIntegrationsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">UpdateCourseAIIntegrationsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">28</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for UpdateCourseAIIntegrationsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of UpdateCourseAIIntegrationsAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Task Completes |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `GetCourseMaterialIdsAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetCourseMaterialIdsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetCourseMaterialIdsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetCourseMaterialIdsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of GetCourseMaterialIdsAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Returns list of ints |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `ResolveThreatLevelAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ResolveThreatLevelAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ResolveThreatLevelAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">17</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ResolveThreatLevelAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of ResolveThreatLevelAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Task Completes |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `ResolveDeduplicationResultAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ResolveDeduplicationResultAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ResolveDeduplicationResultAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">12</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ResolveDeduplicationResultAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of ResolveDeduplicationResultAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Task Completes |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `GetDeDuplicationFeedbackText`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetDeDuplicationFeedbackText</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetDeDuplicationFeedbackText</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">18</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetDeDuplicationFeedbackText</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">3</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">4</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of GetDeDuplicationFeedbackText.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Returns string |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `ResolveClassificationResultAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ResolveClassificationResultAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ResolveClassificationResultAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">6</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ResolveClassificationResultAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of ResolveClassificationResultAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Task Completes |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `ProcessClassificationFieldsAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">ProcessClassificationFieldsAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">ProcessClassificationFieldsAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">29</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for ProcessClassificationFieldsAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">5</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">6</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of ProcessClassificationFieldsAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Task Completes |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `GetClassificationFeedbackText`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetClassificationFeedbackText</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetClassificationFeedbackText</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">7</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetClassificationFeedbackText</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of GetClassificationFeedbackText.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Returns string |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `GetIdFromFieldName`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetIdFromFieldName</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetIdFromFieldName</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">13</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetIdFromFieldName</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of GetIdFromFieldName.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Returns int |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `GetNotificationContent`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">GetNotificationContent</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">GetNotificationContent</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">12</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for GetNotificationContent</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of GetNotificationContent.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Returns string |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `PersistAiFeedbackAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">PersistAiFeedbackAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">PersistAiFeedbackAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">17</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for PersistAiFeedbackAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">1</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">1</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of PersistAiFeedbackAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 |
+| :--- | :--- | :--- | :--- | :---: |
+| **Condition** | **Precondition** |  |  |  |
+|  |  | Valid request |  | O |
+| **Confirm** | **Return** |  |  |  |
+|  |  | Task Completes |  | O |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | N |
+|  | **Passed/Failed** |  | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 |
+|  | **Defect ID** |  |  |  |
+
+## Function: `SaveAiFeedbackChangesAsync`
+<table border="1" width="100%" style="border-collapse: collapse; text-align: left;">
+  <tr>
+    <td colspan="2"><strong>Function Code</strong></td>
+    <td colspan="3">SaveAiFeedbackChangesAsync</td>
+    <td colspan="6"><strong>Function Name</strong></td>
+    <td colspan="9">SaveAiFeedbackChangesAsync</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Created By</strong></td>
+    <td colspan="3">AnHK</td>
+    <td colspan="6"><strong>Executed By</strong></td>
+    <td colspan="9">AnHK</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Lines of code</strong></td>
+    <td colspan="3">8</td>
+    <td colspan="6"><strong>Lack of test cases</strong></td>
+    <td colspan="9">=IF(Functions!E6<>"N/A",SUM(C4*Functions!E6/1000,-O7),"N/A")</td>
+  </tr>
+  <tr>
+    <td colspan="2"><strong>Test requirement</strong></td>
+    <td colspan="18">Tests for SaveAiFeedbackChangesAsync</td>
+  </tr>
+  <tr>
+    <th colspan="2" style="text-align: center;">Passed</th>
+    <th colspan="3" style="text-align: center;">Failed</th>
+    <th colspan="6" style="text-align: center;">Untested</th>
+    <th colspan="3" style="text-align: center;">N/A/B</th>
+    <th colspan="6" style="text-align: center;">Total Test Cases</th>
+  </tr>
+  <tr>
+    <td colspan="2" style="text-align: center;">2</td>
+    <td colspan="3" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">0</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">1</td>
+    <td colspan="1" style="text-align: center;">0</td>
+    <td colspan="6" style="text-align: center;">2</td>
+  </tr>
+</table>
+
+- **Test requirement:** Verify the functionality and validation rules of SaveAiFeedbackChangesAsync.
+
+| Category | Sub-category | Detail 1 | Detail 2 | UTCID01 | UTCID02 |
+| :--- | :--- | :--- | :--- | :---: | :---: |
+| **Condition** | **Precondition** |  |  |  |  |
+|  |  | CourseException occurs |  | O |  |
+|  |  | Valid request |  |  | O |
+| **Confirm** | **Return** |  |  |  |  |
+|  |  | Task Completes |  |  | O |
+|  | **Exception** |  |  |  |  |
+|  |  | BadRequestException |  | O |  |
+| **Result** | **Type(N : Normal, A : Abnormal, B : Boundary)** |  |  | A | N |
+|  | **Passed/Failed** |  | P | P | P |
+|  | **Executed Date** |  |  | 10/08/2026 | 10/08/2026 |
+|  | **Defect ID** |  |  |  |  |
