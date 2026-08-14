@@ -40,8 +40,9 @@ database Database as db
 
 act++
 act->view++:1. Click "Logout" button
-view->fe_ctrl++:2. POST /Account/Logout
+view->fe_ctrl:2. POST /Account/Logout
 deactivate view
+activate fe_ctrl
 
 fe_ctrl->be_ctrl++:3. POST /api/auth/logout
 
@@ -52,15 +53,17 @@ opt accountId is valid
     be_ctrl->sv++:4.1. Call LogoutAsync(accountId)
     sv->u_repo++:4.1.1. Call RevokeRefreshTokenAsync(accountId)
     u_repo->ctx++:4.1.2. Set RefreshToken = null
-    ctx-->>u_repo--:4.1.3. Return result
+    ctx->db++:4.1.3. Execute query
+    db-->>ctx--:4.1.4. Return result
+    ctx-->>u_repo--:4.1.5. Return result
     
-    u_repo->ctx++:4.1.4. Call SaveChangesAsync()
-    ctx->db++:4.1.5. Save changes to database
-    db-->>ctx--:4.1.6. Return numberOfRowsAffected
-    ctx-->>u_repo--:4.1.7. Return numberOfRowsAffected
+    u_repo->ctx++:4.1.6. Call SaveChangesAsync()
+    ctx->db++:4.1.7. Save changes to database
+    db-->>ctx--:4.1.8. Return numberOfRowsAffected
+    ctx-->>u_repo--:4.1.9. Return numberOfRowsAffected
     
-    u_repo-->>sv--:4.1.8. Return numberOfRowsAffected
-    sv-->>be_ctrl--:4.1.9. Return result
+    u_repo-->>sv--:4.1.10. Return numberOfRowsAffected
+    sv-->>be_ctrl--:4.1.11. Return result
 end
 
 be_ctrl->be_ctrl++:5. Clear API cookies (AccessToken, RefreshToken)

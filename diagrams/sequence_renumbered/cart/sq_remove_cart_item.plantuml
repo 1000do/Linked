@@ -80,34 +80,40 @@ else Valid actor's authentication and authorization
             ctx-->>repo--:2.2.1.3.6. Return CartItem entity
             repo-->>sv--:2.2.1.3.7. Return CartItem entity
             
+            sv -> sv++:2.2.1.3.8. Validate cart item existence
+            sv--
+            
 alt item == null
-                sv-->>be_ctrl:2.2.1.3.7.1. throw InvalidOperationException("Course not found in the cart.")
-                be_ctrl-->>fe_ctrl:2.2.1.3.7.1.1. Return statusCode 400 (BadRequest)
-                fe_ctrl-->>view:2.2.1.3.7.1.2. Return statusCode 302 (Redirect)
-                view-->>act:2.2.1.3.7.1.3. Display error message
+                sv-->>be_ctrl:2.2.1.3.8.1. throw InvalidOperationException("Course not found in the cart.")
+                be_ctrl-->>fe_ctrl:2.2.1.3.8.1.1. Return statusCode 400 (BadRequest)
+                fe_ctrl-->>view:2.2.1.3.8.1.2. Return statusCode 302 (Redirect)
+                view-->>act:2.2.1.3.8.1.3. Display error message
 else item != null
-                sv->repo++:2.2.1.3.7.2. Call RemoveCartItem(item)
+                sv->repo++:2.2.1.3.8.2. Call RemoveCartItem(item)
                 
-                repo->ctx++:2.2.1.3.7.2.1. Call SaveChangesAsync()
-                ctx->db++:2.2.1.3.7.2.2. Save changes to database
+                repo->ctx++:2.2.1.3.8.2.1. Call SaveChangesAsync()
+                ctx->db++:2.2.1.3.8.2.2. Save changes to database
+                
+                db -> db++:2.2.1.3.8.2.3. Check database save status
+                db--
                 
 alt Database Save Failure
-                    db-->>ctx:2.2.1.3.7.2.2.1. Throw DbUpdateException
-                    ctx-->>repo:2.2.1.3.7.2.2.1.1. Throw DbUpdateException
-                    repo-->>sv:2.2.1.3.7.2.2.1.2. Throw DbUpdateException
-                    sv-->>be_ctrl:2.2.1.3.7.2.2.1.3. Throw DbUpdateException
-                    be_ctrl-->>fe_ctrl:2.2.1.3.7.2.2.1.4. Return statusCode 500 (InternalServerError)
-                    fe_ctrl-->>view:2.2.1.3.7.2.2.1.5. Return statusCode 302 (Redirect)
-                    view-->>act:2.2.1.3.7.2.2.1.6. Display database error message
+                    db-->>ctx:2.2.1.3.8.2.3.1. Throw DbUpdateException
+                    ctx-->>repo:2.2.1.3.8.2.3.1.1. Throw DbUpdateException
+                    repo-->>sv:2.2.1.3.8.2.3.1.2. Throw DbUpdateException
+                    sv-->>be_ctrl:2.2.1.3.8.2.3.1.3. Throw DbUpdateException
+                    be_ctrl-->>fe_ctrl:2.2.1.3.8.2.3.1.4. Return statusCode 500 (InternalServerError)
+                    fe_ctrl-->>view:2.2.1.3.8.2.3.1.5. Return statusCode 302 (Redirect)
+                    view-->>act:2.2.1.3.8.2.3.1.6. Display database error message
 else Database Save Success
-                    db-->>ctx--:2.2.1.3.7.2.2.2. Return result
-                    ctx-->>repo--:2.2.1.3.7.2.2.2.1. Return result
-                    repo-->>sv--:2.2.1.3.7.2.2.2.2. Return result
+                    db-->>ctx--:2.2.1.3.8.2.3.2. Return result
+                    ctx-->>repo--:2.2.1.3.8.2.3.2.1. Return result
+                    repo-->>sv--:2.2.1.3.8.2.3.2.2. Return result
                     
-                    sv-->>be_ctrl--:2.2.1.3.7.2.2.2.3. Return
-                    be_ctrl-->>fe_ctrl--:2.2.1.3.7.2.2.2.4. Return statusCode 200 (Ok)
-                    fe_ctrl-->>view--:2.2.1.3.7.2.2.2.5. Return statusCode 302 (Redirect)
-                    view-->>act--:2.2.1.3.7.2.2.2.6. Display success message
+                    sv-->>be_ctrl--:2.2.1.3.8.2.3.2.3. Return
+                    be_ctrl-->>fe_ctrl--:2.2.1.3.8.2.3.2.4. Return statusCode 200 (Ok)
+                    fe_ctrl-->>view--:2.2.1.3.8.2.3.2.5. Return statusCode 302 (Redirect)
+                    view-->>act--:2.2.1.3.8.2.3.2.6. Display success message
 end
 end
 end
