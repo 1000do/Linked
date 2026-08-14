@@ -66,6 +66,8 @@ alt Item not found
 else Item found
     sv->w_repo++: Call RemoveAsync(item)
     w_repo->ctx++: Mark entity as deleted
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
     ctx-->>w_repo--: Return result
     w_repo-->>sv--: Return result
     

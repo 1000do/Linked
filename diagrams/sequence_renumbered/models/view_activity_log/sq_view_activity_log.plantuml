@@ -1,7 +1,7 @@
 @startuml 
 <style>
     sequenceDiagram{
-        FontSize 16
+        FontSize 12
 
         arrow {
             ' Set the maximum width of the text on arrows
@@ -72,27 +72,14 @@ else Valid actor's authentication and authorization
     fe_ctrl--
     
     fe_ctrl -->> view--:3.3.4. Return View(model)
-    
+    view -> view++:3.3.5. Validate log's existence
+    view--
 alt No Logs Exist For Category
-        view -->> act:3.3.4.1. Display empty state message
+        view -->> act:3.3.5.1. Display empty state message
 else Logs Exist
-        view -->> act:3.3.4.2. Display activity log list under course moderation subtab
+        view -->> act--:3.3.5.2. Display list of activity logs
         
-opt Admin Switches Category Subtab
-            act -> view:3.3.4.2.1. Click different category subtab
-            view -> view++:3.3.4.2.1.1. Toggle subtab visibility
-            view--
-            view -->> act:3.3.4.2.1.2. Display activity log list for selected category
-end
         
-opt Admin Navigates to Another Page
-            act -> view:3.3.4.2.2. Click pagination button
-            view -> fe_ctrl++:3.3.4.2.2.1. Send GET request to GetCourseLogsPartial
-            fe_ctrl -> fe_ctrl++:3.3.4.2.2.2. Fetch requested page of logs
-            fe_ctrl--
-            fe_ctrl -->> view--:3.3.4.2.2.3. Return PartialView
-            view -->> act--:3.3.4.2.2.4. Display requested page of logs
-end
 end
 end
 @enduml

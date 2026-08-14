@@ -30,7 +30,7 @@ mainframe Login
 actor "User/Instructor/Staff/Admin" as act
 
 participant "LoginView" as view
-participant "AdminNotificationView" as admin_view
+participant "AdminDashboardView" as admin_view
 participant "HomeIndexView" as home_view
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
@@ -88,56 +88,63 @@ alt Account is locked out
 else Account is active
         sv->u_repo++:13.2.6.2. Call UpdateLastLoginAsync(accountId)
         u_repo->ctx++:13.2.6.2.1. Update LastLoginDate
-        ctx-->>u_repo--:13.2.6.2.2. Return result
+        ctx->db++:13.2.6.2.2. Execute query
+        db-->>ctx--:13.2.6.2.3. Return result
+        ctx-->>u_repo--:13.2.6.2.4. Return result
         
-        u_repo->ctx++:13.2.6.2.3. Call SaveChangesAsync()
-        ctx->db++:13.2.6.2.4. Save changes to database
-        db-->>ctx--:13.2.6.2.5. Return numberOfRowsAffected
-        ctx-->>u_repo--:13.2.6.2.6. Return numberOfRowsAffected
-        u_repo-->>sv--:13.2.6.2.7. Return numberOfRowsAffected
+        u_repo->ctx++:13.2.6.2.5. Call SaveChangesAsync()
+        ctx->db++:13.2.6.2.6. Save changes to database
+        db-->>ctx--:13.2.6.2.7. Return numberOfRowsAffected
+        ctx-->>u_repo--:13.2.6.2.8. Return numberOfRowsAffected
+        u_repo-->>sv--:13.2.6.2.9. Return numberOfRowsAffected
         
-        sv->u_repo++:13.2.6.2.8. Call GetRoleByAccountIdAsync(accountId)
-        u_repo->ctx++:13.2.6.2.9. Query Role
-        ctx->db++:13.2.6.2.10. Execute query
-        db-->>ctx--:13.2.6.2.11. Return result
-        ctx-->>u_repo--:13.2.6.2.12. Return role
-        u_repo-->>sv--:13.2.6.2.13. Return role
+        sv->u_repo++:13.2.6.2.10. Call GetRoleByAccountIdAsync(accountId)
+        u_repo->ctx++:13.2.6.2.11. Query Role
+        ctx->db++:13.2.6.2.12. Execute query
+        db-->>ctx--:13.2.6.2.13. Return result
+        ctx-->>u_repo--:13.2.6.2.14. Return role
+        u_repo-->>sv--:13.2.6.2.15. Return role
         
-        sv->sv++:13.2.6.2.14. Generate JWT tokens
+        sv->sv++:13.2.6.2.16. Generate JWT tokens
         sv--
         
-        sv->u_repo++:13.2.6.2.15. Call SaveRefreshTokenAsync(accountId, refreshToken)
-        u_repo->ctx++:13.2.6.2.16. Update RefreshToken
-        ctx-->>u_repo--:13.2.6.2.17. Return result
+        sv->u_repo++:13.2.6.2.17. Call SaveRefreshTokenAsync(accountId, refreshToken)
+        u_repo->ctx++:13.2.6.2.18. Update RefreshToken
+        ctx->db++:13.2.6.2.19. Execute query
+        db-->>ctx--:13.2.6.2.20. Return result
+        ctx-->>u_repo--:13.2.6.2.21. Return result
         
-        u_repo->ctx++:13.2.6.2.18. Call SaveChangesAsync()
-        ctx->db++:13.2.6.2.19. Save changes to database
-        db-->>ctx--:13.2.6.2.20. Return numberOfRowsAffected
-        ctx-->>u_repo--:13.2.6.2.21. Return numberOfRowsAffected
-        u_repo-->>sv--:13.2.6.2.22. Return numberOfRowsAffected
+        u_repo->ctx++:13.2.6.2.22. Call SaveChangesAsync()
+        ctx->db++:13.2.6.2.23. Save changes to database
+        db-->>ctx--:13.2.6.2.24. Return numberOfRowsAffected
+        ctx-->>u_repo--:13.2.6.2.25. Return numberOfRowsAffected
+        u_repo-->>sv--:13.2.6.2.26. Return numberOfRowsAffected
         
-        sv->res++:13.2.6.2.23. Call LoginResponseDTO()
-        res-->>sv--:13.2.6.2.24. Return LoginResponseDTO object
+        sv->res++:13.2.6.2.27. Call LoginResponseDTO()
+        res-->>sv--:13.2.6.2.28. Return LoginResponseDTO object
         
-        sv-->>be_ctrl--:13.2.6.2.25. Return LoginResponseDTO object
+        sv-->>be_ctrl--:13.2.6.2.29. Return LoginResponseDTO object
         
-        be_ctrl->be_ctrl++:13.2.6.2.26. Append HttpOnly cookies
+        be_ctrl->be_ctrl++:13.2.6.2.30. Append HttpOnly cookies
         be_ctrl--
         
-        be_ctrl-->>fe_ctrl--:13.2.6.2.27. Return statusCode 200
+        be_ctrl-->>fe_ctrl--:13.2.6.2.31. Return statusCode 200
         
-        fe_ctrl->fe_ctrl++:13.2.6.2.28. Append HttpOnly cookies and user info cookies
+        fe_ctrl->fe_ctrl++:13.2.6.2.32. Append HttpOnly cookies and user info cookies
         fe_ctrl--
         
         deactivate view
+        fe_ctrl->fe_ctrl++:13.2.6.2.33. Check user role
+        fe_ctrl--
+        
 alt role == admin or staff
-            fe_ctrl -->> admin_view--:13.2.6.2.28.1. Redirect to Admin Notification page
+            fe_ctrl -->> admin_view:13.2.6.2.33.1. Redirect to Admin Dashboard page
             activate admin_view
-            admin_view -->> act--:13.2.6.2.28.1.1. Display Admin Notification page
+            admin_view -->> act--:13.2.6.2.33.1.1. Display Admin Dashboard page
 else role == user or instructor
-            fe_ctrl -->> home_view--:13.2.6.2.28.2. Redirect to Home Index page
+            fe_ctrl -->> home_view--:13.2.6.2.33.2. Redirect to Home Index page
             activate home_view
-            home_view -->> act--:13.2.6.2.28.2.1. Display Homepage
+            home_view -->> act--:13.2.6.2.33.2.1. Display Homepage
 end
 end
 end

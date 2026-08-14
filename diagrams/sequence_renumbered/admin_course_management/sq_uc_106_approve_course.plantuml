@@ -1,0 +1,136 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe Approve Course Submission
+
+actor Admin as act
+participant "CourseModerationPage" as view
+participant "AdminModerationController" as fe_ctrl <<frontend controller>>
+participant "AdminModerationController" as be_ctrl <<backend controller>>
+participant ":CourseModerationService" as sv
+participant ":IEmbeddingService" as embed_sv
+participant ":INotificationService" as notif_sv
+participant ":IRedisService" as redis
+participant ":ICourseRepository" as repo
+participant ":IMaterialRepository" as material_repo
+participant ":ILessonRepository" as lesson_repo
+participant ":IEnrollmentRepository" as enroll_repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Click Approve
+view -> fe_ctrl++:2. POST /AdminModeration/Approve/{id}
+fe_ctrl -> be_ctrl++:3. POST /api/admin-moderation/courses/approve/{id}
+
+be_ctrl -> sv++:4. Call ApproveCourseAsync(id, feedback)
+
+sv -> repo++:5. Call GetByIdAsync(id)
+repo -> ctx++:6. Query course from DbSet
+ctx -> db++:7. Execute query
+db -->> ctx--:8. Return query results
+ctx -->> repo--:9. Return course entity
+repo -->> sv--:10. Return course entity
+
+sv -> sv++:11. Validate course existence
+sv--
+
+alt Course Not Found
+    sv -->> be_ctrl:11.1. Return false
+    be_ctrl -->> fe_ctrl:11.1.1. Return statusCode 404
+    fe_ctrl -->> view:11.1.2. Return JSON (success=false)
+    view -->> act:11.1.3. Display course not found message
+else Course Found
+    sv -> sv++:11.2. Update course.CourseStatus = "published"
+    sv--
+    
+    sv -> material_repo++:11.2.1. Call GetByCourseIdAsync(id)
+    material_repo -> ctx++:11.2.2. Query materials from DbSet
+    ctx -> db++:11.2.3. Execute query
+    db -->> ctx--:11.2.4. Return query results
+    ctx -->> material_repo--:11.2.5. Return materials
+    material_repo -->> sv--:11.2.6. Return materials
+    
+    sv -> sv++:11.2.7. Set all active materials LearningStatus = "active"
+    sv--
+    
+    sv -> embed_sv++:11.2.8. Call PersistPendingMaterialEmbeddingsAsync(courseId)
+    embed_sv -->> sv--:11.2.9. Return
+    
+    sv -> lesson_repo++:11.2.10. Call GetByCourseIdAsync(id)
+    lesson_repo -> ctx++:11.2.11. Query lessons from DbSet
+    ctx -> db++:11.2.12. Execute query
+    db -->> ctx--:11.2.13. Return query results
+    ctx -->> lesson_repo--:11.2.14. Return lessons
+    lesson_repo -->> sv--:11.2.15. Return lessons
+    
+    sv -> sv++:11.2.16. Set all active lessons LessonStatus = "active"
+    sv--
+    
+    sv -> repo++:11.2.17. Call Update(course)
+    repo -->> sv--:11.2.18. Return tracking state
+    
+    sv -> repo++:11.2.19. Call SaveChangesAsync()
+    repo -> ctx++:11.2.20. Save changes to database
+    ctx -> db++:11.2.21. Update entities
+    db -->> ctx--:11.2.22. Return returnCode
+    ctx -->> repo--:11.2.23. Return numberOfRowsAffected
+    repo -->> sv--:11.2.24. Return numberOfRowsAffected
+    
+    sv -> notif_sv++:11.2.25. Call SendNotificationAsync(instructorId, "Course Approved")
+    notif_sv -->> sv--:11.2.26. Return
+    
+    sv -> enroll_repo++:11.2.27. Call GetEnrolledUserIdsAsync(id)
+    enroll_repo -> ctx++:11.2.28. Query enrolled users from DbSet
+    ctx -> db++:11.2.29. Execute query
+    db -->> ctx--:11.2.30. Return query results
+    ctx -->> enroll_repo--:11.2.31. Return enrolledUserIds
+    enroll_repo -->> sv--:11.2.32. Return enrolledUserIds
+    
+    sv -> sv++:11.2.33. Check if there are enrolled users
+    sv--
+    
+opt Has Enrolled Users
+        sv -> notif_sv++:11.2.33.1. Call SendBulkNotificationsAsync(studentNotifications)
+        notif_sv -->> sv--:11.2.33.1.1. Return
+end
+    
+    sv -> redis++:11.2.34. Call RemoveCacheAsync(cacheKey)
+    redis -->> sv--:11.2.35. Return
+    
+    sv -->> be_ctrl--:11.2.36. Return true
+    be_ctrl -->> fe_ctrl--:11.2.37. Return statusCode 200
+    fe_ctrl -->> view--:11.2.38. Return JSON (success=true)
+    view -->> act--:11.2.39. Display course approved message
+end

@@ -61,6 +61,9 @@ else Valid Request Data
     ctx-->>repo--: Return Coupon entity
     repo-->>sv--: Return Coupon entity
     
+    sv->sv++: Check if Coupon Code exists
+    sv--
+    
     alt Coupon Code Already Exists
         sv-->>be_ctrl: Throw InvalidOperationException
         be_ctrl-->>view: Return statusCode 400
@@ -71,19 +74,34 @@ else Valid Request Data
         
         sv->repo++: Call AddAsync(coupon)
         repo->ctx++: Add Coupon entity to ChangeTracker
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>repo--: Completed
         repo-->>sv--: Completed
         
         sv->repo++: Call SaveChangesAsync()
         repo->ctx++: Commit tracked changes
         ctx->db++: Save changes to database
-        db-->>ctx--: Return result
-        ctx-->>repo--: Return numberOfRowsAffected
-        repo-->>sv--: Return success
         
-        sv-->>be_ctrl--: Return success
-        be_ctrl-->>view--: Return statusCode 200
-        view-->>act--: Render updated Coupon List / Display success message
+        db->db++: Execute query
+        db--
+        
+        alt Database save failed
+            db-->>ctx: throw DbUpdateException
+            ctx-->>repo: throw DbUpdateException
+            repo-->>sv: throw DatabaseException
+            sv-->>be_ctrl: throw InvalidOperationException
+            be_ctrl-->>view: Return statusCode 400
+            view-->>act: Display error toast message
+        else Save successful
+            db-->>ctx--: Return result
+            ctx-->>repo--: Return numberOfRowsAffected
+            repo-->>sv--: Return success
+            
+            sv-->>be_ctrl--: Return success
+            be_ctrl-->>view--: Return statusCode 200
+            view-->>act--: Render updated Coupon List / Display success message
+        end
     end
 end
 @enduml

@@ -433,7 +433,7 @@
 
             if (!codeVal) { showError("err-code", "Code is required"); isValid = false; }
             if (isNaN(valueVal) || valueVal <= 0) { showError("err-value", "Value must be greater than 0"); isValid = false; }
-            if (typeVal === "percentage" && valueVal > 100) { showError("err-value", "Percentage must not exceed 100%"); isValid = false; }
+            if (typeVal === "percentage" && valueVal > 99) { showError("err-value", "Percentage must not exceed 99%"); isValid = false; }
             
             if (endVal) {
                 const end = new Date(endVal);

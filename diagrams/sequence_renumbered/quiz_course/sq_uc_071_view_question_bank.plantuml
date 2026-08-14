@@ -1,0 +1,96 @@
+@startuml
+<style>
+    sequenceDiagram{
+        FontSize 16
+
+        arrow {
+            ' Set the maximum width of the text on arrows
+            MaximumWidth 300
+
+        }
+        actor{
+            BackgroundColor white
+            LineThickness 1.0
+        }
+        participant{
+            BackgroundColor white
+            RoundCorner 0
+        }
+        database{
+            BackgroundColor white
+        }
+        groupHeader{
+            BackgroundColor white
+        }
+        referenceHeader{
+            BackgroundColor white
+        }
+        reference{
+            BackgroundColor white
+        }
+    }
+</style>
+
+hide footbox
+mainframe View Question Bank (Lessons Summary)
+
+actor Instructor as act
+participant "QuestionBankPage" as view
+participant "QuestionBankController" as fe_ctrl <<frontend controller>>
+participant "QuestionBankController" as be_ctrl <<backend controller>>
+participant ":QuestionBankService" as sv
+participant ":QuestionBankLessonSummaryResponse" as res
+participant ":ICourseRepository" as course_repo
+participant ":ILessonRepository" as lesson_repo
+participant ":IQuestionBankRepository" as repo
+participant ":AppDbContext" as ctx
+database Database as db
+
+act ++
+act -> view++:1. Select a course
+view -> fe_ctrl++:2. GET /QuestionBank/CourseLessonsSummary?courseId={courseId}
+
+fe_ctrl -> be_ctrl++:3. GET /api/QuestionBank/courses/{courseId}/lessons-summary
+
+be_ctrl -> sv++:4. Call GetLessonsSummaryByCourseAsync(courseId, instructorId)
+
+sv -> course_repo++:5. Call GetByIdAsync(courseId)
+course_repo -> ctx++:6. Query course from DbSet
+ctx -> db++:7. Execute query
+db -->> ctx--:8. Return course data
+ctx -->> course_repo--:9. Return course entity
+course_repo -->> sv--:10. Return course entity
+
+sv -> sv++:11. Validate Course Ownership
+sv--
+
+alt Course Not Found Or Unauthorized
+    sv -->> be_ctrl:11.1. throw UnauthorizedAccessException
+    be_ctrl -->> fe_ctrl:11.1.1. Return statusCode 403
+    fe_ctrl -->> view:11.1.2. Return JSON (success=false)
+    view -->> act:11.1.3. Display unauthorized error message
+else Authorized
+    sv -> lesson_repo++:11.2. Call GetByCourseIdAsync(courseId)
+    lesson_repo -> ctx++:11.2.1. Query lessons by course from DbSet
+    ctx -> db++:11.2.2. Execute query
+    db -->> ctx--:11.2.3. Return query results
+    ctx -->> lesson_repo--:11.2.4. Return List<Lesson>
+    lesson_repo -->> sv--:11.2.5. Return List<Lesson>
+
+    sv -> repo++:11.2.6. Call GetQuestionsByCourseAsync(courseId)
+    repo -> ctx++:11.2.7. Query questions by course from DbSet
+    ctx -> db++:11.2.8. Execute query
+    db -->> ctx--:11.2.9. Return query results
+    ctx -->> repo--:11.2.10. Return List<QuizQuestion>
+    repo -->> sv--:11.2.11. Return List<QuizQuestion>
+
+loop For each lesson in List<Lesson>
+        sv -> res++:11.2.12. Call QuestionBankLessonSummaryResponse()
+        res -->> sv--:11.2.13. Return QuestionBankLessonSummaryResponse object
+end
+
+    sv -->> be_ctrl--:11.2.14. Return List<QuestionBankLessonSummaryResponse>
+    be_ctrl -->> fe_ctrl--:11.2.15. Return statusCode 200
+    fe_ctrl -->> view--:11.2.16. Return JSON (success=true)
+    view -->> act--:11.2.17. Display lessons summary
+end

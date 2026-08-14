@@ -62,18 +62,20 @@ else Valid coupon deletion request
     
     sv->repo++:10.2.1. Update(coupon)
     repo->ctx++:10.2.2. Mark entity as modified
-    ctx-->>repo--:10.2.3. Return result
-    repo-->>sv--:10.2.4. Return result
+    ctx->db++:10.2.3. Execute query
+    db-->>ctx--:10.2.4. Return result
+    ctx-->>repo--:10.2.5. Return result
+    repo-->>sv--:10.2.6. Return result
     
-    sv->repo++:10.2.5. SaveChangesAsync()
-    repo->ctx++:10.2.6. Commit tracked changes
-    ctx->db++:10.2.7. Save changes to database
-    db-->>ctx--:10.2.8. Return result
-    ctx-->>repo--:10.2.9. Return numberOfRowsAffected
-    repo-->>sv--:10.2.10. Return success
+    sv->repo++:10.2.7. SaveChangesAsync()
+    repo->ctx++:10.2.8. Commit tracked changes
+    ctx->db++:10.2.9. Save changes to database
+    db-->>ctx--:10.2.10. Return result
+    ctx-->>repo--:10.2.11. Return numberOfRowsAffected
+    repo-->>sv--:10.2.12. Return success
     
-    sv-->>be_ctrl--:10.2.11. Return result
-    be_ctrl-->>view--:10.2.12. Return statusCode 200
-    view-->>act--:10.2.13. Display success message
+    sv-->>be_ctrl--:10.2.13. Return result
+    be_ctrl-->>view--:10.2.14. Return statusCode 200
+    view-->>act--:10.2.15. Display success message
 end
 @enduml

@@ -85,6 +85,8 @@ end
 sv->repo++: Call UpdateUserProfileAsync(...)
 
 repo->ctx++: Begin database transaction
+ctx->db++: Execute query
+db-->>ctx--: Return result
 ctx-->>repo--: Return result
 
 repo->ctx++: Query User joined with navigation details
@@ -103,7 +105,7 @@ opt Email is modified
 end
 
 repo->ctx++: Call SaveChangesAsync()
-ctx->db++: Execute query
+ctx->db++: Save changes to database
 db-->>ctx--: Return result
 ctx-->>repo--: Return numberOfRowsAffected
 
@@ -111,6 +113,8 @@ repo->repo++: Check numberOfRowsAffected
 repo--
 
 repo->ctx++: Commit transaction
+ctx->db++: Execute query
+db-->>ctx--: Return result
 ctx-->>repo--: Return result
 repo-->>sv--: Return success
 

@@ -40,8 +40,9 @@ database Database as db
 
 act++
 act->view++: Click "Logout" button
-view->fe_ctrl++: POST /Account/Logout
+view->fe_ctrl: POST /Account/Logout
 deactivate view
+activate fe_ctrl
 
 fe_ctrl->be_ctrl++: POST /api/auth/logout
 
@@ -52,6 +53,8 @@ opt accountId is valid
     be_ctrl->sv++: Call LogoutAsync(accountId)
     sv->u_repo++: Call RevokeRefreshTokenAsync(accountId)
     u_repo->ctx++: Set RefreshToken = null
+    ctx->db++: Execute query
+    db-->>ctx--: Return result
     ctx-->>u_repo--: Return result
     
     u_repo->ctx++: Call SaveChangesAsync()
