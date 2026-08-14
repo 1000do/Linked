@@ -22,6 +22,7 @@
 
     <form method="post" asp-action="Create" id="createCourseForm">
         <input type="hidden" asp-for="CourseThumbnailUrl" id="CourseThumbnailUrl" />
+        <input type="hidden" asp-for="ThumbnailHash" id="ThumbnailHash" />
         
         <!-- Section 1: Core Identity -->
         <div id="step-content-1" class="form-step animate-in fade-in slide-in-from-right-4 duration-500">
@@ -699,20 +700,64 @@
                 });
                 return;
             }
+
             progressEl.classList.remove('hidden');
+            document.querySelector('#upload-progress p').textContent = 'Validating...';
+
+            const spark = new SparkMD5.ArrayBuffer();
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                spark.append(e.target.result);
+                const md5Hash = spark.end();
+                document.getElementById('ThumbnailHash').value = md5Hash;
+
+                fetch(`/InstructorCourse/CheckThumbnailHash?hash=${encodeURIComponent(md5Hash)}`)
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success && res.data === true) {
+                            progressEl.classList.add('hidden');
+                            Swal.fire({
+                                title: 'Duplicate Image Detected',
+                                text: 'This thumbnail has already been used in another course. Please select a different one.',
+                                icon: 'error',
+                                confirmButtonColor: '#006a62'
+                            });
+                        } else {
+                            document.querySelector('#upload-progress p').textContent = 'Uploading to Cloudinary...';
+                            uploadToCloudinary(file);
+                        }
+                    })
+                    .catch(() => {
+                        document.querySelector('#upload-progress p').textContent = 'Uploading to Cloudinary...';
+                        uploadToCloudinary(file);
+                    });
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function uploadToCloudinary(file) {
             const fd = new FormData();
-            fd.append('upload_preset', UPLOAD_PRESET); fd.append('file', file);
+            fd.append('upload_preset', UPLOAD_PRESET); 
+            fd.append('file', file);
+            
             fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method: 'POST', body: fd })
             .then(r => { if(!r.ok) throw new Error('Upload failed'); return r.json(); })
             .then(data => {
-                progressEl.classList.add('hidden'); urlInput.value = data.secure_url;
-                thumbnailPreview.src = data.secure_url; previewContainer.classList.remove('hidden');
-                // updateProgressBar();
+                progressEl.classList.add('hidden'); 
+                urlInput.value = data.secure_url;
+                thumbnailPreview.src = data.secure_url; 
+                previewContainer.classList.remove('hidden');
             })
             .catch(() => {
                 progressEl.classList.add('hidden');
                 const reader = new FileReader();
-                reader.onload = e => { thumbnailPreview.src = e.target.result; previewContainer.classList.remove('hidden'); urlInput.value = e.target.result; };
+                reader.onload = e => { 
+                    thumbnailPreview.src = e.target.result; 
+                    previewContainer.classList.remove('hidden'); 
+                    urlInput.value = e.target.result; 
+                };
                 reader.readAsDataURL(file);
             });
         }

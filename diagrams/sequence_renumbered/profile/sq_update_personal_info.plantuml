@@ -85,54 +85,58 @@ end
 sv->repo++:20. Call UpdateUserProfileAsync(...)
 
 repo->ctx++:21. Begin database transaction
-ctx-->>repo--:22. Return result
+ctx->db++:22. Execute query
+db-->>ctx--:23. Return result
+ctx-->>repo--:24. Return result
 
-repo->ctx++:23. Query User joined with navigation details
-ctx->db++:24. Execute query
-db-->>ctx--:25. Return result
-ctx-->>repo--:26. Return User entity
+repo->ctx++:25. Query User joined with navigation details
+ctx->db++:26. Execute query
+db-->>ctx--:27. Return result
+ctx-->>repo--:28. Return User entity
 
-repo->repo++:27. Set modified fields
+repo->repo++:29. Set modified fields
 repo--
 
 opt Email is modified
-    repo->ctx++:27.2. Check if email is already taken
-    ctx->db++:27.2.1. Execute query
-    db-->>ctx--:27.2.2. Return result
-    ctx-->>repo--:27.2.3. Return result
+    repo->ctx++:29.2. Check if email is already taken
+    ctx->db++:29.2.1. Execute query
+    db-->>ctx--:29.2.2. Return result
+    ctx-->>repo--:29.2.3. Return result
 end
 
-repo->ctx++:28. Call SaveChangesAsync()
-ctx->db++:29. Execute query
-db-->>ctx--:30. Return result
-ctx-->>repo--:31. Return numberOfRowsAffected
+repo->ctx++:30. Call SaveChangesAsync()
+ctx->db++:31. Save changes to database
+db-->>ctx--:32. Return result
+ctx-->>repo--:33. Return numberOfRowsAffected
 
-repo->repo++:32. Check numberOfRowsAffected
+repo->repo++:34. Check numberOfRowsAffected
 repo--
 
-repo->ctx++:33. Commit transaction
-ctx-->>repo--:34. Return result
-repo-->>sv--:35. Return success
+repo->ctx++:35. Commit transaction
+ctx->db++:36. Execute query
+db-->>ctx--:37. Return result
+ctx-->>repo--:38. Return result
+repo-->>sv--:39. Return success
 
-sv-->>be_ctrl--:36. Return success
-be_ctrl-->>fe_ctrl--:37. Return statusCode 200
+sv-->>be_ctrl--:40. Return success
+be_ctrl-->>fe_ctrl--:41. Return statusCode 200
 
-fe_ctrl->be_ctrl++:38. GET /api/Profile
-be_ctrl->sv++:39. Call GetUserProfileAsync(userId)
-sv->repo++:40. Call GetUserByIdAsync(userId)
-repo->ctx++:41. Query User joined with navigation details
-ctx->db++:42. Execute query
-db-->>ctx--:43. Return result
-ctx-->>repo--:44. Return User entity
-repo-->>sv--:45. Return User entity
-sv-->>be_ctrl--:46. Return UserProfileResponse object
-be_ctrl-->>fe_ctrl--:47. Return statusCode 200
+fe_ctrl->be_ctrl++:42. GET /api/Profile
+be_ctrl->sv++:43. Call GetUserProfileAsync(userId)
+sv->repo++:44. Call GetUserByIdAsync(userId)
+repo->ctx++:45. Query User joined with navigation details
+ctx->db++:46. Execute query
+db-->>ctx--:47. Return result
+ctx-->>repo--:48. Return User entity
+repo-->>sv--:49. Return User entity
+sv-->>be_ctrl--:50. Return UserProfileResponse object
+be_ctrl-->>fe_ctrl--:51. Return statusCode 200
 
-fe_ctrl->fe_ctrl++:48. Sync display cookies
+fe_ctrl->fe_ctrl++:52. Sync display cookies
 fe_ctrl--
 
-fe_ctrl-->>view--:49. Return statusCode 200
-view-->>act--:50. Redirect to Profile page
-act->r_view++:51. Access Profile page
-r_view-->>act--:52. Display "Updated successfully!" and show updated profile info
+fe_ctrl-->>view--:53. Return statusCode 200
+view-->>act--:54. Redirect to Profile page
+act->r_view++:55. Access Profile page
+r_view-->>act--:56. Display "Updated successfully!" and show updated profile info
 @enduml

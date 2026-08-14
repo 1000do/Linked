@@ -57,6 +57,9 @@ db-->>ctx--: Return result
 ctx-->>u_repo--: Return Account entity
 u_repo-->>sv--: Return Account entity
 
+sv->sv++: Check Account existence and role
+sv--
+
 alt Account not found
     sv-->>be_ctrl: Return null
     be_ctrl-->>fe_ctrl: Return statusCode 404
@@ -68,11 +71,16 @@ else Account is Super Admin
     fe_ctrl-->>view: Return JSON with success = false
     view-->>act: Display error toast message
 else Account is valid
+    sv->sv++: Check current Account status
+    sv--
+    
     alt Account is currently Banned
         sv->sv++: Set AccountStatus = "Active"
         sv--
         sv->lockout_repo++: Call RemoveAccountLockoutsAsync(accountId)
         lockout_repo->ctx++: Remove Lockout entities
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>lockout_repo--: Return tracking state
         lockout_repo-->>sv--: Return success
     else Account is currently Active
@@ -82,6 +90,8 @@ else Account is valid
         lockout_ett-->>sv--: Return Lockout entity
         sv->lockout_repo++: Call AddAsync(lockout)
         lockout_repo->ctx++: Add Lockout entity (100 years)
+        ctx->db++: Execute query
+        db-->>ctx--: Return result
         ctx-->>lockout_repo--: Return tracking state
         lockout_repo-->>sv--: Return success
     end
@@ -89,13 +99,27 @@ else Account is valid
     sv->u_repo++: Call SaveChangesAsync()
     u_repo->ctx++: Commit tracked changes
     ctx->db++: Save changes to database
-    db-->>ctx--: Return result
-    ctx-->>u_repo--: Return numberOfRowsAffected
-    u_repo-->>sv--: Return success
     
-    sv-->>be_ctrl--: Return newStatus
-    be_ctrl-->>fe_ctrl--: Return statusCode 200
-    fe_ctrl-->>view--: Return JSON with success = true
-    view-->>act--: Display success toast and update UI status
+    db->db++: Execute query
+    db--
+    
+    alt Database save failed
+        db-->>ctx: throw DbUpdateException
+        ctx-->>u_repo: throw DbUpdateException
+        u_repo-->>sv: throw DatabaseException
+        sv-->>be_ctrl: throw InvalidOperationException
+        be_ctrl-->>fe_ctrl: Return statusCode 400
+        fe_ctrl-->>view: Return JSON with success = false
+        view-->>act: Display error toast message
+    else Save successful
+        db-->>ctx--: Return result
+        ctx-->>u_repo--: Return numberOfRowsAffected
+        u_repo-->>sv--: Return success
+        
+        sv-->>be_ctrl--: Return newStatus
+        be_ctrl-->>fe_ctrl--: Return statusCode 200
+        fe_ctrl-->>view--: Return JSON with success = true
+        view-->>act--: Display success toast and update UI status
+    end
 end
 @enduml

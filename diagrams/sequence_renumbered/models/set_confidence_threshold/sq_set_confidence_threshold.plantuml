@@ -95,24 +95,25 @@ end
     
     repo -> ctx++:4.13. Call SaveChangesAsync()
     ctx -> db++:4.14. Save changes to Database
-    
+    db -> db++:4.15. Check database\noperation status
+    db--
 alt Database Save Failure
-        db -->> ctx:4.14.1. Throw DbUpdateException
-        ctx -->> repo:4.14.1.1. Throw DbUpdateException
-        repo -->> sv:4.14.1.2. Throw SystemConfigException
-        sv -->> be_ctrl:4.14.1.3. Throw BadRequestException
-        be_ctrl -->> fe_ctrl:4.14.1.4. Return statusCode 400
-        fe_ctrl -->> view:4.14.1.5. Return BadRequest()
-        view -->> act:4.14.1.6. Display database save failure message
+        db -->> ctx:4.15.1. Throw DbUpdateException
+        ctx -->> repo:4.15.1.1. Throw DbUpdateException
+        repo -->> sv:4.15.1.2. Throw SystemConfigException
+        sv -->> be_ctrl:4.15.1.3. Throw BadRequestException
+        be_ctrl -->> fe_ctrl:4.15.1.4. Return statusCode 400
+        fe_ctrl -->> view:4.15.1.5. Return BadRequest()
+        view -->> act:4.15.1.6. Display database save failure message
 else Database Save Success
-        db -->> ctx--:4.14.2. Return numberOfRowsAffected
-        ctx -->> repo--:4.14.2.1. Return numberOfRowsAffected
-        repo -->> sv--:4.14.2.2. Return numberOfRowsAffected
+        db -->> ctx--:4.15.2. Return numberOfRowsAffected
+        ctx -->> repo--:4.15.2.1. Return numberOfRowsAffected
+        repo -->> sv--:4.15.2.2. Return numberOfRowsAffected
         
-        sv -->> be_ctrl--:4.14.2.3. Return true
-        be_ctrl -->> fe_ctrl--:4.14.2.4. Return statusCode 200
-        fe_ctrl -->> view--:4.14.2.5. Return Ok()
-        view -->> act--:4.14.2.6. Display success notification
+        sv -->> be_ctrl--:4.15.2.3. Return true
+        be_ctrl -->> fe_ctrl--:4.15.2.4. Return statusCode 200
+        fe_ctrl -->> view--:4.15.2.5. Return Ok()
+        view -->> act--:4.15.2.6. Display success notification
 end
 end
 @enduml

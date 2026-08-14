@@ -70,40 +70,41 @@ else Valid actor's authentication and authorization
     sv -> repo++:3.3.2. GetAllLessonReviewReportsAsync(status, page, pageSize)
     repo -> ctx++:3.3.3. Query filtered lesson review reports from database
     ctx -> db++:3.3.4. Query filtered lesson review reports from database
-    
+    db -> db++:3.3.5. Check database\n operation status
+    db--
 alt Empty Filter Result
-        db -->> ctx:3.3.4.1. Return empty list, totalCount = 0
-        ctx -->> repo:3.3.4.1.1. Return empty list, totalCount = 0
-        repo -->> sv:3.3.4.1.2. Return empty list, totalCount = 0
-        sv -->> be_ctrl:3.3.4.1.3. throw KeyNotFoundException
-        be_ctrl -->> fe_ctrl:3.3.4.1.4. Return statusCode 404
-        fe_ctrl -->> view:3.3.4.1.5. Return PartialView(empty viewModel)
-        view -->> act:3.3.4.1.6. Display empty state message
+        db -->> ctx:3.3.5.1. Return empty list, totalCount = 0
+        ctx -->> repo:3.3.5.1.1. Return empty list, totalCount = 0
+        repo -->> sv:3.3.5.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:3.3.5.1.3. throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:3.3.5.1.4. Return statusCode 404
+        fe_ctrl -->> view:3.3.5.1.5. Return PartialView(empty viewModel)
+        view -->> act:3.3.5.1.6. Display empty state message
 else Database Query Success
-        db -->> ctx:3.3.4.2. Return (reports, totalCount)
+        db -->> ctx:3.3.5.2. Return (reports, totalCount)
         db--
-        ctx -->> repo:3.3.4.2.1. Return (reports, totalCount)
+        ctx -->> repo:3.3.5.2.1. Return (reports, totalCount)
 
         ctx--
-        repo -->> sv:3.3.4.2.2. Return (reports, totalCount)
+        repo -->> sv:3.3.5.2.2. Return (reports, totalCount)
         repo--
         
-        sv -> sv++:3.3.4.2.3. Call Mapper to map entities to DTOs
+        sv -> sv++:3.3.5.2.3. Call Mapper to map entities to DTOs
         sv--
         
-        sv -> res++:3.3.4.2.4. Create PagedResult
-        res -->> sv--:3.3.4.2.5. Return object
+        sv -> res++:3.3.5.2.4. Create PagedResult
+        res -->> sv--:3.3.5.2.5. Return object
         
-        sv -->> be_ctrl--:3.3.4.2.6. Return PagedResult<ReviewReportDetailResponse>
+        sv -->> be_ctrl--:3.3.5.2.6. Return PagedResult<ReviewReportDetailResponse>
         
-        be_ctrl -->> fe_ctrl--:3.3.4.2.7. Return statusCode 200 with PagedResult
+        be_ctrl -->> fe_ctrl--:3.3.5.2.7. Return statusCode 200 with PagedResult
         
-        fe_ctrl -> view_model++:3.3.4.2.8. Deserialize JSON to populate ViewModel
-        view_model -->> fe_ctrl--:3.3.4.2.9. Return populated ViewModel
+        fe_ctrl -> view_model++:3.3.5.2.8. Deserialize JSON to populate ViewModel
+        view_model -->> fe_ctrl--:3.3.5.2.9. Return populated ViewModel
         
-        fe_ctrl -->> view--:3.3.4.2.10. Return PartialView(populated viewModel)
+        fe_ctrl -->> view--:3.3.5.2.10. Return PartialView(populated viewModel)
         
-        view -->> act--:3.3.4.2.11. Display filtered list of lesson review reports
+        view -->> act--:3.3.5.2.11. Display filtered list of lesson review reports
 end
 end
 @enduml

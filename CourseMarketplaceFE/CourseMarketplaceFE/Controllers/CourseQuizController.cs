@@ -125,7 +125,7 @@ namespace CourseMarketplaceFE.Controllers
                     var list = new System.Collections.Generic.List<object>();
                     foreach (var item in items)
                     {
-                        if (item.TryGetProperty("courseId", out var cIdProp))
+                        if (item.TryGetProperty("courseId", out var cIdProp) && cIdProp.ValueKind != System.Text.Json.JsonValueKind.Null)
                         {
                             if (cIdProp.GetInt32() != courseId)
                             {

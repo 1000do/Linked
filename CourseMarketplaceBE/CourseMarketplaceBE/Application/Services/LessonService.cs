@@ -8,6 +8,7 @@ using CourseMarketplaceBE.Application.IServices;
 using CourseMarketplaceBE.Domain.Constants;
 using CourseMarketplaceBE.Domain.Entities;
 using CourseMarketplaceBE.Domain.IRepositories;
+using CourseMarketplaceBE.Domain.Exceptions;
 
 namespace CourseMarketplaceBE.Application.Services;
 
@@ -22,6 +23,7 @@ public class LessonService : ILessonService
     private readonly ILogger<LessonService> _logger;
     private readonly ILockoutRepository _lockoutRepo;
     private readonly IHtmlTextManipulationService _htmlTextManipulationService;
+    private readonly IMaterialExtRepository _materialExtRepository;
 
     public LessonService(
         ILessonRepository lessonRepository,
@@ -32,7 +34,8 @@ public class LessonService : ILessonService
         IInstructorRepository instructorRepository,
         ILogger<LessonService> logger,
         ILockoutRepository lockoutRepo,
-        IHtmlTextManipulationService htmlTextManipulationService)
+        IHtmlTextManipulationService htmlTextManipulationService,
+        IMaterialExtRepository materialExtRepository)
     {
         _lessonRepository = lessonRepository;
         _courseRepository = courseRepository;
@@ -43,6 +46,7 @@ public class LessonService : ILessonService
         _logger = logger;
         _lockoutRepo = lockoutRepo;
         _htmlTextManipulationService = htmlTextManipulationService;
+        _materialExtRepository = materialExtRepository;
     }
 
     private async Task ValidateInstructorAndCourseStateAsync(Course? course, int instructorId, string actionMessage)
@@ -88,6 +92,20 @@ public class LessonService : ILessonService
 
         material.LearningStatus = LearningStatus.Removed.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
+
+        // Xóa FileHash để không bị báo duplicate nếu instructor muốn upload lại video này
+        // Tuy nhiên, ta cần lưu lại nó vào OriginalFileHash để check trùng lặp khi Restore
+        var ext = await _materialExtRepository.GetByMaterialIdAsync(material.MaterialId);
+        if (ext != null)
+        {
+            if (material.MaterialMetadata == null) material.MaterialMetadata = new MaterialMetadata();
+            material.MaterialMetadata.OriginalFileHash = ext.FileHash;
+            
+            // Note: Update material immediately to save the metadata change, it will be saved later by SaveChangesAsync
+            _materialRepository.Update(material);
+        }
+        
+        await _materialExtRepository.DeleteByMaterialIdAsync(material.MaterialId);
     }
 
     public async Task<LessonResponse> CreateLessonAsync(LessonCreateRequest request, int instructorId)
@@ -156,9 +174,9 @@ public class LessonService : ILessonService
         {
             await _lessonRepository.SaveChangesAsync();
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
         {
-            throw new Exception($"DB Error: {ex.InnerException?.Message}");
+            throw new BadRequestException("An unexpected database error occurred while creating the lesson. Please check your data and try again.");
         }
 
         await InvalidateCourseCacheAsync(request.CourseId);
@@ -344,6 +362,22 @@ public class LessonService : ILessonService
         }
 
         await _materialRepository.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(request.FileHash))
+        {
+            try
+            {
+                await _materialExtRepository.AddMaterialExtAsync(new MaterialExt
+                {
+                    MaterialId = material.MaterialId,
+                    FileHash = request.FileHash
+                });
+            }
+            catch (CourseException)
+            {
+                throw new BadRequestException("Duplication detected on material file");
+            }
+        }
 
         if (string.Equals(lesson.Course.CourseStatus, CourseStatus.Published.ToValue(), StringComparison.OrdinalIgnoreCase))
         {
@@ -580,10 +614,45 @@ public class LessonService : ILessonService
             }
         }
 
+        // Validate original hash to prevent duplicate escapes before restoring
+        string? originalHashToRestore = null;
+        if (material.MaterialMetadata != null && !string.IsNullOrEmpty(material.MaterialMetadata.OriginalFileHash))
+        {
+            originalHashToRestore = material.MaterialMetadata.OriginalFileHash;
+            bool hashExists = await _materialExtRepository.IsHashExistsAsync(originalHashToRestore);
+            if (hashExists)
+            {
+                throw new BadRequestException("Cannot restore this video because an identical video has already been uploaded and is currently active in another lesson.");
+            }
+        }
+
         material.LearningStatus = wasPublished ? LearningStatus.Draft.ToValue() : LearningStatus.Active.ToValue();
         material.UpdatedAt = DateTime.UtcNow;
+
+        if (originalHashToRestore != null)
+        {
+            // Clear the original hash from metadata since it is being restored
+            material.MaterialMetadata.OriginalFileHash = null;
+        }
+
         _materialRepository.Update(material);
         await _materialRepository.SaveChangesAsync();
+
+        if (originalHashToRestore != null)
+        {
+            try
+            {
+                await _materialExtRepository.AddMaterialExtAsync(new MaterialExt
+                {
+                    MaterialId = material.MaterialId,
+                    FileHash = originalHashToRestore
+                });
+            }
+            catch (CourseException)
+            {
+                // Silently handle if somehow it fails, though it shouldn't
+            }
+        }
 
         await InvalidateCourseCacheAsync(lesson.CourseId);
     }
@@ -594,9 +663,9 @@ public class LessonService : ILessonService
         {
             return await _lessonRepository.SaveChangesAsync();
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
         {
-            throw new BadRequestException("Database operation failed due to a constraint violation or data issue while saving lessons.");
+            throw new BadRequestException("An unexpected database error occurred while saving the lesson. Please check your data and try again.");
         }
     }
 
@@ -606,9 +675,9 @@ public class LessonService : ILessonService
         {
             return await _materialRepository.SaveChangesAsync();
         }
-        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
         {
-            throw new BadRequestException("Database operation failed due to a constraint violation or data issue while saving materials.");
+            throw new BadRequestException("An unexpected database error occurred while saving the material. Please check your data and try again.");
         }
     }
 
@@ -647,5 +716,10 @@ public class LessonService : ILessonService
         }
 
         return await SaveMaterialChangesAsync();
+    }
+
+    public async Task<bool> CheckMaterialDuplicateAsync(string hash)
+    {
+        return await _materialExtRepository.IsHashExistsAsync(hash);
     }
 }

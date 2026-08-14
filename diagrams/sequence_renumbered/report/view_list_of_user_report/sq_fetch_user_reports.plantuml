@@ -51,27 +51,29 @@ par Fetch Course Reports
     sv -> repo++:0.1.2. Call GetAllCourseReportsAsync(status, page, pageSize)
     repo -> ctx++:0.1.3. Query course reports
     ctx -> db++:0.1.4. Execute query
+    db -> db++:0.1.5. Check database\n operation status
+    db--
     
 alt Database Query Failure
-        db -->> ctx:0.1.4.1. Return empty list, totalCount = 0
-        ctx -->> repo:0.1.4.1.1. Return empty list, totalCount = 0
-        repo -->> sv:0.1.4.1.2. Return empty list, totalCount = 0
-        sv -->> be_ctrl:0.1.4.1.3. Throw KeyNotFoundException
-        be_ctrl -->> fe_ctrl:0.1.4.1.4. Return statusCode 404
+        db -->> ctx:0.1.5.1. Return empty list, totalCount = 0
+        ctx -->> repo:0.1.5.1.1. Return empty list, totalCount = 0
+        repo -->> sv:0.1.5.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:0.1.5.1.3. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:0.1.5.1.4. Return statusCode 404
 else Database Query Success
-        db -->> ctx:0.1.4.2. Return data
+        db -->> ctx:0.1.5.2. Return data
         db--
-        ctx -->> repo:0.1.4.2.1. Return data
+        ctx -->> repo:0.1.5.2.1. Return data
         ctx--
-        repo -->> sv:0.1.4.2.2. Return (reports, totalCount)
+        repo -->> sv:0.1.5.2.2. Return (reports, totalCount)
         repo--
         
-        sv -> c_res++:0.1.4.2.3. Map to PagedResult<CourseReportDetailResponse>
-        c_res -->> sv--:0.1.4.2.4. Return PagedResult
+        sv -> c_res++:0.1.5.2.3. Map to PagedResult<CourseReportDetailResponse>
+        c_res -->> sv--:0.1.5.2.4. Return PagedResult
         
-        sv -->> be_ctrl:0.1.4.2.5. Return PagedResult<CourseReportDetailResponse>
+        sv -->> be_ctrl:0.1.5.2.5. Return PagedResult<CourseReportDetailResponse>
         sv--
-        be_ctrl -->> fe_ctrl:0.1.4.2.6. Return statusCode 200
+        be_ctrl -->> fe_ctrl:0.1.5.2.6. Return statusCode 200
         be_ctrl--
 end
 else Fetch Course Review Reports
@@ -80,27 +82,29 @@ else Fetch Course Review Reports
     sv -> repo++:0.2.2. Call GetAllCourseReviewReportsAsync(status, page, pageSize)
     repo -> ctx++:0.2.3. Query course review reports
     ctx -> db++:0.2.4. Execute query
+    db -> db++:0.2.5. Check database\n operation status
+    db--
     
 alt Database Query Failure
-        db -->> ctx:0.2.4.1. Return empty list, totalCount = 0
-        ctx -->> repo:0.2.4.1.1. Return empty list, totalCount = 0
-        repo -->> sv:0.2.4.1.2. Return empty list, totalCount = 0
-        sv -->> be_ctrl:0.2.4.1.3. Throw KeyNotFoundException
-        be_ctrl -->> fe_ctrl:0.2.4.1.4. Return statusCode 404
+        db -->> ctx:0.2.5.1. Return empty list, totalCount = 0
+        ctx -->> repo:0.2.5.1.1. Return empty list, totalCount = 0
+        repo -->> sv:0.2.5.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:0.2.5.1.3. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:0.2.5.1.4. Return statusCode 404
 else Database Query Success
-        db -->> ctx:0.2.4.2. Return data
+        db -->> ctx:0.2.5.2. Return data
         db--
-        ctx -->> repo:0.2.4.2.1. Return data
+        ctx -->> repo:0.2.5.2.1. Return data
         ctx--
-        repo -->> sv:0.2.4.2.2. Return (reports, totalCount)
+        repo -->> sv:0.2.5.2.2. Return (reports, totalCount)
         repo--
         
-        sv -> r_res++:0.2.4.2.3. Map to PagedResult<ReviewReportDetailResponse>
-        r_res -->> sv--:0.2.4.2.4. Return PagedResult
+        sv -> r_res++:0.2.5.2.3. Map to PagedResult<ReviewReportDetailResponse>
+        r_res -->> sv--:0.2.5.2.4. Return PagedResult
         
-        sv -->> be_ctrl:0.2.4.2.5. Return PagedResult<ReviewReportDetailResponse>
+        sv -->> be_ctrl:0.2.5.2.5. Return PagedResult<ReviewReportDetailResponse>
         sv--
-        be_ctrl -->> fe_ctrl:0.2.4.2.6. Return statusCode 200
+        be_ctrl -->> fe_ctrl:0.2.5.2.6. Return statusCode 200
         be_ctrl--
 end
 else Fetch Lesson Review Reports
@@ -109,27 +113,29 @@ else Fetch Lesson Review Reports
     sv -> repo++:0.3.2. Call GetAllLessonReviewReportsAsync(status, page, pageSize)
     repo -> ctx++:0.3.3. Query lesson review reports
     ctx -> db++:0.3.4. Execute query
+    db -> db++:0.3.5. Check database\n operation status
+    db--
     
 alt Database Query Failure
-        db -->> ctx:0.3.4.1. Return empty list, totalCount = 0
-        ctx -->> repo:0.3.4.1.1. Return empty list, totalCount = 0
-        repo -->> sv:0.3.4.1.2. Return empty list, totalCount = 0
-        sv -->> be_ctrl:0.3.4.1.3. Throw KeyNotFoundException
-        be_ctrl -->> fe_ctrl:0.3.4.1.4. Return statusCode 404
+        db -->> ctx:0.3.5.1. Return empty list, totalCount = 0
+        ctx -->> repo:0.3.5.1.1. Return empty list, totalCount = 0
+        repo -->> sv:0.3.5.1.2. Return empty list, totalCount = 0
+        sv -->> be_ctrl:0.3.5.1.3. Throw KeyNotFoundException
+        be_ctrl -->> fe_ctrl:0.3.5.1.4. Return statusCode 404
 else Database Query Success
-        db -->> ctx:0.3.4.2. Return data
+        db -->> ctx:0.3.5.2. Return data
         db--
-        ctx -->> repo:0.3.4.2.1. Return data
+        ctx -->> repo:0.3.5.2.1. Return data
         ctx--
-        repo -->> sv:0.3.4.2.2. Return (reports, totalCount)
+        repo -->> sv:0.3.5.2.2. Return (reports, totalCount)
         repo--
         
-        sv -> r_res++:0.3.4.2.3. Map to PagedResult<ReviewReportDetailResponse>
-        r_res -->> sv--:0.3.4.2.4. Return PagedResult
+        sv -> r_res++:0.3.5.2.3. Map to PagedResult<ReviewReportDetailResponse>
+        r_res -->> sv--:0.3.5.2.4. Return PagedResult
         
-        sv -->> be_ctrl:0.3.4.2.5. Return PagedResult<ReviewReportDetailResponse>
+        sv -->> be_ctrl:0.3.5.2.5. Return PagedResult<ReviewReportDetailResponse>
         sv--
-        be_ctrl -->> fe_ctrl:0.3.4.2.6. Return statusCode 200
+        be_ctrl -->> fe_ctrl:0.3.5.2.6. Return statusCode 200
         be_ctrl--
 end
 end

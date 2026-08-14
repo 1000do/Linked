@@ -123,17 +123,27 @@ namespace CourseMarketplaceFE.Controllers
             }
             return View(new List<PublicCourseViewModel>());
         }
-        
         [HttpGet]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> StreamMaterial(int materialId, [FromQuery] bool download = false)
         {
-            var token = Request.Cookies["AccessToken"];
-            if (string.IsNullOrEmpty(token))
-                return Unauthorized();
+            // Referer check to prevent Postman/IDM downloads
+            var referer = Request.Headers["Referer"].ToString();
+            
+            // ALL requests (whether guest or authenticated) MUST provide a valid referer
+            // matching our website's host. This prevents anyone from putting the proxy URL 
+            // into Postman/IDM to download the video.
+            if (string.IsNullOrEmpty(referer) || !referer.Contains(Request.Host.Value))
+            {
+                return StatusCode(403, "Direct access to video stream is not allowed. Please watch on the website.");
+            }
 
             var httpClient = _httpClientFactory.CreateClient("BackendApi");
-            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            var token = Request.Cookies["AccessToken"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
 
             // Forward the Range header
             var rangeHeader = Request.Headers["Range"].ToString();

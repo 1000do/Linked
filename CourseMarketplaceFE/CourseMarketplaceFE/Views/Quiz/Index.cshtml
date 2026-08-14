@@ -116,7 +116,7 @@
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <!-- TODO: Tới trang Editor -->
-                                        <a href="/Quiz/Editor/@quiz.QuizId" class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit Quiz">
+                                        <a href="javascript:void(0)" onclick="editQuiz(@quiz.QuizId)" class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit Quiz">
                                             <span class="material-symbols-outlined text-[20px]">edit</span>
                                         </a>
                                         <button onclick="deleteQuiz(@quiz.QuizId)" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -222,10 +222,28 @@
 
 @section Scripts {
     <script>
+        const instructorLockoutEndStr = '@(ViewBag.LockoutEnd?.ToString("o") ?? "")';
+        function isInstructorLockedOut() {
+            if (instructorLockoutEndStr) {
+                const lockoutDate = new Date(instructorLockoutEndStr);
+                if (lockoutDate > new Date()) {
+                    Swal.fire({
+                        title: 'Account Locked',
+                        text: 'Your instructor rights are locked due to policy violations. You cannot perform this action.',
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
+
         const modal = document.getElementById('createModal');
         const content = document.getElementById('createModalContent');
         
         function openCreateModal() {
+            if (isInstructorLockedOut()) return;
             modal.classList.remove('hidden');
             // setTimeout for transition
             setTimeout(() => {
@@ -501,7 +519,13 @@
             }, 500);
         });
         
+        function editQuiz(quizId) {
+            if (isInstructorLockedOut()) return;
+            window.location.href = '/Quiz/Editor/' + quizId;
+        }
+
         async function deleteQuiz(quizId) {
+            if (isInstructorLockedOut()) return;
             const res = await Swal.fire({
                 title: 'Delete Quiz?',
                 text: 'Are you sure you want to delete this quiz? This action cannot be undone.',
@@ -537,6 +561,11 @@
         }
 
         async function toggleQuizStatus(quizId, isChecked) {
+            if (isInstructorLockedOut()) {
+                const checkbox = document.querySelector(`input[onchange="toggleQuizStatus(${quizId}, this.checked)"]`);
+                if (checkbox) checkbox.checked = !isChecked;
+                return;
+            }
             const isHidden = !isChecked;
             try {
                 const response = await fetch('/Quiz/ToggleHidden', {

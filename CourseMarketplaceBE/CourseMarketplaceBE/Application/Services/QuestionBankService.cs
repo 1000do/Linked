@@ -14,19 +14,24 @@ public class QuestionBankService : IQuestionBankService
     private readonly IQuestionBankRepository _questionBankRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly ILessonRepository _lessonRepository;
+    private readonly ILockoutRepository _lockoutRepo;
 
     public QuestionBankService(
         IQuestionBankRepository questionBankRepository,
         ICourseRepository courseRepository,
-        ILessonRepository lessonRepository)
+        ILessonRepository lessonRepository,
+        ILockoutRepository lockoutRepo)
     {
         _questionBankRepository = questionBankRepository;
         _courseRepository = courseRepository;
         _lessonRepository = lessonRepository;
+        _lockoutRepo = lockoutRepo;
     }
 
     public async Task<QuizQuestionResponse> AddQuestionAsync(int courseId, QuizAddQuestionRequest request, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "create questions");
+
         ValidateQuizOptions(request.Options);
         await EnsureInstructorOwnsCourseAsync(courseId, instructorId, "You do not have permission to add questions to this course.");
 
@@ -52,6 +57,8 @@ public class QuestionBankService : IQuestionBankService
 
     public async Task<QuizQuestionResponse> UpdateQuestionAsync(int questionId, QuizUpdateQuestionRequest request, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "update questions");
+
         ValidateQuizOptions(request.Options);
 
         var question = await _questionBankRepository.GetQuestionByIdAsync(questionId);
@@ -83,6 +90,8 @@ public class QuestionBankService : IQuestionBankService
 
     public async Task DeleteQuestionAsync(int questionId, int instructorId)
     {
+        await EnsureNotLockedOutAsync(instructorId, "delete questions");
+
         var question = await _questionBankRepository.GetQuestionByIdAsync(questionId);
         if (question == null) return;
 
@@ -155,6 +164,15 @@ public class QuestionBankService : IQuestionBankService
         var course = await _courseRepository.GetByIdAsync(courseId);
         if (course == null || course.InstructorId != instructorId)
             throw new UnauthorizedAccessException(errorMessage);
+    }
+
+    private async Task EnsureNotLockedOutAsync(int instructorId, string actionMessage)
+    {
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(instructorId, "instructor");
+        if (activeLockout != null)
+        {
+            throw new CourseMarketplaceBE.Application.Exceptions.BadRequestException($"Your instructor rights are locked until {activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to policy violations. You cannot {actionMessage}.");
+        }
     }
 
     private static QuizQuestionResponse MapToResponse(QuizQuestion q)

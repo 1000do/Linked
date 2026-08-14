@@ -29,9 +29,8 @@ hide footbox
 mainframe Login with Google
 actor "User/Instructor" as act
 
-participant "LoginView" as view
-participant "AdminNotificationView" as admin_view
 participant "HomeIndexView" as home_view
+participant "LoginView" as view
 participant "Google Identity" as Google
 participant "AccountController" as fe_ctrl <<frontend controller>>
 participant "AuthController" as be_ctrl <<backend controller>>
@@ -81,20 +80,22 @@ opt account == null
     
     sv->u_repo++:17.1.4. Call RegisterUserAsync(acc, user)
     u_repo->ctx++:17.1.5. Add Account and User entities
-    ctx-->>u_repo--:17.1.6. Return result
+    ctx->db++:17.1.6. Execute query
+    db-->>ctx--:17.1.7. Return result
+    ctx-->>u_repo--:17.1.8. Return result
     
-    u_repo->ctx++:17.1.7. Call SaveChangesAsync()
-    ctx->db++:17.1.8. Save changes to database
-    db-->>ctx--:17.1.9. Return numberOfRowsAffected
-    ctx-->>u_repo--:17.1.10. Return numberOfRowsAffected
-    u_repo-->>sv--:17.1.11. Return isCreated
+    u_repo->ctx++:17.1.9. Call SaveChangesAsync()
+    ctx->db++:17.1.10. Save changes to database
+    db-->>ctx--:17.1.11. Return numberOfRowsAffected
+    ctx-->>u_repo--:17.1.12. Return numberOfRowsAffected
+    u_repo-->>sv--:17.1.13. Return isCreated
     
-    sv->u_repo++:17.1.12. Call GetAccountByEmailAsync(email)
-    u_repo->ctx++:17.1.13. Query Account
-    ctx->db++:17.1.14. Execute query
-    db-->>ctx--:17.1.15. Return result
-    ctx-->>u_repo--:17.1.16. Return account
-    u_repo-->>sv--:17.1.17. Return account
+    sv->u_repo++:17.1.14. Call GetAccountByEmailAsync(email)
+    u_repo->ctx++:17.1.15. Query Account
+    ctx->db++:17.1.16. Execute query
+    db-->>ctx--:17.1.17. Return result
+    ctx-->>u_repo--:17.1.18. Return account
+    u_repo-->>sv--:17.1.19. Return account
 end
 
 sv->lock_repo++:18. Call GetActiveLockoutAsync(accountId, "account")
@@ -115,57 +116,52 @@ alt Account is locked out
 else Account is active
     sv->u_repo++:24.2. Call UpdateLastLoginAsync(accountId)
     u_repo->ctx++:24.2.1. Update LastLoginDate
-    ctx-->>u_repo--:24.2.2. Return result
+    ctx->db++:24.2.2. Execute query
+    db-->>ctx--:24.2.3. Return result
+    ctx-->>u_repo--:24.2.4. Return result
     
-    u_repo->ctx++:24.2.3. Call SaveChangesAsync()
-    ctx->db++:24.2.4. Save changes to database
-    db-->>ctx--:24.2.5. Return numberOfRowsAffected
-    ctx-->>u_repo--:24.2.6. Return numberOfRowsAffected
-    u_repo-->>sv--:24.2.7. Return result
+    u_repo->ctx++:24.2.5. Call SaveChangesAsync()
+    ctx->db++:24.2.6. Save changes to database
+    db-->>ctx--:24.2.7. Return numberOfRowsAffected
+    ctx-->>u_repo--:24.2.8. Return numberOfRowsAffected
+    u_repo-->>sv--:24.2.9. Return result
     
-    sv->u_repo++:24.2.8. Call GetRoleByAccountIdAsync(accountId)
-    u_repo->ctx++:24.2.9. Query Role
-    ctx->db++:24.2.10. Execute query
-    db-->>ctx--:24.2.11. Return result
-    ctx-->>u_repo--:24.2.12. Return role
-    u_repo-->>sv--:24.2.13. Return role
+    sv->u_repo++:24.2.10. Call GetRoleByAccountIdAsync(accountId)
+    u_repo->ctx++:24.2.11. Query Role
+    ctx->db++:24.2.12. Execute query
+    db-->>ctx--:24.2.13. Return result
+    ctx-->>u_repo--:24.2.14. Return role
+    u_repo-->>sv--:24.2.15. Return role
     
-    sv->sv++:24.2.14. Generate JWT tokens
+    sv->sv++:24.2.16. Generate JWT tokens
     sv--
     
-    sv->u_repo++:24.2.15. Call SaveRefreshTokenAsync(accountId, refreshToken)
-    u_repo->ctx++:24.2.16. Update RefreshToken
-    ctx-->>u_repo--:24.2.17. Return result
+    sv->u_repo++:24.2.17. Call SaveRefreshTokenAsync(accountId, refreshToken)
+    u_repo->ctx++:24.2.18. Update RefreshToken
+    ctx->db++:24.2.19. Execute query
+    db-->>ctx--:24.2.20. Return result
+    ctx-->>u_repo--:24.2.21. Return result
     
-    u_repo->ctx++:24.2.18. Call SaveChangesAsync()
-    ctx->db++:24.2.19. Save changes to database
-    db-->>ctx--:24.2.20. Return numberOfRowsAffected
-    ctx-->>u_repo--:24.2.21. Return numberOfRowsAffected
-    u_repo-->>sv--:24.2.22. Return result
+    u_repo->ctx++:24.2.22. Call SaveChangesAsync()
+    ctx->db++:24.2.23. Save changes to database
+    db-->>ctx--:24.2.24. Return numberOfRowsAffected
+    ctx-->>u_repo--:24.2.25. Return numberOfRowsAffected
+    u_repo-->>sv--:24.2.26. Return result
     
-    sv->res++:24.2.23. Call LoginResponseDTO()
-    res-->>sv--:24.2.24. Return LoginResponseDTO object
+    sv->res++:24.2.27. Call LoginResponseDTO()
+    res-->>sv--:24.2.28. Return LoginResponseDTO object
     
-    sv-->>be_ctrl--:24.2.25. Return LoginResponseDTO object
+    sv-->>be_ctrl--:24.2.29. Return LoginResponseDTO object
     
-    be_ctrl-->>fe_ctrl--:24.2.26. Return statusCode 200
+    be_ctrl-->>fe_ctrl--:24.2.30. Return statusCode 200
     
-    fe_ctrl->fe_ctrl++:24.2.27. Append HttpOnly cookies and user info cookies
+    fe_ctrl->fe_ctrl++:24.2.31. Append HttpOnly cookies and user info cookies
     fe_ctrl--
     
-    fe_ctrl-->>view--:24.2.28. Return statusCode 200
+    fe_ctrl-->>view--:24.2.32. Return statusCode 200
     
-    view->view++:24.2.29. Check user role from cookies
-    view--
-    
-alt role == admin or staff
-        view -->> admin_view--:24.2.29.1. Redirect to Admin Notification page
-        activate admin_view
-        admin_view -->> act--:24.2.29.1.1. Display Admin Notification page
-else role == user or instructor
-        view -->> home_view--:24.2.29.2. Redirect to Home Index page
-        activate home_view
-        home_view -->> act--:24.2.29.2.1. Display Homepage
-end
+    view -->> home_view--:24.2.33. Redirect to Home Index page
+    activate home_view
+    home_view -->> act--:24.2.34. Display Homepage
 end
 @enduml

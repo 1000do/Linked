@@ -37,6 +37,8 @@ public partial class LearningMaterial
     public virtual ICollection<MaterialCompletion> MaterialCompletions { get; set; } = new List<MaterialCompletion>();
 
     public virtual ICollection<LearningMaterialAiFeedback> LearningMaterialAiFeedbacks { get; set; } = new List<LearningMaterialAiFeedback>();
+
+    public virtual MaterialExt? MaterialExt { get; set; }
 }
 
 public class MaterialMetadata
@@ -55,4 +57,7 @@ public class MaterialMetadata
 
     [JsonPropertyName("page_count")]
     public int? PageCount { get; set; }
+
+    [JsonPropertyName("original_file_hash")]
+    public string? OriginalFileHash { get; set; }
 }
