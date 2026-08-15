@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = "Curriculum Editor";
     Layout = "_InstructorLayout";
@@ -1368,8 +1369,8 @@
         }
 
         function startThumbCloudinaryUpload(file, md5Hash) {
-            const CLOUD_NAME = 'df8i0azc5';
-            const UPLOAD_PRESET = 'course_marketplace_preset';
+            const CLOUD_NAME = '@Configuration["CloudinarySettings:CloudName"]';
+            const UPLOAD_PRESET = '@Configuration["CloudinarySettings:UploadPreset"]';
             const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
             
             const fd = new FormData();
@@ -2740,8 +2741,8 @@
             if (document.querySelector('.lesson-item.border-primary')?.dataset.lessonId === targetLessonId) {
                 document.getElementById('upload-filename-display').textContent = `Uploading "${file.name}"`;
             }
-            const CLOUD_NAME = 'df8i0azc5';
-            const UPLOAD_PRESET = 'course_marketplace_preset';
+            const CLOUD_NAME = '@Configuration["CloudinarySettings:CloudName"]';
+            const UPLOAD_PRESET = '@Configuration["CloudinarySettings:UploadPreset"]';
             
             const fd = new FormData();
             fd.append('upload_preset', UPLOAD_PRESET);
@@ -3787,8 +3788,8 @@
         });
 
         function startResourceCloudinaryUpload(file, fileHash) {
-            const CLOUD_NAME = 'df8i0azc5';
-            const UPLOAD_PRESET = 'course_marketplace_preset';
+            const CLOUD_NAME = '@Configuration["CloudinarySettings:CloudName"]';
+            const UPLOAD_PRESET = '@Configuration["CloudinarySettings:UploadPreset"]';
             const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/raw/upload`;
             const fd = new FormData(); 
             fd.append('upload_preset', UPLOAD_PRESET); 

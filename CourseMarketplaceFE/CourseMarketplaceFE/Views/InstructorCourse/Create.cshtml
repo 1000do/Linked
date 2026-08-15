@@ -1,4 +1,5 @@
 @model CourseMarketplaceFE.Models.CreateCourseViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     ViewData["Title"] = "Create New Course";
     Layout = "_InstructorLayout";
@@ -671,8 +672,8 @@
         updateProgressBarUI(1);
 
         // Cloudinary Upload
-        const CLOUD_NAME = 'df8i0azc5';
-        const UPLOAD_PRESET = 'course_marketplace_preset';
+        const CLOUD_NAME = '@Configuration["CloudinarySettings:CloudName"]';
+        const UPLOAD_PRESET = '@Configuration["CloudinarySettings:UploadPreset"]';
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('fileElem');
         const progressEl = document.getElementById('upload-progress');

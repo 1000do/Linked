@@ -24,6 +24,20 @@ namespace CourseMarketplaceFE
                 builder.Configuration["Authentication:Google:ClientId"] = googleClientId;
             }
 
+            // 🔥 Cloudinary Cloud Name – đọc từ biến môi trường
+            var cloudinaryCloudName = Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME");
+            if (!string.IsNullOrWhiteSpace(cloudinaryCloudName))
+            {
+                builder.Configuration["CloudinarySettings:CloudName"] = cloudinaryCloudName;
+            }
+
+            // 🔥 Cloudinary Upload Preset – đọc từ biến môi trường
+            var cloudinaryUploadPreset = Environment.GetEnvironmentVariable("CLOUDINARY_UPLOAD_PRESET");
+            if (!string.IsNullOrWhiteSpace(cloudinaryUploadPreset))
+            {
+                builder.Configuration["CloudinarySettings:UploadPreset"] = cloudinaryUploadPreset;
+            }
+
             // 1. Đăng ký HttpClient để FE có thể gọi API Backend
             builder.Services.AddHttpClient("BackendApi", client =>
             {

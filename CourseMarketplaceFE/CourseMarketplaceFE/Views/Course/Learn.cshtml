@@ -1,4 +1,5 @@
 @model CourseMarketplaceFE.Models.CourseDetailViewModel
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @functions {
     public static string FormatDuration(int totalSeconds)
     {
@@ -1341,7 +1342,7 @@
                 let optimizedUrl = url;
                 if (url === 'PROXY_STREAM') {
                     optimizedUrl = `/Course/StreamMaterial?materialId=${materialId}`;
-                } else if (url.includes('cloudinary.com/df8i0azc5/video/upload/')) {
+                } else if (url.includes('cloudinary.com/@Configuration["CloudinarySettings:CloudName"]/video/upload/')) {
                     optimizedUrl = url.replace('/video/upload/', '/video/upload/f_auto,q_auto/');
                 }
 
