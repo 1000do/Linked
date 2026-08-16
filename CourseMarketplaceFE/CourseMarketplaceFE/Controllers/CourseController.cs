@@ -56,7 +56,7 @@ namespace CourseMarketplaceFE.Controllers
 
         public async Task<IActionResult> Index(string query, string category, string sort, string price, string rating, int page = 1)
         {
-            int pageSize = 12;
+            int pageSize = 9;
             var url = $"public/courses?query={Uri.EscapeDataString(query ?? "")}&category={Uri.EscapeDataString(category ?? "")}&sort={Uri.EscapeDataString(sort ?? "")}&price={Uri.EscapeDataString(price ?? "")}&rating={Uri.EscapeDataString(rating ?? "")}&page={page}&pageSize={pageSize}";
             var response = await _apiClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
