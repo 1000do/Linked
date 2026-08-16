@@ -3445,7 +3445,7 @@
             }
 
             // ─── CHECK ACTIVE UPLOADS ───
-            if (currentXHR && currentXHR.readyState !== 4) {
+            if (window.activeUploads && Object.keys(window.activeUploads).length > 0) {
                 switchMainTab('curriculum');
                 Swal.fire({
                     title: 'Upload in Progress',
@@ -3890,7 +3890,7 @@
             if (isSubmitting) return;
 
             // 1. Check if active uploads are in progress
-            if (currentXHR && currentXHR.readyState !== 4) {
+            if (window.activeUploads && Object.keys(window.activeUploads).length > 0) {
                 return "A video upload is currently in progress. If you leave now, the upload will be cancelled.";
             }
             if (isResourceUploading) {
