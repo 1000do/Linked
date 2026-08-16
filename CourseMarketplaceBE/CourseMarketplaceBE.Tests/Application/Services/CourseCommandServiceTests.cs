@@ -179,7 +179,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _instructorRepoMock.GetByIdAsync(instructorId).Returns(instructor);
             _materialRepoMock.GetByCourseIdAsync(courseId).Returns(materials);
             _lessonRepoMock.GetByCourseIdAsync(courseId).Returns(lessons);
-            _userRepoMock.GetAdminIdAsync().Returns(adminId);
+            _userRepoMock.GetAllManagerIdsAsync().Returns(new List<int> { adminId });
             _courseRepoMock.SaveChangesAsync().Returns(1);
 
             //Act
@@ -191,12 +191,13 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _courseRepoMock.Received(1).Update(Arg.Is<Course>(c => c.CourseId == courseId && c.CourseStatus == CourseStatus.Pending.ToValue()));
             await _courseRepoMock.Received(1).SaveChangesAsync();
             
-            await _notificationServiceMock.Received(1).SendNotificationAsync(
-                adminId, 
-                "Course Submitted", 
-                $"Course '{course.Title}' was submitted for review.", 
-                "/AdminModeration/Courses"
-            );
+            await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<List<NotificationBulkDto>>(dtos =>
+                dtos.Count == 1 &&
+                dtos[0].ReceiverId == adminId &&
+                dtos[0].Title == "Course Submitted" &&
+                dtos[0].Content == $"Course '{course.Title}' was submitted for review." &&
+                dtos[0].LinkAction == "/AdminModeration/Courses"
+            ));
         }
 
         [Fact]
@@ -994,11 +995,17 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             _courseRepoMock.GetByIdAsync(courseId).Returns(course);
             _instructorRepoMock.GetByIdAsync(2).Returns(instructor);
             _lessonRepoMock.GetByCourseIdAsync(courseId).Returns(lessons);
-            _userRepoMock.GetAdminIdAsync().Returns(99);
+            _userRepoMock.GetAllManagerIdsAsync().Returns(new List<int> { 99 });
 
             await _sut.UpdateCourseStatusAsync(courseId, CourseStatus.Pending.ToValue(), 2);
 
-            await _notificationServiceMock.Received(1).SendNotificationAsync(99, "Course Submitted", "Course 'Title' was submitted for review.", "/AdminModeration/Courses");
+            await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<List<NotificationBulkDto>>(dtos =>
+                dtos.Count == 1 &&
+                dtos[0].ReceiverId == 99 &&
+                dtos[0].Title == "Course Submitted" &&
+                dtos[0].Content == "Course 'Title' was submitted for review." &&
+                dtos[0].LinkAction == "/AdminModeration/Courses"
+            ));
         }
 
         [Fact]

@@ -351,16 +351,8 @@ public class CourseCommandService : ICourseCommandService
             ValidateLandingPageRequirements(course);
             await ValidateCourseDurationLimitsAsync(course, instructorId);
 
-            var adminId = await _userRepository.GetAdminIdAsync();
-            if (adminId.HasValue)
-            {
-                await _notificationService.SendNotificationAsync(
-                    adminId.Value, 
-                    "Course Submitted", 
-                    $"Course '{course.Title}' was submitted for review.", 
-                    "/AdminModeration/Courses"
-                );
-            }
+            await NotifyManagersAsync("Course Submitted", $"Course '{course.Title}' was submitted for review.", "/AdminModeration/Courses");
+
         }
 
         _courseRepository.Update(course);
@@ -586,6 +578,23 @@ public class CourseCommandService : ICourseCommandService
         catch (CourseException ex)
         {
             throw new BadRequestException(ex.Message);
+        }
+    }
+
+    private async Task NotifyManagersAsync(string title, string content, string? linkAction)
+    {
+        var managerIds = await _userRepository.GetAllManagerIdsAsync();
+        if (managerIds != null && managerIds.Any())
+        {
+            var dtos = managerIds.Select(id => new NotificationBulkDto
+            {
+                ReceiverId = id,
+                Title = title,
+                Content = content,
+                LinkAction = linkAction
+            }).ToList();
+
+            await _notificationService.SendBulkNotificationsAsync(dtos);
         }
     }
 }
