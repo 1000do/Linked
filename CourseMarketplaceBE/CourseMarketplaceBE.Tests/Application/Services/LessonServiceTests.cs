@@ -535,7 +535,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             Func<Task> act = async () => await _sut.CreateLessonAsync(request, instructorId);
 
             //Assert
-            await act.Should().ThrowAsync<Exception>().WithMessage("DB Error: inner");
+            await act.Should().ThrowAsync<Exception>().WithMessage("An unexpected database error occurred while creating the lesson. Please check your data and try again.");
             await _lessonRepoMock.Received(1).SaveChangesAsync();
         }
 
@@ -850,7 +850,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             Func<Task> act = async () => await (Task<int>)method.Invoke(_sut, null)!;
 
             //Assert
-            await act.Should().ThrowAsync<Exception>().WithMessage("*Database operation failed due to a constraint violation or data issue while saving lessons.*");
+            await act.Should().ThrowAsync<Exception>().WithMessage("An unexpected database error occurred while saving the lesson. Please check your data and try again.");
         }
 
         [Fact]
@@ -866,7 +866,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             Func<Task> act = async () => await (Task<int>)method.Invoke(_sut, null)!;
 
             //Assert
-            await act.Should().ThrowAsync<Exception>().WithMessage("*Database operation failed due to a constraint violation or data issue while saving materials.*");
+            await act.Should().ThrowAsync<Exception>().WithMessage("An unexpected database error occurred while saving the material. Please check your data and try again.");
         }
 
         [Fact]

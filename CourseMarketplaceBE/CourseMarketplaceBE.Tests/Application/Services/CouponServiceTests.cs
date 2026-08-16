@@ -154,7 +154,7 @@ public class CouponServiceTests
 
         //Assert
         var ex = await act.Should().ThrowAsync<ArgumentException>();
-        ex.WithMessage("Discount percentage cannot exceed 100%.");
+        ex.WithMessage("Discount percentage cannot exceed 99%.");
     }
 
     [Fact]
