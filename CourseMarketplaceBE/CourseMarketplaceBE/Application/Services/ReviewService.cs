@@ -427,6 +427,12 @@ public class ReviewService : IReviewService
 
     public async Task UpdateReviewAsync(int userId, UpdateReviewRequest request)
     {
+        var activeLockout = await _lockoutRepo.GetActiveLockoutAsync(userId, "review");
+        if (activeLockout != null)
+            throw new BadRequestException(
+                $"Your account has been restricted from editting comments and reviews until " +
+                $"{activeLockout.LockoutEnd.Value:yyyy-MM-dd HH:mm:ss} due to repeated community standards violations.");
+
         if (request.Rating < 1 || request.Rating > 5)
             throw new InvalidOperationException("Rating must be between 1 and 5 stars.");
         if (string.IsNullOrWhiteSpace(request.Comment))

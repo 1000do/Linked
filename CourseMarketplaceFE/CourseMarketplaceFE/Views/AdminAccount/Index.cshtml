@@ -444,6 +444,45 @@
                 return;
             }
 
+            if (!displayName) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Display Name is required.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                });
+                return;
+            }
+
+            if (!password || password.length < 6) {
+                Swal.fire({
+                    title: 'Validation Error',
+                    text: 'Temporary Password must be at least 6 characters.',
+                    icon: 'warning',
+                    confirmButtonColor: '#0f172a',
+                    background: '#ffffff',
+                    customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                });
+                return;
+            }
+
+            if (phoneNumber) {
+                const phoneRegex = /^[0-9]{10}$/;
+                if (!phoneRegex.test(phoneNumber)) {
+                    Swal.fire({
+                        title: 'Validation Error',
+                        text: 'Contact Number must be exactly 10 digits.',
+                        icon: 'warning',
+                        confirmButtonColor: '#0f172a',
+                        background: '#ffffff',
+                        customClass: { popup: 'rounded-2xl shadow-xl border border-slate-100' }
+                    });
+                    return;
+                }
+            }
+
             try {
                 const response = await fetch('/AdminAccount/CreateStaff', {
                     method: 'POST',
@@ -521,20 +560,11 @@
             }
 
             if (phoneNumber) {
-                const phoneRegex = /^\+?[0-9\s-]{9,15}$/;
+                const phoneRegex = /^[0-9]{10}$/;
                 if (!phoneRegex.test(phoneNumber)) {
                     Swal.fire({
                         title: 'Validation Error',
-                        text: 'Invalid phone number format.',
-                        icon: 'warning',
-                        confirmButtonColor: '#0f172a'
-                    });
-                    return;
-                }
-                if (phoneNumber.length > 50) {
-                    Swal.fire({
-                        title: 'Validation Error',
-                        text: 'Phone number cannot exceed 50 characters.',
+                        text: 'Contact Number must be exactly 10 digits.',
                         icon: 'warning',
                         confirmButtonColor: '#0f172a'
                     });

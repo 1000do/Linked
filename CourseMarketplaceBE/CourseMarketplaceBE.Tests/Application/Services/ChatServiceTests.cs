@@ -1116,7 +1116,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var chat = new Chat
             {
                 ChatId = 1,
-                Messages = new List<Message> { new Message { Content = null } },
+                Messages = new List<Message> { new Message { Content = "Hello" } },
                 ChatParticipants = new List<ChatParticipant>()
             };
             var participants = new List<ChatParticipant>
@@ -1131,7 +1131,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
 
             result.Should().HaveCount(1);
             result.First().PartnerName.Should().Be("Support Team");
-            result.First().LastMessage.Should().BeNull();
+            result.First().LastMessage.Should().Be("Hello");
         }
 
         [Fact]

@@ -25,16 +25,26 @@ namespace CourseMarketplaceBE.Infrastructure.Services
         private readonly ILogger<AiModerationService> _logger;
         private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
         private readonly IAsyncPolicy<HttpResponseMessage> _circuitBreakerPolicy;
+        private readonly IRedisService _redisService;
 
         private const int MaxRetries = 3;
         private const string BaseUrl = UrlConst.AIModerationBaseURL;
 
         public AiModerationService(
             HttpClient httpClient,
-            ILogger<AiModerationService> logger)
+            ILogger<AiModerationService> logger,
+            Microsoft.Extensions.Configuration.IConfiguration configuration,
+            IRedisService redisService)
         {
             _httpClient = httpClient;
-            _httpClient.Timeout = TimeSpan.FromMinutes(30);
+            _redisService = redisService;
+            var requestTimeoutEnv = configuration["REQUEST_TIMEOUT"];
+            var timeoutSeconds = 1800; // 30 minutes default
+            if (!string.IsNullOrEmpty(requestTimeoutEnv) && int.TryParse(requestTimeoutEnv, out var parsedTimeout))
+            {
+                timeoutSeconds = parsedTimeout;
+            }
+            _httpClient.Timeout = TimeSpan.FromSeconds(timeoutSeconds);
             _logger = logger;
 
             // Setup retry policy
@@ -94,6 +104,10 @@ namespace CourseMarketplaceBE.Infrastructure.Services
         {
             try
             {
+                if (!await _redisService.IsHealthyAsync())
+                {
+                    return false;
+                }
                 var response = await _httpClient.GetAsync($"{BaseUrl}/{UrlConst.HealthCheckURL}");
                 return response.IsSuccessStatusCode;
             }

@@ -18,6 +18,8 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 
     <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
 	
@@ -674,6 +676,11 @@
                     headers: { 'Authorization': `Bearer ${currentToken}` }
                 });
                 if (!res.ok) return;
+
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    return;
+                }
 
                 const result = await res.json();
                 const items = result?.data?.items ?? [];
@@ -1436,8 +1443,8 @@
             if (currentToken) {
                 if (localStorage.getItem("AccountLocked") === "true") {
                     localStorage.removeItem("AccountLocked");
-                    const form = document.getElementById('global-logout-form');
-                    if(form) { form.submit(); }
+                    const form = document.getElementById('global-logout-form') || document.getElementById('global-logout-form-desktop') || document.getElementById('global-logout-form-mobile') || document.querySelector('form[action="/Account/Logout"]');
+                    if (form) { form.submit(); }
                     return;
                 }
 
@@ -1479,7 +1486,8 @@
                         allowOutsideClick: false,
                         allowEscapeKey: false
                     }).then(() => {
-                        document.getElementById('global-logout-form').submit();
+                        const form = document.getElementById('global-logout-form') || document.getElementById('global-logout-form-desktop') || document.getElementById('global-logout-form-mobile') || document.querySelector('form[action="/Account/Logout"]');
+                        if (form) { form.submit(); }
                     });
                 });
                 notiConn.start().catch(err => console.error("Noti Hub Error", err));

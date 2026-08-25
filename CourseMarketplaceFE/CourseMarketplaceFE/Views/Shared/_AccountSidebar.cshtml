@@ -1,6 +1,7 @@
 @model string
 @{
     var userRole = (Context.Request.Cookies["UserRole"] ?? "learner").ToLower();
+    var authProvider = (Context.Request.Cookies["AuthProvider"] ?? ViewData["AuthProvider"]?.ToString() ?? "local").ToLower();
 }
 
 <aside class="w-full lg:w-80 flex-shrink-0">
@@ -81,17 +82,20 @@
             <!-- Separator -->
             <div class="h-px bg-slate-100 my-2 mx-4"></div>
 
-            <!-- 6. Change Password -->
-            <a href="/Account/ChangePassword" 
-               class="@(Model == "ChangePassword" 
-                   ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
-                   : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
-                <span class="material-symbols-outlined @(Model == "ChangePassword" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
-                      style='font-variation-settings: "FILL" @(Model == "ChangePassword" ? "1" : "0");'>
-                    lock
-                </span>
-                <span class="@(Model == "ChangePassword" ? "" : "font-semibold")">Change Password</span>
-            </a>
+            @if (authProvider != "google")
+            {
+                <!-- 6. Change Password -->
+                <a href="/Account/ChangePassword" 
+                   class="@(Model == "ChangePassword" 
+                       ? "flex items-center gap-4 px-5 py-4 rounded-2xl bg-white shadow-lg shadow-primary/10 text-primary font-bold transition-all border border-primary/5" 
+                       : "group flex items-center gap-4 px-5 py-4 rounded-2xl text-slate-500 hover:bg-white hover:shadow-md transition-all duration-300")">
+                    <span class="material-symbols-outlined @(Model == "ChangePassword" ? "text-primary" : "text-slate-400 group-hover:text-primary transition-colors")" 
+                          style='font-variation-settings: "FILL" @(Model == "ChangePassword" ? "1" : "0");'>
+                        lock
+                    </span>
+                    <span class="@(Model == "ChangePassword" ? "" : "font-semibold")">Change Password</span>
+                </a>
+            }
         </nav>
 
 

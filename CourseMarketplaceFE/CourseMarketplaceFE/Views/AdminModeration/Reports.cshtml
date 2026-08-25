@@ -442,10 +442,15 @@
                 });
             },
             preConfirm: () => {
+                const note = document.getElementById('swal-note').value.trim();
+                if (!note) {
+                    Swal.showValidationMessage('Please enter a moderation note.');
+                    return false;
+                }
                 return {
                     status: document.getElementById('swal-status').value,
                     removeContent: document.getElementById('swal-remove-content').checked,
-                    resolutionNote: document.getElementById('swal-note').value
+                    resolutionNote: note
                 }
             }
         });
@@ -573,10 +578,15 @@
                 });
             },
             preConfirm: () => {
+                const note = document.getElementById('swal-note').value.trim();
+                if (!note) {
+                    Swal.showValidationMessage('Please enter a moderation note.');
+                    return false;
+                }
                 return {
                     status: document.getElementById('swal-status').value,
                     removeContent: document.getElementById('swal-remove-content').checked,
-                    resolutionNote: document.getElementById('swal-note').value
+                    resolutionNote: note
                 }
             }
         });
@@ -797,7 +807,7 @@
                 
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs font-bold">
                     <span class="text-slate-400 block uppercase tracking-wider text-[10px] mb-1">Reported Course</span>
-                    <a href="/Course/Detail/${r.courseId}" target="_blank" class="text-primary hover:underline">${escapeHtml(r.courseTitle)}</a>
+                    <a href="/Course/Details/${r.courseId}" target="_blank" class="text-primary hover:underline">${escapeHtml(r.courseTitle)}</a>
                     <div class="flex items-center gap-2 mt-1.5 text-[10px] text-slate-500">
                         <span>Instructor: ${escapeHtml(r.instructorName)}</span>
                         <span>•</span>
@@ -879,7 +889,7 @@
                     <p class="text-slate-800 italic font-semibold">"${escapeHtml(r.reviewComment || 'No comments')}"</p>
                     <div class="flex flex-col gap-0.5 mt-2 text-[10px] text-slate-500">
                         <div>Author: <span class="font-bold text-slate-750">${escapeHtml(r.reviewAuthorName || 'Unknown User')}</span> ${r.reviewRating ? `• Rating: <span class="font-bold text-amber-500">${r.reviewRating}⭐</span>` : ''}</div>
-                        ${r.courseTitle ? `<div class="mt-1">Course: <a href="/Course/Detail/${r.courseId}" target="_blank" class="font-bold text-primary hover:underline">${escapeHtml(r.courseTitle)}</a></div>` : ''}
+                        ${r.courseTitle ? `<div class="mt-1">Course: <a href="/Course/Details/${r.courseId}" target="_blank" class="font-bold text-primary hover:underline">${escapeHtml(r.courseTitle)}</a></div>` : ''}
                         ${r.lessonTitle ? `<div>Lesson: <span class="font-bold text-slate-600">${escapeHtml(r.lessonTitle)}</span></div>` : ''}
                     </div>
                 </div>

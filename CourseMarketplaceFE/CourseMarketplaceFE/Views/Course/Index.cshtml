@@ -595,6 +595,18 @@
                             document.getElementById('btn-clear-search')?.classList.remove('hidden');
                         }
                     }
+                } else if (response.status === 429) {
+                    coursesContainer.style.opacity = '1';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Too Many Requests',
+                            text: 'Too many requests. Please slow down and try again later.',
+                            confirmButtonColor: '#0ea5e9'
+                        });
+                    } else {
+                        alert('Too many requests. Please slow down and try again later.');
+                    }
                 }
             } catch (err) {
                 console.error("Error loading course list:", err);
@@ -797,5 +809,21 @@
         window.removeFilter = removeFilter;
         window.toggleAccordion = toggleAccordion;
         window.setViewMode = setViewMode;
+
+        @if (ViewBag.IsRateLimited == true)
+        {
+            <text>
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Too Many Requests',
+                    text: '@Html.Raw(ViewBag.RateLimitMessage)',
+                    confirmButtonColor: '#0ea5e9'
+                });
+            } else {
+                alert('@Html.Raw(ViewBag.RateLimitMessage)');
+            }
+            </text>
+        }
     });
 </script>

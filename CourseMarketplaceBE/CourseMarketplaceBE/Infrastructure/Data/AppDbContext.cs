@@ -317,6 +317,9 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("model_updated_at");
             entity.Property(e => e.ModelPath).HasColumnName("model_path");
             entity.Property(e => e.ProcessType).HasMaxLength(255).HasColumnName("process_type");
+
+            entity.HasIndex(e => e.ModelName, "ai_models_model_name_key").IsUnique();
+            entity.HasIndex(e => e.ModelPath, "ai_models_model_path_key").IsUnique();
         });
 
         // ── courses_ai_integrations ─────────────────────────────────────────────

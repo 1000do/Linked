@@ -145,6 +145,7 @@ public class Program
         builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<IGoogleTokenValidator, GoogleTokenValidator>();
         builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+        builder.Services.AddScoped<IAiFeedbackRepository, AiFeedbackRepository>();
         builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
         builder.Services.AddScoped<ILessonRepository, LessonRepository>();
         builder.Services.AddScoped<IMaterialRepository, MaterialRepository>();
@@ -316,32 +317,54 @@ public class Program
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            
-            // Auth endpoints: 10/min
-            options.AddFixedWindowLimiter("AuthPolicy", opt =>
+            options.OnRejected = async (context, token) =>
             {
-                opt.PermitLimit = 10;
-                opt.Window = TimeSpan.FromMinutes(1);
-                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                opt.QueueLimit = 0;
+                context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                context.HttpContext.Response.ContentType = "application/json";
+                await context.HttpContext.Response.WriteAsync(
+                    "{\"status\":429,\"message\":\"Too many requests. Please try again later.\"}", cancellationToken: token);
+            };
+            
+            // Auth endpoints: 5/min per IP
+            options.AddPolicy("AuthPolicy", context =>
+            {
+                var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter(remoteIp,
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
+                    });
             });
             
-            // OTP/Password Reset: 5/15min
-            options.AddFixedWindowLimiter("OtpPolicy", opt =>
+            // OTP/Password Reset: 5/15min per IP
+            options.AddPolicy("OtpPolicy", context =>
             {
-                opt.PermitLimit = 5;
-                opt.Window = TimeSpan.FromMinutes(15);
-                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                opt.QueueLimit = 0;
+                var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter(remoteIp,
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 5,
+                        Window = TimeSpan.FromMinutes(15),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
+                    });
             });
             
-            // Search endpoints: 60/min
-            options.AddFixedWindowLimiter("SearchPolicy", opt =>
+            // Search endpoints: 60/min per IP
+            options.AddPolicy("SearchPolicy", context =>
             {
-                opt.PermitLimit = 60;
-                opt.Window = TimeSpan.FromMinutes(1);
-                opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                opt.QueueLimit = 0;
+                var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                return RateLimitPartition.GetFixedWindowLimiter(remoteIp,
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 60,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 0
+                    });
             });
         });
 

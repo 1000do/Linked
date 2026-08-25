@@ -521,12 +521,16 @@ public class EmbeddingServiceTests
 
         //Arrange 2
         _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(isInitialized);
+        _materialRepositoryMock.GetRemovedMaterialIdsAsync().Returns(new List<int> { 1, 2 });
 
         //Act
         var result = await _sut.PrepareMaterialEmbeddingsAsync();
 
         //Assert
         result.Should().BeFalse();
+        await _materialRepositoryMock.Received(1).GetRemovedMaterialIdsAsync();
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(1));
+        await _redisServiceMock.Received(1).RemoveCacheAsync(CacheKeys.MaterialEmbedding.GetKey(2));
         await _textEmbeddingRepositoryMock.DidNotReceive().GetAllAsync();
         await _mediaEmbeddingRepositoryMock.DidNotReceive().GetAllAsync();
     }
@@ -544,6 +548,7 @@ public class EmbeddingServiceTests
         _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(false);
         _textEmbeddingRepositoryMock.GetAllAsync().Returns(textItems);
         _mediaEmbeddingRepositoryMock.GetAllAsync().Returns(new List<MediaEmbedding>());
+        _materialRepositoryMock.GetByIdAsync(10).Returns(new LearningMaterial { MaterialId = 10, LearningStatus = CourseMarketplaceBE.Domain.Constants.LearningStatus.Active.ToValue() });
         
         string cacheKey = CacheKeys.MaterialEmbedding.GetKey(10);
         _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey).Returns((MaterialEmbeddingResponse)null!);
@@ -571,6 +576,7 @@ public class EmbeddingServiceTests
         _redisServiceMock.GetCacheAsync<bool>(CacheKeys.MaterialEmbeddingInitialized.GetKey()).Returns(false);
         _textEmbeddingRepositoryMock.GetAllAsync().Returns(textItems);
         _mediaEmbeddingRepositoryMock.GetAllAsync().Returns(new List<MediaEmbedding>());
+        _materialRepositoryMock.GetByIdAsync(10).Returns(new LearningMaterial { MaterialId = 10, LearningStatus = CourseMarketplaceBE.Domain.Constants.LearningStatus.Active.ToValue() });
         
         string cacheKey = CacheKeys.MaterialEmbedding.GetKey(10);
         _redisServiceMock.GetCacheAsync<MaterialEmbeddingResponse>(cacheKey).Returns(existingCached);

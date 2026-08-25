@@ -138,6 +138,7 @@
         let optionCounter = -1;
 
         document.addEventListener('DOMContentLoaded', async () => {
+            document.body.appendChild(document.getElementById('view-question-form'));
             await loadCourses();
             renderView();
         });

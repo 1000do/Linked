@@ -62,6 +62,7 @@ services:
   #     WHISPER_MODEL_NAME: ${WHISPER_MODEL_NAME}
   #     MEDIA_EMBEDDING_DIM: ${MEDIA_EMBEDDING_DIM}
   #     TEXT_EMBEDDING_DIM: ${TEXT_EMBEDDING_DIM}
+  #     REQUEST_TIMEOUT: ${REQUEST_TIMEOUT}
   #   volumes:
   #     - hf_cache:/root/.cache/huggingface
   #     - easyocr_cache:/root/.EasyOCR
@@ -89,6 +90,7 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       ASPNETCORE_URLS: "http://+:80"
       TZ: Asia/Ho_Chi_Minh
+      REQUEST_TIMEOUT: ${REQUEST_TIMEOUT}
       JWT_KEY: ${JWT_KEY}
       JWT_ISSUER: ${JWT_ISSUER}
       JWT_AUDIENCE: ${JWT_AUDIENCE}
@@ -107,6 +109,10 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
+      SPAM_MODEL_PATH: ${SPAM_MODEL_PATH}
+      TOXIC_MODEL_PATH: ${TOXIC_MODEL_PATH}
+      TEXT_EMBEDDING_MODEL_NAME: ${TEXT_EMBEDDING_MODEL_NAME}
+      CLIP_MODEL_NAME: ${CLIP_MODEL_NAME}
     depends_on:
       db:
         condition: service_healthy

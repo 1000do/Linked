@@ -47,12 +47,40 @@ namespace CourseMarketplaceBE.Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<AiModel>> GetActiveModelsByPathsAsync(List<string> paths)
+        {
+            if (paths == null || !paths.Any()) return new List<AiModel>();
+            
+            var lowerPaths = paths.Select(p => p.ToLower()).ToList();
+            
+            return await _context.AiModels
+                .AsNoTracking()
+                .Where(am => lowerPaths.Contains(am.ModelPath.ToLower()) && am.ModelStatus == AiModelConst.Active)
+                .ToListAsync();
+        }
+
         public async Task<List<AiModel>> GetModelsByTypeAsync(string modelType)
         {
             return await _context.AiModels
                 .AsNoTracking()
                 .Where(am => am.ModelType == modelType)
                 .ToListAsync();
+        }
+
+        public async Task<bool> ExistsByModelNameAsync(string modelName)
+        {
+            if (string.IsNullOrEmpty(modelName)) return false;
+            var lowerName = modelName.ToLower();
+            return await _context.AiModels
+                .AnyAsync(am => am.ModelName.ToLower() == lowerName);
+        }
+
+        public async Task<bool> ExistsByModelPathAsync(string modelPath)
+        {
+            if (string.IsNullOrEmpty(modelPath)) return false;
+            var lowerPath = modelPath.ToLower();
+            return await _context.AiModels
+                .AnyAsync(am => am.ModelPath.ToLower() == lowerPath);
         }
 
         public async Task<CourseMarketplaceBE.Application.DTOs.AiModelDto?> GetByModelPathAsync(string modelPath)

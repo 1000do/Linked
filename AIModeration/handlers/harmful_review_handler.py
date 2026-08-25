@@ -1,4 +1,5 @@
 import time
+import json
 import logging
 from typing import Optional, Dict, Any
 from core.models import (
@@ -27,7 +28,24 @@ class HarmfulReviewHandler(BaseHandler):
         Orchestrate harmful (toxicity & spam) detection for a single review comment.
         """
         stage_start = time.time()
-        
+        model = request.classification_model
+
+        # print("Classification model details:")
+        # print(json.dumps(vars(model), indent=4, default=str))
+
+        model_status = model.model_status if model else None
+        if model and model_status and model_status.lower() == 'inactive':
+            self.logger.warning("Classification model is inactive. Early exit with manual audit.")
+            total_latency = (time.time() - stage_start) * 1000
+            return ReviewAiModerationResponse(
+                moderation_status=ModerationStatus.MANUAL_AUDIT.value,
+                confidence_score=0.0,
+                reason="Classification model is inactive",
+                latency_ms=total_latency,
+                details = {},
+                model_id=request.classification_model.model_id
+            )
+
         # Use provided thresholds
         spam_threshold = request.spam_score_threshold
         toxic_threshold = request.toxic_score_threshold

@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     # Timeout config (in seconds)
     # MODEL_LOAD_TIMEOUT: int = int(os.getenv("MODEL_LOAD_TIMEOUT", 300))
     # INFERENCE_TIMEOUT: int = int(os.getenv("INFERENCE_TIMEOUT", 60))
-    REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", 300))
+    REQUEST_TIMEOUT: int = int(os.getenv("REQUEST_TIMEOUT", 1800))
     
     # Logging
     LOG_LEVEL: str = os.getenv("AI_LOG_LEVEL", "INFO")

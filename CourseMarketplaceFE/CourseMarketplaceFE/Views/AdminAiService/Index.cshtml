@@ -68,21 +68,21 @@
                         <label class="text-xs font-bold text-slate-700">Harmful Text Classifier (Course & Review)</label>
                         <div class="px-3.5 py-2 text-[13px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 break-all">
                             @{ var harmfulTextModel = Model.AllActiveModels.FirstOrDefault(x => x.ModelPath == Model.Config.CourseHarmfulTextClassifierPath); }
-                            <span class="font-semibold text-slate-800">@(harmfulTextModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(Model.Config.CourseHarmfulTextClassifierPath))</span>
+                            <span class="font-semibold text-slate-800">@(harmfulTextModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(harmfulTextModel?.ModelPath ?? "unknown_path"))</span>
                         </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-bold text-slate-700">Course Text Embedding</label>
                         <div class="px-3.5 py-2 text-[13px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 break-all">
                             @{ var textEmbedModel = Model.AllActiveModels.FirstOrDefault(x => x.ModelPath == Model.Config.CourseTextEmbeddingGeneratorPath); }
-                            <span class="font-semibold text-slate-800">@(textEmbedModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(Model.Config.CourseTextEmbeddingGeneratorPath))</span>
+                            <span class="font-semibold text-slate-800">@(textEmbedModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(textEmbedModel?.ModelPath ?? "unknown_path"))</span>
                         </div>
                     </div>
                     <div class="flex flex-col gap-1.5">
                         <label class="text-xs font-bold text-slate-700">Course Media Embedding</label>
                         <div class="px-3.5 py-2 text-[13px] border border-slate-200 rounded-lg bg-slate-50 text-slate-600 break-all">
                             @{ var mediaEmbedModel = Model.AllActiveModels.FirstOrDefault(x => x.ModelPath == Model.Config.CourseMediaEmbeddingGeneratorPath); }
-                            <span class="font-semibold text-slate-800">@(mediaEmbedModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(Model.Config.CourseMediaEmbeddingGeneratorPath))</span>
+                            <span class="font-semibold text-slate-800">@(mediaEmbedModel?.ModelName ?? "Unknown")</span> <span class="text-slate-400 font-mono text-xs ml-1">(@(mediaEmbedModel?.ModelPath ?? "unknown_path"))</span>
                         </div>
                     </div>
                 </div>
@@ -251,10 +251,7 @@
                 <label class="text-xs font-bold text-slate-700">Model Version <span class="text-rose-500">*</span></label>
                 <input type="text" id="editModelVersion" required pattern="^\d+\.\d+\.\d+$" maxlength="50" placeholder="e.g. 1.0.0" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
             </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-slate-700">Model Path <span class="text-rose-500">*</span></label>
-                <input type="text" id="editModelPath" required maxlength="255" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors" />
-            </div>
+
             <div class="flex flex-col gap-1.5">
                 <label class="text-xs font-bold text-slate-700">Description <span class="text-rose-500">*</span></label>
                 <textarea id="editDescription" required minlength="20" rows="3" class="px-3.5 py-2 text-sm border border-slate-200 focus:border-slate-300 focus:outline-none rounded-lg bg-slate-50/50 focus:bg-white transition-colors"></textarea>
@@ -356,13 +353,11 @@
             const id = btn.getAttribute('data-id');
             const provider = btn.getAttribute('data-provider');
             const version = btn.getAttribute('data-version');
-            const path = btn.getAttribute('data-path');
             const desc = btn.getAttribute('data-desc');
 
             document.getElementById('editModelId').value = id;
             document.getElementById('editModelProvider').value = provider;
             document.getElementById('editModelVersion').value = version;
-            document.getElementById('editModelPath').value = path;
             document.getElementById('editDescription').value = desc;
 
             const modal = document.getElementById('editAiModelModal');
@@ -445,7 +440,7 @@
                 fetchPage('models', 1);
             } else {
                 const err = await res.json();
-                Swal.fire('Error', err.Message || 'Failed to add model', 'error');
+                Swal.fire('Error', err.Message || err.message || 'Failed to add model', 'error');
             }
         }
 
@@ -456,7 +451,6 @@
             const body = {
                 ModelProvider: document.getElementById('editModelProvider').value,
                 ModelVersion: document.getElementById('editModelVersion').value,
-                ModelPath: document.getElementById('editModelPath').value,
                 Description: document.getElementById('editDescription').value
             };
 
@@ -491,7 +485,7 @@
                 fetchPage('models', 1);
             } else {
                 const err = await res.json();
-                Swal.fire('Error', err.Message || 'Failed to edit model', 'error');
+                Swal.fire('Error', err.Message || err.message || 'Failed to edit model', 'error');
             }
         }
 
@@ -553,7 +547,7 @@
                         popup: 'rounded-2xl border border-slate-100 shadow-xl' } });
             } else {
                 const err = await res.json();
-                Swal.fire('Error', err.Message || 'Failed to update', 'error');
+                Swal.fire('Error', err.Message || err.message || 'Failed to update', 'error');
             }
         }
 
@@ -590,7 +584,7 @@
                 fetchPage('models', 1);
             } else {
                 const err = await res.json();
-                Swal.fire('Error', err.Message || 'Failed to toggle status', 'error');
+                Swal.fire('Error', err.Message || err.message || 'Failed to toggle status', 'error');
             }
         }
 

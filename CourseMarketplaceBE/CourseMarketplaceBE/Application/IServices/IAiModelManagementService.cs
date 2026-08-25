@@ -15,4 +15,5 @@ public interface IAiModelManagementService
     Task<bool> ToggleModelStatusAsync(int id);
     Task<List<int>> GetModelIdsByType(string type);
     Task<List<AiModelDto>> GetModelsByTypeAsync(string modelType);
+    Task<List<AiModelAdminDto>> GetActiveModelsByPathsAsync(List<string> paths);
 }

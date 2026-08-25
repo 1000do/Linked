@@ -9,5 +9,6 @@ namespace CourseMarketplaceBE.Domain.IRepositories
         void AddCourseFeedback(CourseAiFeedback feedback);
         void AddLessonFeedback(LessonAiFeedback feedback);
         void AddMaterialFeedback(LearningMaterialAiFeedback feedback);
+        Task<System.Collections.Generic.List<CourseMarketplaceBE.Application.DTOs.AiFeedbackBubbleDto>> GetLatestFeedbacksByCourseAsync(int courseId);
     }
 }

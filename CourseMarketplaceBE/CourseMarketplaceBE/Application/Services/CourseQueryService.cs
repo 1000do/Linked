@@ -22,6 +22,7 @@ public class CourseQueryService : ICourseQueryService
     private readonly ICartRepository _cartRepository;
     private readonly ILogger<CourseQueryService> _logger;
     private readonly ICourseExtRepository _courseExtRepository;
+    private readonly IAiFeedbackRepository _aiFeedbackRepository;
 
     public CourseQueryService(
         ICourseRepository courseRepository,
@@ -31,7 +32,8 @@ public class CourseQueryService : ICourseQueryService
         IMapper mapper,
         ICartRepository cartRepository,
         ILogger<CourseQueryService> logger,
-        ICourseExtRepository courseExtRepository)
+        ICourseExtRepository courseExtRepository,
+        IAiFeedbackRepository aiFeedbackRepository)
     {
         _courseRepository = courseRepository;
         _instructorRepository = instructorRepository;
@@ -41,6 +43,7 @@ public class CourseQueryService : ICourseQueryService
         _cartRepository = cartRepository;
         _logger = logger;
         _courseExtRepository = courseExtRepository;
+        _aiFeedbackRepository = aiFeedbackRepository;
     }
 
     public async Task<bool> CheckThumbnailDuplicateAsync(string hash, int? excludeCourseId = null)
@@ -198,8 +201,12 @@ public class CourseQueryService : ICourseQueryService
     {
         string cacheKey = CacheKeys.CourseDetail.GetKey(courseId);
         _logger.LogInformation("GetCourseWithDetailsAsync: {CacheKey}", cacheKey);
-        var response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
-        _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
+        CourseDetailResponse? response = null;
+        if (await _redisService.IsHealthyAsync())
+        {
+            response = await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey);
+            _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
+        }
         if (response == null)
         {
             var course = await _courseRepository.GetCourseWithDetailsAsync(courseId);
@@ -224,8 +231,11 @@ public class CourseQueryService : ICourseQueryService
             response.RatingAverage = (decimal)(courseStats?.RatingAverage ?? 0);
             _logger.LogInformation("GetCourseWithDetailsAsync: {Response}", response);
 
-            await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
-            _logger.LogInformation("Cached course {CourseId} with key {CacheKey} : {CacheValue}", courseId, cacheKey, await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey));
+            if (await _redisService.IsHealthyAsync())
+            {
+                await _redisService.SetCacheAsync(cacheKey, response, CacheTtl.Short.GetTtl());
+                _logger.LogInformation("Cached course {CourseId} with key {CacheKey} : {CacheValue}", courseId, cacheKey, await _redisService.GetCacheAsync<CourseDetailResponse>(cacheKey));
+            }
         }
 
         response.IsInAnyCart = await _cartRepository.IsCourseInAnyCartAsync(courseId);
@@ -285,6 +295,12 @@ public class CourseQueryService : ICourseQueryService
             {
                 throw new UnauthorizedAccessException("You do not have permission to view this course.");
             }
+        }
+
+        if (userRole != null && (string.Equals(userRole, "admin", StringComparison.OrdinalIgnoreCase) || 
+                                 string.Equals(userRole, "staff", StringComparison.OrdinalIgnoreCase)))
+        {
+            response.AiFeedbacks = await _aiFeedbackRepository.GetLatestFeedbacksByCourseAsync(courseId);
         }
 
         return response;

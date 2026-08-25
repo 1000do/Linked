@@ -412,6 +412,27 @@ public class GiftServiceTests
     }
 
     [Fact]
+    public async Task ClaimGiftAsync_UserIsCourseInstructor_ThrowsInvalidOperationException()
+    {
+        //Arrange 1
+        var userId = 10;
+        var token = "valid_token";
+        var gift = new Gift { IsClaimed = false, DeliveryStatus = "active", OrderItem = new OrderItem { CourseId = 2 } };
+        var course = new Course { CourseId = 2, InstructorId = 10 };
+
+        //Arrange 2
+        _giftRepoMock.GetByTokenAsync(token).Returns(gift);
+        _courseRepoMock.GetByIdAsync(2).Returns(course);
+
+        //Act
+        Func<Task> act = async () => await _sut.ClaimGiftAsync(userId, token);
+
+        //Assert
+        var ex = await act.Should().ThrowAsync<InvalidOperationException>();
+        ex.WithMessage("You already own this course in your library.");
+    }
+
+    [Fact]
     public async Task ClaimGiftAsync_ValidClaim_ProcessesTransactionAndSendsNotification()
     {
         //Arrange 1
@@ -648,6 +669,25 @@ public class GiftServiceTests
         _userRepoMock.GetAccountByEmailAsync(email).Returns(account);
         _courseRepoMock.IsEnrolledAsync(1, 2).Returns(true);
         
+        //Act
+        var result = await _sut.IsRecipientEnrolledAsync(email, 2);
+
+        //Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task IsRecipientEnrolledAsync_AccountIsInstructor_ReturnsTrue()
+    {
+        //Arrange 1
+        var email = "instructor@test.com";
+        var account = new Account { AccountId = 10 };
+        var course = new Course { CourseId = 2, InstructorId = 10 };
+
+        //Arrange 2
+        _userRepoMock.GetAccountByEmailAsync(email).Returns(account);
+        _courseRepoMock.GetByIdAsync(2).Returns(course);
+
         //Act
         var result = await _sut.IsRecipientEnrolledAsync(email, 2);
 

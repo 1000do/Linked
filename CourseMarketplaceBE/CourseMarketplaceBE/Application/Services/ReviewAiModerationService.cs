@@ -149,8 +149,11 @@ public class ReviewAiModerationService : IReviewAiModerationService
         {
             ModelId = model.ModelId,
             ModelName = model.ModelName,
+            ModelType = model.ModelType,
             ModelProvider = model.ModelProvider,
             ModelVersion = model.ModelVersion,
+            ModelStatus = model.ModelStatus,
+            Description = model.Description,
             ModelPath = model.ModelPath,
             ProcessType = model.ProcessType
         };

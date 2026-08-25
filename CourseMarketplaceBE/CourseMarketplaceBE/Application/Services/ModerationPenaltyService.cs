@@ -188,6 +188,8 @@ public class ModerationPenaltyService : IModerationPenaltyService
             var studentIds = await _enrollmentRepo.GetEnrolledUserIdsAsync(c.CourseId);
             foreach (var sId in studentIds)
             {
+                if (sId == instructor.InstructorId) continue;
+
                 if (notifiedUserIds.Add(sId))
                 {
                     bulkNotifications.Add(new NotificationBulkDto

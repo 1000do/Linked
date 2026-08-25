@@ -111,8 +111,7 @@ namespace CourseMarketplaceBE.Application.Services
                             ins.InstructorId,
                             title,
                             content,
-
-                            "/Instructor/Payouts" // Link đến trang thu nhập để họ kiểm tra
+                            null
                         );
                     }
 

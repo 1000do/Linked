@@ -35,3 +35,14 @@ WHERE model_name = 'harmful_text_classifier';
 UPDATE system_configs 
 SET config_value = 'ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier' 
 WHERE config_key IN ('course_harmful_text_classifier', 'review_harmful_text_classifier');
+
+UPDATE system_configs
+SET config_value = '{"similarity": 0.9, "spam": 0.95, "toxic": 0.9}'
+WHERE config_key = 'moderation_threshold';
+
+ALTER TABLE ai_models ADD CONSTRAINT ai_models_model_name_key UNIQUE (model_name);
+ALTER TABLE ai_models ADD CONSTRAINT ai_models_model_path_key UNIQUE (model_path);
+
+UPDATE system_configs 
+SET config_value = 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2' 
+WHERE config_key = 'course_text_embedding_generator';

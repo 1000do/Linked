@@ -57,7 +57,7 @@
             <span class="material-symbols-outlined text-amber-600">report</span>
             <div class="flex-1">
                 <h4 class="text-sm font-bold text-amber-900 mb-1">Moderation Feedback:</h4>
-                <p class="text-sm text-amber-800 leading-relaxed">@moderationFeedback</p>
+                <p class="text-sm text-amber-800 leading-relaxed whitespace-pre-wrap">@moderationFeedback.Replace(" - ", "\n- ")</p>
             </div>
             <button onclick="this.parentElement.remove()" class="text-amber-400 hover:text-amber-600">
                 <span class="material-symbols-outlined text-[18px]">close</span>

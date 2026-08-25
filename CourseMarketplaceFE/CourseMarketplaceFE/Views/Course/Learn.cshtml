@@ -50,6 +50,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
     <link rel="icon" type="image/png" href="~/img/default-avatar.png" />
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <style>
@@ -290,7 +292,7 @@
                             <div>
                                 <p class="text-xs font-bold text-[#006a62] uppercase tracking-tighter">Section @(Model.Lessons.IndexOf(lesson) + 1)</p>
                                 <div class="flex items-center gap-2">
-                                    <h3 class="font-bold text-sm text-[#191c1b]">@lesson.Title</h3>
+                                    <h3 id="lesson_@(lesson.LessonId)_title" class="font-bold text-sm text-[#191c1b]">@lesson.Title</h3>
                                     <span class="lesson-rating-badge hidden text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-md leading-none"></span>
                                     <span class="lesson-lock-icon hidden text-slate-400" title="Complete previous lesson to unlock">
                                         <span class="material-symbols-outlined text-[16px]">lock</span>
@@ -1502,8 +1504,8 @@
         if (currentToken) {
             if (localStorage.getItem("AccountLocked") === "true") {
                 localStorage.removeItem("AccountLocked");
-                const form = document.getElementById('global-logout-form');
-                if(form) { form.submit(); }
+                const form = document.getElementById('global-logout-form') || document.getElementById('global-logout-form-desktop') || document.getElementById('global-logout-form-mobile') || document.querySelector('form[action="/Account/Logout"]');
+                if (form) { form.submit(); }
             }
 
             const notiConn = new signalR.HubConnectionBuilder()
@@ -1532,7 +1534,8 @@
                     allowOutsideClick: false,
                     allowEscapeKey: false
                 }).then(() => {
-                    document.getElementById('global-logout-form').submit();
+                    const form = document.getElementById('global-logout-form') || document.getElementById('global-logout-form-desktop') || document.getElementById('global-logout-form-mobile') || document.querySelector('form[action="/Account/Logout"]');
+                    if (form) { form.submit(); }
                 });
             });
             notiConn.start().catch(err => console.error("Noti Hub Error", err));
@@ -1562,6 +1565,222 @@
                 }
             }
         });
+        @if (isStaffOrAdmin && Model.AiFeedbacks != null && Model.AiFeedbacks.Any())
+        {
+            <text>
+            const aiFeedbacks = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AiFeedbacks));
+            
+            const materialToLesson = {};
+            const materialTitles = {};
+            @foreach (var lesson in Model.Lessons) {
+                @foreach (var material in lesson.LearningMaterials) {
+                    <text>
+                    materialToLesson['@material.MaterialId'] = '@lesson.LessonId';
+                    materialTitles['@material.MaterialId'] = "@Html.Raw(System.Web.HttpUtility.JavaScriptStringEncode(material.Title))";
+                    </text>
+                }
+            }
+
+            const materialFeedbacks = {};
+            const lessonFeedbacks = {};
+
+            aiFeedbacks.forEach(feedback => {
+                const matMatch = feedback.FieldName.match(/^material_(\d+)(_.*)?$/);
+                const lessMatch = feedback.FieldName.match(/^lesson_(\d+)(_.*)?$/);
+
+                if (matMatch) {
+                    const materialId = matMatch[1];
+                    const targetMaterialId = `material_${materialId}`;
+                    const targetLessonId = materialToLesson[materialId] ? `lesson_${materialToLesson[materialId]}_title` : null;
+                    
+                    let label = "General";
+                    if (matMatch[2]) {
+                        label = matMatch[2].substring(1);
+                        label = label.charAt(0).toUpperCase() + label.slice(1);
+                    } else {
+                        label = "Content";
+                    }
+
+                    // Material Tooltip Data
+                    if (!materialFeedbacks[targetMaterialId]) {
+                        materialFeedbacks[targetMaterialId] = { feedbacks: [], statuses: [] };
+                    }
+                    materialFeedbacks[targetMaterialId].feedbacks.push({
+                        label: label,
+                        text: feedback.FeedbackText,
+                        status: feedback.ModerationStatus ? feedback.ModerationStatus.toLowerCase() : ''
+                    });
+                    materialFeedbacks[targetMaterialId].statuses.push(feedback.ModerationStatus ? feedback.ModerationStatus.toLowerCase() : '');
+
+                    // Lesson Tooltip Data (Summarized Material)
+                    if (targetLessonId) {
+                        if (!lessonFeedbacks[targetLessonId]) {
+                            lessonFeedbacks[targetLessonId] = { lessonRawFeedbacks: [], materials: {} };
+                        }
+                        if (!lessonFeedbacks[targetLessonId].materials[materialId]) {
+                            lessonFeedbacks[targetLessonId].materials[materialId] = [];
+                        }
+                        let statusStr = feedback.ModerationStatus ? feedback.ModerationStatus.toLowerCase() : '';
+                        lessonFeedbacks[targetLessonId].materials[materialId].push(statusStr);
+                    }
+
+                } else if (lessMatch) {
+                    const lessonId = lessMatch[1];
+                    const targetLessonId = `lesson_${lessonId}_title`;
+                    
+                    let label = "Lesson";
+                    if (lessMatch[2]) {
+                        label = lessMatch[2].substring(1);
+                        label = label.charAt(0).toUpperCase() + label.slice(1);
+                    }
+
+                    if (!lessonFeedbacks[targetLessonId]) {
+                        lessonFeedbacks[targetLessonId] = { lessonRawFeedbacks: [], materials: {} };
+                    }
+                    lessonFeedbacks[targetLessonId].lessonRawFeedbacks.push({
+                        label: label,
+                        text: feedback.FeedbackText,
+                        status: feedback.ModerationStatus ? feedback.ModerationStatus.toLowerCase() : ''
+                    });
+                }
+            });
+
+            // 1. Aggregated Material Feedbacks
+            Object.keys(materialFeedbacks).forEach(targetId => {
+                const targetEl = document.getElementById(targetId);
+                if (!targetEl) return;
+
+                const data = materialFeedbacks[targetId];
+                
+                let overallColor = 'text-emerald-500';
+                let icon = 'check_circle';
+                
+                if (data.statuses.some(s => s === 'flagged' || s === 'match_found' || s === 'rejected')) {
+                    overallColor = 'text-rose-500';
+                    icon = 'error';
+                } else if (data.statuses.some(s => s === 'manual_audit' || s === 'pending')) {
+                    overallColor = 'text-amber-500';
+                    icon = 'warning';
+                }
+
+                let feedbackContentHtml = '';
+                data.feedbacks.forEach(fb => {
+                    let sectionColor = 'text-emerald-400';
+                    if (fb.status === 'flagged' || fb.status === 'match_found' || fb.status === 'rejected') {
+                        sectionColor = 'text-rose-400';
+                    } else if (fb.status === 'manual_audit' || fb.status === 'pending') {
+                        sectionColor = 'text-amber-400';
+                    }
+                    
+                    feedbackContentHtml += `
+                        <div class="mb-3 pb-3 border-b border-slate-700 last:mb-0 last:pb-0 last:border-0">
+                            <p class="font-bold text-[10px] uppercase tracking-wider mb-1 ${sectionColor}">${fb.label} (${fb.status.replace('_', ' ')})</p>
+                            <div class="text-xs" style="white-space: pre-wrap;">${fb.text}</div>
+                        </div>
+                    `;
+                });
+
+                targetEl.classList.add('relative'); 
+                
+                const bubbleHtml = `
+                    <div class="absolute right-4 bottom-0 -translate-y-1/2 z-10 flex items-center">
+                        <span class="material-symbols-outlined text-[18px] bg-white rounded-full ${overallColor} hover:scale-110 transition-transform cursor-help p-0.5 shadow-sm">${icon}</span>
+                    </div>
+                    <div class="absolute bottom-0 right-0 translate-y-full mb-2 w-72 p-3 bg-slate-800 text-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[80] pointer-events-none text-left leading-relaxed normal-case tracking-normal font-normal cursor-default">
+                        ${feedbackContentHtml}
+                        <div class="absolute top-full right-4 -mt-px border-4 border-transparent border-t-slate-800"></div>
+                    </div>
+                `;
+                targetEl.insertAdjacentHTML('beforeend', bubbleHtml);
+            });
+
+            // 2. Aggregated Lesson Feedbacks
+            Object.keys(lessonFeedbacks).forEach(targetId => {
+                const targetEl = document.getElementById(targetId);
+                if (!targetEl) return;
+
+                const data = lessonFeedbacks[targetId];
+                
+                let allStatuses = [];
+                data.lessonRawFeedbacks.forEach(f => allStatuses.push(f.status));
+                Object.values(data.materials).forEach(matStatuses => allStatuses.push(...matStatuses));
+
+                let textColor = 'text-emerald-500';
+                let animation = 'animate-none';
+                let icon = 'check_circle';
+                
+                if (allStatuses.some(s => s === 'flagged' || s === 'match_found' || s === 'rejected')) {
+                    textColor = 'text-rose-500';
+                    animation = 'animate-ping group-hover:animate-none';
+                    icon = 'error';
+                } else if (allStatuses.some(s => s === 'manual_audit' || s === 'pending')) {
+                    textColor = 'text-amber-500';
+                    animation = 'animate-bounce group-hover:animate-none';
+                    icon = 'warning';
+                }
+
+                let feedbackContentHtml = '';
+                
+                // Add lesson raw feedbacks
+                data.lessonRawFeedbacks.forEach(fb => {
+                    let sectionColor = 'text-emerald-400';
+                    if (fb.status === 'flagged' || fb.status === 'match_found' || fb.status === 'rejected') {
+                        sectionColor = 'text-rose-400';
+                    } else if (fb.status === 'manual_audit' || fb.status === 'pending') {
+                        sectionColor = 'text-amber-400';
+                    }
+                    
+                    feedbackContentHtml += `
+                        <div class="mb-3 pb-3 border-b border-slate-700 last:mb-0 last:pb-0 last:border-0">
+                            <p class="font-bold text-[10px] uppercase tracking-wider mb-1 ${sectionColor}">${fb.label} (${fb.status.replace('_', ' ')})</p>
+                            <div class="text-xs" style="white-space: pre-wrap;">${fb.text}</div>
+                        </div>
+                    `;
+                });
+
+                // Add summarized material feedbacks
+                Object.keys(data.materials).forEach(matId => {
+                    const matStatuses = data.materials[matId];
+                    const matTitle = materialTitles[matId] || `Material ${matId}`;
+                    
+                    let matStatus = 'approved';
+                    if (matStatuses.some(s => s === 'flagged' || s === 'match_found' || s === 'rejected')) {
+                        matStatus = matStatuses.find(s => s === 'flagged' || s === 'match_found' || s === 'rejected');
+                    } else if (matStatuses.some(s => s === 'manual_audit' || s === 'pending')) {
+                        matStatus = matStatuses.find(s => s === 'manual_audit' || s === 'pending');
+                    } else if (matStatuses.length > 0) {
+                        matStatus = matStatuses[0];
+                    }
+                    if (!matStatus) matStatus = '';
+                    
+                    let sectionColor = 'text-emerald-400';
+                    if (matStatus === 'flagged' || matStatus === 'match_found' || matStatus === 'rejected') {
+                        sectionColor = 'text-rose-400';
+                    } else if (matStatus === 'manual_audit' || matStatus === 'pending') {
+                        sectionColor = 'text-amber-400';
+                    }
+
+                    feedbackContentHtml += `
+                        <div class="mb-3 pb-3 border-b border-slate-700 last:mb-0 last:pb-0 last:border-0">
+                            <p class="font-bold text-[10px] uppercase tracking-wider mb-1 ${sectionColor}">${matTitle} (${matStatus.replace('_', ' ')})</p>
+                        </div>
+                    `;
+                });
+
+                targetEl.classList.add('group', 'relative', 'inline-flex', 'items-center', 'gap-2');
+                const bubbleHtml = `
+                    <span class="inline-flex items-center ml-2 align-middle z-10 relative">
+                        <span class="material-symbols-outlined text-[24px] ${textColor} ${animation} transition-transform group-hover:scale-110 cursor-help">${icon}</span>
+                    </span>
+                    <div class="absolute bottom-0 left-0 translate-y-full mb-2 w-72 p-3 bg-slate-800 text-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[80] pointer-events-none text-left leading-relaxed normal-case tracking-normal font-normal cursor-default">
+                        ${feedbackContentHtml}
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-slate-800"></div>
+                    </div>
+                `;
+                targetEl.insertAdjacentHTML('beforeend', bubbleHtml);
+            });
+            </text>
+        }
     </script>
 </body>
 </html>

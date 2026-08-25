@@ -12,7 +12,7 @@
                 <span class="material-symbols-outlined text-primary text-4xl" style='font-variation-settings:"FILL" 1;'>shopping_cart</span>
                 My Shopping Cart
             </h1>
-            <p class="text-slate-500 mt-1 text-sm">@Model.Items.Count courses waiting for you</p>
+            <p id="cart-count-subtitle" class="text-slate-500 mt-1 text-sm">@Model.Items.Count courses waiting for you</p>
         </div>
 
         @* ── TOAST MESSAGES ───────────────────────────────────────────────── *@
@@ -375,6 +375,12 @@
             const newMain = doc.getElementById('cart-main-container');
             if (newMain && mainContainer) {
                 mainContainer.innerHTML = newMain.innerHTML;
+            }
+            
+            const newSubtitle = doc.getElementById('cart-count-subtitle');
+            const currentSubtitle = document.getElementById('cart-count-subtitle');
+            if (newSubtitle && currentSubtitle) {
+                currentSubtitle.innerHTML = newSubtitle.innerHTML;
             }
             
             const newToasts = doc.getElementById('cart-toasts-container');

@@ -242,6 +242,10 @@
         const modal = document.getElementById('createModal');
         const content = document.getElementById('createModalContent');
         
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.appendChild(modal);
+        });
+        
         function openCreateModal() {
             if (isInstructorLockedOut()) return;
             modal.classList.remove('hidden');

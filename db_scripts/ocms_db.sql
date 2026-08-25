@@ -709,7 +709,7 @@ CREATE TABLE system_configs (
 
 CREATE TABLE ai_models (
     model_id SERIAL PRIMARY KEY,
-    model_name VARCHAR(255) NOT NULL,
+    model_name VARCHAR(255) UNIQUE NOT NULL,
     model_type VARCHAR(50),
     model_provider VARCHAR(50),
     model_version VARCHAR(50),
@@ -717,7 +717,7 @@ CREATE TABLE ai_models (
     description TEXT,
     model_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     model_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	model_path VARCHAR(255),
+	model_path VARCHAR(255) UNIQUE,
 	process_type VARCHAR(255)
 );
 
@@ -1049,7 +1049,7 @@ INSERT INTO
 system_configs(config_key,config_value,description)
 VALUES
 ('course_harmful_text_classifier','ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier','system config of course_harmful_text_classifier'),
-('course_text_embedding_generator', 'distilbert-base-multilingual-cased','system config of course_text_embedding_generator'),
+('course_text_embedding_generator', 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2','system config of course_text_embedding_generator'),
 ('course_media_embedding_generator','openai/clip-vit-base-patch32','system config of course_media_embedding_generator'),
 ('review_harmful_text_classifier','ki4n-4nt/spam_text_classifier,ki4n-4nt/toxic_text_classifier','system config of review_harmful_text_classifier');
 
@@ -1057,7 +1057,7 @@ INSERT INTO
 system_configs(config_key,config_value,description)
 VALUES
 ('moderation_threshold',
-'{"similarity": 0.85,"spam": 0.85,"toxic": 0.85}',
+'{"similarity": 0.9,"spam": 0.95,"toxic": 0.9}',
 'system config of AI moderation threshold');
 
 -- =====================================================================

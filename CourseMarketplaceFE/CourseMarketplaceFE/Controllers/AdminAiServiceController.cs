@@ -38,7 +38,7 @@ public class AdminAiServiceController : Controller
         try
         {
             var modelsTask = _api.GetAsync($"admin/ai-service/models?page={modelPage}&pageSize=10");
-            var allModelsTask = _api.GetAsync("admin/ai-service/models/all");
+            var allModelsTask = _api.GetAsync($"admin/ai-service/models/configured");
             var configTask = _api.GetAsync("admin/ai-service/configs");
             var courseLogTask = _api.GetAsync($"admin/ai-service/logs/course?page={coursePage}&pageSize=10");
             var cReviewLogTask = _api.GetAsync($"admin/ai-service/logs/course-review?page={cReviewPage}&pageSize=10");
@@ -63,7 +63,7 @@ public class AdminAiServiceController : Controller
             if (allModelsResp.IsSuccessStatusCode) {
                  var json = await allModelsResp.Content.ReadAsStringAsync();
                  var parsed = JsonSerializer.Deserialize<BaseApiResponse<List<AiModelViewModel>>>(json, _jsonOpts);
-                 if (parsed?.Data != null) model.AllActiveModels = parsed.Data.Where(m => m.ModelStatus == "active").ToList();
+                 if (parsed?.Data != null) model.AllActiveModels = parsed.Data;
             }
 
             var configResp = await configTask;
@@ -275,7 +275,8 @@ public class AdminAiServiceController : Controller
         if (!res.IsSuccessStatusCode)
         {
             var err = await res.Content.ReadAsStringAsync();
-            return BadRequest(new { Message = "Failed to add AI Model", Details = err });
+            var errorJson = JsonSerializer.Deserialize<object>(err, _jsonOpts);
+            return StatusCode((int)res.StatusCode, errorJson);
         }
         return Ok(new { Message = "AI Model added successfully" });
     }
@@ -296,7 +297,9 @@ public class AdminAiServiceController : Controller
         if (!res.IsSuccessStatusCode)
         {
             var err = await res.Content.ReadAsStringAsync();
-            return BadRequest(new { Message = "Failed to edit AI Model", Details = err });
+            // return BadRequest(new { Message = "Failed to edit AI Model", Details = err });
+            var errorJson = JsonSerializer.Deserialize<object>(err, _jsonOpts);
+            return StatusCode((int)res.StatusCode, errorJson);
         }
         return Ok(new { Message = "AI Model updated successfully" });
     }
@@ -311,7 +314,9 @@ public class AdminAiServiceController : Controller
         if (!res.IsSuccessStatusCode)
         {
             var err = await res.Content.ReadAsStringAsync();
-            return BadRequest(new { Message = "Failed to toggle status", Details = err });
+            // return BadRequest(new { Message = "Failed to toggle status", Details = err });
+            var errorJson = JsonSerializer.Deserialize<object>(err, _jsonOpts);
+            return StatusCode((int)res.StatusCode, errorJson);
         }
         return Ok(new { Message = "Model status toggled successfully" });
     }
@@ -332,7 +337,9 @@ public class AdminAiServiceController : Controller
         if (!res.IsSuccessStatusCode)
         {
             var err = await res.Content.ReadAsStringAsync();
-            return BadRequest(new { Message = "Failed to update thresholds", Details = err });
+            // return BadRequest(new { Message = "Failed to update thresholds", Details = err });
+            var errorJson = JsonSerializer.Deserialize<object>(err, _jsonOpts);
+            return StatusCode((int)res.StatusCode, errorJson);
         }
         return Ok(new { Message = "Thresholds updated successfully" });
     }
@@ -353,7 +360,9 @@ public class AdminAiServiceController : Controller
         if (!res.IsSuccessStatusCode)
         {
             var err = await res.Content.ReadAsStringAsync();
-            return BadRequest(new { Message = "Failed to update integration mapping", Details = err });
+            // return BadRequest(new { Message = "Failed to update integration mapping", Details = err });
+            var errorJson = JsonSerializer.Deserialize<object>(err, _jsonOpts);
+            return StatusCode((int)res.StatusCode, errorJson);
         }
         return Ok(new { Message = "Integration mapping updated successfully" });
     }

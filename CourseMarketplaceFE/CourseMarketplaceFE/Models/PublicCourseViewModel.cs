@@ -39,6 +39,16 @@ namespace CourseMarketplaceFE.Models
         public int FlagCount { get; set; }
         public List<CourseQuizItemViewModel> CourseQuizzes { get; set; } = new List<CourseQuizItemViewModel>();
         public List<CourseFieldFeedbackViewModel>? FieldFeedbacks { get; set; }
+        public List<AiFeedbackBubbleViewModel>? AiFeedbacks { get; set; }
+    }
+
+    public class AiFeedbackBubbleViewModel
+    {
+        public int FeedbackId { get; set; }
+        public string FieldName { get; set; } = null!;
+        public string FeedbackText { get; set; } = null!;
+        public DateTime? DateAdded { get; set; }
+        public string ModerationStatus { get; set; } = "PENDING";
     }
 
     public class CourseFieldFeedbackViewModel

@@ -207,9 +207,9 @@ public class CouponService : ICouponService
 
     private async Task EnsureCouponCodeIsUniqueAsync(string couponCode)
     {
-        var existing = await _repo.GetByCodeAsync(couponCode.Trim());
+        var existing = await _repo.GetByCodeAsync(couponCode.Trim().ToUpper());
         if (existing != null)
-            throw new InvalidOperationException($"Coupon code '{couponCode.Trim()}' already exists.");
+            throw new InvalidOperationException($"Coupon code '{couponCode.Trim().ToUpper()}' already exists.");
     }
 
     private static Coupon BuildNewCoupon(CreateCouponRequest req, string type, int managerId)
@@ -242,6 +242,8 @@ public class CouponService : ICouponService
 
         if (req.UsageLimit.HasValue)
         {
+            if (req.UsageLimit < 1)
+                throw new ArgumentException("UsageLimit must be greater than 0.");
             if (req.UsageLimit < (coupon.UsedCount ?? 0))
                 throw new ArgumentException(
                     $"UsageLimit ({req.UsageLimit}) cannot be less than the used count ({coupon.UsedCount}).");

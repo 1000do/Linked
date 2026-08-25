@@ -61,6 +61,9 @@ public class GiftService : IGiftService
         ValidateGiftForClaiming(gift);
 
         var course = await GetCourseForGiftOrThrowAsync(gift.OrderItem?.CourseId);
+        if (course.InstructorId.HasValue && course.InstructorId.Value == userId)
+            throw new InvalidOperationException("You already own this course in your library.");
+
         await EnsureRecipientNotAlreadyEnrolledAsync(userId, course.CourseId);
 
         using var transaction = await _enrollmentRepo.BeginTransactionAsync();
@@ -104,6 +107,12 @@ public class GiftService : IGiftService
         var recipientAccount = await _userRepo.GetAccountByEmailAsync(email);
         if (recipientAccount != null)
         {
+            var course = await _courseRepo.GetByIdAsync(courseId);
+            if (course != null && course.InstructorId.HasValue && course.InstructorId.Value == recipientAccount.AccountId)
+            {
+                return true;
+            }
+
             return await _courseRepo.IsEnrolledAsync(recipientAccount.AccountId, courseId);
         }
 

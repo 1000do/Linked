@@ -95,6 +95,10 @@ public class CouponController : ControllerBase
         {
             return BadRequest(ApiResponse<string>.ErrorResponse(ex.Message));
         }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException ex)
+        {
+            return BadRequest(ApiResponse<string>.ErrorResponse("This coupon code already exists or there is a data constraint error. Please try a different code."));
+        }
         catch (Exception ex)
         {
             return StatusCode(500, ApiResponse<string>.ErrorResponse($"Error: {ex.Message}"));

@@ -145,7 +145,7 @@ class CacheRepository:
         except Exception as e:
             logger.error(f"Failed to invalidate cache: {e}")
             return False
-    
+
     # ========================================================================
     # EMBEDDINGS
     # ========================================================================

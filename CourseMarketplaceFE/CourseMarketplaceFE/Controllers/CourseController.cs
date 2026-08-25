@@ -121,6 +121,13 @@ namespace CourseMarketplaceFE.Controllers
 
                 return View(paginatedCourses);
             }
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                ViewBag.IsRateLimited = true;
+                ViewBag.RateLimitMessage = "Too many requests. Please slow down and try again later.";
+                Response.StatusCode = 429;
+            }
+
             return View(new List<PublicCourseViewModel>());
         }
         [HttpGet]
@@ -229,6 +236,11 @@ namespace CourseMarketplaceFE.Controllers
 
                 return Json(new { success = true, data = results });
             }
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                return Json(new { success = false, isRateLimited = true, message = "Too many requests. Please slow down and try again later." });
+            }
+            
             return Json(new { success = false, data = new List<object>() });
         }
 

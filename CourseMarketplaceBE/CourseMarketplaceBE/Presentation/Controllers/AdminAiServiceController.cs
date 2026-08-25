@@ -17,15 +17,18 @@ namespace CourseMarketplaceBE.Presentation.Controllers
         private readonly IAiModelManagementService _aiModelService;
         private readonly IAiConfigurationService _aiConfigService;
         private readonly IAiModerationLogService _aiLogService;
+        private readonly Microsoft.Extensions.Configuration.IConfiguration _config;
 
         public AdminAiServiceController(
             IAiModelManagementService aiModelService,
             IAiConfigurationService aiConfigService,
-            IAiModerationLogService aiLogService)
+            IAiModerationLogService aiLogService,
+            Microsoft.Extensions.Configuration.IConfiguration config)
         {
             _aiModelService = aiModelService;
             _aiConfigService = aiConfigService;
             _aiLogService = aiLogService;
+            _config = config;
         }
 
         // ==========================
@@ -61,6 +64,22 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
+            }
+        }
+
+        [HttpGet("models/configured")]
+        public async Task<IActionResult> GetConfiguredModels()
+        {
+            try
+            {
+                var pathList = GetConfiguredModelPaths();
+
+                var models = await _aiModelService.GetActiveModelsByPathsAsync(pathList);
+                return Ok(ApiResponse<object>.SuccessResponse(models, "Models retrieved successfully"));
             }
             catch (Exception ex)
             {
@@ -325,6 +344,27 @@ namespace CourseMarketplaceBE.Presentation.Controllers
             {
                 return StatusCode(500, ApiResponse<object>.ErrorResponse(ex.Message));
             }
+        }
+
+        private List<string> GetConfiguredModelPaths()
+        {
+            var spam = _config["SPAM_MODEL_PATH"];
+            var toxic = _config["TOXIC_MODEL_PATH"];
+            var harmfulPath = string.Empty;
+            
+            if (!string.IsNullOrEmpty(spam) && !string.IsNullOrEmpty(toxic))
+                harmfulPath = $"{spam},{toxic}";
+            else if (!string.IsNullOrEmpty(spam))
+                harmfulPath = spam;
+            else if (!string.IsNullOrEmpty(toxic))
+                harmfulPath = toxic;
+
+            return new List<string>
+            {
+                harmfulPath,
+                _config["TEXT_EMBEDDING_MODEL_NAME"],
+                _config["CLIP_MODEL_NAME"]
+            }.Where(p => !string.IsNullOrEmpty(p)).ToList();
         }
     }
 }

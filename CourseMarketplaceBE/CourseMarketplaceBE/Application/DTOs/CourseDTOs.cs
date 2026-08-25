@@ -83,6 +83,7 @@ public class CourseDetailResponse : CourseResponse
 {
     public List<LessonResponse> Lessons { get; set; } = new List<LessonResponse>();
     public List<CourseQuizItemResponse> CourseQuizzes { get; set; } = new List<CourseQuizItemResponse>();
+    public List<AiFeedbackBubbleDto>? AiFeedbacks { get; set; }
 }
 
 public class CourseQuizItemResponse

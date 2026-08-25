@@ -415,4 +415,13 @@ namespace CourseMarketplaceBE.Application.DTOs
         [JsonPropertyName("timestamp")] 
         public DateTime Timestamp { get; set; }
     }
+
+    public class AiFeedbackBubbleDto
+    {
+        public int FeedbackId { get; set; }
+        public string FieldName { get; set; } = null!;
+        public string FeedbackText { get; set; } = null!;
+        public DateTime? DateAdded { get; set; }
+        public string ModerationStatus { get; set; } = "PENDING";
+    }
 }

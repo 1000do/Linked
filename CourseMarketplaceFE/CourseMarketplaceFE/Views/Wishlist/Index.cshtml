@@ -46,42 +46,6 @@
         }
         else
         {
-            @* ── Wishlist Search, Sort, Filter Bar ───────────────────── *@
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-4 mb-8">
-                <div class="relative w-full md:w-1/3">
-                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-                    <input type="text" id="wishlist-search" placeholder="Search by course title or instructor..." 
-                           class="w-full pl-10 pr-4 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:bg-white" />
-                </div>
-                
-                <div class="flex flex-wrap items-center gap-4 w-full md:w-auto md:ml-auto">
-                    <div class="relative w-full sm:w-auto">
-                        <select id="wishlist-filter-price" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-700 cursor-pointer">
-                            <option value="all">All Prices</option>
-                            <option value="free">Free</option>
-                            <option value="paid">Paid</option>
-                        </select>
-                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
-                    </div>
-
-                    <div class="relative w-full sm:w-auto">
-                        <select id="wishlist-sort" class="w-full sm:w-auto appearance-none border border-slate-200 rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-slate-700 cursor-pointer">
-                            <option value="newest">Recently Added</option>
-                            <option value="oldest">Oldest Added</option>
-                            <option value="price-asc">Price: Low to High</option>
-                            <option value="price-desc">Price: High to Low</option>
-                            <option value="rating">Highest Rated</option>
-                        </select>
-                        <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none text-[20px]">arrow_drop_down</span>
-                    </div>
-
-                    <button type="button" id="wishlist-clear" class="w-full sm:w-auto px-4 py-2.5 text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all flex items-center justify-center gap-1.5 shrink-0">
-                        <span class="material-symbols-outlined text-[18px]">filter_alt_off</span>
-                        Reset Filters
-                    </button>
-                </div>
-            </div>
-
             @* ── Dynamic Course Grid ─────────────────────────────────── *@
             <div id="wishlist-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 @foreach (var item in Model)
@@ -297,44 +261,6 @@
             }
         }
 
-        function applyWishlistFilters() {
-            const query = document.getElementById('wishlist-search').value.toLowerCase().trim();
-            const filterPrice = document.getElementById('wishlist-filter-price').value;
-            const sortVal = document.getElementById('wishlist-sort').value;
-
-            let filtered = [...wishlistData];
-
-            // 1. Search filter
-            if (query) {
-                filtered = filtered.filter(x => 
-                    x.Title.toLowerCase().includes(query) || 
-                    (x.InstructorName && x.InstructorName.toLowerCase().includes(query))
-                );
-            }
-
-            // 2. Price filter
-            if (filterPrice === 'free') {
-                filtered = filtered.filter(x => x.Price === 0);
-            } else if (filterPrice === 'paid') {
-                filtered = filtered.filter(x => x.Price > 0);
-            }
-
-            // 3. Sorting
-            if (sortVal === 'newest') {
-                filtered.sort((a, b) => new Date(b.AddedDate) - new Date(a.AddedDate));
-            } else if (sortVal === 'oldest') {
-                filtered.sort((a, b) => new Date(a.AddedDate) - new Date(b.AddedDate));
-            } else if (sortVal === 'price-asc') {
-                filtered.sort((a, b) => a.Price - b.Price);
-            } else if (sortVal === 'price-desc') {
-                filtered.sort((a, b) => b.Price - a.Price);
-            } else if (sortVal === 'rating') {
-                filtered.sort((a, b) => b.RatingAverage - a.RatingAverage);
-            }
-
-            renderWishlist(filtered);
-        }
-
         // Live override for toggleWishlist ajax response
         window.toggleWishlist = async function(btn, courseId) {
             try {
@@ -342,7 +268,7 @@
                 const data = await res.json();
                 if (data.success && !data.isInWishlist) {
                     wishlistData = wishlistData.filter(x => x.CourseId !== courseId);
-                    applyWishlistFilters();
+                    renderWishlist(wishlistData);
                     
                     // Also update counts shown on page header
                     const countEl = document.querySelector('.text-primary.font-bold span');
@@ -364,25 +290,6 @@
                 }
                 hideWishlistBadge();
             };
-
-            // Hook up event listeners for instant filtering
-            const searchInput = document.getElementById('wishlist-search');
-            const priceSelect = document.getElementById('wishlist-filter-price');
-            const sortSelect = document.getElementById('wishlist-sort');
-            const clearBtn = document.getElementById('wishlist-clear');
-
-            if (searchInput) {
-                searchInput.addEventListener('input', applyWishlistFilters);
-                priceSelect.addEventListener('change', applyWishlistFilters);
-                sortSelect.addEventListener('change', applyWishlistFilters);
-                
-                clearBtn.addEventListener('click', () => {
-                    searchInput.value = '';
-                    priceSelect.value = 'all';
-                    sortSelect.value = 'newest';
-                    applyWishlistFilters();
-                });
-            }
         });
     </script>
 }

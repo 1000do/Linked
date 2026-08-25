@@ -9,9 +9,20 @@
         <div class="text-center mb-8">
             <h2 class="text-3xl font-headline font-extrabold text-on-surface mb-2">Create Account</h2>
             <p class="text-slate-500 text-sm">Join LinkedLearn today and start learning.</p>
-
-
         </div>
+
+        @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ContainsKey(string.Empty) && ViewData.ModelState[string.Empty]!.Errors.Count > 0)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-4 text-sm flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                @foreach (var error in ViewData.ModelState[string.Empty]!.Errors)
+                {
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">error</span>
+                        <span>@error.ErrorMessage</span>
+                    </div>
+                }
+            </div>
+        }
 
         <form asp-controller="Account" asp-action="Register" asp-route-giftToken="@ViewBag.GiftToken" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post" class="space-y-4">
 

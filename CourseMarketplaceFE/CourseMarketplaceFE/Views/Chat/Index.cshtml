@@ -125,7 +125,7 @@
                     @if (ViewBag.EnableAttachments == true)
                     {
                         <input type="file" id="file-input" style="display:none;" onchange="handleFileSelect(this)" />
-                        <button type="button" class="btn-attach" onclick="document.getElementById('file-input').click()">
+                        <button type="button" class="btn-attach" onclick="triggerFileInput()">
                             <span class="material-symbols-outlined text-slate-400 hover:text-emerald-500 transition-colors">attach_file</span>
                         </button>
                     }
@@ -531,6 +531,8 @@
             // 2. Không có ticket chờ -> Hiển thị màn hình Welcome
             activeChatId = 'support_ticket';
             isWaitingForSupportStaff = false;
+            selectedFiles = [];
+            if (typeof renderAttachmentPreview === 'function') renderAttachmentPreview();
             
             document.getElementById('empty-state').style.display = 'none';
             document.getElementById('chat-content').style.display = 'flex';
@@ -603,6 +605,13 @@
             document.getElementById('chat-content').style.display = 'none';
             document.getElementById('empty-state').style.display = 'block';
             document.querySelectorAll('.chat-card').forEach(c => c.classList.remove('active'));
+
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.delete('chatId');
+            currentUrl.searchParams.delete('fallbackName');
+            currentUrl.searchParams.delete('fallbackAvatar');
+            window.history.replaceState({}, '', currentUrl);
+
             loadPendingRequests();
         }
         // ------------------------------ //
@@ -633,8 +642,15 @@
 
         // 3. Chọn cuộc hội thoại
         async function selectChat(chatId, name, avatar, isOnline = true, forceReload = false) {
-            currentChatId = chatId;
             document.querySelector('.chat-wrapper').classList.add('chat-active');
+
+            if (chatId && chatId !== 'support_ticket' && !isNaN(chatId)) {
+                const currentUrl = new URL(window.location);
+                currentUrl.searchParams.set('chatId', chatId);
+                if (name) currentUrl.searchParams.set('fallbackName', name);
+                if (avatar) currentUrl.searchParams.set('fallbackAvatar', avatar);
+                window.history.replaceState({}, '', currentUrl);
+            }
 
             if (!forceReload && activeChatId === chatId) return;
             
@@ -827,7 +843,18 @@
             const content = input.value.trim();
             
             if (activeChatId === 'support_ticket') {
-                if (!content) return;
+                if (!content) {
+                    Swal.fire({
+                        title: 'Message required',
+                        text: 'Please enter a message to send your support request.',
+                        icon: 'warning',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                    return;
+                }
                 
                 if (isWaitingForSupportStaff) {
                     Swal.fire({
@@ -856,6 +883,7 @@
                     
                     if (res.ok) {
                         input.value = "";
+                        input.style.height = 'auto';
                         showPendingSupportUI(content);
                         await loadPendingRequests();
                     } else {
@@ -902,6 +930,7 @@
                     Attachments: attachments
                 });
                 input.value = "";
+                input.style.height = 'auto';
                 selectedFiles = [];
                 renderAttachmentPreview();
                 await chatPageConnection.invoke("Typing", activeChatId, false);
@@ -964,7 +993,37 @@
             }
         }
 
+        function triggerFileInput() {
+            if (activeChatId === 'support_ticket') {
+                Swal.fire({
+                    title: 'Attachments not allowed',
+                    text: 'You can only send file attachments after a support staff member accepts your request.',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 4000
+                });
+                return;
+            }
+            document.getElementById('file-input').click();
+        }
+
         function handleFileSelect(input) {
+            if (activeChatId === 'support_ticket') {
+                Swal.fire({
+                    title: 'Attachments not allowed',
+                    text: 'You can only send file attachments after a support staff member accepts your request.',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 4000
+                });
+                input.value = "";
+                return;
+            }
+
             if (input.files && input.files[0]) {
                 const file = input.files[0];
                 
@@ -1034,7 +1093,7 @@
                     `;
                 }
             }).join('') + `
-                <button onclick="document.getElementById('file-input').click()" class="w-[60px] h-[60px] flex-shrink-0 bg-slate-50 hover:bg-slate-100 transition-colors rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:text-slate-600">
+                <button onclick="triggerFileInput()" class="w-[60px] h-[60px] flex-shrink-0 bg-slate-50 hover:bg-slate-100 transition-colors rounded-lg border border-dashed border-slate-300 flex items-center justify-center text-slate-400 hover:text-slate-600">
                     <span class="material-symbols-outlined">add</span>
                 </button>
             `;
@@ -1096,6 +1155,12 @@
                         activeChatId = null;
                         document.getElementById('chat-content').style.display = 'none';
                         document.getElementById('empty-state').style.display = 'block';
+                        
+                        const currentUrl = new URL(window.location);
+                        currentUrl.searchParams.delete('chatId');
+                        currentUrl.searchParams.delete('fallbackName');
+                        currentUrl.searchParams.delete('fallbackAvatar');
+                        window.history.replaceState({}, '', currentUrl);
                         
                         // Refresh sidebar
                         loadChats();

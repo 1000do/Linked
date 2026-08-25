@@ -522,6 +522,18 @@
                                 </a>
                             `;
                         }).join('');
+                    } else if (result.isRateLimited) {
+                        searchResults.classList.add('hidden');
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Too Many Requests',
+                                text: result.message,
+                                confirmButtonColor: '#0ea5e9'
+                            });
+                        } else {
+                            alert(result.message);
+                        }
                     } else {
                         searchResults.classList.remove('hidden');
                         resultsList.innerHTML = `

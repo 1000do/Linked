@@ -548,7 +548,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public async Task GetCourseModerationModelsAsync_ConfigPathsEmpty_ReturnsModelsFromFallbackService()
+        public async Task GetCourseModerationModelsAsync_ConfigPathsEmpty_ReturnsEmptyModels()
         {
             //Arrange 1
             var fallbackClassifiers = new List<AiModelDto> { new AiModelDto { ModelId = 4 } };
@@ -563,8 +563,8 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var result = await InvokePrivateMethodAsync<(List<AiModelDto> classifiers, List<AiModelDto> emb_generators)>("GetCourseModerationModelsAsync");
 
             //Assert
-            result.classifiers.Should().BeEquivalentTo(fallbackClassifiers);
-            result.emb_generators.Should().BeEquivalentTo(fallbackGenerators);
+            result.classifiers.Should().BeEmpty();
+            result.emb_generators.Should().BeEmpty();
             await _aiModelRepositoryMock.DidNotReceive().GetByModelPathAsync(Arg.Any<string>());
         }
         
@@ -831,7 +831,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             //Assert
             await _courseCommandServiceMock.Received(1).UpdateCourseThreatLevelAsync(1, AiThreatLevel.Approved);
             await _aiFeedbackRepositoryMock.Received(1).SaveChangesAsync();
-            await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<List<NotificationBulkDto>>(l => l.Count == 1 && l[0].Title == "AI Moderation Result" && l[0].Content.Contains("Course 1 requires manual review")));
+            await _notificationServiceMock.Received(1).SendBulkNotificationsAsync(Arg.Is<List<NotificationBulkDto>>(l => l.Count == 1 && l[0].Title == "AI Moderation Result" && l[0].Content.Contains("Course '1' requires manual review")));
         }
 
         [Fact]
@@ -1197,7 +1197,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var result = InvokePrivateMethod<string>("GetClassificationFeedbackText", "t", "l", "r", ModerationStatus.ManualAudit.ToValue());
 
             //Assert
-            result.Should().Contain("Manual audit suggested. Reason: r. Text snippet: 't'");
+            result.Should().Contain("Manual audit suggested.\nReason: r.\nText snippet: 't'");
         }
 
         [Fact]
@@ -1211,7 +1211,7 @@ namespace CourseMarketplaceBE.Tests.Application.Services
             var result = InvokePrivateMethod<string>("GetClassificationFeedbackText", "t", "l", "r", ModerationStatus.Rejected.ToValue());
 
             //Assert
-            result.Should().Contain("Content flagged as l. Reason: r. Text snippet: 't'");
+            result.Should().Contain("Content flagged as l.\nReason: r.\nText snippet: 't'");
         }
 
         [Fact]
@@ -1273,33 +1273,35 @@ namespace CourseMarketplaceBE.Tests.Application.Services
         }
 
         [Fact]
-        public void GetNotificationContent_WithFlaggedAndManualFields_BuildsCompleteMessage()
+        public async Task GetNotificationContentAsync_WithFlaggedAndManualFields_BuildsCompleteMessage()
         {
             //Arrange 1
             
             //Arrange 2
 
             //Act
-            var result = InvokePrivateMethod<string>("GetNotificationContent", 1, "Status", new List<string> { "f1" }, new List<string> { "m1" });
+            var stageLogs = new List<StageLog> { new StageLog { Stage = 1, FlaggedFields = new List<string> { "f1" }, ManualAuditFields = new List<string> { "m1" } } };
+            var result = await InvokePrivateMethodAsync<string>("GetNotificationContentAsync", 1, "Status", stageLogs);
 
             //Assert
-            result.Should().Contain("Course 1 requires manual review");
-            result.Should().Contain("Severe Threats found in: f1");
-            result.Should().Contain("Moderate Threats found in: m1");
+            result.Should().Contain("Course '1' requires manual review");
+            result.Should().Contain("Severe Threats found in:");
+            result.Should().Contain("Moderate Threats found in:");
+            result.Should().Contain("- Content of course 'Course 0'");
         }
 
         [Fact]
-        public void GetNotificationContent_NoFields_BuildsBasicMessage()
+        public async Task GetNotificationContentAsync_NoFields_BuildsBasicMessage()
         {
             //Arrange 1
             
             //Arrange 2
 
             //Act
-            var result = InvokePrivateMethod<string>("GetNotificationContent", 1, "Status", (List<string>)null!, (List<string>)null!);
+            var result = await InvokePrivateMethodAsync<string>("GetNotificationContentAsync", 1, "Status", (List<StageLog>)null!);
 
             //Assert
-            result.Should().Contain("Course 1 requires manual review");
+            result.Should().Contain("Course '1' requires manual review");
             result.Should().NotContain("Severe Threats found in:");
             result.Should().NotContain("Moderate Threats found in:");
         }

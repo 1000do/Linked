@@ -62,6 +62,15 @@ public class MaterialRepository : IMaterialRepository
             .ToListAsync();
     }
 
+    public async Task<List<int>> GetRemovedMaterialIdsAsync()
+    {
+        return await _context.LearningMaterials
+            .IgnoreQueryFilters()
+            .Where(m => m.LearningStatus == CourseMarketplaceBE.Domain.Constants.LearningStatus.Removed.ToValue())
+            .Select(m => m.MaterialId)
+            .ToListAsync();
+    }
+
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();

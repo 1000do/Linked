@@ -281,10 +281,15 @@ public class LessonService : ILessonService
         fileType = request.MaterialMetadata?.FileType ?? "video";
 
         var existingActiveVideos = new List<LearningMaterial>();
+        var removableStatuses = new HashSet<string>();
+        removableStatuses.Add(LearningStatus.Rejected.ToValue());
+        removableStatuses.Add(LearningStatus.Active.ToValue());
+        removableStatuses.Add(LearningStatus.Draft.ToValue());
         if (fileType == "video")
         {
             existingActiveVideos = allMaterials.Where(m =>
-                m.LearningStatus == LearningStatus.Active.ToValue() &&
+                removableStatuses.Contains(m.LearningStatus) &&
+                // m.LearningStatus == LearningStatus.Active.ToValue() &&
                 ((m.MaterialMetadata != null && m.MaterialMetadata.FileType == "video") || (m.MaterialMetadata == null))).ToList();
         }
 

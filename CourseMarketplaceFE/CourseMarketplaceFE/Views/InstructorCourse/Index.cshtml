@@ -98,11 +98,11 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <a href="/InstructorCourse/Trash" class="px-5 py-2 bg-white text-slate-700 border border-slate-200 font-bold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
+            <a href="javascript:void(0)" onclick="if(!isInstructorLockedOut()) window.location.href='/InstructorCourse/Trash'" class="px-5 py-2 bg-white text-slate-700 border border-slate-200 font-bold rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
                 <span class="material-symbols-outlined text-[18px]">delete</span>
                 Trash
             </a>
-            <a href="/InstructorCourse/Create" class="px-5 py-2 bg-primary hover:bg-secondary text-white font-bold rounded-lg transition-colors shadow-md shadow-primary/20 flex items-center gap-2">
+            <a href="javascript:void(0)" onclick="if(!isInstructorLockedOut()) window.location.href='/InstructorCourse/Create'" class="px-5 py-2 bg-primary hover:bg-secondary text-white font-bold rounded-lg transition-colors shadow-md shadow-primary/20 flex items-center gap-2">
                 <span class="material-symbols-outlined text-[18px]">add</span>
                 Create New Course
             </a>
@@ -155,6 +155,23 @@
 
 @section Scripts {
     <script>
+        const instructorLockoutEndStr = '@(ViewBag.LockoutEnd?.ToString("o") ?? "")';
+        function isInstructorLockedOut() {
+            if (instructorLockoutEndStr) {
+                const lockoutDate = new Date(instructorLockoutEndStr);
+                if (lockoutDate > new Date()) {
+                    Swal.fire({
+                        title: 'Account Locked',
+                        text: 'Your instructor rights are locked due to policy violations. You cannot perform this action.',
+                        icon: 'error',
+                        confirmButtonColor: '#0f172a'
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
+
         // List / Grid toggle
         const viewBtns = document.querySelectorAll('.view-btn');
         const listView = document.getElementById('list-view');
@@ -284,7 +301,7 @@
                 } else {
                     const isReadOnly = status === 'pending';
                     actionsHtml = `
-                        <a href="/InstructorCourse/Editor/${course.Id}" title="${isReadOnly ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
+                        <a href="javascript:void(0)" onclick="if(!isInstructorLockedOut()) window.location.href='/InstructorCourse/Editor/${course.Id}'" title="${isReadOnly ? 'View course' : 'Edit course'}" class="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-container/20 rounded-full transition-colors">
                             <span class="material-symbols-outlined text-[18px]">${isReadOnly ? 'visibility' : 'edit'}</span>
                         </a>
                         ${hideBtn}
@@ -376,7 +393,7 @@
 
                 const courseLink = status === 'discontinued' ? `/Course/Details/${course.Id}` : `/InstructorCourse/Editor/${course.Id}`;
 
-                return `<a href="${courseLink}" ${status === 'discontinued' ? 'target="_blank"' : ''} class="${cardClass}">
+                return `<a href="javascript:void(0)" onclick="${status === 'discontinued' ? `window.open('/Course/Details/${course.Id}', '_blank')` : `if(!isInstructorLockedOut()) window.location.href='/InstructorCourse/Editor/${course.Id}'`}" class="${cardClass}">
                     <div class="w-full h-40 bg-slate-200 relative overflow-hidden">
                         ${course.ThumbnailUrl
                             ? `<img src="${course.ThumbnailUrl}" alt="${course.Title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />`
@@ -489,6 +506,7 @@
 
         // Delete modal
         async function confirmDelete(id, name, students) {
+            if (isInstructorLockedOut()) return;
             if (students > 0) {
                 Swal.fire({
                     title: 'Cannot Delete!',
@@ -538,6 +556,7 @@
 
         // Toggle Hide/Show
         async function toggleHide(id, newStatus) {
+            if (isInstructorLockedOut()) return;
             const confirmText = (newStatus === 'archived' || newStatus === 'Hidden') 
                 ? 'Are you sure you want to hide this course? New students will not be able to find it.' 
                 : 'Do you want to make this course visible again?';

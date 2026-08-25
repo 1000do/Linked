@@ -117,9 +117,6 @@ public class UpdateAiModelRequest
     [RegularExpression(@"^\d+\.\d+\.\d+$", ErrorMessage = "Must be semantic versioning (e.g. 1.0.0)")]
     public string ModelVersion { get; set; } = null!;
 
-    [Required]
-    [StringLength(255)]
-    public string ModelPath { get; set; } = null!;
 
     [Required]
     [MinLength(20)]

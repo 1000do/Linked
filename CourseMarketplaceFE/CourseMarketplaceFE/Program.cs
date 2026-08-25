@@ -56,6 +56,17 @@ namespace CourseMarketplaceFE
             // 2. Thêm dịch vụ HttpContextAccessor để truy cập Cookie dễ dàng hơn ở các lớp khác
             builder.Services.AddHttpContextAccessor();
 
+            // Cấu hình Forwarded Headers để chạy sau Reverse Proxy (ngrok)
+            builder.Services.Configure<Microsoft.AspNetCore.Builder.ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | 
+                                           Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto | 
+                                           Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedHost;
+                // Clear default limits to allow ngrok proxy
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
+
             // Add services to the container.
             builder.Services.AddControllersWithViews(options =>
             {
@@ -147,6 +158,8 @@ namespace CourseMarketplaceFE
                 });
 
             var app = builder.Build();
+
+            app.UseForwardedHeaders();
 
             // Intercept and obfuscate user identity cookies
             app.UseMiddleware<CourseMarketplaceFE.Middlewares.CookieObfuscationMiddleware>();

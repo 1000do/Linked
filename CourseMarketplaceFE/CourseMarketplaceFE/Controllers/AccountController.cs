@@ -158,6 +158,7 @@ namespace CourseMarketplaceFE.Controllers
                 Response.Cookies.Append("UserRole", result.Role ?? "user", displayOpts);
                 Response.Cookies.Append("UserId", result.AccountId.ToString(), displayOpts);
                 Response.Cookies.Append("IsVerified", result.IsVerified ? "true" : "false", displayOpts);
+                Response.Cookies.Append("AuthProvider", "local", displayOpts);
 
                 if (string.IsNullOrEmpty(result.Role))
                 {
@@ -202,6 +203,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("AuthProvider", new CookieOptions { Path = "/" });
 
             TempData.Clear();
 
@@ -221,6 +223,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Delete("AvatarUrl", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserRole", new CookieOptions { Path = "/" });
             Response.Cookies.Delete("UserId", new CookieOptions { Path = "/" });
+            Response.Cookies.Delete("AuthProvider", new CookieOptions { Path = "/" });
 
             TempData.Clear();
 
@@ -246,6 +249,11 @@ namespace CourseMarketplaceFE.Controllers
                 var isVerified = result?.Data?.IsVerified ?? false;
                 var displayOpts = new CookieOptions { Expires = DateTimeOffset.UtcNow.AddHours(24), Path = "/" };
                 Response.Cookies.Append("IsVerified", isVerified ? "true" : "false", displayOpts);
+
+                if (!string.IsNullOrEmpty(result?.Data?.AuthProvider))
+                {
+                    Response.Cookies.Append("AuthProvider", result.Data.AuthProvider, displayOpts);
+                }
 
                 return View(result?.Data);
             }
@@ -491,6 +499,7 @@ namespace CourseMarketplaceFE.Controllers
             Response.Cookies.Append("UserRole", result?.Role ?? "user", cookieOptions);
             Response.Cookies.Append("UserId", result?.AccountId.ToString() ?? "0", cookieOptions);
             Response.Cookies.Append("IsVerified", (result?.IsVerified ?? true) ? "true" : "false", cookieOptions);
+            Response.Cookies.Append("AuthProvider", "google", cookieOptions);
 
             return Ok();
         }
@@ -656,8 +665,14 @@ namespace CourseMarketplaceFE.Controllers
                 return RedirectToAction("Login");
             }
 
-            // ❗ FIX QUAN TRỌNG
-            ViewBag.ErrorMessage = "Incorrect or expired OTP";
+            // ❗ Đọc lỗi thực tế từ Backend trả về
+            var errorMessage = await res.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(errorMessage)) 
+            {
+                errorMessage = "Incorrect or expired OTP";
+            }
+
+            ViewBag.ErrorMessage = errorMessage;
 
             return View(model);
         }

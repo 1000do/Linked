@@ -17,6 +17,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Fonts: Inter for UI, Manrope for display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.min.js"></script>
@@ -336,7 +338,7 @@
             if (ADMIN_LAYOUT_TOKEN) {
                 if (localStorage.getItem("AccountLocked") === "true") {
                     localStorage.removeItem("AccountLocked");
-                    const form = document.querySelector('form[action="/Account/Logout"]');
+                    const form = document.getElementById('global-logout-form') || document.getElementById('global-logout-form-desktop') || document.getElementById('global-logout-form-mobile') || document.querySelector('form[action="/Account/Logout"]');
                     if (form) { form.submit(); }
                     return;
                 }
@@ -391,7 +393,8 @@
                         allowOutsideClick: false,
                         allowEscapeKey: false
                     }).then(() => {
-                        document.querySelector('form[action="/Account/Logout"]').submit();
+                        const form = document.getElementById('global-logout-form') || document.getElementById('global-logout-form-desktop') || document.getElementById('global-logout-form-mobile') || document.querySelector('form[action="/Account/Logout"]');
+                        if (form) { form.submit(); }
                     });
                 });
 

@@ -11,6 +11,8 @@ public interface IRedisService
     Task ClearUnreadCountAsync(int accountId, int chatId);
     Task<int> GetUnreadCountAsync(int accountId, int chatId);
 
+    Task<bool> IsHealthyAsync();
+
     // Generic Object Caching
     Task SetCacheAsync<T>(string key, T value, TimeSpan? expiry = null);
     Task<T?> GetCacheAsync<T>(string key);

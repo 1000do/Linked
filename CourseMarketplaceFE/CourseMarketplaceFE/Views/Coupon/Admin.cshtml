@@ -157,6 +157,7 @@
                 <div class="space-y-2">
                     <label class="text-[11px] font-black text-slate-500 uppercase tracking-[0.15em] ml-1">Maximum Usage Limit</label>
                     <input id="usageLimit" type="number" class="w-full border-2 border-slate-100 rounded-2xl px-4 py-3.5 text-base font-black focus:outline-none focus:border-primary transition-all bg-slate-50/50 focus:bg-white" placeholder="∞" />
+                    <p id="err-usage" class="text-rose-500 text-[10px] font-black mt-1.5 hidden flex items-center gap-1.5 ml-1 uppercase tracking-tight"><span class="material-symbols-outlined text-[14px]">error</span> Invalid usage limit</p>
                 </div>
             </div>
 
@@ -454,7 +455,7 @@
 
             if (usageVal !== "") {
                 const usageNum = parseInt(usageVal);
-                if (isNaN(usageNum) || usageNum < 0) { showError("err-usage", "Usage limit must be positive"); isValid = false; }
+                if (isNaN(usageNum) || usageNum <= 0) { showError("err-usage", "Usage limit must be greater than 0"); isValid = false; }
             }
             return isValid;
         }

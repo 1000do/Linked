@@ -288,7 +288,7 @@ public class GiftCheckoutService : IGiftCheckoutService
                 StripeSessionId = sessionId,
                 StripePaymentintentId = paymentIntentId,
                 Currency = "usd",
-                TransactionsStatus = "Success",
+                TransactionsStatus = TransactionStatus.Succeeded.ToValue(),
                 TransactionType = "gift",
                 TransactionCreatedAt = DateTime.Now,
                 TransferRate = 100
@@ -324,6 +324,9 @@ public class GiftCheckoutService : IGiftCheckoutService
         var userAccount = await _userRepo.GetAccountByEmailAsync(recipientEmail);
         if (userAccount != null)
         {
+            if (userAccount.AccountId == course!.InstructorId)
+                throw new InvalidOperationException($"The recipient {recipientEmail} already has access to this course.");
+
             var enrollment = await _enrollmentRepo.GetEnrollmentAsync(userAccount.AccountId, courseId);
             if (enrollment != null)
                 throw new InvalidOperationException($"The recipient {recipientEmail} already has access to this course.");

@@ -46,8 +46,7 @@ public class CourseRepository : ICourseRepository
         // 1. Filtering by search term
         if (!string.IsNullOrEmpty(search))
         {
-            queryable = queryable.Where(c => EF.Functions.ToTsVector("simple", c.Title)
-                .Matches(EF.Functions.WebSearchToTsQuery("simple", search)));
+            queryable = queryable.Where(c => EF.Functions.ILike(c.Title, $"%{search}%"));
         }
 
         // 2. Filtering by status
@@ -142,8 +141,7 @@ public class CourseRepository : ICourseRepository
         // 1. Filtering by search term
         if (!string.IsNullOrEmpty(search))
         {
-            queryable = queryable.Where(c => EF.Functions.ToTsVector("simple", c.Title)
-                .Matches(EF.Functions.WebSearchToTsQuery("simple", search)));
+            queryable = queryable.Where(c => EF.Functions.ILike(c.Title, $"%{search}%"));
         }
 
         // 2. Filtering by category
